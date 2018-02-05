@@ -1,0 +1,18 @@
+
+.env
+.git
+
+# used for building imagew, but not needed inside the images
+docker
+
+# This needs to be discussed.
+# At this point the tests are ran locally by developer (see `make start-dev`)
+# and are NOT included in the build. At some point we may want to
+# build a derivative image (based on prod image) that adds tests folder
+# and runs the tests in the cloud, but that does not have to be
+# baked into the image. Base image can just be ran with /tests mounted
+# into it and ran as such... anyway, excluding for now.
+tests
+
+# IDEs artifacts
+.idea

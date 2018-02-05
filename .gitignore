@@ -1,0 +1,9 @@
+# Python Files
+*.py[co]
+.env
+.python-version
+__pycache__
+
+# IDE
+.idea
+*.sw[mnop]

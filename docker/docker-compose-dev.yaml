@@ -1,0 +1,19 @@
+version: '2'
+
+services:
+
+  redis:
+    extends:
+      file: docker-compose-base.yaml
+      service: redis
+
+  collection-system:
+    extends:
+      file: docker-compose-base.yaml
+      service: collection-system
+#    ports:
+#      - 8000:8000
+#      - 3569:3569
+    links:
+      - redis
+    command: bash

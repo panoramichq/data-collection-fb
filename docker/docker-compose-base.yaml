@@ -1,0 +1,20 @@
+version: '2'
+
+services:
+
+  redis:
+    image: redis:3
+    # ports:
+    #  - 6379:6379
+    command: redis-server --appendonly no --appendfsync no --stop-writes-on-bgsave-error no --maxmemory 1gb
+    logging:
+      driver: none
+
+  collection-system:
+    image: ${IMAGE_NAME_FULL}
+    environment:
+      USER_ID: ${USER_ID}
+      GROUP_ID: ${GROUP_ID}
+    volumes:
+      # >..< because this file is nested one level deep
+      - ..:${WORKDIR}

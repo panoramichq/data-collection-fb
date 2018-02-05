@@ -1,0 +1,18 @@
+[flake8]
+ignore = E402,
+         # imports not used
+         F401,
+         # many unassigned variables right now, will be used in the future?
+         F841,
+         # allow uppercase arguments because we are passing matrices
+         N803,
+         # allow comparing value directly to True, which is used a lot with pandas code to filter rows
+         E712,
+         # do not enforce double quoted docstrings
+         Q001,
+         # allow bare except clause
+         E722
+statistics = True
+exclude = .git,
+          __pycache__
+max-line-length = 300
