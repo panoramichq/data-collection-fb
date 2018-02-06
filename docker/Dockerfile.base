@@ -1,5 +1,14 @@
 FROM python:3.6.4-slim as pythonuserbaseimage
 
+# Setup environment variables and arguments all at once
+ARG WORKDIR=/usr/src/app
+ARG PYTHONUSERBASE
+
+# PYTHONUNBUFFERED: Force stdin, stdout and stderr to be totally unbuffered. (equivalent to `python -u`)
+# PYTHONHASHSEED: Enable hash randomization (equivalent to `python -R`)
+# PYTHONDONTWRITEBYTECODE: Do not write byte files to disk, since we maintain it as readonly. (equivalent to `python -B`)
+ENV PYTHONUNBUFFERED=1 PYTHONHASHSEED=random PYTHONDONTWRITEBYTECODE=1 PYTHONUSERBASE=$PYTHONUSERBASE PATH="${PYTHONUSERBASE}/bin:${PATH}"
+
 # Readme has explanation / examples for why GoSU vs Dockerfile.USER
 # https://github.com/tianon/gosu
 ENV GOSU_VERSION 1.10
@@ -27,20 +36,12 @@ RUN set -ex; \
     # verify that the binary works
 	gosu nobody true; \
 	\
-	apt-get purge -y --auto-remove $fetchDeps
+	apt-get purge -y --auto-remove $fetchDeps; \
+	\
+	# we allow running / managing these folders by non-root users. Thus need chmod
+	mkdir -p $PYTHONUSERBASE && chmod 777 ${PYTHONUSERBASE}; \
+	mkdir -p $WORKDIR && chmod 777 ${WORKDIR}
 
+WORKDIR $WORKDIR
 COPY docker-entrypoint.sh /docker-entrypoint.sh
 ENTRYPOINT ["sh", "/docker-entrypoint.sh"]
-
-ENV PYTHONUNBUFFERED=1
-
-ARG PYTHONUSERBASE
-ENV PYTHONUSERBASE=$PYTHONUSERBASE
-# we allow running / managing that folder by non-root users. Thus need chmod
-RUN mkdir -p $PYTHONUSERBASE && chmod 777 ${PYTHONUSERBASE}
-ENV PATH="${PYTHONUSERBASE}/bin:${PATH}"
-
-ARG WORKDIR=/usr/src/app
-# we allow running / managing that folder by non-root users. Thus need chmod
-RUN mkdir -p $WORKDIR && chmod 777 ${WORKDIR}
-WORKDIR $WORKDIR

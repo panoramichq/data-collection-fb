@@ -9,7 +9,7 @@ clean:
 
 VENDOR_NAME:=metrics
 IMAGE_NAME:=collection-system
-IMAGE_NAME_FULL:=$(VENDOR_NAME)/$(IMAGE_NAME)
+IMAGE_NAME_FULL:=$(if $(IMAGE_NAME_FULL),$(IMAGE_NAME_FULL),$(VENDOR_NAME)/$(IMAGE_NAME))
 
 # When we are building through Circle CI, use the
 BRANCH_NAME:=$(if $(CIRCLE_BRANCH),$(CIRCLE_BRANCH),$(shell git rev-parse --abbrev-ref HEAD))
@@ -19,20 +19,28 @@ COMMIT_ID=$(if $(CIRCLE_SHA1),$(CIRCLE_SHA1),$(shell git log -1 --format="%H"))
 
 PYTHONUSERBASE_INNER=/tmp/pythonuserbase
 
+ECR_URL:=$(if $(DOCKER_PUSH_URL),$(DOCKER_PUSH_URL),897117390337.dkr.ecr.us-east-1.amazonaws.com/operam/data-collection-fb)
+
 image.base:
 	docker build \
-		-t $(IMAGE_NAME_FULL)-base:$(BUILD_ID) \
+		-t $(IMAGE_NAME_FULL)-base:$(BUILD_ID)-$(COMMIT_ID) \
 		--build-arg PYTHONUSERBASE=$(PYTHONUSERBASE_INNER) \
 		-f docker/Dockerfile.base .
 
 image: image.base
 	docker build \
-		-t $(IMAGE_NAME_FULL):$(BUILD_ID) \
-		--build-arg BASE_IMAGE=$(IMAGE_NAME_FULL)-base:$(BUILD_ID) \
+		-t $(IMAGE_NAME_FULL):$(BUILD_ID)-$(COMMIT_ID) \
+		--build-arg BASE_IMAGE=$(IMAGE_NAME_FULL)-base:$(BUILD_ID)-$(COMMIT_ID) \
 		--build-arg COMMIT_ID=${COMMIT_ID} \
 		--build-arg BUILD_ID=${BUILD_ID} \
 		--build-arg PYTHONUSERBASE=$(PYTHONUSERBASE_INNER) \
 		-f docker/Dockerfile .
+
+push_image: image
+	docker tag $(IMAGE_NAME_FULL):$(BUILD_ID)-$(COMMIT_ID) \
+		$(ECR_URL):$(BUILD_ID)-$(COMMIT_ID)
+	docker push \
+		$(ECR_URL):$(BUILD_ID)-$(COMMIT_ID)
 
 .PHONY: image image.base
 
