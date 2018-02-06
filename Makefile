@@ -19,7 +19,7 @@ COMMIT_ID=$(if $(CIRCLE_SHA1),$(CIRCLE_SHA1),$(shell git log -1 --format="%H"))
 
 PYTHONUSERBASE_INNER=/tmp/pythonuserbase
 
-ECR_URL:=$(if $(DOCKER_PUSH_URL),$(DOCKER_PUSH_URL),897117390337.dkr.ecr.us-east-1.amazonaws.com/operam/data-collection-fb)
+PUSH_URL:=$(if $(DOCKER_PUSH_URL),$(DOCKER_PUSH_URL),897117390337.dkr.ecr.us-east-1.amazonaws.com/operam/data-collection-fb)
 
 image.base:
 	docker build \
@@ -38,9 +38,9 @@ image: image.base
 
 push_image: image
 	docker tag $(IMAGE_NAME_FULL):$(BUILD_ID)-$(COMMIT_ID) \
-		$(ECR_URL):$(BUILD_ID)-$(COMMIT_ID)
+		$(PUSH_URL)/$(IMAGE_NAME_FULL):$(BUILD_ID)-$(COMMIT_ID)
 	docker push \
-		$(ECR_URL):$(BUILD_ID)-$(COMMIT_ID)
+		$(PUSH_URL)/$(IMAGE_NAME_FULL):$(BUILD_ID)-$(COMMIT_ID)
 
 .PHONY: image image.base
 
