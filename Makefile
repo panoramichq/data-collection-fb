@@ -37,6 +37,7 @@ image: image.base
 		-f docker/Dockerfile .
 
 push_image: image
+	eval $(aws ecr get-login --region us-east-1 --no-include-email)
 	docker tag $(IMAGE_NAME_FULL):$(BUILD_ID)-$(COMMIT_ID) \
 		$(ECR_URL):$(BUILD_ID)-$(COMMIT_ID)
 	docker push \
