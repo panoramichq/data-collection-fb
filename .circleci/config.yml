@@ -10,10 +10,13 @@ jobs:
       - setup_remote_docker:
           docker_layer_caching: true
 
+      # Install AWS CLI
+      - run: sudo pip install awscli --upgrade
+
       # build and push Docker image
       - run: |
-          sudo pip install awscli --upgrade
           eval $(aws ecr get-login --region us-east-1 --no-include-email)
+          eval $(aws ecr get-login --region us-west-2 --no-include-email)
           make image
           make push_image
 
