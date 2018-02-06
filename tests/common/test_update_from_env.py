@@ -24,11 +24,10 @@ class TestingUpdateFromEnv(TestCase):
         VAR_A = "STRING"
         VAR_B = 1
         update_from_env(__name__, 'config', 'APP_')
-        
         """)
 
         with patch.object(os, 'environ', fake_environ), \
-            FakeModule('config.a.b', module_code) as module:
+                FakeModule('config.a.b', module_code) as module:
 
             assert module.VAR_A == 'OVERRIDDEN'
             assert module.VAR_B == 2
