@@ -12,6 +12,7 @@ jobs:
 
       # build and push Docker image
       - run: |
+          pip install awscli --upgrade --user
           eval $(aws ecr get-login --region us-east-1 --no-include-email)
           make image
           make push_image
