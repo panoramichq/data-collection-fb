@@ -1,6 +1,5 @@
-
 .env
-.git
+.*/
 
 # used for building imagew, but not needed inside the images
 docker
