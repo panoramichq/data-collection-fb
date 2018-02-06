@@ -1,4 +1,7 @@
 -r requirements.txt
+flake8-polyfill==1.0.2
+flake8-string-format==0.2.3
+flake8==3.5.0
 ipdb
 ipython
 pip-tools
