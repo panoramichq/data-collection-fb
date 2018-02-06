@@ -32,6 +32,8 @@ RUN set -ex; \
 COPY docker-entrypoint.sh /docker-entrypoint.sh
 ENTRYPOINT ["sh", "/docker-entrypoint.sh"]
 
+ENV PYTHONUNBUFFERED=1
+
 ARG PYTHONUSERBASE
 ENV PYTHONUSERBASE=$PYTHONUSERBASE
 # we allow running / managing that folder by non-root users. Thus need chmod
