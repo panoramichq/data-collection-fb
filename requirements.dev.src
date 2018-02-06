@@ -2,4 +2,4 @@
 ipdb
 ipython
 pip-tools
-nose
+pytest

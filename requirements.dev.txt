@@ -5,6 +5,7 @@
 #    pip-compile --output-file requirements.dev.txt requirements.dev.src
 #
 amqp==2.2.2
+attrs==17.4.0             # via pytest
 billiard==3.5.0.3
 celery==4.1.0
 click==6.7                # via pip-tools
@@ -17,17 +18,19 @@ ipython-genutils==0.2.0   # via traitlets
 ipython==6.2.1
 jedi==0.11.1              # via ipython
 kombu==4.1.0
-nose==1.3.7
 parso==0.1.1              # via jedi
 pexpect==4.3.1            # via ipython
 pickleshare==0.7.4        # via ipython
 pip-tools==1.11.0
+pluggy==0.6.0             # via pytest
 prompt-toolkit==1.0.15    # via ipython
 ptyprocess==0.5.2         # via pexpect
+py==1.5.2                 # via pytest
 pygments==2.2.0           # via ipython
+pytest==3.4.0
 pytz==2017.3
 simplegeneric==0.8.1      # via ipython
-six==1.11.0               # via pip-tools, prompt-toolkit, traitlets
+six==1.11.0               # via pip-tools, prompt-toolkit, pytest, traitlets
 traitlets==4.3.2          # via ipython
 uvloop==0.9.1
 vine==1.1.4
