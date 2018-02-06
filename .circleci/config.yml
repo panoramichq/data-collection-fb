@@ -6,12 +6,13 @@ jobs:
       - image: circleci/python:3.6-jessie-node
 
     steps:
-      - checkout
       - setup_remote_docker:
           docker_layer_caching: true
 
       # Install AWS CLI
       - run: sudo pip install awscli --upgrade
+
+      - checkout
 
       # build and push Docker image
       - run: |
