@@ -3,7 +3,7 @@ version: 2
 jobs:
   build_image:
     docker:
-      - image: circleci/buildpack-deps:trusty
+      - image: circleci/python:3.6-jessie-node
 
     steps:
       - checkout
