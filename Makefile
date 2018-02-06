@@ -29,7 +29,8 @@ image: image.base
 	docker build \
 		-t $(IMAGE_NAME_FULL):$(BUILD_ID) \
 		--build-arg BASE_IMAGE=$(IMAGE_NAME_FULL)-base:$(BUILD_ID) \
-		--build-arg BUILD_INFO="{'commit_id':'$(COMMIT_ID)', 'build_id':'$(BUILD_ID)', 'build_date':'$(shell date -u +\"%Y-%m-%dT%H:%M:%SZ\")'}" \
+		--build-arg COMMIT_ID=${COMMIT_ID} \
+		--build-arg BUILD_ID=${BUILD_ID} \
 		--build-arg PYTHONUSERBASE=$(PYTHONUSERBASE_INNER) \
 		-f docker/Dockerfile .
 

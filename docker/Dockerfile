@@ -44,6 +44,9 @@ COPY --from=pythonuserbaseimage $PYTHONUSERBASE/ $PYTHONUSERBASE/
 
 COPY . .
 
-# this must go after COPY . . because COPY . . may overwrite this file
-ARG BUILD_INFO="{'commit_id':'NOT_DEFINED', 'build_id':'NOT_DEFINED', 'build_date':'NOT_DEFINED'}"
-RUN echo "build_info = $BUILD_INFO" > buildinfo.py
+ARG BUILD_ID=latest
+ARG COMMIT_ID=none
+# these env vars are picked up by config's update_from_env function
+# and applied to config.build.BUILD_ID config.build.COMMIT_ID attrs.
+ENV APP_BUILD_BUILD_ID=${BUILD_ID}
+ENV APP_BUILD_COMMIT_ID=${COMMIT_ID}
