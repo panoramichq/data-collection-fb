@@ -13,4 +13,4 @@ services:
       service: collection-system
     links:
       - redis
-    command: bash
+    command: celery worker --app=celery-entrypoint --pool gevent --autoscale=400,10

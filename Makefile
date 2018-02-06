@@ -62,7 +62,15 @@ start-dev:
 	WORKDIR=/usr/src/app \
 	docker-compose -f docker/docker-compose-dev.yaml run --service-ports collection-system
 
-.PHONY: start-dev
+# use this for standing up entire stack on its own and interacting with it remotely
+start-stack:
+	IMAGE_NAME_FULL=$(IMAGE_NAME_FULL) \
+	USER_ID=$(shell id -u) \
+	GROUP_ID=$(shell id -g) \
+	WORKDIR=/usr/src/app \
+	docker-compose -f docker/docker-compose-stack.yaml up
+
+.PHONY: start-dev start-stack
 
 
 #############

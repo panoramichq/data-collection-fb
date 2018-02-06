@@ -12,6 +12,11 @@
 ARG BASE_IMAGE
 FROM ${BASE_IMAGE} as pythonuserbaseimage
 
+# since this is a throw-away image, it's ok to have these steps separate and cached
+RUN apt-get update
+# need these for hiredis (to start)
+RUN apt-get install -y --no-install-recommends gcc python3-dev
+
 # In order to reuse Docker cache during builds
 # requirements are split into base (those unlikely to change frequently)
 # and regular requirements. The split is arbitrary and beside the
