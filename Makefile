@@ -38,9 +38,9 @@ image: image.base
 
 push_image: image
 	docker tag $(IMAGE_NAME_FULL):$(BUILD_ID)-$(COMMIT_ID) \
-		$(PUSH_URL)/$(BUILD_ID)-$(COMMIT_ID)
+		$(PUSH_URL):$(BUILD_ID)-$(COMMIT_ID)
 	docker push \
-		$(PUSH_URL)/$(BUILD_ID)-$(COMMIT_ID)
+		$(PUSH_URL):$(BUILD_ID)-$(COMMIT_ID)
 
 .PHONY: image image.base
 
