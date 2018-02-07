@@ -1,13 +1,8 @@
 # CircleCI DMP config
 version: 2
 
-defaults: &defaults
-  working_directory: /tmp
-
 jobs:
   build_image:
-    <<: *defaults
-
     docker:
       - image: circleci/python:3.6-jessie-node
 
@@ -18,8 +13,7 @@ jobs:
       # Install AWS CLI
       - run: sudo pip install awscli --upgrade
 
-      - checkout:
-          path: /tmp/app
+      - checkout
 
       # build and push Docker image
       - run: |
@@ -30,23 +24,21 @@ jobs:
           cd app && make push_image
 
       # Record build info in workspace
-      - run: mkdir -p workspace
-      - run: echo ${DOCKER_IMAGE_NAME} > workspace/image_url
-      - run: echo ${CIRCLE_BUILD_NUM}-${CIRCLE_SHA1} > workspace/image_name
+      - run: mkdir -p /tmp/workspace
+      - run: echo ${DOCKER_IMAGE_NAME} > /tmp/workspace/image_url
+      - run: echo ${CIRCLE_BUILD_NUM}-${CIRCLE_SHA1} > /tmp/workspace/image_name
 
       # Persist the specified paths (workspace/image*) into the workspace for use in downstream job. 
       - persist_to_workspace:
           # Must be an absolute path, or relative path from working_directory. This is a directory on the container which is 
           # taken to be the root directory of the workspace.
-          root: workspace
+          root: /tmp/workspace
           # Must be relative path from root
           paths:
             - image_url
             - image_name
 
   run_tests:
-    <<: *defaults
-
     machine:
       image: circleci/classic:latest
 
