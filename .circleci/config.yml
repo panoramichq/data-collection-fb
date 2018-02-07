@@ -16,13 +16,31 @@ jobs:
 
       # build and push Docker image
       - run: |
+          export DOCKER_IMAGE_NAME=${DOCKER_PUSH_URL}:${CIRCLE_BUILD_NUM}-${CIRCLE_SHA1}
+          echo ${DOCKER_IMAGE_NAME}
           eval $(aws ecr get-login --region us-east-1 --no-include-email)
           eval $(aws ecr get-login --region us-west-2 --no-include-email)
           make image
           make push_image
 
+  run_tests:
+    docker:
+      - image: ${DOCKER_PUSH_URL}:${CIRCLE_BUILD_NUM}-${CIRCLE_SHA1}
+
+    steps:
+
+      - checkout
+
+      - run : |
+          make test
+
+
 workflows:
   version: 2
-  test:
+  build:
     jobs:
       - build_image
+
+      - run_tests:
+          requires:
+            - build_image

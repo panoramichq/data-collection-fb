@@ -1,0 +1,16 @@
+version: '2'
+
+services:
+
+  redis:
+    extends:
+      file: docker-compose-base.yaml
+      service: redis
+
+  collection:
+    extends:
+      file: docker-compose-base.yaml
+      service: collection-system
+    links:
+      - redis
+    command: pytest

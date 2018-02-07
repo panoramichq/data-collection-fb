@@ -20,6 +20,7 @@ COMMIT_ID=$(if $(CIRCLE_SHA1),$(CIRCLE_SHA1),$(shell git log -1 --format="%H"))
 PYTHONUSERBASE_INNER=/tmp/pythonuserbase
 
 PUSH_URL:=$(if $(DOCKER_PUSH_URL),$(DOCKER_PUSH_URL),897117390337.dkr.ecr.us-east-1.amazonaws.com/operam/data-collection-fb)
+DOCKER_IMAGE_NAME:=$(if $(DOCKER_IMAGE_NAME),$(DOCKER_IMAGE_NAME),$(PUSH_URL):$(BUILD_ID)-$(COMMIT_ID))
 
 image.base:
 	docker build \
@@ -38,11 +39,11 @@ image: image.base
 
 push_image: image
 	docker tag $(IMAGE_NAME_FULL):$(BUILD_ID)-$(COMMIT_ID) \
-		$(PUSH_URL):$(BUILD_ID)-$(COMMIT_ID)
+		$(DOCKER_IMAGE_NAME)
 	docker push \
-		$(PUSH_URL):$(BUILD_ID)-$(COMMIT_ID)
+		$(DOCKER_IMAGE_NAME)
 
-.PHONY: image image.base
+.PHONY: image image.base push_image
 
 #############
 # Dev Helpers
@@ -64,7 +65,7 @@ pythonuserbase: rm-container
 
 # use this for interactive console dev and running unit tests
 start-dev:
-	IMAGE_NAME_FULL=$(IMAGE_NAME_FULL) \
+	IMAGE_NAME_FULL=$(IMAGE_NAME_FULL):$(BUILD_ID)-$(COMMIT_ID) \
 	USER_ID=$(shell id -u) \
 	GROUP_ID=$(shell id -g) \
 	WORKDIR=/usr/src/app \
@@ -72,7 +73,7 @@ start-dev:
 
 # use this for standing up entire stack on its own and interacting with it remotely
 start-stack:
-	IMAGE_NAME_FULL=$(IMAGE_NAME_FULL) \
+	IMAGE_NAME_FULL=$(IMAGE_NAME_FULL):$(BUILD_ID)-$(COMMIT_ID) \
 	USER_ID=$(shell id -u) \
 	GROUP_ID=$(shell id -g) \
 	WORKDIR=/usr/src/app \
@@ -80,6 +81,18 @@ start-stack:
 
 .PHONY: start-dev start-stack
 
+#############
+# Test runner
+test: image
+	IMAGE_NAME_FULL=$(IMAGE_NAME_FULL):$(BUILD_ID)-$(COMMIT_ID) \
+	USER_ID=$(shell id -u) \
+	GROUP_ID=$(shell id -g) \
+	WORKDIR=/usr/src/app \
+	docker-compose -f docker/docker-compose-test.yaml up \
+		--remove-orphans --abort-on-container-exit --exit-code-from collection
+	docker-compose -f docker/docker-compose-test.yaml down
+
+.PHONY: test
 
 #############
 # requirement files management
