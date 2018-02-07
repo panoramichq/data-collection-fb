@@ -24,15 +24,9 @@ jobs:
 
   run_tests:
     machine:
-      image: circleci/python:3.6-jessie-node
+      image: circleci/classic:latest
 
     steps:
-      - setup_remote_docker:
-          docker_layer_caching: true
-
-      # Install AWS CLI
-      - run: sudo pip install awscli --upgrade
-
       - checkout
 
       - run : |
