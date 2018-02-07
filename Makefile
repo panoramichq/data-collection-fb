@@ -88,9 +88,8 @@ start-stack:
 test:
 	IMAGE_NAME_FULL=$(DOCKER_TAG_NAME_FULL) \
 	WORKDIR=/usr/src/app \
-	docker-compose -f docker/docker-compose-test.yaml up \
-		--remove-orphans --abort-on-container-exit --exit-code-from collection
-	docker-compose -f docker/docker-compose-test.yaml down
+	docker-compose -f docker/docker-compose-test.yaml run \
+		--rm collection
 
 .PHONY: test
 
