@@ -87,8 +87,6 @@ start-stack:
 # Test runner
 test:
 	IMAGE_NAME_FULL=$(DOCKER_TAG_NAME_FULL) \
-	USER_ID=$(shell id -u) \
-	GROUP_ID=$(shell id -g) \
 	WORKDIR=/usr/src/app \
 	docker-compose -f docker/docker-compose-test.yaml up \
 		--remove-orphans --abort-on-container-exit --exit-code-from collection
