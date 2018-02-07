@@ -15,18 +15,18 @@ jobs:
 
       - checkout
 
-      # build and push Docker image
+      # Setup workspace directory
+      - run: mkdir -p /tmp/workspace
+
+      # build and push Docker image & record data in workspace
       - run: |
           export DOCKER_IMAGE_NAME=${DOCKER_PUSH_URL}:${CIRCLE_BUILD_NUM}-${CIRCLE_SHA1}
           echo ${DOCKER_IMAGE_NAME}
+          echo ${DOCKER_IMAGE_NAME} > /tmp/workspace/image_url
+          echo ${CIRCLE_BUILD_NUM}-${CIRCLE_SHA1} > /tmp/workspace/image_name
           eval $(aws ecr get-login --region us-east-1 --no-include-email)
           eval $(aws ecr get-login --region us-west-2 --no-include-email)
           make push_image
-
-      # Record build info in workspace
-      - run: mkdir -p /tmp/workspace
-      - run: echo ${DOCKER_IMAGE_NAME} > /tmp/workspace/image_url
-      - run: echo ${CIRCLE_BUILD_NUM}-${CIRCLE_SHA1} > /tmp/workspace/image_name
 
       # Persist the specified paths (workspace/image*) into the workspace for use in downstream job. 
       - persist_to_workspace:
