@@ -21,7 +21,7 @@ jobs:
           echo ${DOCKER_IMAGE_NAME}
           eval $(aws ecr get-login --region us-east-1 --no-include-email)
           eval $(aws ecr get-login --region us-west-2 --no-include-email)
-          cd app && make push_image
+          make push_image
 
       # Record build info in workspace
       - run: mkdir -p /tmp/workspace
