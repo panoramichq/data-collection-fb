@@ -26,21 +26,21 @@ DOCKER_IMAGE_NAME:=$(if $(DOCKER_IMAGE_NAME),$(DOCKER_IMAGE_NAME),$(PUSH_URL):$(
 
 image.base:
 	docker build \
-		-t $(IMAGE_NAME_FULL)-base:$(BUILD_ID)-$(COMMIT_ID) \
+		-t $(IMAGE_NAME_FULL)-base:$(DOCKER_TAG_NAME) \
 		--build-arg PYTHONUSERBASE=$(PYTHONUSERBASE_INNER) \
 		-f docker/Dockerfile.base .
 
 image: image.base
 	docker build \
-		-t $(IMAGE_NAME_FULL):$(BUILD_ID)-$(COMMIT_ID) \
-		--build-arg BASE_IMAGE=$(IMAGE_NAME_FULL)-base:$(BUILD_ID)-$(COMMIT_ID) \
+		-t $(IMAGE_NAME_FULL):$(DOCKER_TAG_NAME) \
+		--build-arg BASE_IMAGE=$(IMAGE_NAME_FULL)-base:$(DOCKER_TAG_NAME) \
 		--build-arg COMMIT_ID=${COMMIT_ID} \
 		--build-arg BUILD_ID=${BUILD_ID} \
 		--build-arg PYTHONUSERBASE=$(PYTHONUSERBASE_INNER) \
 		-f docker/Dockerfile .
 
 push_image: image
-	docker tag $(IMAGE_NAME_FULL):$(BUILD_ID)-$(COMMIT_ID) \
+	docker tag $(IMAGE_NAME_FULL):$(DOCKER_TAG_NAME) \
 		$(DOCKER_IMAGE_NAME)
 	docker push \
 		$(DOCKER_IMAGE_NAME)

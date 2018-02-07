@@ -20,11 +20,10 @@ jobs:
           echo ${DOCKER_IMAGE_NAME}
           eval $(aws ecr get-login --region us-east-1 --no-include-email)
           eval $(aws ecr get-login --region us-west-2 --no-include-email)
-          make image
           make push_image
 
   run_tests:
-    docker:
+    machine:
       - image: circleci/python:3.6-jessie-node
 
     steps:
