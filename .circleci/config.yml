@@ -6,6 +6,10 @@ jobs:
     docker:
       - image: circleci/python:3.6-jessie-node
 
+    environment:
+      - DOCKER_PUSH_URL: "897117390337.dkr.ecr.us-east-1.amazonaws.com/operam/data-collection-fb"
+      - IMAGE_NAME_FULL: "metrics-collection-system"
+
     steps:
       - setup_remote_docker:
           docker_layer_caching: true
