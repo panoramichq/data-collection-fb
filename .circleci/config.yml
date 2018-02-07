@@ -1,4 +1,5 @@
-# CircleCI DMP config
+# CircleCI Data Collection config
+
 version: 2
 
 jobs:
@@ -31,10 +32,9 @@ jobs:
           eval $(aws ecr get-login --region us-west-2 --no-include-email)
           make push_image
 
-      # Persist the specified paths (workspace/image*) into the workspace for use in downstream job. 
+      # Persist the specified paths (workspace/image*) into the workspace for use in downstream job.
       - persist_to_workspace:
-          # Must be an absolute path, or relative path from working_directory. This is a directory on the container which is 
-          # taken to be the root directory of the workspace.
+          # Must be absolute path or relative path from working_directory
           root: /tmp/workspace
           # Must be relative path from root
           paths:
@@ -47,7 +47,6 @@ jobs:
 
     steps:
       - attach_workspace:
-          # Must be absolute path or relative path from working_directory
           at: /tmp/workspace
 
       - checkout
