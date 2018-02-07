@@ -51,7 +51,7 @@ jobs:
 
       - run : |
           export DOCKER_TAG_NAME_FULL=`cat /tmp/workspace/image_url`
-          echo $DOCKER_TAG_NAME_FULL
+          echo ${DOCKER_TAG_NAME_FULL}
           eval $(aws ecr get-login --region us-east-1 --no-include-email)
           eval $(aws ecr get-login --region us-west-2 --no-include-email)
           make test
