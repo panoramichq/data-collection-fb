@@ -18,7 +18,8 @@ jobs:
       # Install AWS CLI
       - run: sudo pip install awscli --upgrade
 
-      - checkout
+      - checkout:
+          path: /tmp/app
 
       # build and push Docker image
       - run: |
@@ -26,7 +27,7 @@ jobs:
           echo ${DOCKER_IMAGE_NAME}
           eval $(aws ecr get-login --region us-east-1 --no-include-email)
           eval $(aws ecr get-login --region us-west-2 --no-include-email)
-          make push_image
+          cd app && make push_image
 
       # Record build info in workspace
       - run: mkdir -p workspace
