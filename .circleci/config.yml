@@ -1,7 +1,13 @@
 # CircleCI DMP config
 version: 2
+
+defaults: &defaults
+  working_directory: /tmp
+
 jobs:
   build_image:
+    <<: *defaults
+
     docker:
       - image: circleci/python:3.6-jessie-node
 
@@ -22,15 +28,37 @@ jobs:
           eval $(aws ecr get-login --region us-west-2 --no-include-email)
           make push_image
 
+      # Record build info in workspace
+      - run: mkdir -p workspace
+      - run: echo ${DOCKER_IMAGE_NAME} > workspace/image_url
+      - run: echo ${CIRCLE_BUILD_NUM}-${CIRCLE_SHA1} > workspace/image_name
+
+      # Persist the specified paths (workspace/image*) into the workspace for use in downstream job. 
+      - persist_to_workspace:
+          # Must be an absolute path, or relative path from working_directory. This is a directory on the container which is 
+          # taken to be the root directory of the workspace.
+          root: workspace
+          # Must be relative path from root
+          paths:
+            - image_url
+            - image_name
+
   run_tests:
+    <<: *defaults
+
     machine:
       image: circleci/classic:latest
 
     steps:
+      - attach_workspace:
+          # Must be absolute path or relative path from working_directory
+          at: /tmp/workspace
+
       - checkout
 
       - run : |
-          export DOCKER_TAG_NAME_FULL=${DOCKER_PUSH_URL}:${CIRCLE_PREVIOUS_BUILD_NUM}-${CIRCLE_SHA1}
+          export DOCKER_TAG_NAME_FULL=`cat /tmp/workspace/image_url`
+          echo $DOCKER_TAG_NAME_FULL
           eval $(aws ecr get-login --region us-east-1 --no-include-email)
           eval $(aws ecr get-login --region us-west-2 --no-include-email)
           make test
