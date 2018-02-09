@@ -84,6 +84,13 @@ def get_celery_app(celery_config=celery_config):
             # routing_key: queue name
             RoutingKey.longrunning: pad_with_build_id(RoutingKey.longrunning),
         }
+        # This is manual router implementation for Celery, per spec detailed here:
+        # http://docs.celeryproject.org/en/latest/userguide/configuration.html#task-routes
+        # The idea is to avoid static routing table and, instead,
+        # route to special dynamically-named queues based on special routing keys and
+        # fall back to default queue otherwise
+        # Partially purposefully verbose about it to make link to
+        # use of routing_key enum so very explicit.
         def route_task(name, args, kwargs, options, task=None, **kw):
             routing_key = options.get('routing_key', RoutingKey.default)
             if routing_key in special_task_routes:
@@ -91,6 +98,7 @@ def get_celery_app(celery_config=celery_config):
                     'queue': special_task_routes[routing_key]
                 }
             else:
+                # will result in this task falling into default route and queue
                 return {}
 
         _celery_app.conf.task_default_queue = pad_with_build_id(RoutingKey.default)
