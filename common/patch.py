@@ -3,6 +3,7 @@ import gevent.monkey
 
 _patched = False
 
+
 def patch_event_loop():
     """
     Tries to monkeypatch with Gevent only once no matter how many times called
