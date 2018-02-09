@@ -37,6 +37,19 @@ image: image.base
 .PHONY: image image.base
 
 #############
+# Dynamodb local management
+
+# Build DynamoDB image
+dynamo.image:
+	docker build \
+		--no-cache \
+		-t dynamodb-local \
+		--build-arg DYNAMODB_VERSION=latest \
+		-f docker/Dockerfile.dynamodb .
+
+.PHONY: dynamo.image
+
+#############
 # Dev Helpers
 
 # Copying PYTHONUSEBASE folder from container to local machine to allow IDE introspection
