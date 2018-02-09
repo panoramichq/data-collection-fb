@@ -15,3 +15,8 @@ tests
 
 # IDEs artifacts
 .idea
+
+# The dynamodata directory is sticking around so that you keep local dynamodb
+# data between restarts of the stack / dev environment. We do not want to pack
+# this into our images
+dynamodata

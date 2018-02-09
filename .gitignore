@@ -9,3 +9,6 @@ __pycache__
 # IDE
 .idea
 *.sw[mnop]
+
+# Local dynamo data files
+dynamodata/*.db

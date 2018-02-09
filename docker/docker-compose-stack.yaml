@@ -7,12 +7,18 @@ services:
       file: docker-compose-base.yaml
       service: redis
 
+  dynamo:
+    extends:
+      file: docker-compose-base.yaml
+      service: dynamo
+
   app_longrunning:
     extends:
       file: docker-compose-base.yaml
       service: app
     links:
       - redis
+      - dynamo
     command: python app.py worker longrunning
 
   app_default:
@@ -21,4 +27,5 @@ services:
       service: app
     links:
       - redis
+      - dynamo
     command: python app.py worker default

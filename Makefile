@@ -38,16 +38,18 @@ image: image.base
 
 #############
 # Dynamodb local management
+DYNAMO_IMAGE_NAME:="dynamodb"
+DYNAMO_IMAGE_NAME_FULL:=$(VENDOR_NAME)/$(DYNAMO_IMAGE_NAME)
 
 # Build DynamoDB image
-dynamo.image:
+image.dynamo:
 	docker build \
 		--no-cache \
-		-t dynamodb-local \
+		-t $(DYNAMO_IMAGE_NAME_FULL) \
 		--build-arg DYNAMODB_VERSION=latest \
 		-f docker/Dockerfile.dynamodb .
 
-.PHONY: dynamo.image
+.PHONY: image.dynamo
 
 #############
 # Dev Helpers
@@ -69,6 +71,8 @@ pythonuserbase: rm-container
 
 # use this for interactive console dev and running unit tests
 start-dev:
+	DYNAMO_IMAGE_NAME_FULL=$(DYNAMO_IMAGE_NAME_FULL) \
+	DYNAMODIR=/dynamodb_local_db \
 	IMAGE_NAME_FULL=$(IMAGE_NAME_FULL) \
 	USER_ID=$(shell id -u) \
 	GROUP_ID=$(shell id -g) \
@@ -77,6 +81,8 @@ start-dev:
 
 # use this for standing up entire stack on its own and interacting with it remotely
 start-stack:
+	DYNAMO_IMAGE_NAME_FULL=$(DYNAMO_IMAGE_NAME_FULL) \
+	DYNAMODIR=/dynamodb_local_db \
 	IMAGE_NAME_FULL=$(IMAGE_NAME_FULL) \
 	USER_ID=$(shell id -u) \
 	GROUP_ID=$(shell id -g) \
