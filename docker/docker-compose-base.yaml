@@ -10,7 +10,7 @@ services:
     logging:
       driver: none
 
-  collection-system:
+  app:
     image: ${IMAGE_NAME_FULL}
     environment:
       USER_ID: ${USER_ID}

@@ -7,10 +7,10 @@ services:
       file: docker-compose-base.yaml
       service: redis
 
-  collection:
+  app:
     extends:
       file: docker-compose-base.yaml
-      service: collection-system
+      service: app
     links:
       - redis
     command: bash

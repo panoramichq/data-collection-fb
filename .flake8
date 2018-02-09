@@ -1,5 +1,7 @@
 [flake8]
-ignore = E402,
+ignore = E265,
+         # block comments formatting
+         E402,
          # imports not used
          F401,
          # many unassigned variables right now, will be used in the future?
