@@ -1,5 +1,7 @@
 # Facebook data collection system
 
+The initial write-up and specification can be found [in the Operam drive](https://drive.google.com/drive/folders/1zrGT3l3BbLmdhs6BwlL8CUEViqFXrJgF?usp=sharing).
+
 ## To get up and running
 
 We use `make` as our "build tool" to run arbitrary commands (for example issue a docker build, start docker-compose of the whole stack etc.)
