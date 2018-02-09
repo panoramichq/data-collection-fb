@@ -7,10 +7,18 @@ services:
       file: docker-compose-base.yaml
       service: redis
 
-  collection:
+  app_longrunning:
     extends:
       file: docker-compose-base.yaml
-      service: collection-system
+      service: app
     links:
       - redis
-    command: celery worker --app=celery-entrypoint --pool gevent --autoscale=400,10
+    command: python app.py worker longrunning
+
+  app_default:
+    extends:
+      file: docker-compose-base.yaml
+      service: app
+    links:
+      - redis
+    command: python app.py worker default
