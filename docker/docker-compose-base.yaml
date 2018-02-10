@@ -10,6 +10,15 @@ services:
     logging:
       driver: none
 
+  dynamo:
+    image: ${DYNAMO_IMAGE_NAME_FULL}
+#    ports:
+#      - 8000:8000
+    volumes:
+      # >..< because this file is nested one level deep. We keep the directory
+      # around so that data is available between restarts
+      - ../dynamodata:${DYNAMODIR}
+
   app:
     image: ${IMAGE_NAME_FULL}
     environment:
