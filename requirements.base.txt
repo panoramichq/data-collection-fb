@@ -11,7 +11,7 @@ gevent==1.2.2
 greenlet==0.4.13          # via gevent
 hiredis==0.2.0
 kombu==4.1.0              # via celery
-pytz==2017.3              # via celery
+pytz==2018.3              # via celery
 redis==2.10.6             # via celery
 uvloop==0.9.1
 vine==1.1.4               # via amqp
