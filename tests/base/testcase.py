@@ -17,4 +17,18 @@ class TestCase(_TestCase):
     and, thus, is the best (until we find a new one) place to patch
     event loop, set up connections etc - all centrally.
     """
-    pass
+    def setUp(self):
+        "Hook method for setting up the test fixture before exercising it."
+        pass
+
+    def tearDown(self):
+        "Hook method for deconstructing the test fixture after testing it."
+        pass
+
+    @classmethod
+    def setUpClass(cls):
+        "Hook method for setting up class fixture before running tests in the class."
+
+    @classmethod
+    def tearDownClass(cls):
+        "Hook method for deconstructing the class fixture after running all tests in the class."
