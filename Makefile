@@ -18,11 +18,13 @@ BUILD_ID:=$(if $(CIRCLE_BUILD_NUM),$(CIRCLE_BUILD_NUM),$(BUILD_ID))
 COMMIT_ID=$(if $(CIRCLE_SHA1),$(CIRCLE_SHA1),$(shell git log -1 --format="%H"))
 
 PYTHONUSERBASE_INNER=/tmp/pythonuserbase
+WORKDIR:=/usr/src/app
 
 image.base:
 	docker build \
 		-t $(IMAGE_NAME_FULL)-base:$(BUILD_ID) \
 		--build-arg PYTHONUSERBASE=$(PYTHONUSERBASE_INNER) \
+		--build-arg WORKDIR=$(WORKDIR) \
 		-f docker/Dockerfile.base .
 
 image: image.base
@@ -76,7 +78,7 @@ start-dev:
 	IMAGE_NAME_FULL=$(IMAGE_NAME_FULL) \
 	USER_ID=$(shell id -u) \
 	GROUP_ID=$(shell id -g) \
-	WORKDIR=/usr/src/app \
+	WORKDIR=$(WORKDIR) \
 	docker-compose -f docker/docker-compose-dev.yaml run --service-ports app
 
 # use this for standing up entire stack on its own and interacting with it remotely
@@ -86,7 +88,7 @@ start-stack:
 	IMAGE_NAME_FULL=$(IMAGE_NAME_FULL) \
 	USER_ID=$(shell id -u) \
 	GROUP_ID=$(shell id -g) \
-	WORKDIR=/usr/src/app \
+	WORKDIR=$(WORKDIR) \
 	docker-compose -f docker/docker-compose-stack.yaml up
 
 .PHONY: start-dev start-stack
