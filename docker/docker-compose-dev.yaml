@@ -7,10 +7,16 @@ services:
       file: docker-compose-base.yaml
       service: redis
 
-  collection:
+  dynamo:
     extends:
       file: docker-compose-base.yaml
-      service: collection-system
+      service: dynamo
+
+  app:
+    extends:
+      file: docker-compose-base.yaml
+      service: app
     links:
       - redis
+      - dynamo
     command: bash

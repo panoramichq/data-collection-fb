@@ -7,45 +7,55 @@ clean:
 
 .PHONY: default clean
 
+# Operam Python base image from Docker Hub
+BASE_IMAGE_NAME:=operam/base-images:python3.6-latest
+
 VENDOR_NAME:=metrics
 IMAGE_NAME:=collection-system
-IMAGE_NAME_FULL:=$(if $(IMAGE_NAME_FULL),$(IMAGE_NAME_FULL),$(VENDOR_NAME)/$(IMAGE_NAME))
+IMAGE_NAME_FULL?=$(VENDOR_NAME)/$(IMAGE_NAME)
 
 # When we are building through Circle CI, use the
 BRANCH_NAME:=$(if $(CIRCLE_BRANCH),$(CIRCLE_BRANCH),$(shell git rev-parse --abbrev-ref HEAD))
 BUILD_ID?=latest
 BUILD_ID:=$(if $(CIRCLE_BUILD_NUM),$(CIRCLE_BUILD_NUM),$(BUILD_ID))
-COMMIT_ID=$(if $(CIRCLE_SHA1),$(CIRCLE_SHA1),$(shell git log -1 --format="%H"))
+COMMIT_ID=$(if $(CIRCLE_SHA1),$(CIRCLE_SHA1),$(shell git rev-parse --short HEAD))
 
-PYTHONUSERBASE_INNER=/tmp/pythonuserbase
+PYTHONUSERBASE_INNER=/usr/src/libs
+WORKDIR=/usr/src/app
 
-PUSH_URL:=$(if $(DOCKER_PUSH_URL),$(DOCKER_PUSH_URL),897117390337.dkr.ecr.us-east-1.amazonaws.com/operam/data-collection-fb)
-DOCKER_TAG_NAME:=$(if $(DOCKER_TAG_NAME),$(DOCKER_TAG_NAME),$(BUILD_ID)-$(COMMIT_ID))
-DOCKER_TAG_NAME_FULL:=$(if $(DOCKER_TAG_NAME_FULL),$(DOCKER_TAG_NAME_FULL),$(IMAGE_NAME_FULL):$(DOCKER_TAG_NAME))
-DOCKER_IMAGE_NAME:=$(if $(DOCKER_IMAGE_NAME),$(DOCKER_IMAGE_NAME),$(PUSH_URL):$(DOCKER_TAG_NAME))
+PUSH_IMAGE_NAME?=897117390337.dkr.ecr.us-east-1.amazonaws.com/operam/data-collection-fb:latest
 
-image.base:
+image:
 	docker build \
-		-t $(IMAGE_NAME_FULL)-base:$(DOCKER_TAG_NAME) \
-		--build-arg PYTHONUSERBASE=$(PYTHONUSERBASE_INNER) \
-		-f docker/Dockerfile.base .
-
-image: image.base
-	docker build \
-		-t $(IMAGE_NAME_FULL):$(DOCKER_TAG_NAME) \
-		--build-arg BASE_IMAGE=$(IMAGE_NAME_FULL)-base:$(DOCKER_TAG_NAME) \
+		-t $(IMAGE_NAME_FULL):$(BUILD_ID) \
+		--build-arg BASE_IMAGE=$(BASE_IMAGE_NAME) \
 		--build-arg COMMIT_ID=${COMMIT_ID} \
 		--build-arg BUILD_ID=${BUILD_ID} \
 		--build-arg PYTHONUSERBASE=$(PYTHONUSERBASE_INNER) \
 		-f docker/Dockerfile .
 
 push_image: image
-	docker tag $(IMAGE_NAME_FULL):$(DOCKER_TAG_NAME) \
-		$(DOCKER_IMAGE_NAME)
+	docker tag $(IMAGE_NAME_FULL):$(BUILD_ID) \
+		$(PUSH_IMAGE_NAME)
 	docker push \
-		$(DOCKER_IMAGE_NAME)
+		$(PUSH_IMAGE_NAME)
 
-.PHONY: image image.base push_image
+.PHONY: image push_image
+
+#############
+# Dynamodb local management
+DYNAMO_IMAGE_NAME:="dynamodb"
+DYNAMO_IMAGE_NAME_FULL:=$(VENDOR_NAME)/$(DYNAMO_IMAGE_NAME)
+
+# Build DynamoDB image
+image.dynamo:
+	docker build \
+		--no-cache \
+		-t $(DYNAMO_IMAGE_NAME_FULL) \
+		--build-arg DYNAMODB_VERSION=latest \
+		-f docker/Dockerfile.dynamodb .
+
+.PHONY: image.dynamo
 
 #############
 # Dev Helpers
@@ -67,18 +77,22 @@ pythonuserbase: rm-container
 
 # use this for interactive console dev and running unit tests
 start-dev:
-	IMAGE_NAME_FULL=$(DOCKER_TAG_NAME_FULL) \
+	DYNAMO_IMAGE_NAME_FULL=$(DYNAMO_IMAGE_NAME_FULL) \
+	DYNAMODIR=/dynamodb_local_db \
+	IMAGE_NAME_FULL=$(IMAGE_NAME_FULL) \
 	USER_ID=$(shell id -u) \
 	GROUP_ID=$(shell id -g) \
-	WORKDIR=/usr/src/app \
-	docker-compose -f docker/docker-compose-dev.yaml run --service-ports collection-system
+	WORKDIR=$(WORKDIR) \
+	docker-compose -f docker/docker-compose-dev.yaml run --service-ports app
 
 # use this for standing up entire stack on its own and interacting with it remotely
 start-stack:
-	IMAGE_NAME_FULL=$(DOCKER_TAG_NAME_FULL) \
+	DYNAMO_IMAGE_NAME_FULL=$(DYNAMO_IMAGE_NAME_FULL) \
+	DYNAMODIR=/dynamodb_local_db \
+	IMAGE_NAME_FULL=$(IMAGE_NAME_FULL) \
 	USER_ID=$(shell id -u) \
 	GROUP_ID=$(shell id -g) \
-	WORKDIR=/usr/src/app \
+	WORKDIR=$(WORKDIR) \
 	docker-compose -f docker/docker-compose-stack.yaml up
 
 .PHONY: start-dev start-stack
@@ -86,7 +100,7 @@ start-stack:
 #############
 # Test runner
 test:
-	IMAGE_NAME_FULL=$(DOCKER_TAG_NAME_FULL) \
+	IMAGE_NAME_FULL=$(IMAGE_NAME_FULL) \
 	WORKDIR=/usr/src/app \
 	docker-compose -f docker/docker-compose-test.yaml run \
 		--rm collection

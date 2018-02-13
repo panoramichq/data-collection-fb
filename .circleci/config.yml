@@ -9,7 +9,6 @@ jobs:
 
     environment:
       - DOCKER_PUSH_URL: "897117390337.dkr.ecr.us-east-1.amazonaws.com/operam/data-collection-fb"
-      - IMAGE_NAME_FULL: "metrics-collection-system"
 
     steps:
       - setup_remote_docker:
@@ -24,13 +23,17 @@ jobs:
       - run: mkdir -p /tmp/workspace
 
       # build and push Docker image & record data in workspace
+      # Note that this will push 2 images, one tagged with the branch name and the other with the build ID
       - run: |
-          export DOCKER_IMAGE_NAME=${DOCKER_PUSH_URL}:${CIRCLE_BUILD_NUM}-${CIRCLE_SHA1}
-          echo ${DOCKER_IMAGE_NAME} > /tmp/workspace/image_url
-          echo ${CIRCLE_BUILD_NUM}-${CIRCLE_SHA1} > /tmp/workspace/image_name
+          export PUSH_IMAGE_NAME=${DOCKER_PUSH_URL}:${CIRCLE_BUILD_NUM}-$(git rev-parse --short HEAD)
+          echo ${PUSH_IMAGE_NAME} > /tmp/workspace/image_url
+          echo ${CIRCLE_BUILD_NUM}-$(git rev-parse --short HEAD) > /tmp/workspace/image_name
+          docker login -e aws+dockerci@operam.com -u operamci1 -p MZqvqD3zaPKQKoqpRDUDeFWd
           eval $(aws ecr get-login --region us-east-1 --no-include-email)
           eval $(aws ecr get-login --region us-west-2 --no-include-email)
+          make image
           make push_image
+          PUSH_IMAGE_NAME=${DOCKER_PUSH_URL}:$(git rev-parse --abbrev-ref HEAD) make push_image
 
       # Persist the specified paths (workspace/image*) into the workspace for use in downstream job.
       - persist_to_workspace:
@@ -52,7 +55,7 @@ jobs:
       - checkout
 
       - run : |
-          export DOCKER_TAG_NAME_FULL=`cat /tmp/workspace/image_url`
+          export IMAGE_NAME_FULL=`cat /tmp/workspace/image_url`
           eval $(aws ecr get-login --region us-east-1 --no-include-email)
           eval $(aws ecr get-login --region us-west-2 --no-include-email)
           make test
