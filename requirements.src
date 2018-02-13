@@ -1,2 +1,3 @@
 -r requirements.base.txt
 pynamodb==3.2.1
+facebookads==2.11.3

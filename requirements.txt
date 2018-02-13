@@ -8,16 +8,22 @@ amqp==2.2.2
 billiard==3.5.0.3
 botocore==1.8.40          # via pynamodb
 celery[redis]==4.1.0
+certifi==2018.1.18        # via requests
+chardet==3.0.4            # via requests
 docutils==0.14            # via botocore
+facebookads==2.11.3
 gevent==1.2.2
 greenlet==0.4.13
 hiredis==0.2.0
+idna==2.6                 # via requests
 jmespath==0.9.3           # via botocore
 kombu==4.1.0
 pynamodb==3.2.1
 python-dateutil==2.6.1    # via botocore, pynamodb
 pytz==2018.3
 redis==2.10.6
-six==1.11.0               # via pynamodb, python-dateutil
+requests==2.18.4          # via facebookads
+six==1.11.0               # via facebookads, pynamodb, python-dateutil
+urllib3==1.22             # via requests
 uvloop==0.9.1
 vine==1.1.4
