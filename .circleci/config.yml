@@ -28,7 +28,7 @@ jobs:
           export PUSH_IMAGE_NAME=${DOCKER_PUSH_URL}:${CIRCLE_BUILD_NUM}-$(git rev-parse --short HEAD)
           echo ${PUSH_IMAGE_NAME} > /tmp/workspace/image_url
           echo ${CIRCLE_BUILD_NUM}-$(git rev-parse --short HEAD) > /tmp/workspace/image_name
-          docker login -e aws+dockerci@operam.com -u operamci1 -p MZqvqD3zaPKQKoqpRDUDeFWd
+          docker login -u operamci1 -p MZqvqD3zaPKQKoqpRDUDeFWd
           eval $(aws ecr get-login --region us-east-1 --no-include-email)
           eval $(aws ecr get-login --region us-west-2 --no-include-email)
           make image
