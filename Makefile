@@ -23,7 +23,9 @@ COMMIT_ID=$(if $(CIRCLE_SHA1),$(CIRCLE_SHA1),$(shell git rev-parse --short HEAD)
 PYTHONUSERBASE_INNER=/usr/src/libs
 WORKDIR=/usr/src/app
 
-PUSH_IMAGE_NAME?=897117390337.dkr.ecr.us-east-1.amazonaws.com/operam/data-collection-fb:latest
+PUSH_IMAGE_NAME_PREFIX=897117390337.dkr.ecr.us-east-1.amazonaws.com/operam/data-collection-fb
+PUSH_IMAGE_NAME_BRANCH?=$(PUSH_IMAGE_NAME_PREFIX):$(BRANCH_NAME)
+PUSH_IMAGE_NAME_BUILD?=$(PUSH_IMAGE_NAME_PREFIX):$(BUILD_ID)-$(COMMIT_ID)
 
 image:
 	docker build \
@@ -36,9 +38,13 @@ image:
 
 push_image: image
 	docker tag $(IMAGE_NAME_FULL):$(BUILD_ID) \
-		$(PUSH_IMAGE_NAME)
+		$(PUSH_IMAGE_NAME_BRANCH)
+	docker tag $(IMAGE_NAME_FULL):$(BUILD_ID) \
+		$(PUSH_IMAGE_NAME_BUILD)
 	docker push \
-		$(PUSH_IMAGE_NAME)
+		$(PUSH_IMAGE_NAME_BRANCH)
+	docker push \
+		$(PUSH_IMAGE_NAME_BUILD)
 
 .PHONY: image push_image
 
@@ -99,11 +105,13 @@ start-stack:
 
 #############
 # Test runner
-test:
+test: image.dynamo
+	DYNAMO_IMAGE_NAME_FULL=$(DYNAMO_IMAGE_NAME_FULL) \
+	DYNAMODIR=/dynamodb_local_db \
 	IMAGE_NAME_FULL=$(IMAGE_NAME_FULL) \
 	WORKDIR=/usr/src/app \
 	docker-compose -f docker/docker-compose-test.yaml run \
-		--rm collection
+		--rm app
 
 .PHONY: test
 
