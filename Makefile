@@ -20,7 +20,7 @@ BUILD_ID?=latest
 BUILD_ID:=$(if $(CIRCLE_BUILD_NUM),$(CIRCLE_BUILD_NUM),$(BUILD_ID))
 COMMIT_ID=$(if $(CIRCLE_SHA1),$(CIRCLE_SHA1),$(shell git rev-parse --short HEAD))
 
-PYTHONUSERBASE_INNER=/usr/src/libs
+PYTHONUSERBASE_INNER=/usr/src/lib
 WORKDIR=/usr/src/app
 
 PUSH_IMAGE_NAME_PREFIX=897117390337.dkr.ecr.us-east-1.amazonaws.com/operam/data-collection-fb
