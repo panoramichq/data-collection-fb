@@ -52,6 +52,8 @@ jobs:
       - PUSH_IMAGE_NAME_PREFIX: "operam/data-collection-fb"
 
     steps:
+      - setup_remote_docker
+
       - attach_workspace:
           at: /tmp/workspace
 
