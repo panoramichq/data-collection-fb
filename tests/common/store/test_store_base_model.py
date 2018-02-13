@@ -6,11 +6,12 @@ import uuid
 from common.store.base import BaseMeta, BaseModel, attributes
 from tests.base import random
 
+
 class BaseModelTests(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        super(BaseModelTests, cls).setUpClass()
+        super().setUpClass()
 
         # purposefully messing with real attr names to test .to_dict()
         class TestModel(BaseModel):

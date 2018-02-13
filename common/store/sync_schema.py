@@ -4,11 +4,13 @@ from . import (
     sweepentityreporttype
 )
 
+
 modules_with_models = [
     entities,
     entityreporttype,
     sweepentityreporttype
 ]
+
 
 def sync_schema(brute_force=False):
     """
