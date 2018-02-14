@@ -27,6 +27,12 @@ services:
       # in local dev set up we override DynamoDB host value on all Dynamo models
       # http://pynamodb.readthedocs.io/en/latest/local.html
       APP_DYNAMODB_HOST: "http://dynamo:8000"
+      # Need this to have default credentials for AWS botocore so that local testing works
+      # In Prod AWS credentials are injected by some other way.
+      # https://docs.aws.amazon.com/sdk-for-java/v1/developer-guide/credentials.html
+      # ( possibly through AWS_CONTAINER_CREDENTIALS_RELATIVE_URI (and a mounted config file) )
+      AWS_ACCESS_KEY_ID: "useOnlyInDev"
+      AWS_SECRET_ACCESS_KEY: "inProdWeDoItSomeOtherWay"
     volumes:
       # >..< because this file is nested one level deep
       - ..:${WORKDIR}

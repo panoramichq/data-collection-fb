@@ -55,7 +55,3 @@ ARG COMMIT_ID=none
 # and applied to config.build.BUILD_ID config.build.COMMIT_ID attrs.
 ENV APP_BUILD_BUILD_ID=${BUILD_ID}
 ENV APP_BUILD_COMMIT_ID=${COMMIT_ID}
-
-# Need this to have default credentials for AWS boto so that local testing works
-# normally use single print, but it's not available in python:slim
-ENV AWS_ACCESS_KEY_ID=asdf AWS_SECRET_ACCESS_KEY=qwer
