@@ -1,13 +1,12 @@
-import sys
+# must be first, as it does event loop patching and other "first" things
+from tests.base.testcase import TestCase
+
 import os
 
-from unittest import TestCase
 from unittest.mock import patch
 from textwrap import dedent
 
 from tests.base.fakemodule import FakeModule
-
-from common.updatefromenv import update_from_env
 
 
 class TestingUpdateFromEnv(TestCase):

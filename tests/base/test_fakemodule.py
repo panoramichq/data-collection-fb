@@ -1,6 +1,7 @@
-import sys
+# must be first, as it does event loop patching and other "first" things
+from tests.base.testcase import TestCase
 
-from unittest import TestCase
+import sys
 
 from .fakemodule import FakeModule
 
