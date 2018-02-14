@@ -3,7 +3,7 @@ from config import dynamodb as dynamodb_config
 from .base import BaseMeta, BaseModel, attributes
 
 
-class FacebookSweepEntityReportType(BaseModel):
+class FacebookSweepEntityReport(BaseModel):
     """
     Store granular results of each particular sweep's job here
     """
@@ -47,7 +47,7 @@ def sync_schema(brute_force=False):
     from pynamodb.exceptions import TableError, TableDoesNotExist
 
     tables = [
-        FacebookSweepEntityReportType
+        FacebookSweepEntityReport
     ]
 
     for table in tables:
