@@ -34,6 +34,7 @@ class FacebookSweepEntityReport(BaseModel):
     entity_id = attributes.UnicodeAttribute(attr_name='eid')
     entity_type = attributes.UnicodeAttribute(null=True, attr_name='et')
     stage_id = attributes.NumberAttribute(null=True, attr_name='stid')
+    failure_bucket = attributes.NumberAttribute(null=True, attr_name='fb')
     failure_error = attributes.UnicodeAttribute(null=True, attr_name='error')
 
 
