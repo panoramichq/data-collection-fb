@@ -12,3 +12,4 @@ __pycache__
 
 # Local dynamo data files
 dynamodata/*.db
+s3data/*

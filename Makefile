@@ -40,7 +40,7 @@ image: image.base
 
 #############
 # Dynamodb local management
-DYNAMO_IMAGE_NAME:="dynamodb"
+DYNAMO_IMAGE_NAME:=dynamodb
 DYNAMO_IMAGE_NAME_FULL:=$(VENDOR_NAME)/$(DYNAMO_IMAGE_NAME)
 
 # Build DynamoDB image
@@ -52,6 +52,18 @@ image.dynamo:
 		-f docker/Dockerfile.dynamodb .
 
 .PHONY: image.dynamo
+#############
+# Fake s3 local management
+FAKE_S3_IMAGE_NAME:=fakes3
+FAKE_S3_IMAGE_NAME_FULL:=${VENDOR_NAME}/${FAKE_S3_IMAGE_NAME}
+
+# Build Fake S3 image
+image.fakes3:
+	docker build \
+		--no-cache \
+		-t ${FAKE_S3_IMAGE_NAME_FULL} \
+		--build-arg FAKES3_VERSION=1.2.1 \
+		-f docker/Dockerfile.fakes3 .
 
 #############
 # Dev Helpers
@@ -75,6 +87,8 @@ pythonuserbase: rm-container
 start-dev:
 	DYNAMO_IMAGE_NAME_FULL=$(DYNAMO_IMAGE_NAME_FULL) \
 	DYNAMODIR=/dynamodb_local_db \
+	FAKE_S3_IMAGE_NAME_FULL=${FAKE_S3_IMAGE_NAME_FULL} \
+	FAKES3DIR=/s3_data \
 	IMAGE_NAME_FULL=$(IMAGE_NAME_FULL) \
 	USER_ID=$(shell id -u) \
 	GROUP_ID=$(shell id -g) \
@@ -85,6 +99,8 @@ start-dev:
 start-stack:
 	DYNAMO_IMAGE_NAME_FULL=$(DYNAMO_IMAGE_NAME_FULL) \
 	DYNAMODIR=/dynamodb_local_db \
+	FAKE_S3_IMAGE_NAME_FULL=${FAKE_S3_IMAGE_NAME_FULL} \
+	FAKES3DIR=/s3_data \
 	IMAGE_NAME_FULL=$(IMAGE_NAME_FULL) \
 	USER_ID=$(shell id -u) \
 	GROUP_ID=$(shell id -g) \
