@@ -20,3 +20,8 @@ tests
 # data between restarts of the stack / dev environment. We do not want to pack
 # this into our images
 dynamodata
+
+# The s3 directory is sticking around so that you keep local s3 data between
+# restarts of the stack / dev environment. We do not want to pack this into our
+# images
+s3data
