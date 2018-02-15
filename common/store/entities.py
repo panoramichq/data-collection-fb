@@ -1,34 +1,7 @@
+from common.enums.entity import Entity
 from config import dynamodb as dynamodb_config
 
-from common.enums.entity import Entity
-
 from .base import BaseMeta, BaseModel, attributes
-
-
-class FacebookAdAccountScope(BaseModel):
-    """
-    Stores metadata specific to "Scope" that acts as grouping element
-    for a collection of Ad Accounts
-
-    This is approximately mapped to a Facebook User (token) or some
-    cohesive source of Ad Accounts.
-
-    Initially used for tracking / managing the per-sweep sync of Ad Account IDs from
-    Console into our internal store for later iteration over that collection.
-    """
-    Meta = BaseMeta(dynamodb_config.FB_AD_ACCOUNT_SCOPE_TABLE)
-
-    # scope is an ephemeral scoping element
-    # Imagine "operam business manager system user" being one of the scope's values.
-    # This is here mostly just to simplify iterating
-    # through AAs per given known source.
-    # (even if originally we will have only one scope in entire system)
-    # At first, scope will be pegged one-to-one to
-    # one token to be used for all AAs,
-    # (Later this relationship may need to be inverted to
-    # allow multiple tokens per AA)
-    scope = attributes.UnicodeAttribute(hash_key=True, attr_name='scope')
-
 
 
 class FacebookAdAccountEntity(BaseModel):
@@ -56,7 +29,7 @@ class FacebookAdAccountEntity(BaseModel):
 
     # copied indicator of activity from Console DB per each sync
     # (alternative to deletion. To be discussed later if deletion is better)
-    active = attributes.BooleanAttribute(default=False)
+    is_active = attributes.BooleanAttribute(default=False)
     # utilized by logic that prunes out Ad Accounts
     # that are switched to "inactive" on Console
     # Expectation is that after a long-running update job
@@ -144,6 +117,7 @@ def sync_schema(brute_force=False):
     from pynamodb.exceptions import TableError, TableDoesNotExist
 
     tables = [
+        FacebookAdAccountEntity,
         FacebookCampaignEntity,
         FacebookAdsetEntity,
         FacebookAdEntity
