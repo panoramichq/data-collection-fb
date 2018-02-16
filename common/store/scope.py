@@ -1,4 +1,5 @@
 from common.enums.entity import Entity
+from common.memoize import memoized_property
 from config import dynamodb as dynamodb_config
 
 from .base import BaseMeta, BaseModel, attributes
@@ -56,7 +57,9 @@ class FacebookAdAccountScope(BaseModel):
     scope = attributes.UnicodeAttribute(hash_key=True, attr_name='scope')
     token_ids = attributes.UnicodeSetAttribute(default=set, attr_name='tids')
 
+    # Memoized in instance to avoid hitting DB all the time we are called.
     @property
+    @memoized_property
     def tokens(self):
         """
         Returns a set of actual FB tokens that token_ids attribute point to by ids
