@@ -41,7 +41,7 @@ services:
       # ( possibly through AWS_CONTAINER_CREDENTIALS_RELATIVE_URI (and a mounted config file) )
       AWS_ACCESS_KEY_ID: "useOnlyInDev"
       AWS_SECRET_ACCESS_KEY: "inProdWeDoItSomeOtherWay"
-      APP_AWS_S3_ENDPOINT: "fakes3:4444"
+      APP_AWS_S3_ENDPOINT: "http://fakes3:4444"
     volumes:
       # >..< because this file is nested one level deep
       - ..:${WORKDIR}
