@@ -1,19 +1,21 @@
 import boto3
 import hashlib
 import io
+import json
+import pytz
 
-from config import aws, build
+import config.aws
+import config.build
 
 # Ensure we are connected to the right endpoint. This is necessary because of
 # the faked S3 service, which we contact based on a specific endpoint_url
-if aws.S3_ENDPOINT is not None:
-    print("configuring the endpoint")
-    _s3 = boto3.resource('s3', endpoint_url=aws.S3_ENDPOINT)
+if config.aws.S3_ENDPOINT is not None:
+    _s3 = boto3.resource('s3', endpoint_url=config.aws.S3_ENDPOINT)
 else:
     _s3 = boto3.resource('s3')
 
 
-_bucket = _s3.Bucket(aws.S3_BUCKET_NAME)
+_bucket = _s3.Bucket(config.aws.S3_BUCKET_NAME)
 
 
 class ColdStorageUploader:
@@ -37,7 +39,10 @@ class ColdStorageUploader:
 
     PLATFORM = 'facebook'
 
-    def __init__(self, ad_account_id, report_type, report_time, report_id, request_metadata):
+    def __init__(
+        self, ad_account_id, report_type, report_time, report_id,
+        request_metadata
+    ):
         """
         Initialize the storage with arguments required to store it
 
@@ -47,20 +52,28 @@ class ColdStorageUploader:
         :param string report_id:
         :param dict request_metadata:
         """
+        # Sanity check report time
+        if report_time.tzinfo is None or \
+                report_time.tzinfo.utcoffset(report_time) is None:
+            raise ValueError('Supplied report time is not timezone aware')
+
         self._ad_account_id = ad_account_id
         self._report_type = report_type
-        self._report_time = report_time
+
+        # Convert this to UTC and remove microseconds
+        self._report_time = report_time.replace(microsecond=0).\
+            astimezone(pytz.utc)
         self._report_id = report_id
 
         # Add build id to metadata
         self._metadata = {
             **request_metadata,
-            'build_id': build.BUILD_ID
+            'build_id': config.build.BUILD_ID
         }
 
         # We're starting with opening brackets for a JSON list. Not nice really,
         # but does the trick
-        self._buffer = io.BytesIO()
+        self._buffer = io.StringIO()
 
     def _get_storage_key(self):
         """
@@ -69,16 +82,25 @@ class ColdStorageUploader:
         :return string: The full S3 key to use
         """
         prefix = hashlib.md5(self._ad_account_id.encode()).hexdigest()[:6]
+        zulu_time = self._report_time.strftime('%Y-%m-%dT%H:%M:%SZ')
 
         return f'facebook/{prefix}-{self._ad_account_id}/{self._report_type}/' \
-               f'{self._report_time.year}/{self._report_time.month}/' \
-               f'{self._report_time.day}/{self._report_time.isoformat()}-' \
+               f'{self._report_time.strftime("%Y")}/' \
+               f'{self._report_time.strftime("%m")}/'\
+               f'{self._report_time.strftime("%d")}/{zulu_time}-' \
                f'{self._report_id}.json'
 
-    def write_items(self, data):
+    def store(self, item):
         """
-        Adds the data to the current buffer. This method takes a list and just
-        dumbly dumps it to JSON and the buffer
+        Adds the item to the current buffer (by JSON dumping it) and Uploads the
+        buffer to S3 under a constructed key
+
+        Note that we take dictionary as input, as opposed to some object. The
+        reason behind that is to be more or less oblivious to what it is we are
+        actually storing and not have internal knowledge about the data types.
+
+        :param dict item: A dictionary with data
+        :return string: The key used to store the data
         """
         # TODO: This is obviously problematic, as we create 2x the memory
         # requirement. The reason why this is here is because it is as of now
@@ -86,21 +108,15 @@ class ColdStorageUploader:
         # they will be received from the collection task.
 
         # Once this becomes settled, the method will be updated accordingly
-        pass
+        key = self._get_storage_key()
 
-    def store(self):
-        """
-        Uploads the current buffer to S3 under a constructed key
+        try:
+            _bucket.put_object(
+                Key=key,
+                Body=json.dumps(item, ensure_ascii=False).encode(),
+                Metadata=self._metadata
+            )
+        finally:
+            self._buffer.close()
 
-        Close out the buffer with closing list bracket, seek to the beginning
-        and throw it at S3 upload.
-        """
-
-        self._buffer.write(b']')
-        self._buffer.seek(0)
-
-        _bucket.put_object(
-            Key=self._get_storage_key(),
-            Body=self._buffer,
-            Metadata=self._metadata
-        )
+        return key
