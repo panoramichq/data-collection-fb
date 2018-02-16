@@ -12,11 +12,17 @@ services:
       file: docker-compose-base.yaml
       service: dynamo
 
+  fakes3:
+    extends:
+      file: docker-compose-base.yaml
+      service: fakes3
+
   app_longrunning:
     extends:
       file: docker-compose-base.yaml
       service: app
     links:
+      - fakes3
       - redis
       - dynamo
     command: python app.py worker longrunning
@@ -26,6 +32,7 @@ services:
       file: docker-compose-base.yaml
       service: app
     links:
+      - fakes3
       - redis
       - dynamo
     command: python app.py worker default

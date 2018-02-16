@@ -12,13 +12,21 @@ services:
 
   dynamo:
     image: ${DYNAMO_IMAGE_NAME_FULL}
-#    ports:
-#      - 8000:8000
+    # ports:
+    #  - 8000:8000
     volumes:
       # >..< because this file is nested one level deep. We keep the directory
       # around so that data is available between restarts
       - ../dynamodata:${DYNAMODIR}
 
+  fakes3:
+    image: ${FAKE_S3_IMAGE_NAME_FULL}
+    # ports:
+    #  - 4444:4444
+    volumes:
+      # >..< because this file is nested one level deep. We keep the directory
+      # around so that data is available between restarts
+      - ../s3data:${FAKES3DIR}
   app:
     image: ${IMAGE_NAME_FULL}
     environment:
@@ -33,6 +41,7 @@ services:
       # ( possibly through AWS_CONTAINER_CREDENTIALS_RELATIVE_URI (and a mounted config file) )
       AWS_ACCESS_KEY_ID: "useOnlyInDev"
       AWS_SECRET_ACCESS_KEY: "inProdWeDoItSomeOtherWay"
+      APP_AWS_S3_ENDPOINT: "http://fakes3:4444"
     volumes:
       # >..< because this file is nested one level deep
       - ..:${WORKDIR}
