@@ -2,6 +2,8 @@ from typing import Optional
 
 from pynamodb.models import Model
 from pynamodb import attributes
+from pynamodb.expressions.update import Action as PynamoDBAction
+
 
 from config import dynamodb as dynamodb_config
 
@@ -22,6 +24,21 @@ class BaseMeta:
     def __init__(self, table_name, **kwargs):
         self.__dict__.update(kwargs)
         self.table_name = table_name
+
+
+def _convert_to_pynamodb_expression(cls, value, attr_name):
+    if isinstance(value, PynamoDBAction):
+        # it's already provided to us as compiled Operand
+        # https://pynamodb.readthedocs.io/en/latest/updates.html#update-expressions
+        return value
+
+    if value is None:
+        # instead of writing Null to DB, removing the value
+        # This fixes a number of attribute types (like UTCDateTime)
+        # that don't process well an actual value of None coming back from DB
+        return getattr(cls, attr_name).remove()
+
+    return getattr(cls, attr_name).set(value)
 
 
 class BaseModel(Model):
@@ -50,10 +67,12 @@ class BaseModel(Model):
         # (in prod, we will rarely use it, but it's useful in testing)
 
         model = cls(*primary_keys)
+
         actions = [
-            getattr(cls, attr_name).set(value)
+            _convert_to_pynamodb_expression(cls, value, attr_name)
             for attr_name, value in data.items()
         ]
+
         model.update(actions=actions)
         return model
 
