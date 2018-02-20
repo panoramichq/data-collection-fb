@@ -1,4 +1,4 @@
-# must be first, as it does event loop patching and other "first" things
+# mustfrom t be first, as it does event loop patching and other "first" things
 from tests.base.testcase import TestCase
 from datetime import datetime
 import uuid
@@ -12,7 +12,7 @@ import pytz
 import dateutil.parser
 
 from facebookads.adobjects.campaign import Campaign
-from oozer.common.cold_storage import ColdStorageUploader
+from oozer.common import cold_storage, job_scope
 from common import tztools
 
 
@@ -52,7 +52,8 @@ class TestUploadToS3(TestCase):
         known_object_contents = b'{"id": "123123123", "account_id": "98989898"}'
 
         test_data = self._fake_data_factory()
-        uploader = ColdStorageUploader(
+
+        ctx = job_scope.JobScope(
             ad_account_id=test_data[Campaign.Field.account_id],
             report_type='fb_entities_adaccount_campaigns',
             report_time=datetime.now(pytz.utc),
@@ -60,7 +61,7 @@ class TestUploadToS3(TestCase):
             request_metadata={}
         )
 
-        storage_key = uploader.store(dict(test_data))
+        storage_key = cold_storage.store(dict(test_data), ctx)
         _, fileobj_under_test = self._get_s3_object(storage_key)
 
         # Assert the contents
@@ -71,17 +72,17 @@ class TestUploadToS3(TestCase):
         Check we have stored the expected metadata
         """
         test_data = self._fake_data_factory()
-        uploader = ColdStorageUploader(
+        ctx = job_scope.JobScope(
             ad_account_id=test_data[Campaign.Field.account_id],
             report_type='fb_entities_adaccount_campaigns',
             report_time=datetime.now(pytz.utc),
             report_id=uuid.uuid4().hex,
-            request_metadata={
+            metadata={
                 'some': 'metadata'
             }
         )
 
-        storage_key = uploader.store(dict(test_data))
+        storage_key = cold_storage.store(dict(test_data), ctx)
         s3_obj, _ = self._get_s3_object(storage_key)
 
         assert s3_obj.metadata == {
@@ -103,9 +104,8 @@ class TestUploadToS3(TestCase):
             'request_metadata': {}
         }
 
-        uploader = ColdStorageUploader(**params)
-
-        storage_key = uploader.store(dict(test_data))
+        ctx = job_scope.JobScope(**params)
+        storage_key = cold_storage.store(dict(test_data), ctx)
 
         account_prefix = hashlib.md5(params['ad_account_id'].encode()) \
             .hexdigest()[:6]
@@ -125,8 +125,6 @@ class TestUploadToS3(TestCase):
         Checks that timezone gets converted correctly and that datetime without
         tz is not accepted
         """
-        test_data = self._fake_data_factory()
-
         params = {
             'ad_account_id': '1',
             'report_type': 'rt',
@@ -135,16 +133,11 @@ class TestUploadToS3(TestCase):
             'request_metadata': {}
         }
 
-        # Should raise because datetime is not TZ aware
-        with pytest.raises(ValueError):
-            params['report_time'] = datetime.now()
-            ColdStorageUploader(**params)
-
         # Create a fixed time in some weird TZ
         params['report_time'] = dateutil.parser.parse(
             "2010-01-01T00:00:00-08:00"
         )
-        uploader = ColdStorageUploader(**params)
+        ctx = job_scope.JobScope(**params)
 
         account_prefix = hashlib.md5(params['ad_account_id'].encode()) \
             .hexdigest()[:6]
@@ -152,4 +145,4 @@ class TestUploadToS3(TestCase):
         expected_key = f'facebook/{account_prefix}-1' \
                        f'/rt/2010/01/01/{zulu_time}-1.json'
 
-        assert uploader._get_storage_key() == expected_key
+        assert cold_storage._context_as_storage_key(ctx) == expected_key

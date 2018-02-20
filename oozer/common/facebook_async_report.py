@@ -5,7 +5,7 @@ class FacebookReportDefinition:
     """
 
     """
-    # TODO: Decide whether we need and want the notion of what fields constitue
+    # TODO: Decide whether we need and want the notion of what fields constitute
     # a report
 
     # level = None

@@ -1,13 +1,16 @@
 import random
-import functools
 
+from facebookads.api import FacebookRequestError
+
+from oozer.common import cold_storage
+from oozer.common.report_job_status_task import report_job_status
 from oozer.common.facebook_collector import FacebookCollector
 from oozer.common.enum import (
     ENTITY_CAMPAIGN,
     ENTITY_ADSET,
     ENTITY_AD,
-    ENTITY_NAMES
 )
+from oozer.entities.entity_feedback_task import feedback_entity
 
 
 class FacebookEntityCollector(FacebookCollector):
@@ -63,59 +66,59 @@ class FacebookEntityCollector(FacebookCollector):
         return False
 
 
-STAGE_CONTEXT = {}
+# Use this to communicate to give status reporter enough information to
+# figure out what the stage id means in terms of failures
+JOB_STATUS_REPORT_CONTEXT = {}
 
 
-def collect_entities_for_adaccount(
-    token, adaccount_id, entity_type, job_context, context,
-    report_status, feedback_entity,
-):
+def collect_entities_for_adaccount(entity_type, job_scope, context):
     """
     Collects an arbitrary entity for an ad account
 
-    :param token:
-    :param adaccount_id:
-    :param entity_type:
-    :param job_context:
+    :param entity_type: The entity to collect for
+    :param dict job_scope: The dict representation of JobScope
     :param context:
-    :param callable report_status:
-    :param callable feedback_entity:
-    :return:
     """
-    # Setup the job reporting function, so that we can report on individual
-    # entities and do not need to repeat the signature
 
-    report_status = functools.partial(
-        report_status, ENTITY_NAMES[entity_type],
-    )
+    # Report start of work
+    report_job_status.delay(10, job_scope)
 
-    with FacebookEntityCollector(token) as collector:
-        for entity in \
-                collector.get_entities_for_adaccount(adaccount_id, entity_type):
+    try:
+        with FacebookEntityCollector(job_scope['access_token']) as collector:
+            for entity in \
+                    collector.get_entities_for_adaccount(
+                        job_scope['adaccount_id'], entity_type
+                    ):
 
-            # TODO: STATUS: Figure out staging (we got data)
-            report_status(entity['id'], 10, STAGE_CONTEXT)
+                # Externalize these for clarity
+                current_hash = context.get(entity['id'])
+                entity_hash = FacebookEntityCollector.checksum_entity(entity)
 
-            # Externalize these for clarity
-            current_hash = context.get(entity['id'])
-            entity_hash = FacebookEntityCollector.checksum_entity(entity)
+                # Check whether we actually need to put this into the ETL
+                # pipeline it is possible that a given entity has not changed
+                # since last time we checked and therefore it is not necessary
+                # to deal with right now
+                if FacebookEntityCollector.checksum_valid(
+                    current_hash, entity_hash
+                ):
+                    continue
 
-            # Check whether we actually need to put this into the ETL pipeline
-            # It is possible that a given entity has not changed since last time
-            # we checked and therefore it is not necessary to deal with right
-            # now
-            if FacebookEntityCollector.checksum_valid(current_hash, entity_hash):
-                # TODO: STATUS: Figure out staging (we are done, since we are skipping)
-                report_status(entity['id'], 1000, STAGE_CONTEXT)
-                continue
+                # Store the individual datum, use job context for the cold
+                # storage thing to divine whatever it needs from the job context
+                cold_storage.store(dict(entity), job_scope)
 
-            # TODO: STATUS: Figure out staging (we are uploading data)
-            report_status(entity['id'], 100, STAGE_CONTEXT)
+                # Signal to the system the new entity
+                feedback_entity.delay(entity, entity_hash)
 
-            # TODO: STORAGE: push data to cold store
-
-            # TODO: STATUS: Figure out staging (data uploaded)
-            report_status(entity['id'], 110, STAGE_CONTEXT)
-
-            # Signal to the system the new entity
-            feedback_entity(entity, entity_hash)
+                # Report some start of work
+                report_job_status.delay(1000, job_scope)
+    except FacebookRequestError as e:
+        # Inspect the exception for FB exceptions, so we can distill the proper
+        # failure bucket
+        report_job_status.delay(-500, job_scope, JOB_STATUS_REPORT_CONTEXT)
+        raise
+    except Exception:
+        # This is a generic failure, which does not help us at all, so, we just
+        # report it and bail
+        report_job_status.delay(-1000, job_scope, JOB_STATUS_REPORT_CONTEXT)
+        raise
