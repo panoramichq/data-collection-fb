@@ -112,6 +112,18 @@ class FacebookAdEntity(FacebookEntityBaseMixin, BaseModel):
     entity_type = Entity.Ad
 
 
+# Used to map from entity_type str to Model for persistence-style tasks
+ENTITY_TYPE_MODEL_MAP = {
+    model.entity_type: model
+    for model in [
+        FacebookAdAccountEntity,
+        FacebookCampaignEntity,
+        FacebookAdsetEntity,
+        FacebookAdEntity
+    ]
+}
+
+
 def sync_schema(brute_force=False):
     """
     In order to push fidelity and maintenance of table "migrations"

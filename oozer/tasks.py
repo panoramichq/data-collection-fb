@@ -1,8 +1,3 @@
-from common.celeryapp import get_celery_app
+from .echo_task import echo
+from .entity_tasks.entity_feedback_task import entity_feedback_task
 
-app = get_celery_app()
-
-
-@app.task
-def echo(message='This is Default queue'):
-    print(message)
