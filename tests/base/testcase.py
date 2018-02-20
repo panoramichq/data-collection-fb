@@ -1,7 +1,7 @@
 from common.patch import patch_event_loop
 patch_event_loop()
 
-from unittest import TestCase as _TestCase
+from unittest import TestCase as _TestCase, skip
 
 
 class TestCase(_TestCase):
@@ -32,3 +32,12 @@ class TestCase(_TestCase):
     @classmethod
     def tearDownClass(cls):
         "Hook method for deconstructing the class fixture after running all tests in the class."
+
+
+def integration(fn):
+    from config.facebook import TOKEN
+    if TOKEN and TOKEN != 'bogus token':
+        # it's overridden only in dev. In all other cases should be that bogus value
+        return fn
+    else:
+        return skip(fn)
