@@ -18,12 +18,20 @@ def do_it_all():
     # the thing into DB to act as seed scope for iteration over AdAccounts
     # per given token (hardcoded / passed through configs)
 
-
     from common.store.scope import FacebookAdAccountScope, FacebookToken, DEFAULT_SCOPE
+    from common.store.entities import FacebookAdAccountEntity
+    from config.facebook import TOKEN, AD_ACCOUNT, AD_ACCOUNT_TIME_ZONE
     token_id = DEFAULT_SCOPE
-    FacebookToken.upsert(token_id, token='bogus_token')
+    FacebookToken.upsert(token_id, token=TOKEN)
     FacebookAdAccountScope.upsert(DEFAULT_SCOPE, token_ids={token_id})
 
+    if AD_ACCOUNT:
+        FacebookAdAccountEntity.upsert(
+            DEFAULT_SCOPE,
+            AD_ACCOUNT,
+            is_active=True,
+            timezone=AD_ACCOUNT_TIME_ZONE
+        )
 
 if __name__ == '__main__':
     do_it_all()

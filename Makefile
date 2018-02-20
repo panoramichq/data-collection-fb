@@ -4,6 +4,7 @@ default:
 clean:
 	find . -name \*~ -type f -delete
 	find . -name \*.pyc -type f -delete
+	find dynamodata -name \*.db -type f -delete
 
 .PHONY: default clean
 
