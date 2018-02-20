@@ -8,7 +8,7 @@ class JobScope:
 
     platform = 'facebook'
 
-    access_tokens = None
+    tokens = None
 
     ad_account_id = None
 
@@ -25,8 +25,8 @@ class JobScope:
         self.metadata = kwargs.get('metadata', {})
 
     @property
-    def access_token(self):
-        return self.access_tokens[0]
+    def token(self):
+        return self.tokens[0]
 
     def to_dict(self):
         """

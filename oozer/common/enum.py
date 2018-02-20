@@ -8,14 +8,19 @@ from facebookads.adobjects import (
 from common.enums.entity import Entity
 
 
-ENTITY_ADACCOUNT = adaccount.AdAccount
-ENTITY_CAMPAIGN = campaign.Campaign
-ENTITY_ADSET = adset.AdSet
-ENTITY_AD = ad.Ad
+FB_ADACCOUNT_MODEL = adaccount.AdAccount
+FB_CAMPAIGN_MODEL = campaign.Campaign
+FB_ADSET_MODEL = adset.AdSet
+FB_AD_MODEL = ad.Ad
 
-ENTITY_NAMES = {
-    ENTITY_ADACCOUNT: Entity.AdAccount,
-    ENTITY_CAMPAIGN: Entity.Campaign,
-    ENTITY_ADSET: Entity.AdSet,
-    ENTITY_AD: Entity.Ad
+FB_MODEL_ENUM_VALUE_MAP = {
+    FB_ADACCOUNT_MODEL: Entity.AdAccount,
+    FB_CAMPAIGN_MODEL: Entity.Campaign,
+    FB_ADSET_MODEL: Entity.AdSet,
+    FB_AD_MODEL: Entity.Ad
+}
+
+ENUM_VALUE_FB_MODEL_MAP = {
+    value: Model
+    for Model, value in FB_MODEL_ENUM_VALUE_MAP.items()
 }
