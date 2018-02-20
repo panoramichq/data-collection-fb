@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pynamodb.models import Model
 from pynamodb import attributes
 
@@ -55,19 +57,40 @@ class BaseModel(Model):
         model.update(actions=actions)
         return model
 
+    # allows to_dict method to learn about additional attributes / fields
+    # on the model that we consider canonical, but these are not actually
+    # stored in the database. This typically include derived data exposed
+    # on the model as getter / property or static attributes like type enums
+    # Contents of this set add to the self._attributes.keys() set of
+    # attribute names specific to the model.
+    _additional_fields = None  # type: Optional[set]
+
+    # If set, this becomes the full default list of attributes
+    # we export from the model in .to_dict call.
+    # If set, this overrides (makes useless) value of _additional_fields
+    _fields = None  # type: Optional[set]
+
     def to_dict(self, fields=None, skip_null=False):
         """
         Converts model into underlying data
-        (but in human-readable attribute names, not the
+        (but in human-readable attribute names, not the native / short DB-side names)
 
-        :param list fields: list of attributes to extract. If None, all attributes.
+        If fields attribute
+
+        :param fields: (Optional) list of attributes to extract.
+            If None, default attributes are extracted.
+        :type fields: list or set
         :rtype: dict
         """
+        if not fields:
+            fields = self._fields or \
+                set(self._attributes.keys()) | (self._additional_fields or set())
+
+        # TODO: this is inefficient (getattr twice) when skip_null=True. Rethink
         return {
-            attr_name: getattr(self, attr_name)
-            for attr_name in self._attributes.keys()
-            # return if fields in not set, or if set, attr name must be in fields list
-            if (not fields or attr_name in fields)
+            field: getattr(self, field)
+            for field in fields
+            if not skip_null or getattr(self, field) is not None
         }
 
     @classmethod

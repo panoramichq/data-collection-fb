@@ -1,6 +1,49 @@
+from common.enums.entity import Entity
 from config import dynamodb as dynamodb_config
 
 from .base import BaseMeta, BaseModel, attributes
+
+
+class FacebookAdAccountEntity(BaseModel):
+    """
+    Represents a single facebook ad account entity
+    """
+    Meta = BaseMeta(dynamodb_config.FB_AD_ACCOUNT_ENTITY_TABLE)
+
+    _additional_fields = {
+        'entity_type'
+    }
+
+    # scope is an ephemeral scoping element
+    # Imagine "operam business manager system user" being one of the scope's values.
+    # This is here mostly just to simplify iterating
+    # through AAs per given known source.
+    # (even if originally we will have only one scope in entire system)
+    # At first, scope will be pegged one-to-one to
+    # one token to be used for all AAs,
+    # (Later this relationship may need to be inverted to
+    # allow multiple tokens per AA)
+    scope = attributes.UnicodeAttribute(hash_key=True, attr_name='scope')
+
+    ad_account_id = attributes.UnicodeAttribute(range_key=True, attr_name='aaid')
+
+    # copied indicator of activity from Console DB per each sync
+    # (alternative to deletion. To be discussed later if deletion is better)
+    is_active = attributes.BooleanAttribute(default=False, attr_name='a')
+    # utilized by logic that prunes out Ad Accounts
+    # that are switched to "inactive" on Console
+    # Expectation is that after a long-running update job
+    # there is a task at the end that goes back and marks
+    # all AA records with non-last-sweep_id as "inactive"
+    # See https://operam.atlassian.net/browse/PROD-1825 for context
+    updated_by_sweep_id = attributes.UnicodeAttribute(null=True, attr_name='u')
+
+    # Each AdAccount on FB side can be set to a particular timezone
+    # A lot of reporting on FB is pegged to a "day" that is interpreted
+    # in that AdAccount's timezone (not UTC).
+    timezone = attributes.UnicodeAttribute(attr_name='tz')
+
+    entity_type = Entity.AdAccount
 
 
 class FacebookEntityBaseMixin:
@@ -29,6 +72,11 @@ class FacebookEntityBaseMixin:
     hash = attributes.UnicodeAttribute(null=True, attr_name='h')  # Could be binary
     hash_fields = attributes.UnicodeAttribute(null=True, attr_name='hf')  # Could be binary
 
+    entity_type = None  # will be overridden in subclass
+    _additional_fields = {
+        'entity_type'
+    }
+
 
 class EntityBaseMeta(BaseMeta):
     # Entity tables will be written to massively in parallel
@@ -43,6 +91,8 @@ class FacebookCampaignEntity(FacebookEntityBaseMixin, BaseModel):
     """
     Meta = EntityBaseMeta(dynamodb_config.FB_CAMPAIGN_ENTITY_TABLE)
 
+    entity_type = Entity.Campaign
+
 
 class FacebookAdsetEntity(FacebookEntityBaseMixin, BaseModel):
     """
@@ -50,12 +100,16 @@ class FacebookAdsetEntity(FacebookEntityBaseMixin, BaseModel):
     """
     Meta = EntityBaseMeta(dynamodb_config.FB_ADSET_ENTITY_TABLE)
 
+    entity_type = Entity.AdSet
+
 
 class FacebookAdEntity(FacebookEntityBaseMixin, BaseModel):
     """
     Represents a single facebook ad entity
     """
     Meta = EntityBaseMeta(dynamodb_config.FB_AD_ENTITY_TABLE)
+
+    entity_type = Entity.Ad
 
 
 def sync_schema(brute_force=False):
@@ -68,6 +122,7 @@ def sync_schema(brute_force=False):
     from pynamodb.exceptions import TableError, TableDoesNotExist
 
     tables = [
+        FacebookAdAccountEntity,
         FacebookCampaignEntity,
         FacebookAdsetEntity,
         FacebookAdEntity

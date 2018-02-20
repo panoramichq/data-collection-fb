@@ -87,3 +87,92 @@ class BaseModelTests(TestCase):
             data='primary data',
             more_data='more data'
         )
+
+
+class BaseModelToDictFieldsTests(TestCase):
+
+    def test_additional_fields(self):
+
+        # purposefully messing with real attr names to test .to_dict()
+        class TestModel(BaseModel):
+
+            _additional_fields = {'record_type'}
+
+            Meta = BaseMeta(random.get_string_id())
+
+            primary_id = attributes.UnicodeAttribute(hash_key=True, attr_name='pid')
+            secondary_id = attributes.UnicodeAttribute(range_key=True, attr_name='sid')
+            data = attributes.UnicodeAttribute(null=True, attr_name='d')
+
+            record_type = 'SUPER_RECORD'
+
+        pid = random.get_string_id()
+        sid = random.get_string_id()
+
+        # ARG!!! for some reason instantiation further below
+        # needs to have the table actually exist. Nuts!
+        # TODO: fix this shit and allow object instantiation NOT require a hit to DB
+        TestModel.create_table()
+        record = TestModel(pid, sid, data='value')
+
+        assert record.to_dict() == dict(
+            primary_id=pid,
+            secondary_id=sid,
+            data='value',
+            record_type='SUPER_RECORD'  # <--- note static attribute
+        )
+
+        assert record.to_dict(fields=['data', 'record_type']) == dict(
+            # primary_id=pid,
+            # secondary_id=sid,
+            data='value',
+            record_type='SUPER_RECORD'  # <--- note static attribute
+        )
+
+        with self.assertRaises(AttributeError) as ex:
+            record.to_dict(fields=['data', 'does_not_exist'])
+
+        error_message = str(ex.exception)
+        assert 'object has no attribute' in error_message
+        assert 'does_not_exist' in error_message
+
+    def test_fixed_fields(self):
+
+        # purposefully messing with real attr names to test .to_dict()
+        class TestModel(BaseModel):
+
+            _fields = {
+                'secondary_id',
+                'record_type'
+            }
+
+            Meta = BaseMeta(random.get_string_id())
+
+            primary_id = attributes.UnicodeAttribute(hash_key=True, attr_name='pid')
+            secondary_id = attributes.UnicodeAttribute(range_key=True, attr_name='sid')
+            data = attributes.UnicodeAttribute(null=True, attr_name='d')
+
+            record_type = 'SUPER_RECORD'
+
+        pid = random.get_string_id()
+        sid = random.get_string_id()
+
+        # ARG!!! for some reason instantiation further below
+        # needs to have the table actually exist. Nuts!
+        # TODO: fix this shit and allow object instantiation NOT require a hit to DB
+        TestModel.create_table()
+        record = TestModel(pid, sid, data='value')
+
+        assert record.to_dict() == dict(
+            # primary_id=pid,
+            secondary_id=sid,
+            # data='value',
+            record_type='SUPER_RECORD'  # <--- note static attribute
+        )
+
+        assert record.to_dict(fields=['data', 'record_type']) == dict(
+            # primary_id=pid,
+            # secondary_id=sid,
+            data='value',
+            record_type='SUPER_RECORD'  # <--- note static attribute
+        )
