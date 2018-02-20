@@ -76,7 +76,7 @@ def collect_entities_for_adaccount(entity_type, job_scope, context):
     Collects an arbitrary entity for an ad account
 
     :param entity_type: The entity to collect for
-    :param dict job_scope: The dict representation of JobScope
+    :param dict job_scope: The dict representation of JobScope (not ideal)
     :param context:
     """
 
@@ -108,10 +108,11 @@ def collect_entities_for_adaccount(entity_type, job_scope, context):
                 cold_storage.store(dict(entity), job_scope)
 
                 # Signal to the system the new entity
-                feedback_entity.delay(entity, entity_hash)
+                feedback_entity.delay(entity_type, dict(entity), entity_hash)
 
                 # Report some start of work
-                report_job_status.delay(1000, job_scope)
+
+        report_job_status.delay(1000, job_scope)
     except FacebookRequestError as e:
         # Inspect the exception for FB exceptions, so we can distill the proper
         # failure bucket
