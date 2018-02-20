@@ -10,7 +10,7 @@ from oozer.common.enum import (
     ENTITY_ADSET,
     ENTITY_AD,
 )
-from oozer.entities.entity_feedback_task import feedback_entity
+from oozer.entities.feedback_entity_task import feedback_entity_task
 
 
 class FacebookEntityCollector(FacebookCollector):
@@ -108,7 +108,7 @@ def collect_entities_for_adaccount(entity_type, job_scope, context):
                 cold_storage.store(dict(entity), job_scope)
 
                 # Signal to the system the new entity
-                feedback_entity.delay(entity_type, dict(entity), entity_hash)
+                feedback_entity_task.delay(entity_type, dict(entity), entity_hash)
 
                 # Report some start of work
 

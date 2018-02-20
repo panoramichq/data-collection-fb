@@ -4,7 +4,7 @@ app = get_celery_app()
 
 
 @app.task
-def feedback_entity(entity_data, entity_type, entity_hash_pair):
+def feedback_entity_task(entity_data, entity_type, entity_hash_pair):
     """
     This task is to feedback information about entity collected by updating
     data store.
@@ -15,5 +15,5 @@ def feedback_entity(entity_data, entity_type, entity_hash_pair):
         itself and fields hashes that we can use
 
     """
-    from .entity_feedback import entity_feedback
-    entity_feedback(entity_data, entity_type, entity_hash_pair)
+    from .feedback_entity import feedback_entity
+    feedback_entity(entity_data, entity_type, entity_hash_pair)
