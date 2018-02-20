@@ -16,6 +16,10 @@ from oozer.common import cold_storage, job_scope
 from common import tztools
 
 
+from unittest import skip
+
+
+@skip
 class TestUploadToS3(TestCase):
 
     _s3 = boto3.resource('s3', endpoint_url=config.aws.S3_ENDPOINT)
