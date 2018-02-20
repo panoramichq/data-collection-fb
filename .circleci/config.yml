@@ -1,0 +1,110 @@
+# CircleCI Data Collection config
+
+version: 2
+
+jobs:
+  build_image:
+    docker:
+      - image: circleci/python:3.6-jessie-node
+
+    environment:
+      - PUSH_IMAGE_NAME_PREFIX: "897117390337.dkr.ecr.us-east-1.amazonaws.com/operam/data-collection-fb"
+
+    steps:
+      - setup_remote_docker:
+          docker_layer_caching: true
+
+      # Install AWS CLI
+      - run: sudo pip install awscli --upgrade
+
+      - checkout
+
+      # Setup workspace directory
+      - run: mkdir -p /tmp/workspace
+
+      # build and push Docker image & record data in workspace
+      # Note that this will push 2 images, one tagged with the branch name and the other with the build ID
+      - run: |
+          export PUSH_IMAGE_NAME_BUILD=${PUSH_IMAGE_NAME_PREFIX}:${CIRCLE_BUILD_NUM}-$(git rev-parse --short HEAD)
+          echo ${PUSH_IMAGE_NAME_BUILD} > /tmp/workspace/image_url
+          echo ${CIRCLE_BUILD_NUM}-$(git rev-parse --short HEAD) > /tmp/workspace/image_name
+          echo $(git rev-parse --abbrev-ref HEAD) > /tmp/workspace/branch_name
+          docker login -u ${DOCKERHUB_USER} -p ${DOCKERHUB_PASS}
+          eval $(aws ecr get-login --region us-east-1 --no-include-email)
+          eval $(aws ecr get-login --region us-west-2 --no-include-email)
+          make push_image
+
+      # Persist the specified paths (workspace/image*) into the workspace for use in downstream job.
+      - persist_to_workspace:
+          # Must be absolute path or relative path from working_directory
+          root: /tmp/workspace
+          # Must be relative path from root
+          paths:
+            - image_url
+            - image_name
+            - branch_name
+
+  publish_to_docker_hub:
+    docker:
+      - image: circleci/python:3.6-jessie-node
+
+    environment:
+      - PUSH_IMAGE_NAME_PREFIX: "operam/data-collection-fb"
+
+    steps:
+      - setup_remote_docker
+
+      - attach_workspace:
+          at: /tmp/workspace
+
+      # Install AWS CLI
+      - run: sudo pip install awscli --upgrade
+
+      # Auth all the docker sources and pull the original source
+      - run : |
+          export IMAGE_NAME_FULL=`cat /tmp/workspace/image_url`
+          docker login -u ${DOCKERHUB_USER} -p ${DOCKERHUB_PASS}
+          eval $(aws ecr get-login --region us-east-1 --no-include-email)
+          eval $(aws ecr get-login --region us-west-2 --no-include-email)
+          docker pull ${IMAGE_NAME_FULL}
+
+      # Tag & push images to Docker Hub
+      - run : |
+          export IMAGE_URL=`cat /tmp/workspace/image_url`
+          export IMAGE_NAME=`cat /tmp/workspace/image_name`
+          export IMAGE_BRANCH_NAME=`cat /tmp/workspace/branch_name`
+          docker tag ${IMAGE_URL} ${PUSH_IMAGE_NAME_PREFIX}:${IMAGE_NAME}
+          docker tag ${IMAGE_URL} ${PUSH_IMAGE_NAME_PREFIX}:${IMAGE_BRANCH_NAME}
+          docker push ${PUSH_IMAGE_NAME_PREFIX}:${IMAGE_NAME}
+          docker push ${PUSH_IMAGE_NAME_PREFIX}:${IMAGE_BRANCH_NAME}
+
+  run_tests:
+    machine:
+      image: circleci/classic:latest
+
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+
+      - checkout
+
+      - run : |
+          export IMAGE_NAME_FULL=`cat /tmp/workspace/image_url`
+          eval $(aws ecr get-login --region us-east-1 --no-include-email)
+          eval $(aws ecr get-login --region us-west-2 --no-include-email)
+          make test
+
+
+workflows:
+  version: 2
+  build:
+    jobs:
+      - build_image
+
+      - run_tests:
+          requires:
+            - build_image
+
+      - publish_to_docker_hub:
+          requires:
+            - build_image

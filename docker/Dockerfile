@@ -12,10 +12,16 @@
 ARG BASE_IMAGE
 FROM ${BASE_IMAGE} as pythonuserbaseimage
 
-# since this is a throw-away image, it's ok to have these steps separate and cached
-RUN apt-get update
 # need these for hiredis (to start)
-RUN apt-get install -y --no-install-recommends gcc python3-dev
+RUN set -ex; \
+    \
+    fetchDeps=' \
+        gcc \
+        libc6-dev \
+    '; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends $fetchDeps; \
+    rm -rf /var/lib/apt/lists/*;
 
 # In order to reuse Docker cache during builds
 # requirements are split into base (those unlikely to change frequently)
@@ -27,8 +33,10 @@ RUN apt-get install -y --no-install-recommends gcc python3-dev
 
 COPY requirements.base.txt .
 RUN pip install --user --no-cache-dir -r requirements.base.txt
+
 COPY requirements.txt .
 RUN pip install --user --no-cache-dir -r requirements.txt
+
 # This one needs to move out of the base image as we approach prod time
 # to avoid piling up useless code into prod images.
 # TODO: discuss how build AND USE of dev image will look like.
@@ -42,16 +50,14 @@ RUN pip install --user --no-cache-dir -r requirements.dev.txt
 ARG BASE_IMAGE
 FROM ${BASE_IMAGE}
 
-# to allow Celery work as root
-ENV C_FORCE_ROOT=true
+ARG BUILD_ID=latest
+ARG COMMIT_ID=none
+
+# these env vars are picked up by config's update_from_env function
+# and applied to config.build.BUILD_ID config.build.COMMIT_ID attrs.
+# C_FORCE_ROOT: allow Celery work as root
+ENV APP_BUILD_BUILD_ID=${BUILD_ID} APP_BUILD_COMMIT_ID=${COMMIT_ID} C_FORCE_ROOT=true
 
 COPY --from=pythonuserbaseimage $PYTHONUSERBASE/ $PYTHONUSERBASE/
 
 COPY . .
-
-ARG BUILD_ID=latest
-ARG COMMIT_ID=none
-# these env vars are picked up by config's update_from_env function
-# and applied to config.build.BUILD_ID config.build.COMMIT_ID attrs.
-ENV APP_BUILD_BUILD_ID=${BUILD_ID}
-ENV APP_BUILD_COMMIT_ID=${COMMIT_ID}
