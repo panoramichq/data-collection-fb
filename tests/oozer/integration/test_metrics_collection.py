@@ -17,21 +17,24 @@ class TestMetricsCollection(TestCase):
     def test_fetch_insights_adaccount_campaigns_lifetime(self):
         with FacebookMetricsCollector(TOKEN) as metrics_collector:
 
-            i = metrics_collector.get_insights(
+            metrics = metrics_collector.get_insights(
                 FB_ADACCOUNT_MODEL,
                 AD_ACCOUNT,
                 {'date_preset': 'lifetime', 'level': 'campaign'}
             )
-            # i = metrics_collector.get_insights(FB_ADACCOUNT_MODEL, AD_ACCOUNT, { 'level': 'ad' } )
-            # i = metrics_collector.get_insights(FB_AD_MODEL, '23842753449240224', { } )
+            print(metrics)
+            assert metrics
 
-            # TODO: Maybe hide this into the FacebookAsyncReport class
-            while not i.completed():
-                i.refresh()
-                time.sleep(1)
+    def test_fetch_insights_adaccount_adsets_lifetime(self):
+        with FacebookMetricsCollector(TOKEN) as metrics_collector:
 
-            result = i.read()
-            print(result)
-            assert result
+            metrics = metrics_collector.get_insights(
+                FB_ADACCOUNT_MODEL,
+                AD_ACCOUNT,
+                {'date_preset': 'lifetime', 'level': 'adset'}
+            )
+
+            print(metrics)
+            assert metrics
 
 
