@@ -1,5 +1,5 @@
 from facebookads.adobjects import adreportrun
-
+from facebookads.api import FacebookAdsApi, FacebookSession
 
 class FacebookReportDefinition:
     """
@@ -54,7 +54,10 @@ class FacebookAsyncReport:
         :param string access_token: Facebook access token
         """
         self._token = access_token
-        self._report = adreportrun.AdReportRun(fbid=report_run_id)
+        self._report = adreportrun.AdReportRun(
+            fbid=report_run_id,
+            api=FacebookAdsApi(FacebookSession(access_token=access_token))
+        )
 
     def refresh(self):
         """
@@ -89,17 +92,4 @@ class FacebookAsyncReport:
         return self._status == self.SUCCEEDED_STATE
 
     def read(self):
-        """
-        Read the remote generated report
-
-        :return:
-        # """
-        # requests.get(
-        #     url=REPORT_EXPORT_PATH,
-        #     params={
-        #         'format': 'csv',
-        #         'report_run_id': self._report.id,
-        #         'access_token': self._token
-        #     },
-        #     stream=True
-        # )
+        return self._report.remote_read().get_result()

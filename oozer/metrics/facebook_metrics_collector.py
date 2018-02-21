@@ -16,9 +16,9 @@ class FacebookMetricsCollector(FacebookCollector):
         if edge_entity is FB_ADACCOUNT_MODEL:
             edge_instance = self._get_ad_account(entity_id)
         else:
-            edge_instance = edge_entity(fbid=entity_id)
+            edge_instance = edge_entity(fbid=entity_id, api=self.api)
 
-        result = edge_instance.get_insights_async(params=report_params)
+        result = edge_instance.get_insights(params=report_params, async=True)
 
         return FacebookAsyncReport(result['id'], self.token)
 
