@@ -18,11 +18,10 @@ s3://operam-reports/facebook/2d700d-1629501014003404/fb_insights_campaign_daily/
 import boto3
 import hashlib
 import json
-from datetime import datetime, date, timedelta
+from datetime import datetime
 
 import config.aws
 import config.build
-from common import tztools
 from oozer.common.job_scope import JobScope
 
 
@@ -54,16 +53,16 @@ def _job_scope_to_storage_key(job_scope):
     report_run_time = datetime.utcnow()
     zulu_time = report_run_time.strftime('%Y-%m-%dT%H:%M:%SZ')
 
-    key =f'{job_scope.platform}/' \
-           f'{prefix}-{job_scope.ad_account_id}/' \
-           f'{job_scope.report_type}/' \
-           f'{report_run_time.strftime("%Y")}/' \
-           f'{report_run_time.strftime("%m")}/' \
-           f'{report_run_time.strftime("%d")}/' \
-           f'{zulu_time}-{job_scope.job_id}.json'
+    key = f'{job_scope.platform}/' \
+          f'{prefix}-{job_scope.ad_account_id}/' \
+          f'{job_scope.report_type}/' \
+          f'{report_run_time.strftime("%Y")}/' \
+          f'{report_run_time.strftime("%m")}/' \
+          f'{report_run_time.strftime("%d")}/' \
+          f'{zulu_time}-{job_scope.job_id}.json'
 
     # need this to make it work in local fake S3
-    return key.replace(':','_')
+    return key.replace(':', '_')
 
 
 def store(data, job_scope):

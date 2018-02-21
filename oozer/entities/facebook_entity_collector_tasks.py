@@ -19,8 +19,6 @@ def fb_entities_adaccount_campaigns(job_scope, context):
     :param JobScope job_scope: The dict representation of JobScope
     :param dict context:
     """
-    # TODO: possibly rehydrate JobScope for easier manipulation
-
     cnt = 0
     for fb_model in collect_entities_for_adaccount(
         Entity.Campaign, job_scope, context
@@ -37,8 +35,6 @@ def fb_entities_adaccount_adsets(job_scope, context):
     :param JobScope job_scope: The dict representation of JobScope
     :param dict context:
     """
-    # TODO: possibly rehydrate JobScope for easier manipulation
-
     cnt = 0
     for fb_model in collect_entities_for_adaccount(
         Entity.AdSet, job_scope, context
@@ -55,8 +51,6 @@ def fb_entities_adaccount_ads(job_scope, context):
     :param JobScope job_scope: The dict representation of JobScope
     :param dict context:
     """
-    # TODO: possibly rehydrate JobScope for easier manipulation
-
     cnt = 0
     for fb_model in collect_entities_for_adaccount(
         Entity.Ad, job_scope, context

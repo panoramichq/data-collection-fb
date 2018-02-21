@@ -5,11 +5,10 @@ from oozer.common.job_scope import JobScope
 
 
 app = get_celery_app()
-logger = logging.getLogger(__name__)
 
 
 @app.task
-def report_job_status(stage_id, job_scope, status_context=None):
+def report_job_status_task(stage_id, job_scope, status_context=None):
     """
     We take job scope to divine basic information about the job itself.
 
@@ -20,9 +19,8 @@ def report_job_status(stage_id, job_scope, status_context=None):
 
     :param stage_id:
     :param JobScope job_scope:
-    :param status_context:
+    :param dict status_context:
     :return:
     """
-    status_context = status_context or {}
-
-    logger.warning(f"#: {stage_id} {job_scope.job_id}")
+    from .report_job_status import report_job_status
+    report_job_status(stage_id, job_scope, status_context or {})

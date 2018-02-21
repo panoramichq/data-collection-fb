@@ -20,26 +20,11 @@ class FacebookMetricsCollector(FacebookCollector):
 
         result = edge_instance.get_insights_async(params=report_params)
 
-        # Check for this
-        # error_code = 100,  CodeException (error subcode: 1487534)
-        # ^ means we asked for too much data
-
         return FacebookAsyncReport(result['id'], self.token)
 
 
-def collect_insights(
-    token, adaccount_id, insights_edge, report_definition , job_context,
-    status_reporter
-):
+def collect_insights(job_scope):
     """
-
-    :param token:
-    :param adaccount_id:
-    :param insights_edge:
-    :param job_context:
-    :param job_context:
-    :param callable status_reporter:
-    :return:
+    :param JobScope job_scope: The JobScope as we get it from the task itself
     """
-
     pass

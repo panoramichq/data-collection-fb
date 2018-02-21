@@ -1,21 +1,33 @@
 import random
+from collections import namedtuple
 
 from facebookads.api import FacebookRequestError
 from typing import Generator, Dict
 
 from common.enums.entity import Entity
-from oozer.common import cold_storage
+from oozer.common import cold_storage, report_job_status
 from oozer.common.facebook_collector import FacebookCollector
 from oozer.common.job_scope import JobScope
-from oozer.common.report_job_status_task import report_job_status
+from oozer.common.report_job_status_task import report_job_status_task
 from oozer.common.enum import (
     FB_CAMPAIGN_MODEL,
     FB_ADSET_MODEL,
     FB_AD_MODEL,
-    FB_MODEL_ENUM_VALUE_MAP,
     ENUM_VALUE_FB_MODEL_MAP
 )
 from oozer.entities.feedback_entity_task import feedback_entity_task
+
+
+class EntityHash(namedtuple('EntityHash', ['data', 'fields'])):
+    """
+    Container for the hash to make it a little bit nicer
+    """
+
+    def __eq__(self, other):
+        """
+        Add equality operator for easy checking
+        """
+        return self == other
 
 
 class FacebookEntityCollector(FacebookCollector):
@@ -53,33 +65,35 @@ class FacebookEntityCollector(FacebookCollector):
         Compute a hash of the entity fields that we consider stable, to be able
         to tell apart entities that have / have not changed in between runs
 
-        :return (entity_hash, fields_hash): The hashes for the entity itself and
+        :return EntityHash: The hashes for the entity itself and
             and fields hashed
         """
-        entity_hash = str(random.randint(1, 10000000))
-        fields_hash = 'some_hash'
 
         # Pick stable fields
-
         # Use non-cryptographic has over stable fields. (SeaHash?)
 
-        return entity_hash, fields_hash
-
-    @classmethod
-    def checksum_valid(cls, current_hash, hash_to_check):
-        """
-        TODO: For the time being, we always intentionally break the has
-
-        :param string current_hash:
-        :param tuple hash_to_check:
-        :return bool: Entity has not changed
-        """
-        return False
+        return EntityHash(
+            data=str(random.randint(1, 10000000)),
+            fields='some_hash'
+        )
 
 
-# Use this to communicate to give status reporter enough information to
-# figure out what the stage id means in terms of failures
-JOB_STATUS_REPORT_CONTEXT = {}
+class FacebookEntityJobStatus(report_job_status.JobStatus):
+    """
+    Use this to communicate to give status reporter enough information to
+    figure out what the stage id means in terms of failures
+    """
+
+    # Progress states
+    Start = 100
+    Progress = 200
+    InColdStore = 500
+
+    # Various error states
+    TooMuchData = -500
+    ThrottlingError = -700
+    GenericFacebookError = -900
+    GenericError = -1000
 
 
 def collect_entities_for_adaccount(entity_type, job_scope, context=None):
@@ -87,15 +101,14 @@ def collect_entities_for_adaccount(entity_type, job_scope, context=None):
     Collects an arbitrary entity for an ad account
 
     :param entity_type: The entity to collect for
-    :param JobScope job_scope: The dict representation of JobScope (not ideal)
+    :param JobScope job_scope: The JobScope as we get it from the task itself
     :param dict context:
     :rtype: Generator[Dict]
     """
+    context = context or {}
 
     # Report start of work
-    report_job_status.delay(10, job_scope)
-
-
+    report_job_status_task.delay(FacebookEntityJobStatus.Start, job_scope)
 
     try:
         with FacebookEntityCollector(job_scope.token) as collector:
@@ -110,16 +123,17 @@ def collect_entities_for_adaccount(entity_type, job_scope, context=None):
             for entity in entities:
 
                 # Externalize these for clarity
-                current_hash = (context or {}).get(entity['id'])
+                current_hash = EntityHash(
+                    data=context.get(entity['id'], {}).get('data'),
+                    fields=context.get(entity['id'], {}).get('fields')
+                )
                 entity_hash = FacebookEntityCollector.checksum_entity(entity)
 
                 # Check whether we actually need to put this into the ETL
                 # pipeline it is possible that a given entity has not changed
                 # since last time we checked and therefore it is not necessary
                 # to deal with right now
-                if FacebookEntityCollector.checksum_valid(
-                    current_hash, entity_hash
-                ):
+                if current_hash == entity_hash:
                     continue
 
                 entity_data = entity.export_all_data()
@@ -136,21 +150,40 @@ def collect_entities_for_adaccount(entity_type, job_scope, context=None):
                 # storage thing to divine whatever it needs from the job context
                 cold_storage.store(entity_data, normative_job_scope)
 
-                report_job_status.delay(20, job_scope)
-                report_job_status.delay(20, normative_job_scope)
+                report_job_status_task.delay(
+                    FacebookEntityJobStatus.Progress, job_scope
+                )
+
+                # TODO: Based on what we talked about, this does not make sense
+                # to me right now
+                # report_job_status_task.delay(
+                #     FacebookEntityJobStatus.Progress, normative_job_scope
+                # )
 
                 yield entity
 
-        report_job_status.delay(1000, job_scope)
+        report_job_status_task.delay(
+            FacebookEntityJobStatus.InColdStore, job_scope
+        )
 
     except FacebookRequestError as e:
+        # Check for this
+        # error_code = 100,  CodeException (error subcode: 1487534)
+        # ^ means we asked for too much data
+
         # Inspect the exception for FB exceptions, so we can distill the proper
         # failure bucket
-        report_job_status.delay(-500, job_scope, JOB_STATUS_REPORT_CONTEXT)
+        report_job_status_task.delay(
+            FacebookEntityJobStatus.GenericFacebookError, job_scope,
+            FacebookEntityJobStatus.as_status_context_dict()
+        )
         raise
 
     except Exception:
         # This is a generic failure, which does not help us at all, so, we just
         # report it and bail
-        report_job_status.delay(-1000, job_scope, JOB_STATUS_REPORT_CONTEXT)
+        report_job_status_task.delay(
+            FacebookEntityJobStatus.GenericError, job_scope,
+            FacebookEntityJobStatus.as_status_context_dict()
+        )
         raise
