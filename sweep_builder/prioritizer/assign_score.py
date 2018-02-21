@@ -72,7 +72,7 @@ def assign_score(job_signature, timezone):
     :rtype: int
     """
 
-    job_id = JobSignature.job_id
+    job_id = job_signature.job_id
 
     job_id_components = parse_id(job_id)
     ad_account_id = job_id_components.get('ad_account_id')
@@ -100,7 +100,8 @@ def assign_score(job_signature, timezone):
             ),
             coverage_period
         )
-    except FacebookEntityReport.DoesNotExist:
+    # TODO: proper error here
+    except:
         pass
 
     score = 0
