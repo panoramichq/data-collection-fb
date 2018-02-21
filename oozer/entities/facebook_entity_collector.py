@@ -5,9 +5,11 @@ from facebookads.api import FacebookRequestError
 from typing import Generator, Dict
 
 from common.enums.entity import Entity
-from oozer.common import cold_storage, report_job_status
+from common.enums.failure_bucket import FailureBucket
+from oozer.common import cold_storage
 from oozer.common.facebook_collector import FacebookCollector
 from oozer.common.job_scope import JobScope
+from oozer.common.report_job_status import JobStatus
 from oozer.common.report_job_status_task import report_job_status_task
 from oozer.common.enum import (
     FB_CAMPAIGN_MODEL,
@@ -27,7 +29,7 @@ class EntityHash(namedtuple('EntityHash', ['data', 'fields'])):
         """
         Add equality operator for easy checking
         """
-        return self == other
+        return self.data == other.data and self.fields == other.fields
 
 
 class FacebookEntityCollector(FacebookCollector):
@@ -63,7 +65,9 @@ class FacebookEntityCollector(FacebookCollector):
     def checksum_entity(cls, entity):
         """
         Compute a hash of the entity fields that we consider stable, to be able
-        to tell apart entities that have / have not changed in between runs
+        to tell apart entities that have / have not changed in between runs.
+
+        This method requires an intrinsic knowledge of "what the entity is".
 
         :return EntityHash: The hashes for the entity itself and
             and fields hashed
@@ -78,7 +82,7 @@ class FacebookEntityCollector(FacebookCollector):
         )
 
 
-class FacebookEntityJobStatus(report_job_status.JobStatus):
+class FacebookEntityJobStatus(JobStatus):
     """
     Use this to communicate to give status reporter enough information to
     figure out what the stage id means in terms of failures
@@ -90,8 +94,8 @@ class FacebookEntityJobStatus(report_job_status.JobStatus):
     InColdStore = 500
 
     # Various error states
-    TooMuchData = -500
-    ThrottlingError = -700
+    TooMuchData = (-500, FailureBucket.TooLarge)
+    ThrottlingError = (-700, FailureBucket.Throttling)
     GenericFacebookError = -900
     GenericError = -1000
 
@@ -154,8 +158,8 @@ def collect_entities_for_adaccount(entity_type, job_scope, context=None):
                     FacebookEntityJobStatus.Progress, job_scope
                 )
 
-                # TODO: Based on what we talked about, this does not make sense
-                # to me right now
+                # TODO: Based on what we talked about, i don't understand what
+                # this should actually be doing
                 # report_job_status_task.delay(
                 #     FacebookEntityJobStatus.Progress, normative_job_scope
                 # )
@@ -171,11 +175,10 @@ def collect_entities_for_adaccount(entity_type, job_scope, context=None):
         # error_code = 100,  CodeException (error subcode: 1487534)
         # ^ means we asked for too much data
 
-        # Inspect the exception for FB exceptions, so we can distill the proper
-        # failure bucket
+        # Inspect the exception for FB exceptions, so we can understand what's
+        # going on
         report_job_status_task.delay(
             FacebookEntityJobStatus.GenericFacebookError, job_scope,
-            FacebookEntityJobStatus.as_status_context_dict()
         )
         raise
 
@@ -183,7 +186,6 @@ def collect_entities_for_adaccount(entity_type, job_scope, context=None):
         # This is a generic failure, which does not help us at all, so, we just
         # report it and bail
         report_job_status_task.delay(
-            FacebookEntityJobStatus.GenericError, job_scope,
-            FacebookEntityJobStatus.as_status_context_dict()
+            FacebookEntityJobStatus.GenericError, job_scope
         )
         raise
