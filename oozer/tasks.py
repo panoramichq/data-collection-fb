@@ -1,8 +1,2 @@
-from common.celeryapp import get_celery_app
-
-app = get_celery_app()
-
-
-@app.task
-def echo(message='This is Default queue'):
-    print(message)
+from .echo_task import echo
+from .looper_task import sweep_looper_task

@@ -8,7 +8,10 @@ from config.build import BUILD_ID
 
 MODULES_WITH_TASKS = [
     'prioritizer',
-    'oozer'
+    'oozer',
+    'oozer.common',
+    'oozer.entities',
+    'oozer.metrics',
 ]
 
 

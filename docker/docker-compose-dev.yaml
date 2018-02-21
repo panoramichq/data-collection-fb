@@ -25,4 +25,7 @@ services:
       - fakes3
       - redis
       - dynamo
+    environment:
+      APP_CELERY_task_eager_propagates: "true"
+      APP_CELERY_task_always_eager: "true"
     command: bash
