@@ -1,14 +1,19 @@
 import random
 
 from facebookads.api import FacebookRequestError
+from typing import Generator, Dict
 
+from common.enums.entity import Entity
 from oozer.common import cold_storage
-from oozer.common.report_job_status_task import report_job_status
 from oozer.common.facebook_collector import FacebookCollector
+from oozer.common.job_scope import JobScope
+from oozer.common.report_job_status_task import report_job_status
 from oozer.common.enum import (
-    ENTITY_CAMPAIGN,
-    ENTITY_ADSET,
-    ENTITY_AD,
+    FB_CAMPAIGN_MODEL,
+    FB_ADSET_MODEL,
+    FB_AD_MODEL,
+    FB_MODEL_ENUM_VALUE_MAP,
+    ENUM_VALUE_FB_MODEL_MAP
 )
 from oozer.entities.feedback_entity_task import feedback_entity_task
 
@@ -19,21 +24,27 @@ class FacebookEntityCollector(FacebookCollector):
         """
         Generic getter for entities from the AdAccount edge
 
-        :param string ad_account: Ad account id
-        :param entity_type:
+        :param str ad_account: Ad account id
+        :param str entity_type:
         :param list fields: List of entity fields to fetch
         :return:
         """
+
+        if entity_type not in Entity.ALL:
+            raise ValueError(
+                f'Value of "entity_type" argument must be one of {Entity.ALL}, got {entity_type} instead.'
+            )
+        FBModel = ENUM_VALUE_FB_MODEL_MAP[entity_type]
+
         ad_account = self._get_ad_account(ad_account)
 
-        fields_to_fetch = fields or self._get_default_fileds(entity_type)
-
         getter_method = {
-            ENTITY_CAMPAIGN: ad_account.get_campaigns,
-            ENTITY_ADSET: ad_account.get_ad_sets,
-            ENTITY_AD: ad_account.get_ads
-        }[entity_type]
+            FB_CAMPAIGN_MODEL: ad_account.get_campaigns,
+            FB_ADSET_MODEL: ad_account.get_ad_sets,
+            FB_AD_MODEL: ad_account.get_ads
+        }[FBModel]
 
+        fields_to_fetch = fields or self._get_default_fileds(FBModel)
         yield from getter_method(fields=fields_to_fetch)
 
     @classmethod
@@ -71,27 +82,35 @@ class FacebookEntityCollector(FacebookCollector):
 JOB_STATUS_REPORT_CONTEXT = {}
 
 
-def collect_entities_for_adaccount(entity_type, job_scope, context):
+def collect_entities_for_adaccount(entity_type, job_scope, context=None):
     """
     Collects an arbitrary entity for an ad account
 
     :param entity_type: The entity to collect for
-    :param dict job_scope: The dict representation of JobScope (not ideal)
-    :param context:
+    :param JobScope job_scope: The dict representation of JobScope (not ideal)
+    :param dict context:
+    :rtype: Generator[Dict]
     """
 
     # Report start of work
     report_job_status.delay(10, job_scope)
 
+
+
     try:
-        with FacebookEntityCollector(job_scope['access_token']) as collector:
-            for entity in \
-                    collector.get_entities_for_adaccount(
-                        job_scope['adaccount_id'], entity_type
-                    ):
+        with FacebookEntityCollector(job_scope.token) as collector:
+
+            entities = collector.get_entities_for_adaccount(
+                job_scope.ad_account_id,
+                entity_type
+            )
+
+            job_scope_base_data = job_scope.to_dict()
+
+            for entity in entities:
 
                 # Externalize these for clarity
-                current_hash = context.get(entity['id'])
+                current_hash = (context or {}).get(entity['id'])
                 entity_hash = FacebookEntityCollector.checksum_entity(entity)
 
                 # Check whether we actually need to put this into the ETL
@@ -103,21 +122,33 @@ def collect_entities_for_adaccount(entity_type, job_scope, context):
                 ):
                     continue
 
-                # Store the individual datum, use job context for the cold
-                # storage thing to divine whatever it needs from the job context
-                cold_storage.store(dict(entity), job_scope)
+                entity_data = entity.export_all_data()
+                normative_job_scope = JobScope(
+                    job_scope_base_data,
+                    entity_id=entity_data.get('id'),
+                    entity_type=entity_type
+                )
 
                 # Signal to the system the new entity
-                feedback_entity_task.delay(entity_type, dict(entity), entity_hash)
+                feedback_entity_task.delay(entity_data, entity_type, entity_hash)
 
-                # Report some start of work
+                # Store the individual datum, use job context for the cold
+                # storage thing to divine whatever it needs from the job context
+                cold_storage.store(entity_data, normative_job_scope)
+
+                report_job_status.delay(20, job_scope)
+                report_job_status.delay(20, normative_job_scope)
+
+                yield entity
 
         report_job_status.delay(1000, job_scope)
+
     except FacebookRequestError as e:
         # Inspect the exception for FB exceptions, so we can distill the proper
         # failure bucket
         report_job_status.delay(-500, job_scope, JOB_STATUS_REPORT_CONTEXT)
         raise
+
     except Exception:
         # This is a generic failure, which does not help us at all, so, we just
         # report it and bail
