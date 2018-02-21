@@ -25,4 +25,4 @@ def report_job_status(stage_id, job_scope, status_context=None):
     """
     status_context = status_context or {}
 
-    logger.warning(f"#: {stage_id} {job_scope.report_id}")
+    logger.warning(f"#: {stage_id} {job_scope.job_id}")

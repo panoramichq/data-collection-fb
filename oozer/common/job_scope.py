@@ -1,3 +1,5 @@
+from common.id_tools import parse_id, generate_id
+
 
 class JobScope:
     """
@@ -8,21 +10,32 @@ class JobScope:
 
     platform = 'facebook'
 
-    tokens = None
-
+    # Job ID components parsed
+    namespace = 'fb'  # used for generating Job IDs from this data
     ad_account_id = None
 
+    entity_id = None
+    entity_type = None
+
     report_type = None
-    report_id = None
+    report_variant = None
+
+    range_start = None
+    range_end = None
+
+    # Job performance things
+    tokens = None
     metadata = None
 
-    report_time = None
-
-    def __init__(self, **kwargs):
-        self.__dict__.update(kwargs)
-
+    def __init__(self, *args, **kwargs):
+        self.update(*args, **kwargs)
         # Normalize few things
-        self.metadata = kwargs.get('metadata', {})
+        self.metadata = self.metadata or {}
+
+    def update(self, *args, **kwargs):
+        for arg in args:
+            self.__dict__.update(arg)
+        self.__dict__.update(kwargs)
 
     @property
     def token(self):
@@ -35,3 +48,16 @@ class JobScope:
         :return dict:
         """
         return self.__dict__.copy()
+
+    @property
+    def job_id(self):
+        return generate_id(
+            ad_account_id=self.ad_account_id,
+            entity_type=self.entity_type,
+            entity_id=self.entity_id,
+            report_type=self.report_type,
+            report_variant=self.report_variant,
+            range_start=self.range_start,
+            range_end=self.range_end,
+            namespace=self.namespace,
+        )
