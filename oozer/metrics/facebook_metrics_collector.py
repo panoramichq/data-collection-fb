@@ -1,6 +1,6 @@
 from oozer.common.facebook_collector import FacebookCollector
 from oozer.common.facebook_async_report import FacebookAsyncReport
-from oozer.common.enum import ENTITY_ADACCOUNT
+from oozer.common.enum import FB_ADACCOUNT_MODEL
 
 
 class FacebookMetricsCollector(FacebookCollector):
@@ -13,7 +13,7 @@ class FacebookMetricsCollector(FacebookCollector):
         :param report_params:
         :return FacebookAsyncReport:
         """
-        if edge_entity is ENTITY_ADACCOUNT:
+        if edge_entity is FB_ADACCOUNT_MODEL:
             edge_instance = self._get_ad_account(entity_id)
         else:
             edge_instance = edge_entity(fbid=entity_id)

@@ -3,7 +3,7 @@ import functools
 from common.celeryapp import get_celery_app
 from oozer.common.facebook_async_report import FacebookReportDefinition
 from .facebook_metrics_collector import collect_insights
-from oozer.common.enum import ENTITY_ADACCOUNT
+from oozer.common.enum import FB_ADACCOUNT_MODEL
 
 app = get_celery_app()
 
@@ -42,6 +42,6 @@ def fb_insights_adaccount_campaigns_lifetime(token, adaccount_id, job_context):
     )
 
     collect_insights(
-        token, adaccount_id, ENTITY_ADACCOUNT, report_definition, job_context,
+        token, adaccount_id, FB_ADACCOUNT_MODEL, report_definition, job_context,
         job_reporter
     )
