@@ -59,7 +59,9 @@ class FacebookEntityCollector(FacebookCollector):
             FB_AD_MODEL: ad_account.get_ads
         }[FBModel]
 
-        fields_to_fetch = fields or self._get_default_fileds(FBModel)
+        fields_to_fetch = fields or \
+            FacebookCollector._get_default_fileds(FBModel)
+
         yield from getter_method(fields=fields_to_fetch)
 
     @classmethod
