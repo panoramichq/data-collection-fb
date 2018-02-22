@@ -27,6 +27,9 @@ class JobScope:
     tokens = None
     metadata = None
 
+    # System information
+    sweep_id = None
+
     def __init__(self, *args, **kwargs):
         self.update(*args, **kwargs)
         # Normalize few things
@@ -42,11 +45,6 @@ class JobScope:
         return self.tokens[0]
 
     def to_dict(self):
-        """
-        Celery will need this
-
-        :return dict:
-        """
         return self.__dict__.copy()
 
     @property

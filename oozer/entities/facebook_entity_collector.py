@@ -90,7 +90,8 @@ class FacebookEntityJobStatus(JobStatus):
 
     # Progress states
     Start = 100
-    Progress = 200
+    EntitiesFetched = 200
+    EntityFetched = 200
     InColdStore = 500
 
     # Various error states
@@ -117,9 +118,15 @@ def collect_entities_for_adaccount(entity_type, job_scope, context=None):
     try:
         with FacebookEntityCollector(job_scope.token) as collector:
 
+            # Fetch us the entities iterator
             entities = collector.get_entities_for_adaccount(
                 job_scope.ad_account_id,
                 entity_type
+            )
+
+            # Report on the effective task status
+            report_job_status_task.delay(
+                FacebookEntityJobStatus.EntitiesFetched, job_scope
             )
 
             job_scope_base_data = job_scope.to_dict()
@@ -150,22 +157,23 @@ def collect_entities_for_adaccount(entity_type, job_scope, context=None):
                 # Signal to the system the new entity
                 feedback_entity_task.delay(entity_data, entity_type, entity_hash)
 
+                # Report on the normative task status
+                report_job_status_task.delay(
+                    FacebookEntityJobStatus.EntityFetched, normative_job_scope
+                )
+
                 # Store the individual datum, use job context for the cold
                 # storage thing to divine whatever it needs from the job context
                 cold_storage.store(entity_data, normative_job_scope)
 
+                # Report on the normative task status
                 report_job_status_task.delay(
-                    FacebookEntityJobStatus.Progress, job_scope
+                    FacebookEntityJobStatus.InColdStore, normative_job_scope
                 )
-
-                # TODO: Based on what we talked about, i don't understand what
-                # this should actually be doing
-                # report_job_status_task.delay(
-                #     FacebookEntityJobStatus.Progress, normative_job_scope
-                # )
 
                 yield entity
 
+        # Report on the effective task status
         report_job_status_task.delay(
             FacebookEntityJobStatus.InColdStore, job_scope
         )
