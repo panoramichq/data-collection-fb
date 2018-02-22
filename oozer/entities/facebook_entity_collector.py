@@ -34,11 +34,11 @@ class EntityHash(namedtuple('EntityHash', ['data', 'fields'])):
 
 class FacebookEntityCollector(FacebookCollector):
 
-    def get_entities_for_adaccount(self, ad_account, entity_type, fields=None):
+    def get_entities_for_adaccount(self, ad_account_id, entity_type, fields=None):
         """
         Generic getter for entities from the AdAccount edge
 
-        :param str ad_account: Ad account id
+        :param str ad_account_id: Ad account id
         :param str entity_type:
         :param list fields: List of entity fields to fetch
         :return:
@@ -50,7 +50,7 @@ class FacebookEntityCollector(FacebookCollector):
             )
         FBModel = ENUM_VALUE_FB_MODEL_MAP[entity_type]
 
-        ad_account = self._get_ad_account(ad_account)
+        ad_account = self._get_ad_account(ad_account_id)
 
         getter_method = {
             FB_CAMPAIGN_MODEL: ad_account.get_campaigns,

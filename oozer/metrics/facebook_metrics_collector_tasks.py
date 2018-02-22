@@ -24,21 +24,23 @@ def _bind_job_status_reporter(*args):
 
 
 @app.task
-def fb_insights_adaccount_campaigns_lifetime(token, adaccount_id, job_context):
+def fb_insights_adaccount_campaigns_lifetime(job_scope, context):
     """
     Collect insights for all campaigns under given adaccount
 
-    :param string token:
-    :param string adaccount_id:
-    :param dict job_context:
+    :param JobScope job_scope: The dict representation of JobScope
+    :param dict context:
     """
+
     report_definition = FacebookReportDefinition(
         level='campaign',
         date_preset='lifetime'
     )
 
     job_reporter = _bind_job_status_reporter(
-        job_context['sweep_id'], job_context['report_type'], adaccount_id
+        job_context['sweep_id'],
+        job_context['report_type'],
+        adaccount_id
     )
 
     collect_insights(
