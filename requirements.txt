@@ -29,3 +29,4 @@ six==1.11.0               # via facebookads, pynamodb, python-dateutil
 urllib3==1.22             # via requests
 uvloop==0.9.1
 vine==1.1.4
+xxhash==1.0.1

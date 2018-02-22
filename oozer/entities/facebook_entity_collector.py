@@ -1,6 +1,6 @@
 import random
 from collections import namedtuple
-
+import xxhash
 from facebookads.api import FacebookRequestError
 from typing import Generator
 
@@ -63,7 +63,7 @@ class FacebookEntityCollector(FacebookCollector):
         yield from getter_method(fields=fields_to_fetch)
 
     @classmethod
-    def checksum_entity(cls, entity):
+    def checksum_entity(cls, entity, fields=None):
         """
         Compute a hash of the entity fields that we consider stable, to be able
         to tell apart entities that have / have not changed in between runs.
@@ -74,12 +74,27 @@ class FacebookEntityCollector(FacebookCollector):
             and fields hashed
         """
 
-        # Pick stable fields
-        # Use non-cryptographic has over stable fields. (SeaHash?)
+        # Currently it seems it's not needed, but lets have it here for now for
+        # reference. TODO: Tom - investigate further
+        blacklist = {
+            FB_CAMPAIGN_MODEL: [],
+            FB_ADSET_MODEL: [],
+            FB_AD_MODEL: []
+        }
+
+        fields = fields or cls._get_default_fileds(entity.__class__)
+        raw_data = entity.export_all_data()
+
+        data_hash = xxhash.xxh64()
+        fields_hash = xxhash.xxh64()
+
+        for field in fields:
+            data_hash.update(str(raw_data.get(field, '')))
+            fields_hash.update(field)
 
         return EntityHash(
-            data=str(random.randint(1, 10000000)),
-            fields='some_hash'
+            data=data_hash.hexdigest(),
+            fields=fields_hash.hexdigest()
         )
 
 

@@ -40,7 +40,8 @@ class FacebookCollector:
         """
         return adaccount.AdAccount(fbid=f'act_{account_id}', api=self.api)
 
-    def _get_default_fileds(self, Model):
+    @classmethod
+    def _get_default_fileds(cls, Model):
         """
         Obtain default fields for a given entity type. Note that the entity
         class must come from the Facebook SDK
