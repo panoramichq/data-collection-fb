@@ -3,6 +3,8 @@ from oozer.common.facebook_collector import FacebookCollector
 from oozer.common.facebook_async_report import FacebookAsyncReport
 from oozer.common.enum import FB_ADACCOUNT_MODEL
 
+from common.job_context import JobContext
+
 
 class FacebookMetricsCollector(FacebookCollector):
     DEFAULT_POLLING_INTERVAL = 1
@@ -31,9 +33,10 @@ class FacebookMetricsCollector(FacebookCollector):
         return report_wrapper.read()
 
 
-
-def collect_insights(job_scope):
+def collect_insights(job_scope, job_context=None):
     """
     :param JobScope job_scope: The JobScope as we get it from the task itself
+    :param JobContext job_context: A job context we use for normative tasks
+        reporting
     """
-    pass
+    job_context = job_context or JobContext()

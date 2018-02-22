@@ -2,10 +2,11 @@ import random
 from collections import namedtuple
 
 from facebookads.api import FacebookRequestError
-from typing import Generator, Dict
+from typing import Generator
 
 from common.enums.entity import Entity
 from common.enums.failure_bucket import FailureBucket
+from common.job_context import JobContext
 from oozer.common import cold_storage
 from oozer.common.facebook_collector import FacebookCollector
 from oozer.common.job_scope import JobScope
@@ -101,16 +102,16 @@ class FacebookEntityJobStatus(JobStatus):
     GenericError = -1000
 
 
-def collect_entities_for_adaccount(entity_type, job_scope, context=None):
+def collect_entities_for_adaccount(entity_type, job_scope, job_context=None):
     """
     Collects an arbitrary entity for an ad account
 
     :param entity_type: The entity to collect for
     :param JobScope job_scope: The JobScope as we get it from the task itself
-    :param dict context:
+    :param JobContext job_context: A job context we use for entity checksums
     :rtype: Generator[Dict]
     """
-    context = context or {}
+    job_context = job_context or JobContext()
 
     # Report start of work
     report_job_status_task.delay(FacebookEntityJobStatus.Start, job_scope)
@@ -134,10 +135,10 @@ def collect_entities_for_adaccount(entity_type, job_scope, context=None):
             for entity in entities:
 
                 # Externalize these for clarity
-                current_hash = EntityHash(
-                    data=context.get(entity['id'], {}).get('data'),
-                    fields=context.get(entity['id'], {}).get('fields')
+                current_hash_raw = job_context.entity_checksums.get(
+                    entity['id'], (None, None)
                 )
+                current_hash = EntityHash(*current_hash_raw)
                 entity_hash = FacebookEntityCollector.checksum_entity(entity)
 
                 # Check whether we actually need to put this into the ETL
