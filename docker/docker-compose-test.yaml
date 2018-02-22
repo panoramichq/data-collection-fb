@@ -1,0 +1,22 @@
+version: '2'
+
+services:
+
+  redis:
+    extends:
+      file: docker-compose-base.yaml
+      service: redis
+
+  dynamo:
+    extends:
+      file: docker-compose-base.yaml
+      service: dynamo
+
+  app:
+    extends:
+      file: docker-compose-base.yaml
+      service: app
+    links:
+      - redis
+      - dynamo
+    command: pytest

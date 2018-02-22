@@ -7,36 +7,46 @@ clean:
 
 .PHONY: default clean
 
+# Operam Python base image from Docker Hub
+BASE_IMAGE_NAME:=operam/base-images:python3.6-latest
+
 VENDOR_NAME:=metrics
 IMAGE_NAME:=collection-system
-IMAGE_NAME_FULL:=$(VENDOR_NAME)/$(IMAGE_NAME)
+IMAGE_NAME_FULL?=$(VENDOR_NAME)/$(IMAGE_NAME)
 
 # When we are building through Circle CI, use the
 BRANCH_NAME:=$(if $(CIRCLE_BRANCH),$(CIRCLE_BRANCH),$(shell git rev-parse --abbrev-ref HEAD))
 BUILD_ID?=latest
 BUILD_ID:=$(if $(CIRCLE_BUILD_NUM),$(CIRCLE_BUILD_NUM),$(BUILD_ID))
-COMMIT_ID=$(if $(CIRCLE_SHA1),$(CIRCLE_SHA1),$(shell git log -1 --format="%H"))
+COMMIT_ID=$(if $(CIRCLE_SHA1),$(CIRCLE_SHA1),$(shell git rev-parse --short HEAD))
 
-PYTHONUSERBASE_INNER=/tmp/pythonuserbase
-WORKDIR:=/usr/src/app
+PYTHONUSERBASE_INNER=/usr/src/lib
+WORKDIR=/usr/src/app
 
-image.base:
-	docker build \
-		-t $(IMAGE_NAME_FULL)-base:$(BUILD_ID) \
-		--build-arg PYTHONUSERBASE=$(PYTHONUSERBASE_INNER) \
-		--build-arg WORKDIR=$(WORKDIR) \
-		-f docker/Dockerfile.base .
+PUSH_IMAGE_NAME_PREFIX=897117390337.dkr.ecr.us-east-1.amazonaws.com/operam/data-collection-fb
+PUSH_IMAGE_NAME_BRANCH?=$(PUSH_IMAGE_NAME_PREFIX):$(BRANCH_NAME)
+PUSH_IMAGE_NAME_BUILD?=$(PUSH_IMAGE_NAME_PREFIX):$(BUILD_ID)-$(COMMIT_ID)
 
-image: image.base
+image:
 	docker build \
 		-t $(IMAGE_NAME_FULL):$(BUILD_ID) \
-		--build-arg BASE_IMAGE=$(IMAGE_NAME_FULL)-base:$(BUILD_ID) \
+		--build-arg BASE_IMAGE=$(BASE_IMAGE_NAME) \
 		--build-arg COMMIT_ID=${COMMIT_ID} \
 		--build-arg BUILD_ID=${BUILD_ID} \
 		--build-arg PYTHONUSERBASE=$(PYTHONUSERBASE_INNER) \
 		-f docker/Dockerfile .
 
-.PHONY: image image.base
+push_image: image
+	docker tag $(IMAGE_NAME_FULL):$(BUILD_ID) \
+		$(PUSH_IMAGE_NAME_BRANCH)
+	docker tag $(IMAGE_NAME_FULL):$(BUILD_ID) \
+		$(PUSH_IMAGE_NAME_BUILD)
+	docker push \
+		$(PUSH_IMAGE_NAME_BRANCH)
+	docker push \
+		$(PUSH_IMAGE_NAME_BUILD)
+
+.PHONY: image push_image
 
 #############
 # Dynamodb local management
@@ -109,6 +119,17 @@ start-stack:
 
 .PHONY: start-dev start-stack
 
+#############
+# Test runner
+test: image.dynamo
+	DYNAMO_IMAGE_NAME_FULL=$(DYNAMO_IMAGE_NAME_FULL) \
+	DYNAMODIR=/dynamodb_local_db \
+	IMAGE_NAME_FULL=$(IMAGE_NAME_FULL) \
+	WORKDIR=/usr/src/app \
+	docker-compose -f docker/docker-compose-test.yaml run \
+		--rm app
+
+.PHONY: test
 
 #############
 # requirement files management
