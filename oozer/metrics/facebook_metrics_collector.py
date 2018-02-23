@@ -61,7 +61,7 @@ def _generate_report_args(job_scope):
     # level object type
 
 
-def collect_insights(job_scope, job_context=None):
+def collect_insights(job_scope, job_context):
     """
     :param JobScope job_scope: The JobScope as we get it from the task itself
     :param JobContext job_context: A job context we use for normative tasks

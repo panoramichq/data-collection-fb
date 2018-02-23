@@ -1,10 +1,11 @@
-from typing import Generator, Callable
+from typing import Generator
 
 from common.connect.redis import get_redis
 from common.enums.reporttype import ReportType
 from common.enums.entity import Entity
 from common.id_tools import parse_id
 from oozer.common.job_scope import JobScope
+from oozer.common.job_context import JobContext
 
 
 # :) Guess what for
@@ -78,6 +79,13 @@ def iter_tasks(sweep_id):
                 tokens=[TOKEN]
             )
 
-            celery_task.delay(job_scope, {})
+            # TODO: Add job context, at minimum entity hash data. TBD how to get
+            # this, could be Dynamo directly, or prepared by the sweep builder
+            # and sent along
+            job_context = JobContext(
+
+            )
+
+            celery_task.delay(job_scope, job_context)
 
         yield job_id

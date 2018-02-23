@@ -25,14 +25,6 @@ import config.build
 from oozer.common.job_scope import JobScope
 
 
-class ComplexEncoder(json.JSONEncoder):
-
-    def default(self, obj):
-        if isinstance(obj, complex):
-            return [obj.real, obj.imag]
-        return json.JSONEncoder.default(self, obj)
-
-
 # Ensure we are connected to the right endpoint. This is necessary because of
 # the faked S3 service, which we contact based on a specific endpoint_url
 _s3 = boto3.resource('s3', endpoint_url=config.aws.S3_ENDPOINT)

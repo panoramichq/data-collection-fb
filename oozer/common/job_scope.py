@@ -1,4 +1,4 @@
-from common.id_tools import parse_id, generate_id
+from common.id_tools import generate_id
 
 
 class JobScope:
@@ -7,6 +7,9 @@ class JobScope:
     job, be it normative or effective
 
     """
+
+    # System information
+    sweep_id = None
 
     platform = 'facebook'
 
@@ -26,9 +29,6 @@ class JobScope:
     # Job performance things
     tokens = None
     metadata = None
-
-    # System information
-    sweep_id = None
 
     def __init__(self, *args, **kwargs):
         self.update(*args, **kwargs)

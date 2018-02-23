@@ -1,4 +1,5 @@
 from facebookads.api import FacebookAdsApi, FacebookSession
+from facebookads.adobjects import abstractcrudobject
 from oozer.common.enum import to_fb_model
 
 
@@ -32,10 +33,27 @@ class FacebookApiContext:
 
     def to_fb_model(self, entity_id, entity_type):
         """
-        Like stand-alone to_fb_model but removes the need to pass in API instance manually
+        Like stand-alone to_fb_model but removes the need to pass in API
+        instance manually
 
-        :param entity_id:
+        :param string entity_id: The entity ID
         :param entity_type:
         :return:
         """
         return to_fb_model(entity_id, entity_type, self.api)
+
+
+def get_default_fields(Model):
+    """
+    Obtain default fields for a given entity type. Note that the entity
+    class must come from the Facebook SDK
+
+    :param Model:
+    :return list: List of fields
+    """
+    assert issubclass(Model, abstractcrudobject.AbstractCrudObject)
+
+    return filter(
+        lambda val: not val.startswith('__'),
+        dir(Model.Field)
+    )
