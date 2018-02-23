@@ -1,6 +1,7 @@
 from collections import namedtuple
 import xxhash
 from facebookads.api import FacebookRequestError
+from facebookads.adobjects import ad
 from typing import Generator
 
 from common.enums.entity import Entity
@@ -72,15 +73,18 @@ def _checksum_entity(entity, fields=None):
         and fields hashed
     """
 
-    # Currently it seems it's not needed, but lets have it here for now for
-    # reference. TODO: Tom - investigate further
+    # Drop fields we don't care about
     blacklist = {
         FB_CAMPAIGN_MODEL: [],
         FB_ADSET_MODEL: [],
-        FB_AD_MODEL: []
+        FB_AD_MODEL: [ad.Ad.Field.recommendations]
     }
 
     fields = fields or get_default_fields(entity.__class__)
+
+    # Run through blacklist
+    fields = filter(lambda f: f not in blacklist[entity.__class__], fields)
+
     raw_data = entity.export_all_data()
 
     data_hash = xxhash.xxh64()
