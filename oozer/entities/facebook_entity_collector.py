@@ -1,13 +1,14 @@
-import random
 from collections import namedtuple
-
+import xxhash
 from facebookads.api import FacebookRequestError
-from typing import Generator, Dict
+from facebookads.adobjects import ad
+from typing import Generator
 
 from common.enums.entity import Entity
 from common.enums.failure_bucket import FailureBucket
+from oozer.common.job_context import JobContext
 from oozer.common import cold_storage
-from oozer.common.facebook_collector import FacebookCollector
+from oozer.common.facebook_api import FacebookApiContext, get_default_fields
 from oozer.common.job_scope import JobScope
 from oozer.common.report_job_status import JobStatus
 from oozer.common.report_job_status_task import report_job_status_task
@@ -32,54 +33,86 @@ class EntityHash(namedtuple('EntityHash', ['data', 'fields'])):
         return self.data == other.data and self.fields == other.fields
 
 
-class FacebookEntityCollector(FacebookCollector):
+def _get_entities_for_adaccount(ad_account, entity_type, fields=None):
+    """
+    Generic getter for entities from the AdAccount edge
 
-    def get_entities_for_adaccount(self, ad_account, entity_type, fields=None):
-        """
-        Generic getter for entities from the AdAccount edge
+    :param AdAccount ad_account: Ad account id
+    :param str entity_type:
+    :param list fields: List of entity fields to fetch
+    :return:
+    """
 
-        :param str ad_account: Ad account id
-        :param str entity_type:
-        :param list fields: List of entity fields to fetch
-        :return:
-        """
-
-        if entity_type not in Entity.ALL:
-            raise ValueError(
-                f'Value of "entity_type" argument must be one of {Entity.ALL}, got {entity_type} instead.'
-            )
-        FBModel = ENUM_VALUE_FB_MODEL_MAP[entity_type]
-
-        ad_account = self._get_ad_account(ad_account)
-
-        getter_method = {
-            FB_CAMPAIGN_MODEL: ad_account.get_campaigns,
-            FB_ADSET_MODEL: ad_account.get_ad_sets,
-            FB_AD_MODEL: ad_account.get_ads
-        }[FBModel]
-
-        fields_to_fetch = fields or self._get_default_fileds(FBModel)
-        yield from getter_method(fields=fields_to_fetch)
-
-    @classmethod
-    def checksum_entity(cls, entity):
-        """
-        Compute a hash of the entity fields that we consider stable, to be able
-        to tell apart entities that have / have not changed in between runs.
-
-        This method requires an intrinsic knowledge of "what the entity is".
-
-        :return EntityHash: The hashes for the entity itself and
-            and fields hashed
-        """
-
-        # Pick stable fields
-        # Use non-cryptographic has over stable fields. (SeaHash?)
-
-        return EntityHash(
-            data=str(random.randint(1, 10000000)),
-            fields='some_hash'
+    if entity_type not in Entity.ALL:
+        raise ValueError(
+            f'Value of "entity_type" argument must be one of {Entity.ALL}, '
+            f'got {entity_type} instead.'
         )
+
+    FBModel = ENUM_VALUE_FB_MODEL_MAP[entity_type]
+
+    getter_method = {
+        FB_CAMPAIGN_MODEL: ad_account.get_campaigns,
+        FB_ADSET_MODEL: ad_account.get_ad_sets,
+        FB_AD_MODEL: ad_account.get_ads
+    }[FBModel]
+
+    fields_to_fetch = fields or get_default_fields(FBModel)
+
+    yield from getter_method(fields=fields_to_fetch)
+
+
+def _checksum_entity(entity, fields=None):
+    """
+    Compute a hash of the entity fields that we consider stable, to be able
+    to tell apart entities that have / have not changed in between runs.
+
+    This method requires an intrinsic knowledge of "what the entity is".
+
+    :return EntityHash: The hashes for the entity itself and
+        and fields hashed
+    """
+
+    # Drop fields we don't care about
+    blacklist = {
+        FB_CAMPAIGN_MODEL: [],
+        FB_ADSET_MODEL: [],
+        FB_AD_MODEL: [ad.Ad.Field.recommendations]
+    }
+
+    fields = fields or get_default_fields(entity.__class__)
+
+    # Run through blacklist
+    fields = filter(lambda f: f not in blacklist[entity.__class__], fields)
+
+    raw_data = entity.export_all_data()
+
+    data_hash = xxhash.xxh64()
+    fields_hash = xxhash.xxh64()
+
+    for field in fields:
+        data_hash.update(str(raw_data.get(field, '')))
+        fields_hash.update(field)
+
+    return EntityHash(
+        data=data_hash.hexdigest(),
+        fields=fields_hash.hexdigest()
+    )
+
+
+def _checksum_from_job_context(job_context, entity_id):
+    """
+    Recreate the EntityHash object from JobContext provided
+
+    :param JobContext job_context: The provided job context
+    :param string entity_id:
+
+    :return EntityHash: The reconstructed EntityHash object
+    """
+    current_hash_raw = job_context.entity_checksums.get(
+        entity_id, (None, None)
+    )
+    return EntityHash(*current_hash_raw)
 
 
 class FacebookEntityJobStatus(JobStatus):
@@ -90,7 +123,8 @@ class FacebookEntityJobStatus(JobStatus):
 
     # Progress states
     Start = 100
-    Progress = 200
+    EntitiesFetched = 200
+    EntityFetched = 200
     InColdStore = 500
 
     # Various error states
@@ -100,26 +134,31 @@ class FacebookEntityJobStatus(JobStatus):
     GenericError = -1000
 
 
-def collect_entities_for_adaccount(entity_type, job_scope, context=None):
+def collect_entities_for_adaccount(entity_type, job_scope, job_context):
     """
     Collects an arbitrary entity for an ad account
 
     :param entity_type: The entity to collect for
     :param JobScope job_scope: The JobScope as we get it from the task itself
-    :param dict context:
+    :param JobContext job_context: A job context we use for entity checksums
     :rtype: Generator[Dict]
     """
-    context = context or {}
 
     # Report start of work
     report_job_status_task.delay(FacebookEntityJobStatus.Start, job_scope)
 
     try:
-        with FacebookEntityCollector(job_scope.token) as collector:
+        with FacebookApiContext(job_scope.token) as context:
 
-            entities = collector.get_entities_for_adaccount(
-                job_scope.ad_account_id,
+            # Fetch us the entities iterator
+            entities = _get_entities_for_adaccount(
+                context.to_fb_model(job_scope.ad_account_id, Entity.AdAccount),
                 entity_type
+            )
+
+            # Report on the effective task status
+            report_job_status_task.delay(
+                FacebookEntityJobStatus.EntitiesFetched, job_scope
             )
 
             job_scope_base_data = job_scope.to_dict()
@@ -127,11 +166,10 @@ def collect_entities_for_adaccount(entity_type, job_scope, context=None):
             for entity in entities:
 
                 # Externalize these for clarity
-                current_hash = EntityHash(
-                    data=context.get(entity['id'], {}).get('data'),
-                    fields=context.get(entity['id'], {}).get('fields')
+                current_hash = _checksum_from_job_context(
+                    job_context, entity['id']
                 )
-                entity_hash = FacebookEntityCollector.checksum_entity(entity)
+                entity_hash = _checksum_entity(entity)
 
                 # Check whether we actually need to put this into the ETL
                 # pipeline it is possible that a given entity has not changed
@@ -150,22 +188,23 @@ def collect_entities_for_adaccount(entity_type, job_scope, context=None):
                 # Signal to the system the new entity
                 feedback_entity_task.delay(entity_data, entity_type, entity_hash)
 
+                # Report on the normative task status
+                report_job_status_task.delay(
+                    FacebookEntityJobStatus.EntityFetched, normative_job_scope
+                )
+
                 # Store the individual datum, use job context for the cold
                 # storage thing to divine whatever it needs from the job context
                 cold_storage.store(entity_data, normative_job_scope)
 
+                # Report on the normative task status
                 report_job_status_task.delay(
-                    FacebookEntityJobStatus.Progress, job_scope
+                    FacebookEntityJobStatus.InColdStore, normative_job_scope
                 )
-
-                # TODO: Based on what we talked about, i don't understand what
-                # this should actually be doing
-                # report_job_status_task.delay(
-                #     FacebookEntityJobStatus.Progress, normative_job_scope
-                # )
 
                 yield entity
 
+        # Report on the effective task status
         report_job_status_task.delay(
             FacebookEntityJobStatus.InColdStore, job_scope
         )

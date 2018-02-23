@@ -2,3 +2,4 @@
 pynamodb==3.2.1
 facebookads==2.11.3
 boto3==1.5.27
+xxhash==1.0.1

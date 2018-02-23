@@ -123,7 +123,6 @@ class TestEntityFeedback(TestCase):
             'hash_fields': 'f_hash'
         }
 
-
     def test_all_upserted(self):
         """
         Check that all entity types get inserted as expected

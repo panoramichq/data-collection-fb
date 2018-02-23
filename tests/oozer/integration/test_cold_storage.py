@@ -1,4 +1,4 @@
-# mustfrom t be first, as it does event loop patching and other "first" things
+# must be first, as it does event loop patching and other "first" things
 from tests.base.testcase import TestCase
 from datetime import datetime
 import uuid
@@ -6,7 +6,6 @@ import boto3
 import config.aws
 import config.build
 import hashlib
-import pytest
 from io import BytesIO
 import pytz
 import dateutil.parser
@@ -16,10 +15,6 @@ from oozer.common import cold_storage, job_scope
 from common import tztools
 
 
-from unittest import skip
-
-
-@skip
 class TestUploadToS3(TestCase):
 
     _s3 = boto3.resource('s3', endpoint_url=config.aws.S3_ENDPOINT)
@@ -103,13 +98,14 @@ class TestUploadToS3(TestCase):
         params = {
             'ad_account_id': test_data[Campaign.Field.account_id],
             'report_type': 'fb_entities_adaccount_campaigns',
-            'report_time': datetime.now(pytz.utc),
+            'report_time': tztools.now_in_tz('UTC'),
             'report_id': uuid.uuid4().hex,
             'request_metadata': {}
         }
 
-        ctx = job_scope.JobScope(**params)
-        storage_key = cold_storage.store(dict(test_data), ctx)
+        scope = job_scope.JobScope(**params)
+
+        storage_key = cold_storage.store(dict(test_data), scope)
 
         account_prefix = hashlib.md5(params['ad_account_id'].encode()) \
             .hexdigest()[:6]
@@ -120,7 +116,7 @@ class TestUploadToS3(TestCase):
                        f'/{params["report_time"].strftime("%Y")}' \
                        f'/{params["report_time"].strftime("%m")}' \
                        f'/{params["report_time"].strftime("%d")}/{zulu_time}-' \
-                       f'{params["report_id"]}.json'
+                       f'{scope.job_id}.json'
 
         assert storage_key == expected_key
 
@@ -137,16 +133,17 @@ class TestUploadToS3(TestCase):
             'request_metadata': {}
         }
 
-        # Create a fixed time in some weird TZ
-        params['report_time'] = dateutil.parser.parse(
-            "2010-01-01T00:00:00-08:00"
-        )
-        ctx = job_scope.JobScope(**params)
+        scope = job_scope.JobScope(**params)
 
         account_prefix = hashlib.md5(params['ad_account_id'].encode()) \
             .hexdigest()[:6]
-        zulu_time = '2010-01-01T08:00:00Z'
+        zulu_time = tztools.dt_to_other_timezone(params['report_time'], 'UTC')
         expected_key = f'facebook/{account_prefix}-1' \
-                       f'/rt/2010/01/01/{zulu_time}-1.json'
+                       f'/rt/' \
+                       f'{zulu_time.strftime("%Y")}/' \
+                       f'{zulu_time.strftime("%m")}/' \
+                       f'{zulu_time.strftime("%d")}/' \
+                       f'{zulu_time.strftime("%Y-%m-%dT%H:%M:%SZ")}-' \
+                       f'{scope.job_id}.json'
 
-        assert cold_storage._context_as_storage_key(ctx) == expected_key
+        assert cold_storage._job_scope_to_storage_key(scope) == expected_key

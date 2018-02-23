@@ -1,4 +1,4 @@
-from common.id_tools import parse_id, generate_id
+from common.id_tools import generate_id
 
 
 class JobScope:
@@ -7,6 +7,9 @@ class JobScope:
     job, be it normative or effective
 
     """
+
+    # System information
+    sweep_id = None
 
     platform = 'facebook'
 
@@ -42,11 +45,6 @@ class JobScope:
         return self.tokens[0]
 
     def to_dict(self):
-        """
-        Celery will need this
-
-        :return dict:
-        """
         return self.__dict__.copy()
 
     @property

@@ -12,48 +12,48 @@ logger = logging.getLogger(__name__)
 
 
 @app.task
-def fb_entities_adaccount_campaigns(job_scope, context):
+def fb_entities_adaccount_campaigns(job_scope, job_context):
     """
     Collect all campaign entities for a given adaccount
 
     :param JobScope job_scope: The dict representation of JobScope
-    :param dict context:
+    :param JobContext job_context:
     """
     cnt = 0
     for fb_model in collect_entities_for_adaccount(
-        Entity.Campaign, job_scope, context
+        Entity.Campaign, job_scope, job_context
     ):
         cnt += 1
     logger.warning(f"fb_entities_adaccount_campaigns {job_scope.ad_account_id}:{cnt}")
 
 
 @app.task
-def fb_entities_adaccount_adsets(job_scope, context):
+def fb_entities_adaccount_adsets(job_scope, job_context):
     """
     Collect all campaign entities for a given adaccount
 
     :param JobScope job_scope: The dict representation of JobScope
-    :param dict context:
+    :param JobContext job_context:
     """
     cnt = 0
     for fb_model in collect_entities_for_adaccount(
-        Entity.AdSet, job_scope, context
+        Entity.AdSet, job_scope, job_context
     ):
         cnt += 1
     logger.warning(f"fb_entities_adaccount_adset {job_scope.ad_account_id}:{cnt}")
 
 
 @app.task
-def fb_entities_adaccount_ads(job_scope, context):
+def fb_entities_adaccount_ads(job_scope, job_context):
     """
     Collect all campaign entities for a given adaccount
 
     :param JobScope job_scope: The dict representation of JobScope
-    :param dict context:
+    :param JobContext job_context:
     """
     cnt = 0
     for fb_model in collect_entities_for_adaccount(
-        Entity.Ad, job_scope, context
+        Entity.Ad, job_scope, job_context
     ):
         cnt += 1
     logger.warning(f"fb_entities_adaccount_ad {job_scope.ad_account_id}:{cnt}")
