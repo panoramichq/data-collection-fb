@@ -54,8 +54,9 @@ def _job_scope_to_storage_key(job_scope):
           f'{zulu_time}-{job_scope.job_id}.json'
 
     # need this to make it work in local fake S3
-    return key.replace(':', '_')
+    # return key.replace(':', '_')
 
+    return key
 
 def store(data, job_scope):
     """
