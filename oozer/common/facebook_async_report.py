@@ -29,10 +29,10 @@ class FacebookReportDefinition:
     # use_account_attribution_setting = None
 
     def __init__(self, **kwargs):
-        self._params = kwargs
+        self.__dict__.update(kwargs)
 
-    def as_params_dict(self):
-        return self._params
+    def to_dict(self):
+        return self.__dict__.copy()
 
 
 class FacebookAsyncReportStatus:

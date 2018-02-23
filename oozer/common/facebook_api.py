@@ -49,11 +49,12 @@ def get_default_fields(Model):
     class must come from the Facebook SDK
 
     :param Model:
-    :return list: List of fields
+    :return generator: List of fields
     """
     assert issubclass(Model, abstractcrudobject.AbstractCrudObject)
 
-    return filter(
-        lambda val: not val.startswith('__'),
-        dir(Model.Field)
-    )
+    for field_name in dir(Model.Field):
+        if field_name.startswith('__'):
+            continue
+
+        yield getattr(Model.Field, field_name)

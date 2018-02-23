@@ -60,9 +60,11 @@ def report_job_status(stage_status, job_scope):
     if stage_id < 0 and failure_bucket is None:
         failure_bucket = FailureBucket.Other
 
-    # Sanity check
+    # Sanity checks
     if stage_id >= 0:
         assert failure_bucket is None
+
+    assert job_scope.sweep_id and job_scope.job_id, "Sweep or job id missing"
 
     FacebookSweepEntityReport(
         job_scope.sweep_id, job_scope.job_id,
