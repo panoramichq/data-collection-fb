@@ -5,7 +5,9 @@ from tests.base.testcase import TestCase, integration
 from common.enums.entity import Entity
 from config.facebook import TOKEN, AD_ACCOUNT
 from oozer.common.job_scope import JobScope
-from oozer.entities.facebook_entity_collector import FacebookEntityCollector, collect_entities_for_adaccount
+from oozer.common.facebook_api import FacebookApiContext
+from oozer.entities.facebook_entity_collector import \
+    collect_entities_for_adaccount, _get_entities_for_adaccount
 
 
 @integration
@@ -13,8 +15,8 @@ class TestingEntityCollection(TestCase):
 
     def test_fetch_all_campaigns(self):
 
-        with FacebookEntityCollector(TOKEN) as collector:
-            entities = collector.get_entities_for_adaccount(
+        with FacebookApiContext(TOKEN) as ctx:
+            entities = _get_entities_for_adaccount(
                 AD_ACCOUNT,
                 Entity.Campaign
             )
@@ -27,8 +29,8 @@ class TestingEntityCollection(TestCase):
 
     def test_fetch_all_adsets(self):
 
-        with FacebookEntityCollector(TOKEN) as collector:
-            entities = collector.get_entities_for_adaccount(
+        with FacebookApiContext(TOKEN) as ctx:
+            entities = _get_entities_for_adaccount(
                 AD_ACCOUNT,
                 Entity.AdSet
             )
@@ -41,8 +43,8 @@ class TestingEntityCollection(TestCase):
 
     def test_fetch_all_ads(self):
 
-        with FacebookEntityCollector(TOKEN) as collector:
-            entities = collector.get_entities_for_adaccount(
+        with FacebookApiContext(TOKEN) as ctx:
+            entities = _get_entities_for_adaccount(
                 AD_ACCOUNT,
                 Entity.Ad
             )

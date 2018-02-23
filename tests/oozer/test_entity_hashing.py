@@ -3,15 +3,14 @@ from tests.base.testcase import TestCase
 from datetime import datetime
 import pytz
 from facebookads.adobjects.campaign import Campaign
-import pytest
 
 from oozer.common import job_scope
 from common.enums.entity import Entity
 
 from config.facebook import AD_ACCOUNT, TOKEN
 
-from oozer.entities.facebook_entity_collector import \
-    FacebookEntityCollector, EntityHash
+from oozer.entities.facebook_entity_collector import EntityHash, \
+    _checksum_entity
 
 
 class TestEntityHasher(TestCase):
@@ -36,7 +35,7 @@ class TestEntityHasher(TestCase):
         return c
 
     def test_hash_calculation(self):
-        checksum = FacebookEntityCollector.checksum_entity(
+        checksum = _checksum_entity(
             self._manufacture_test_entity()
         )
 
@@ -47,7 +46,7 @@ class TestEntityHasher(TestCase):
 
     def test_field_selection(self):
         entity = self._manufacture_test_entity()
-        checksum = FacebookEntityCollector.checksum_entity(
+        checksum = _checksum_entity(
             entity, ['account_id', 'buying_type']
         )
 
@@ -58,7 +57,7 @@ class TestEntityHasher(TestCase):
 
         # Check changing of value not selected does not break anything
         entity['budget_rebalance_flag'] = 'whatever'
-        checksum = FacebookEntityCollector.checksum_entity(
+        checksum = _checksum_entity(
             entity, ['account_id', 'buying_type']
         )
 
@@ -66,4 +65,3 @@ class TestEntityHasher(TestCase):
             data='298161fe360af3f3',
             fields='1558fc6663140a4e'
         )
-
