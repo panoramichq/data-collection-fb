@@ -1,15 +1,10 @@
 import gevent
-import time
 
 from typing import Generator, Dict
+from oozer.common.job_context import JobContext
 
 from facebookads.adobjects.adreportrun import AdReportRun
-from facebookads.adobjects.adsinsights import AdsInsights
-
-from oozer.common.facebook_api import FacebookApiContext
 from oozer.common.facebook_async_report import FacebookAsyncReportStatus
-from oozer.common.enum import to_fb_model
-from common.enums.entity import Entity
 from oozer.common.job_scope import JobScope
 
 
@@ -66,10 +61,12 @@ def _generate_report_args(job_scope):
     # level object type
 
 
-
-def collect_insights(job_scope):
+def collect_insights(job_scope, job_context=None):
     """
     :param JobScope job_scope: The JobScope as we get it from the task itself
+    :param JobContext job_context: A job context we use for normative tasks
+        reporting
     """
 
     fb_entity, report_params = _generate_report_args(job_scope)
+    job_context = job_context or JobContext()

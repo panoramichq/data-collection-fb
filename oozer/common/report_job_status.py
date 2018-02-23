@@ -1,6 +1,8 @@
 import logging
 from common.enums.failure_bucket import FailureBucket
 
+from common.store.sweepentityreport import FacebookSweepEntityReport
+
 logger = logging.getLogger(__name__)
 
 
@@ -62,4 +64,13 @@ def report_job_status(stage_status, job_scope):
     if stage_id >= 0:
         assert failure_bucket is None
 
-    logger.warning(f"#: {stage_id} {job_scope.job_id} ({failure_bucket})")
+    FacebookSweepEntityReport(
+        job_scope.sweep_id, job_scope.job_id,
+        report_type=job_scope.report_type,
+        ad_account_id=job_scope.ad_account_id,
+        entity_id=job_scope.entity_id,
+        entity_type=job_scope.entity_type,
+        stage_id=stage_id, failure_bucket=failure_bucket
+    ).save()
+
+    logger.debug(f"#: {stage_id} {job_scope.job_id} ({failure_bucket})")
