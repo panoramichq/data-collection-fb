@@ -114,8 +114,14 @@ DEFAULT_REPORT_FIELDS = [
     # 'unique_social_clicks',
 ]
 
-DEFAULT_ATTRIBUTION_WINDOWS = ['1d_view', '7d_view', '28d_view', '1d_click', '7d_click', '28d_click']
-
+DEFAULT_ATTRIBUTION_WINDOWS = [
+    AdsInsights.ActionAttributionWindows.value_1d_view,
+    AdsInsights.ActionAttributionWindows.value_7d_view,
+    AdsInsights.ActionAttributionWindows.value_28d_view,
+    AdsInsights.ActionAttributionWindows.value_1d_click,
+    AdsInsights.ActionAttributionWindows.value_7d_click,
+    AdsInsights.ActionAttributionWindows.value_28d_click,
+]
 
 class FacebookInsightsJobStatus(JobStatus):
     """
