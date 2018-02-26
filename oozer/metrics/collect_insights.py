@@ -37,6 +37,86 @@ REPORT_TYPE_FB_BREAKDOWN_ENUM = {
 }
 
 
+DEFAULT_REPORT_FIELDS = [
+    AdsInsights.Field.account_id,
+    AdsInsights.Field.campaign_id,
+    AdsInsights.Field.adset_id,
+    AdsInsights.Field.ad_id,
+
+    # Non-unique
+
+    # Essential
+    AdsInsights.Field.spend,
+    AdsInsights.Field.impressions,
+    AdsInsights.Field.clicks,
+    AdsInsights.Field.actions,
+    AdsInsights.Field.video_p25_watched_actions,
+    AdsInsights.Field.video_p50_watched_actions,
+    AdsInsights.Field.video_p75_watched_actions,
+    AdsInsights.Field.video_p95_watched_actions,
+    AdsInsights.Field.video_p100_watched_actions,
+    AdsInsights.Field.video_10_sec_watched_actions,
+    AdsInsights.Field.video_30_sec_watched_actions,
+
+    # Good to have
+    AdsInsights.Field.cost_per_action_type,
+    AdsInsights.Field.cpm,
+    AdsInsights.Field.cpp,
+    AdsInsights.Field.ctr,
+    AdsInsights.Field.cpc,
+    AdsInsights.Field.relevance_score,
+
+    AdsInsights.Field.video_avg_time_watched_actions,
+    AdsInsights.Field.video_avg_percent_watched_actions,
+
+    # Not sure
+    # AdsInsights.Field.action_values,
+    # 'inline_link_clicks',
+    # 'inline_post_engagement',
+    # 'social_clicks',
+    # 'social_impressions',
+    # 'social_reach',
+    # 'social_spend',
+    #
+    # 'action_values',
+    # 'buying_type',
+    # 'call_to_action_clicks',
+    # 'cost_per_10_sec_video_view',
+    # 'cost_per_estimated_ad_recallers',
+    # 'cost_per_inline_link_click',
+    # 'cost_per_inline_post_engagement',
+    # 'cost_per_total_action',
+    # 'estimated_ad_recall_rate',
+    # 'estimated_ad_recallers',
+    # 'total_action_value',
+    # 'video_10_sec_watched_actions',
+    # 'video_30_sec_watched_actions',
+    # 'website_ctr',
+
+
+    # Unique
+
+    # Essential
+    AdsInsights.Field.unique_actions,
+    AdsInsights.Field.reach,
+
+    # Good to have
+    AdsInsights.Field.frequency,
+    AdsInsights.Field.cost_per_unique_action_type,
+
+    # Not sure
+    # 'cost_per_unique_click',
+    # 'total_unique_actions',
+    #
+    # 'unique_clicks',
+    # 'unique_ctr',
+    # 'unique_link_clicks_ctr',
+    # 'unique_social_clicks',
+]
+
+DEFAULT_ATTRIBUTION_WINDOWS = ['1d_view', '7d_view', '28d_view', '1d_click', '7d_click', '28d_click']
+
+
 class FacebookInsightsJobStatus(JobStatus):
     """
     Use this to communicate to give status reporter enough information to
