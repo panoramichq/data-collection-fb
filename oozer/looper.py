@@ -1,4 +1,4 @@
-from typing import Generator
+from typing import Generator, Tuple
 
 from common.connect.redis import get_redis
 from common.enums.reporttype import ReportType
@@ -31,24 +31,30 @@ def iter_tasks_from_redis_zkey(zkey):
 def get_tasks_map():
     # inside of function call to avoid circular import errors
 
-    from oozer.entities.tasks import (
-        fb_entities_adaccount_campaigns,
-        fb_entities_adaccount_adsets,
-        fb_entities_adaccount_ads
-    )
+    from oozer.entities.tasks import collect_entities_per_adaccount_task
+    from oozer.metrics.tasks import collect_insights_task
 
-    from oozer.metrics.tasks import (
-        fb_insights_adaccount_campaigns_lifetime
-    )
-
+    # handlers are often the same for each type because they
+    # look at JobScope to figure out the particular data collection mode
     return {
         ReportType.entities: {
-            Entity.Campaign: fb_entities_adaccount_campaigns,
-            Entity.AdSet: fb_entities_adaccount_adsets,
-            Entity.Ad: fb_entities_adaccount_ads,
+            Entity.Campaign: collect_entities_per_adaccount_task,
+            Entity.AdSet: collect_entities_per_adaccount_task,
+            Entity.Ad: collect_entities_per_adaccount_task,
         },
         ReportType.lifetime: {
-            Entity.Campaign: fb_insights_adaccount_campaigns_lifetime
+            Entity.Campaign: collect_insights_task,
+            Entity.AdSet: collect_insights_task,
+            Entity.Ad: collect_insights_task,
+        },
+        ReportType.day_age_gender: {
+            Entity.Ad: collect_insights_task
+        },
+        ReportType.day_dma: {
+            Entity.Ad: collect_insights_task
+        },
+        ReportType.day_hour: {
+            Entity.Ad: collect_insights_task
         }
     }
 
@@ -58,7 +64,7 @@ def iter_tasks(sweep_id):
     Persist prioritized jobs and pass-through context objects for inspection
 
     :param str sweep_id:
-    :rtype: Generator[PrioritizationClaim]
+    :rtype: Generator[Tuple[CeleryTask, JobScope, JobContext]]
     """
     from config.facebook import TOKEN
 
@@ -76,16 +82,21 @@ def iter_tasks(sweep_id):
         if celery_task:
             job_scope = JobScope(
                 parts,
+                sweep_id=sweep_id,
                 tokens=[TOKEN]
             )
 
             # TODO: Add job context, at minimum entity hash data. TBD how to get
             # this, could be Dynamo directly, or prepared by the sweep builder
             # and sent along
-            job_context = JobContext(
+            job_context = JobContext()
 
-            )
+            yield celery_task, job_scope, job_context
 
-            celery_task.delay(job_scope, job_context)
 
-        yield job_id
+def run_tasks(sweep_id):
+    cnt = 0
+    for celery_task, job_scope, job_context in iter_tasks(sweep_id):
+        celery_task.delay(job_scope, job_context)
+        cnt += 1
+    return cnt

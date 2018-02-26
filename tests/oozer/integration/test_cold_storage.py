@@ -1,18 +1,24 @@
 # must be first, as it does event loop patching and other "first" things
 from tests.base.testcase import TestCase
-from datetime import datetime
-import uuid
+
 import boto3
 import config.aws
 import config.build
 import hashlib
-from io import BytesIO
+import json
+import uuid
 import pytz
-import dateutil.parser
 
-from facebookads.adobjects.campaign import Campaign
-from oozer.common import cold_storage, job_scope
+from datetime import datetime
+from io import BytesIO
+
 from common import tztools
+from common.enums.entity import Entity
+from common.enums.reporttype import ReportType
+from facebookads.adobjects.campaign import Campaign
+from oozer.common import cold_storage
+from oozer.common.job_scope import JobScope
+from tests.base.random import get_string_id
 
 
 class TestUploadToS3(TestCase):
@@ -20,14 +26,21 @@ class TestUploadToS3(TestCase):
     _s3 = boto3.resource('s3', endpoint_url=config.aws.S3_ENDPOINT)
     _bucket = _s3.Bucket(config.aws.S3_BUCKET_NAME)
 
-    def _fake_data_factory(self):
+    def setUp(self):
+        super().setUp()
+
+        self.campaign_id = get_string_id()
+        self.ad_account_id = get_string_id()
+
+    def _fake_data_factory(self, fbid=None, **data):
         """
         Fake campaign factory for testing purposes
 
         :return Campaign: Facebook SDK campaign object
         """
-        test_campaign = Campaign('123123123')
-        test_campaign[Campaign.Field.account_id] = '98989898'
+        test_campaign = Campaign(self.campaign_id)
+        test_campaign[Campaign.Field.account_id] = self.ad_account_id
+        test_campaign.update(data)
         return test_campaign
 
     def _get_s3_object(self, key):
@@ -48,30 +61,39 @@ class TestUploadToS3(TestCase):
         """
         Test the basic upload
         """
-        known_object_contents = b'{"id": "123123123", "account_id": "98989898"}'
+        known_object_contents = f'{{"id": "{self.campaign_id}", "account_id": "{self.ad_account_id}"}}'.encode('utf8')
 
-        test_data = self._fake_data_factory()
-
-        ctx = job_scope.JobScope(
-            ad_account_id=test_data[Campaign.Field.account_id],
-            report_type='fb_entities_adaccount_campaigns',
-            report_time=datetime.now(pytz.utc),
-            report_id=uuid.uuid4().hex,
-            request_metadata={}
+        test_campaign = self._fake_data_factory(
+            self.campaign_id,
+            **{
+                Campaign.Field.account_id: self.ad_account_id
+            }
         )
 
-        storage_key = cold_storage.store(dict(test_data), ctx)
+        job_scope = JobScope(
+            ad_account_id=self.ad_account_id,
+            entity_id=self.campaign_id,
+            entity_type=Entity.Campaign,
+            report_type=ReportType.entities,
+            range_start='2017-12-31',
+        )
+
+        storage_key = cold_storage.store(
+            test_campaign.export_all_data(),
+            job_scope
+        )
+
         _, fileobj_under_test = self._get_s3_object(storage_key)
 
         # Assert the contents
-        assert fileobj_under_test.read() == known_object_contents
+        assert json.load(fileobj_under_test) == {"id": self.campaign_id, "account_id": self.ad_account_id}
 
     def test_metadata_stored(self):
         """
         Check we have stored the expected metadata
         """
         test_data = self._fake_data_factory()
-        ctx = job_scope.JobScope(
+        ctx = JobScope(
             ad_account_id=test_data[Campaign.Field.account_id],
             report_type='fb_entities_adaccount_campaigns',
             report_time=datetime.now(pytz.utc),
@@ -103,7 +125,7 @@ class TestUploadToS3(TestCase):
             'request_metadata': {}
         }
 
-        scope = job_scope.JobScope(**params)
+        scope = JobScope(**params)
 
         storage_key = cold_storage.store(dict(test_data), scope)
 
@@ -133,7 +155,7 @@ class TestUploadToS3(TestCase):
             'request_metadata': {}
         }
 
-        scope = job_scope.JobScope(**params)
+        scope = JobScope(**params)
 
         account_prefix = hashlib.md5(params['ad_account_id'].encode()) \
             .hexdigest()[:6]

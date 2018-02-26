@@ -1,1 +1,1 @@
-from .facebook_metrics_collector_tasks import fb_insights_adaccount_campaigns_lifetime
+from .collect_insights_task import collect_insights_task

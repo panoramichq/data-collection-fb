@@ -7,8 +7,8 @@ from config.facebook import TOKEN, AD_ACCOUNT
 from oozer.common.job_scope import JobScope
 from oozer.common.facebook_api import FacebookApiContext
 from oozer.common.job_context import JobContext
-from oozer.entities.facebook_entity_collector import \
-    collect_entities_for_adaccount, _get_entities_for_adaccount
+from oozer.entities.collect_entities_per_adaccount import \
+    iter_collect_entities_per_adaccount, iter_native_entities_per_adaccount
 
 
 @integration
@@ -19,7 +19,7 @@ class TestingEntityCollection(TestCase):
         with FacebookApiContext(TOKEN) as ctx:
             ad_account = ctx.to_fb_model(AD_ACCOUNT, Entity.AdAccount)
 
-            entities = _get_entities_for_adaccount(
+            entities = iter_native_entities_per_adaccount(
                 ad_account,
                 Entity.Campaign
             )
@@ -35,7 +35,7 @@ class TestingEntityCollection(TestCase):
         with FacebookApiContext(TOKEN) as ctx:
             ad_account = ctx.to_fb_model(AD_ACCOUNT, Entity.AdAccount)
 
-            entities = _get_entities_for_adaccount(
+            entities = iter_native_entities_per_adaccount(
                 ad_account,
                 Entity.AdSet
             )
@@ -51,7 +51,7 @@ class TestingEntityCollection(TestCase):
         with FacebookApiContext(TOKEN) as ctx:
             ad_account = ctx.to_fb_model(AD_ACCOUNT, Entity.AdAccount)
 
-            entities = _get_entities_for_adaccount(
+            entities = iter_native_entities_per_adaccount(
                 ad_account,
                 Entity.Ad
             )
@@ -73,15 +73,16 @@ class TestingEntityCollectionPipeline(TestCase):
             tokens=[TOKEN],
             report_time=datetime.utcnow(),
             report_type='entities',
+            report_variant=Entity.Campaign,
             sweep_id='1'
         )
 
-        fb_models = collect_entities_for_adaccount(
-            Entity.Campaign, job_scope, JobContext()
+        data_iter = iter_collect_entities_per_adaccount(
+            job_scope, JobContext()
         )
 
         cnt = 0
-        for fb_model in fb_models:
+        for datum in data_iter:
             cnt += 1
             if cnt == 4:
                 break

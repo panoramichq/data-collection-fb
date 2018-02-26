@@ -33,7 +33,6 @@ class ReportType:
     # An effort is made to avoid using separator-type characters (: | _ etc) in the values
     # because these are often used as fragments in compound IDs that use separator type characters.
 
-    entity = 'entity'  # singe entity pull
     entities = 'entities'  # multiple entities per some parent
 
     lifetime = 'lifetime'

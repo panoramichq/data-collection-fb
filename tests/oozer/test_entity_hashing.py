@@ -9,7 +9,7 @@ from common.enums.entity import Entity
 
 from config.facebook import AD_ACCOUNT, TOKEN
 
-from oozer.entities.facebook_entity_collector import EntityHash, \
+from oozer.entities.collect_entities_per_adaccount import EntityHash, \
     _checksum_entity
 
 
