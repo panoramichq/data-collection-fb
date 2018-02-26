@@ -4,11 +4,13 @@
 .python-version
 __pycache__
 
-.*/
-
 # IDE
 .idea
 *.sw[mnop]
+
+# Local dot files
+.*/
+!.circleci/
 
 # Local dynamo data files
 dynamodata/*.db
