@@ -35,6 +35,9 @@ class JobScope:
         # Normalize few things
         self.metadata = self.metadata or {}
 
+    def __repr__(self):
+        return f'<JobScope {self.sweep_id}:{self.job_id}>'
+
     def update(self, *args, **kwargs):
         for arg in args:
             self.__dict__.update(arg)
