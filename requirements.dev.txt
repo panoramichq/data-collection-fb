@@ -52,7 +52,9 @@ s3transfer==0.1.13
 simplegeneric==0.8.1      # via ipython
 six==1.11.0
 traitlets==4.3.2          # via ipython
+ujson==1.35
 urllib3==1.22
 uvloop==0.9.1
 vine==1.1.4
 wcwidth==0.1.7            # via prompt-toolkit
+xxhash==1.0.1
