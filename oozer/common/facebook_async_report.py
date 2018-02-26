@@ -99,7 +99,7 @@ class FacebookAsyncReportStatus:
         """
         return self.status in self.SUCCEEDED_STATE
 
-    def iter_report_data(self):
+    def iter_report_data(self, *args, **kwargs):
         """
         :return:
         """
@@ -112,7 +112,7 @@ class FacebookAsyncReportStatus:
         # just iterate through it and you are guarantee to get them all that way.
 
         ads_insights_object = None  # type: AdsInsights
-        for ads_insights_object in self._report.get_insights():
+        for ads_insights_object in self._report.get_insights(*args, **kwargs):
             # .export_all_data converts AdsInsights back into pure dict
             # with native keys and *native* nested values.
             yield ads_insights_object.export_all_data()
