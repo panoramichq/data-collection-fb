@@ -293,7 +293,9 @@ class JobScopeParsed:
             )
         # cool. we are in the right place...
 
-        self.report_params = {}
+        self.report_params = {
+            'fields': DEFAULT_REPORT_FIELDS
+        }
 
         # Next is (a) vs (b) - abstraction level determination
         is_per_parent_report = not job_scope.entity_id and job_scope.report_variant in Entity.ALL
