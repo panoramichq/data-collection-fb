@@ -26,6 +26,7 @@ services:
       - redis
       - dynamo
     environment:
+      APP_LOGGING_LEVEL: 'INFO'
       APP_CELERY_task_eager_propagates: "true"
       APP_CELERY_task_always_eager: "true"
     command: bash
