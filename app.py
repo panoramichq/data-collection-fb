@@ -24,6 +24,10 @@ common.patch.patch_event_loop()
 import argparse
 import sys
 
+from common.configure_logging import configure_logging
+configure_logging()
+
+
 from common.celeryapp import RoutingKey, get_celery_app, pad_with_build_id
 
 

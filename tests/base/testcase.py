@@ -7,6 +7,9 @@ patch_facebook_sdk()
 from unittest import TestCase as _TestCase, skip
 from config.facebook import AD_ACCOUNT, AD_ACCOUNT_TIME_ZONE, TOKEN
 
+from common.configure_logging import configure_logging
+configure_logging()
+
 
 class TestCase(_TestCase):
     """
