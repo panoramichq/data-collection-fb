@@ -13,12 +13,13 @@ def echo(message='This is Long-Running queue'):
 
 
 @app.task(routing_key=RoutingKey.longrunning)
-def sweep_builder_task(sweep_id):
+def sweep_builder_task(sweep_id, start_looper=True):
 
     from datetime import datetime
     from pytz import UTC
     from common.tztools import dt_to_timestamp
     from .persister import iter_persist_prioritized
+    from oozer.tasks import sweep_looper_task
 
     sweep_id = sweep_id or dt_to_timestamp(
         datetime.now().replace(tzinfo=UTC)
@@ -33,3 +34,5 @@ def sweep_builder_task(sweep_id):
             logger.info(f'Queued up claim #{cnt}')
 
     logger.info(f"#{sweep_id}: Queued up {cnt} tasks")
+
+    sweep_looper_task.delay(sweep_id)
