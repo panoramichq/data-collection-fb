@@ -253,6 +253,127 @@ class TaskOozer():
         pass
 
 
+# attr names are same as names of attrs in FailureBucket enum
+Pulse = namedtuple(
+    'Pulse',
+    list(FailureBucket.attr_name_enum_value_map.keys()) + ['Total']
+)
+
+
+class SweepStatusTracker():
+
+    def __init__(self, sweep_id):
+        self.sweep_id = sweep_id
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        # kill outstanding tasks?
+        pass
+
+    def _gen_key(self, minute):
+        return f'{self.sweep_id}:{minute}:{self.__class__.__name__}'
+
+    @staticmethod
+    def now_in_minutes():
+        return int(time.time()/60)
+
+    def report_status(self, failure_bucket=None):
+        """
+        Every effective job calls this to indicate done-ness and severity of done-ness
+
+        The action taken is very specific to SweepStatusTracker and its use by SweepLooper
+        Whatever happens here, has no greater meaning, except to help Looper exit early.
+
+        :param failure_bucket: A value from FailureBucket enum.
+        """
+
+        # status data is stored in '{self.sweep_id}:{minute}' keys which values are
+        # hash objects. Inside the hash, the keys are values of FailureBucket enum
+        # (except stringified)
+        # Thus, within given minute, various tasks' status reports will fall into same
+        # outter key, inside of which value for each of inner keys will be growing,
+        # until we fall onto next minute, when we start fresh.
+
+        key = self._gen_key(self.now_in_minutes())
+        get_redis().hincrby(key, failure_bucket or FailureBucket.Success)
+
+    def _get_trailing_minutes_data(self, minute):
+        # This mess is here just to get through the annoyance
+        # of beating what used to be ints as keys AND values
+        # back into ints from strings (into which Redis beats non-string
+        # keys and values)
+        rr = get_redis()
+        return [
+            {
+                int(k): int(v)
+                for k, v in rr.hgetall(
+                self._gen_key(minute-i)
+            ).items()
+            }
+            for i in range(0, 4)
+        ]
+
+    def get_pulse(self, minute=None, ignore_cache=False):
+        """
+        This calculates some aggregate of status for the most recent jobs
+
+        Meaning of this is very particular to the use in Looper. No grand magic.
+
+        :return:
+        """
+
+        minute = minute or self.now_in_minutes()
+
+        m0, m1, m2, m3 = self._get_trailing_minutes_data(minute)
+
+        # merge data from minute zero and minute one
+        # because minute zero might have only started
+        # and making proportional success estimates based
+        # just on it is too early
+        for k, v in m0.items():
+            m1[k] = m1.get(k, 0) + v
+
+        result = {
+            FailureBucket.Success: 0,
+            FailureBucket.Other: 0,
+            FailureBucket.Throttling: 0,
+            FailureBucket.TooLarge: 0
+        }
+
+        # Now the proportion of successes, failure
+        # is calculated per each minute. Then those
+        # proportions are weighted by ratio related to recency
+        # of that time slice. Then all of proportions are
+        # rolled up by type.
+        # Note, that what you get as a result in each failure
+        # bucket category is NOT a true proportion to total population
+        # but a quasi-score that is heavily proportion-derived.
+        # The goal here is to accentuate most recent
+        # success-vs-failure proportions, with padding of more
+        # distant proportions.
+        # Since these are voodoo numbers, feel free to rejiggle this formula,
+        # but must adapt uses of them in looper below.
+        total_total = 0
+        for data, ratio in zip([m1, m2, m3], [80, 15, 5]):
+            total = sum(data.values())
+            if total:
+                total_total += total
+                for k in list(result.keys()):
+                    result[k] = result[k] + ratio * data.get(k, 0) / total
+
+        pulse = Pulse(
+            Total=total_total,
+            **{
+                name: int(result.get(enum_value, 0))
+                for name, enum_value in FailureBucket.attr_name_enum_value_map.items()
+            }
+        )
+
+        return pulse
+
+
 def run_tasks(sweep_id, limit=None, time_slices=FB_THROTTLING_WINDOW, time_slice_length=1):
     """
     Oozes tasks gradually into Celery workers queue, accounting for total number of tasks
@@ -274,11 +395,29 @@ def run_tasks(sweep_id, limit=None, time_slices=FB_THROTTLING_WINDOW, time_slice
         # If we burn through tasks earlier as a result of that assumption - fine.
         n = time_slices * 10
 
+    max_running_time_seconds = time_slices * time_slice_length
+    be_done_by = time.time() + max_running_time_seconds
+
     cnt = 0
+    _pulse_refresh_interval = 5  # seconds
+    sweep_tracker = SweepStatusTracker(sweep_id)
     tasks_iter = iter_tasks(sweep_id)
 
     with TaskOozer(n, time_slices, time_slice_length) as ooze_task:
+        next_pulse_review_second = time.time() - 1  # set in past to force refresh
         for celery_task, job_scope, job_context in tasks_iter:
+
+            if next_pulse_review_second < time.time():
+                pulse = sweep_tracker.get_pulse()  # type: Pulse
+                if pulse.Total > 20:
+                    if pulse.Success < 20:
+                        # failures across the board
+                        return cnt
+                    if pulse.Throttling > 40:
+                        # time to give it a rest
+                        return cnt
+                next_pulse_review_second = time.time() + _pulse_refresh_interval
+
             # FYI: ooze_task blocks if we pushed too many tasks in the allotted time
             # It will unblock by itself when it's time to release the task
             ooze_task(celery_task, job_scope, job_context)
