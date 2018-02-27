@@ -1,7 +1,9 @@
 import logging
-from common.enums.failure_bucket import FailureBucket
 
+from common.enums.failure_bucket import FailureBucket
 from common.store.sweepentityreport import FacebookSweepEntityReport
+from oozer.common.job_scope import JobScope
+
 
 logger = logging.getLogger(__name__)
 
@@ -48,6 +50,10 @@ def report_job_status(stage_status, job_scope):
     :param JobScope job_scope: The job scope that is attached to this particular
         report
     """
+    # This will be refactored at the souce
+    # TODO: move this import to top of file then
+    from oozer.looper import SweepStatusTracker
+
     failure_bucket = None
 
     # Unpack status and failure bucket
@@ -66,13 +72,18 @@ def report_job_status(stage_status, job_scope):
 
     assert job_scope.sweep_id and job_scope.job_id, "Sweep or job id missing"
 
+    if not job_scope.is_derivative:
+        with SweepStatusTracker(job_scope.sweep_id) as tracker:
+            tracker.report_status(failure_bucket)
+
     FacebookSweepEntityReport(
         job_scope.sweep_id, job_scope.job_id,
         report_type=job_scope.report_type,
         ad_account_id=job_scope.ad_account_id,
         entity_id=job_scope.entity_id,
         entity_type=job_scope.entity_type,
-        stage_id=stage_id, failure_bucket=failure_bucket
+        stage_id=stage_id,
+        failure_bucket=failure_bucket
     ).save()
 
     logger.debug(f"#: {stage_id} {job_scope.job_id} ({failure_bucket})")

@@ -161,8 +161,11 @@ def NaturallyNormativeChildStore(job_scope):
     job_scope_base_data = job_scope.to_dict()
     # since we are converting per-parent into per-child
     # job signature, report_variant cannot be set
-    job_scope_base_data.pop('report_variant')
-    job_scope_base_data['entity_type'] = normative_entity_type
+    job_scope_base_data.update(
+        entity_type=normative_entity_type,
+        is_derivative=True, # this keeps the scope from being counted as done task by looper
+        report_variant=None,
+    )
 
     assert normative_entity_type in Entity.ALL
 

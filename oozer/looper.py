@@ -4,6 +4,7 @@ import time
 
 from collections import namedtuple
 from contextlib import contextmanager
+from itertools import islice
 from typing import Generator, Tuple
 
 from common.connect.redis import get_redis
@@ -401,7 +402,10 @@ def run_tasks(sweep_id, limit=None, time_slices=FB_THROTTLING_WINDOW, time_slice
     cnt = 0
     _pulse_refresh_interval = 5  # seconds
     sweep_tracker = SweepStatusTracker(sweep_id)
+
     tasks_iter = iter_tasks(sweep_id)
+    if limit:
+        tasks_iter = islice(tasks_iter, 0, limit)
 
     with TaskOozer(n, time_slices, time_slice_length) as ooze_task:
         next_pulse_review_second = time.time() - 1  # set in past to force refresh
