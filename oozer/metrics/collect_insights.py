@@ -14,7 +14,10 @@ from common.enums.failure_bucket import FailureBucket
 from common.enums.reporttype import ReportType
 from facebookads.adobjects.adreportrun import AdReportRun
 from oozer.common import cold_storage
-from oozer.common.facebook_api import FacebookApiContext
+from oozer.common.facebook_api import (
+    FacebookApiContext,
+    FacebookApiErrorInspector
+)
 from oozer.common.facebook_async_report import FacebookAsyncReportStatus
 from oozer.common.job_context import JobContext
 from oozer.common.job_scope import JobScope
@@ -422,17 +425,27 @@ def iter_collect_insights(job_scope, job_context):
         )
 
     except FacebookRequestError as e:
-        # Check for this
-        # error_code = 100,  CodeException (error subcode: 1487534)
-        # ^ means we asked for too much data
+        # Build ourselves the error inspector
+        inspector = FacebookApiErrorInspector(e)
 
-        # Inspect the exception for FB exceptions, so we can understand what's
-        # going on
-        report_job_status_task.delay(
-            FacebookInsightsJobStatus.GenericFacebookError, job_scope,
-        )
+        # Is this a throttling error?
+        if inspector.is_throttling_exception():
+            report_job_status_task.delay(
+                FacebookInsightsJobStatus.ThrottlingError, job_scope
+            )
+
+        # Did we ask for too much data?
+        elif inspector.is_too_large_data_exception():
+            report_job_status_task.delay(
+                FacebookInsightsJobStatus.TooMuchData, job_scope
+            )
+
+        # It's something else which we don't understand
+        else:
+            report_job_status_task.delay(
+                FacebookInsightsJobStatus.GenericFacebookError, job_scope,
+            )
         raise
-
     except Exception:
         # This is a generic failure, which does not help us at all, so, we just
         # report it and bail
