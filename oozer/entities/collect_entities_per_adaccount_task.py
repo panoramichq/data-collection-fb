@@ -33,6 +33,7 @@ def collect_entities_per_adaccount_task(job_scope, job_context):
     # but need to spin the generator to work through entire list of work.
     # Generators are lazy. They don't do anything unless you consume from them
     for datum in data_iter:
+        cnt += 1
         if cnt % 100 == 0:
             logger.info(
                 f'{job_scope} processed {cnt} data points so far'
