@@ -7,8 +7,8 @@ from config.build import BUILD_ID
 
 
 MODULES_WITH_TASKS = [
-    'prioritizer',
-    'oozer'
+    'oozer',
+    'sweep_builder',
 ]
 
 
