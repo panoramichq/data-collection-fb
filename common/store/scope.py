@@ -72,6 +72,13 @@ class FacebookAdAccountScope(BaseModel):
             )
         }
 
+    @property
+    def token(self):
+        try:
+            return list(self.tokens)[0]
+        except IndexError:
+            return None
+
 
 def sync_schema(brute_force=False):
     """

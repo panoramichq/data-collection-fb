@@ -15,6 +15,12 @@ task_ignore_result = True
 task_eager_propagates = False
 task_always_eager = False
 
+# Make this work for now. If we deem that this is not good enough (TM), we can
+# deal with custom serialization logic. This is mainly security concern and
+# is problematic when upgrading between pickle protocol versions, if we have
+# some tasks in flight. I do believe though that it should be fine right now.
+task_serializer = 'pickle'
+
 # controlling how many tasks worker grabs from queue
 # default is 4 - too greedy
 worker_prefetch_multiplier = 1
