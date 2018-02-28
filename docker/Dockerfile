@@ -58,6 +58,10 @@ ARG COMMIT_ID=none
 # C_FORCE_ROOT: allow Celery work as root
 ENV APP_BUILD_BUILD_ID=${BUILD_ID} APP_BUILD_COMMIT_ID=${COMMIT_ID} C_FORCE_ROOT=true
 
+# PynamoDB has very odd way of being configured. Requires either this
+# or a global file placed into /etc/ tree. See this file for details why
+ENV PYNAMODB_CONFIG=./config/pynamodb_custom.py
+
 COPY --from=pythonuserbaseimage $PYTHONUSERBASE/ $PYTHONUSERBASE/
 
 COPY . .
