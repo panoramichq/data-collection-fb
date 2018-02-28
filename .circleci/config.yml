@@ -65,8 +65,8 @@ jobs:
       - run : |
           export IMAGE_NAME_FULL=`cat /tmp/workspace/image_url`
           docker login -u ${DOCKERHUB_USER} -p ${DOCKERHUB_PASS}
-          eval $(aws ecr get-login --region us-east-1 --no-include-email)
-          eval $(aws ecr get-login --region us-west-2 --no-include-email)
+          eval $(aws ecr get-login --region us-east-1 --no-include-email --registry-ids 583912811210 897117390337)
+          eval $(aws ecr get-login --region us-west-2 --no-include-email --registry-ids 583912811210 897117390337)
           docker pull ${IMAGE_NAME_FULL}
 
       # Tag & push images to Docker Hub
