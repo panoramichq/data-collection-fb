@@ -40,7 +40,8 @@ def _alter_logger(*args, **kwargs):
     """
 
     # TODO: dress up root logger here under Celery
-    configure_logging()
+    # configure_logging()
+    pass
 
 
 _celery_app = None

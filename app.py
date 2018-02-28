@@ -52,15 +52,15 @@ def process_celery_worker_command(command_line_values):
     celery_worker_args = [
         'worker',
         '--pool=gevent',
-        '--autoscale=10000,5',
+        '--autoscale=1000,30',
         # Had an unfortunate occasion of bringing
         # a Redis instance to near-death with large
         # amount of network IO when these were on
         # and many workers are present.
         # Contemplate going "without" on these
-        # '--without-heartbeat',
-        # '--without-mingle',
-        # '--without-gossip',
+        '--without-heartbeat',
+        '--without-mingle',
+        '--without-gossip',
         '--queues', pad_with_build_id(command_line_values.worker_type)
     ]
     celery_app.worker_main(celery_worker_args)
