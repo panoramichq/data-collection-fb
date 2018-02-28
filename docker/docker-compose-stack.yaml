@@ -1,4 +1,4 @@
-version: '2'
+version: '2.3'
 
 services:
 
@@ -28,6 +28,7 @@ services:
     command: python app.py worker longrunning
 
   app_default:
+    scale: 2
     extends:
       file: docker-compose-base.yaml
       service: app
