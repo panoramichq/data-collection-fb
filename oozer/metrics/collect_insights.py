@@ -337,15 +337,17 @@ def iter_collect_insights(job_scope, job_context):
         )
 
     except FacebookRequestError as e:
-        #    except FacebookRequestError as e:
+        # Build ourselves the error inspector
+        inspector = FacebookApiErrorInspector(e)
+
         # Is this a throttling error?
-        if FacebookApiErrorInspector.is_throttling_exception(e):
+        if inspector.is_throttling_exception():
             report_job_status_task.delay(
                 FacebookInsightsJobStatus.ThrottlingError, job_scope
             )
 
         # Did we ask for too much data?
-        elif FacebookApiErrorInspector.is_too_large_data_exception(e):
+        elif inspector.is_too_large_data_exception():
             report_job_status_task.delay(
                 FacebookInsightsJobStatus.TooMuchData, job_scope
             )
@@ -355,7 +357,7 @@ def iter_collect_insights(job_scope, job_context):
             report_job_status_task.delay(
                 FacebookInsightsJobStatus.GenericFacebookError, job_scope,
             )
-
+        raise
     except Exception:
         # This is a generic failure, which does not help us at all, so, we just
         # report it and bail

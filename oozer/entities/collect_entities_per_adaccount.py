@@ -228,14 +228,17 @@ def iter_collect_entities_per_adaccount(job_scope, job_context):
         )
 
     except FacebookRequestError as e:
+        # Build ourselves the error inspector
+        inspector = FacebookApiErrorInspector(e)
+
         # Is this a throttling error?
-        if FacebookApiErrorInspector.is_throttling_exception(e):
+        if inspector.is_throttling_exception():
             report_job_status_task.delay(
                 FacebookEntityJobStatus.ThrottlingError, job_scope
             )
 
         # Did we ask for too much data?
-        elif FacebookApiErrorInspector.is_too_large_data_exception(e):
+        elif inspector.is_too_large_data_exception():
             report_job_status_task.delay(
                 FacebookEntityJobStatus.TooMuchData, job_scope
             )

@@ -66,32 +66,39 @@ class FacebookApiErrorInspector:
     much data 
     """
 
-    @classmethod
-    def _is_exception_in_list(cls, exception, values):
+    _exception = None
+
+    def __init__(self, exception):
+        """
+        Store the exception we want to test
+
+        :param FacebookRequestError exception: The Facebook Exception
+        """
+        self._exception = exception
+
+    def _is_exception_in_list(self, values):
         """
         Check an exception against a given list of possible codes/subcodes
 
-        :param FacebookRequestError exception: The Facebook Exception
+
         :param list values: List of individual codes or tuples of (code, subcode)
         :return bool: The exception conforms to our excepted list
         """
-        code = exception.api_error_code()
-        subcode = exception.api_error_subcode()
+        code = self._exception.api_error_code()
+        subcode = self._exception.api_error_subcode()
 
         return (code, subcode) in values
 
-    @classmethod
-    def is_throttling_exception(cls, exception):
+    def is_throttling_exception(self):
         """
         Checks whether given Facebook Exception is of throttling type
 
         :param FacebookRequestError exception: The Facebook Exception
         :return bool: If True, the exception is of type throttling
         """
-        return cls._is_exception_in_list(exception, cls.THROTTLING_CODES)
+        return self._is_exception_in_list(self.THROTTLING_CODES)
 
-    @classmethod
-    def is_too_large_data_exception(cls, exception):
+    def is_too_large_data_exception(self):
         """
         Checks whether given Facebook Exception is of a type that says "you are
         asking me to do / calculate too much"
@@ -99,7 +106,7 @@ class FacebookApiErrorInspector:
         :param FacebookRequestError exception: The Facebook Exception
         :return bool: If True, the exception is of type "too much data"
         """
-        return cls._is_exception_in_list(exception, cls.TOO_MUCH_DATA_CODES)
+        return self._is_exception_in_list(self.TOO_MUCH_DATA_CODES)
 
 
 def get_default_fields(Model):
