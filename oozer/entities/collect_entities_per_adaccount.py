@@ -9,7 +9,11 @@ from typing import Generator
 from common.enums.entity import Entity
 from common.enums.failure_bucket import FailureBucket
 from oozer.common import cold_storage
-from oozer.common.facebook_api import FacebookApiContext, get_default_fields
+from oozer.common.facebook_api import (
+    FacebookApiContext,
+    FacebookApiErrorInspector,
+    get_default_fields,
+)
 from oozer.common.job_context import JobContext
 from oozer.common.job_scope import JobScope
 from oozer.common.report_job_status import JobStatus
@@ -227,15 +231,26 @@ def iter_collect_entities_per_adaccount(job_scope, job_context):
         )
 
     except FacebookRequestError as e:
-        # Check for this
-        # error_code = 100,  CodeException (error subcode: 1487534)
-        # ^ means we asked for too much data
+        # Build ourselves the error inspector
+        inspector = FacebookApiErrorInspector(e)
 
-        # Inspect the exception for FB exceptions, so we can understand what's
-        # going on
-        report_job_status_task.delay(
-            FacebookEntityJobStatus.GenericFacebookError, job_scope,
-        )
+        # Is this a throttling error?
+        if inspector.is_throttling_exception():
+            report_job_status_task.delay(
+                FacebookEntityJobStatus.ThrottlingError, job_scope
+            )
+
+        # Did we ask for too much data?
+        elif inspector.is_too_large_data_exception():
+            report_job_status_task.delay(
+                FacebookEntityJobStatus.TooMuchData, job_scope
+            )
+
+        # It's something else which we don't understand
+        else:
+            report_job_status_task.delay(
+                FacebookEntityJobStatus.GenericFacebookError, job_scope,
+            )
         raise
 
     except Exception:

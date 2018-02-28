@@ -39,7 +39,6 @@ class JobStatus:
     Any job considered done is represented by 1000
     """
 
-
 def report_job_status(stage_status, job_scope):
     """
     Report the job status to the job status store
