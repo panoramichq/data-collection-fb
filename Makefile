@@ -4,7 +4,9 @@ default:
 clean:
 	find . -name \*~ -type f -delete
 	find . -name \*.pyc -type f -delete
-	find dynamodata -name \*.db -type f -delete
+	rm -rf .dynamodb_data
+	rm -rf .s3_data
+	rm -rf .pytest_cache
 
 .PHONY: default clean
 
@@ -94,12 +96,22 @@ pythonuserbase: rm-container
 
 .PHONY: pythonuserbase rm-container
 
+
+DYNAMODIR:=/dynamodb_local_db
+FAKES3DIR:=/s3_data
+
+.dynamodb_data:
+	mkdir -p .dynamodb_data
+
+.s3_data:
+	mkdir -p .s3_data
+
 # use this for interactive console dev and running unit tests
-start-dev:
+start-dev: .dynamodb_data .s3_data
 	DYNAMO_IMAGE_NAME_FULL=$(DYNAMO_IMAGE_NAME_FULL) \
-	DYNAMODIR=/dynamodb_local_db \
+	DYNAMODIR=$(DYNAMODIR) \
 	FAKE_S3_IMAGE_NAME_FULL=${FAKE_S3_IMAGE_NAME_FULL} \
-	FAKES3DIR=/s3_data \
+	FAKES3DIR=$(FAKES3DIR) \
 	IMAGE_NAME_FULL=$(IMAGE_NAME_FULL) \
 	USER_ID=$(shell id -u) \
 	GROUP_ID=$(shell id -g) \
@@ -107,11 +119,11 @@ start-dev:
 	docker-compose -f docker/docker-compose-dev.yaml run --service-ports app
 
 # use this for standing up entire stack on its own and interacting with it remotely
-start-stack:
+start-stack: .dynamodb_data .s3_data
 	DYNAMO_IMAGE_NAME_FULL=$(DYNAMO_IMAGE_NAME_FULL) \
-	DYNAMODIR=/dynamodb_local_db \
+	DYNAMODIR=$(DYNAMODIR) \
 	FAKE_S3_IMAGE_NAME_FULL=${FAKE_S3_IMAGE_NAME_FULL} \
-	FAKES3DIR=/s3_data \
+	FAKES3DIR=$(FAKES3DIR) \
 	IMAGE_NAME_FULL=$(IMAGE_NAME_FULL) \
 	USER_ID=$(shell id -u) \
 	GROUP_ID=$(shell id -g) \
@@ -122,9 +134,9 @@ start-stack:
 
 #############
 # Test runner
-test: image.dynamo
+test: .dynamodb_data image.dynamo
 	DYNAMO_IMAGE_NAME_FULL=$(DYNAMO_IMAGE_NAME_FULL) \
-	DYNAMODIR=/dynamodb_local_db \
+	DYNAMODIR=$(DYNAMODIR) \
 	IMAGE_NAME_FULL=$(IMAGE_NAME_FULL) \
 	WORKDIR=/usr/src/app \
 	docker-compose -f docker/docker-compose-test.yaml run \
