@@ -1,3 +1,5 @@
+from typing import Generator
+
 from facebookads.api import FacebookAdsApi, FacebookSession
 from facebookads.adobjects import abstractcrudobject
 from oozer.common.enum import to_fb_model
@@ -43,13 +45,15 @@ class FacebookApiContext:
         return to_fb_model(entity_id, entity_type, self.api)
 
 
+
 def get_default_fields(Model):
+    # type: (Model) -> Generator[str]
     """
     Obtain default fields for a given entity type. Note that the entity
     class must come from the Facebook SDK
 
     :param Model:
-    :return generator: List of fields
+    :rtype: Generator[str] of fields
     """
     assert issubclass(Model, abstractcrudobject.AbstractCrudObject)
 
