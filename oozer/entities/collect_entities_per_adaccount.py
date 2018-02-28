@@ -166,7 +166,6 @@ def iter_collect_entities_per_adaccount(job_scope, job_context):
                 job_scope.ad_account_id, Entity.AdAccount
             )
 
-        last_fetch_dt = datetime.utcnow()
         entities = iter_native_entities_per_adaccount(
             root_fb_entity,
             entity_type
@@ -178,6 +177,11 @@ def iter_collect_entities_per_adaccount(job_scope, job_context):
         )
 
         job_scope_base_data = job_scope.to_dict()
+        job_scope_base_data.update(
+            entity_type=entity_type,
+            is_derivative=True, # this keeps the scope from being counted as done task by looper
+            report_variant=None,
+        )
 
         for entity in entities:
 
@@ -190,8 +194,7 @@ def iter_collect_entities_per_adaccount(job_scope, job_context):
 
             normative_job_scope = JobScope(
                 job_scope_base_data,
-                entity_id=entity_data.get('id'),
-                entity_type=entity_type
+                entity_id=entity_data.get('id')
             )
 
             # Check whether we actually need to put this into the ETL
@@ -220,7 +223,7 @@ def iter_collect_entities_per_adaccount(job_scope, job_context):
                 FacebookEntityJobStatus.Done, normative_job_scope
             )
 
-            yield entity
+            yield entity_data
 
         # Report on the effective task status
         report_job_status_task.delay(

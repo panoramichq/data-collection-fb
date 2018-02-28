@@ -30,6 +30,15 @@ class JobScope:
     tokens = None
     metadata = None
 
+    # Indicates that this is a synthetically created instance of JobScope
+    # (likely by the worker code to indicate some sub-level of work done)
+    # and not the original JobScope pushed out by Sweep Looper that triggered the task
+    # Setting this flag is important for part of the system that monitors
+    # the jobs status stream and makes decisions about when to quit the cycle.
+    # Successful derivative JobScope objects will be ignored by that part of the system
+    # as if it counted them, the "successful" count would be greatly exaggerated
+    is_derivative = False
+
     def __init__(self, *args, **kwargs):
         self.update(*args, **kwargs)
         # Normalize few things

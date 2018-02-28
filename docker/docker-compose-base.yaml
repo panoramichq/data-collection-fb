@@ -1,4 +1,4 @@
-version: '2'
+version: '2.3'
 
 services:
 
@@ -29,6 +29,8 @@ services:
       # around so that data is available between restarts
       # Note the dot after slash. It's a dot-folder
       - ../.s3_data:${FAKES3DIR}
+    logging:
+      driver: none
 
   app:
     image: ${IMAGE_NAME_FULL}

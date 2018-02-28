@@ -20,6 +20,7 @@ task_always_eager = False
 # is problematic when upgrading between pickle protocol versions, if we have
 # some tasks in flight. I do believe though that it should be fine right now.
 task_serializer = 'pickle'
+accept_content = ['application/x-python-serialize']
 
 # controlling how many tasks worker grabs from queue
 # default is 4 - too greedy
