@@ -11,7 +11,3 @@ __pycache__
 # Local dot files
 .*/
 !.circleci/
-
-# Local dynamo data files
-dynamodata/*.db
-s3data/*
