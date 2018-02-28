@@ -207,10 +207,10 @@ def iter_collect_entities_per_adaccount(job_scope, job_context):
                 )
                 # Don't need to save it / send it to cold store
                 continue  # to next entity
-            # else:
-            #     report_job_status_task.delay(
-            #         FacebookEntityJobStatus.EntityFetched, normative_job_scope
-            #     )
+            else:
+                report_job_status_task.delay(
+                    FacebookEntityJobStatus.EntityFetched, normative_job_scope
+                )
 
             # Store the individual datum, use job context for the cold
             # storage thing to divine whatever it needs from the job context

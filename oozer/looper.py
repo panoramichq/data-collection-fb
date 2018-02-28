@@ -14,12 +14,7 @@ from common.enums.reporttype import ReportType
 from common.id_tools import parse_id
 from oozer.common.job_scope import JobScope
 from oozer.common.job_context import JobContext
-
-
-FB_THROTTLING_WINDOW = 10*60  # seconds
-DECAY_FN_START_MULTIPLIER = 3  # value of 'z' used in formulas below
-FIRST = 0
-LAST = -1
+from config import looper as looper_config
 
 
 def get_number_of_queued_jobs(zkey):
@@ -107,7 +102,7 @@ def iter_tasks(sweep_id):
             yield celery_task, job_scope, job_context
 
 
-def create_decay_function(n, t, z=DECAY_FN_START_MULTIPLIER):
+def create_decay_function(n, t, z=looper_config.DECAY_FN_START_MULTIPLIER):
     """
     A function that crates a linear decay function y = F(x), where a *smooth* rationing
     (k per time slice) of population (n) of units of work into discrete time slices (t)
@@ -375,7 +370,7 @@ class SweepStatusTracker():
         return pulse
 
 
-def run_tasks(sweep_id, limit=None, time_slices=FB_THROTTLING_WINDOW, time_slice_length=1):
+def run_tasks(sweep_id, limit=None, time_slices=looper_config.FB_THROTTLING_WINDOW, time_slice_length=1):
     """
     Oozes tasks gradually into Celery workers queue, accounting for total number of tasks
     and the window of time over which we want them to be processed.
