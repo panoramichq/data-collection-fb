@@ -15,6 +15,11 @@ class RealityClaim:
     to add more data to context from the very bottom of the stack. Just extend this object.)
     """
 
+    # Used to mark the scope from which the reality is to be infered
+    # 'Console' for the data updated from the console api
+    # None otherwise
+    scope = None  # type: str
+
     ad_account_id = None  # type: str
     # entity_id may be same value as ad_account_id for AdAccount types (for consistency of interface)
     entity_id = None  # type: str

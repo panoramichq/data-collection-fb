@@ -20,7 +20,7 @@ from typing import Generator, Tuple, Set
 from common.store import entities, scope
 
 
-def _iter_scopes_tokens():
+def iter_scopes_tokens():
     """
     :return: a generator of pairs of: tuple of scope id and its associated set of FB tokens
     :rtype: Generator[Tuple[str, Set[str]]]
