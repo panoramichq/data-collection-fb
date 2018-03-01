@@ -18,6 +18,7 @@ def configure_logging(level=LEVEL):
     to_mute = [
         'botocore',
         'celery.app.trace',
+        'celery.worker.autoscale',
         'celery.worker.strategy',
         'pynamodb',
     ]
