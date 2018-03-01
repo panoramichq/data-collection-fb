@@ -93,11 +93,11 @@ def generate_id(
     ).strip(':')
 
 
-def parse_id(id, fields=fields):
+def parse_id(job_id, fields=fields):
 
     data = {
         key: value or None
-        for key, value in zip_longest(fields, id.split(':')[len(fields):])
+        for key, value in zip_longest(fields, job_id.split(':')[:len(fields)])
     }
 
     to_date = lambda value: datetime.strptime(value, '%Y-%m-%d').date() if value else value

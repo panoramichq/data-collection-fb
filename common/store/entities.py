@@ -1,4 +1,5 @@
 from common.enums.entity import Entity
+from common.memoize import memoized_property
 from config import dynamodb as dynamodb_config
 
 from .base import BaseMeta, BaseModel, attributes
@@ -44,6 +45,32 @@ class FacebookAdAccountEntity(BaseModel):
     timezone = attributes.UnicodeAttribute(attr_name='tz')
 
     entity_type = Entity.AdAccount
+
+    @property
+    @memoized_property
+    def scope_model(self):
+        from .scope import FacebookAdAccountScope
+        return FacebookAdAccountScope.get(self.scope)
+
+    def to_fb_sdk_ad_account(self, api=None):
+        """
+        Returns an instance of Facebook Ads SDK AdAccount model
+        with ID matching this DB model's ID
+
+        :param facebookads.api.FacebookAdsApi api: FB Ads SDK Api instance with token baked in.
+        :rtype: facebookads.adobjects.adaccount.AdAccount
+        """
+        from facebookads.api import FacebookAdsApi, FacebookSession
+        from facebookads.adobjects.adaccount import AdAccount
+
+        if not api:
+            # This is very expensive call. Takes 2 DB hits to get token value
+            # Try to pass api value at all times in prod code to avoid using this.
+            # Allowing to omit the API value to simplify use of this API in
+            # testing in console.
+            api = FacebookAdsApi(FacebookSession(access_token=self.scope_model.token))
+
+        return AdAccount(fbid=f'act_{self.ad_account_id}', api=api)
 
 
 class FacebookEntityBaseMixin:
@@ -110,6 +137,18 @@ class FacebookAdEntity(FacebookEntityBaseMixin, BaseModel):
     Meta = EntityBaseMeta(dynamodb_config.FB_AD_ENTITY_TABLE)
 
     entity_type = Entity.Ad
+
+
+# Used to map from entity_type str to Model for persistence-style tasks
+ENTITY_TYPE_MODEL_MAP = {
+    model.entity_type: model
+    for model in [
+        FacebookAdAccountEntity,
+        FacebookCampaignEntity,
+        FacebookAdsetEntity,
+        FacebookAdEntity
+    ]
+}
 
 
 def sync_schema(brute_force=False):

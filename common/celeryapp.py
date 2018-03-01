@@ -1,14 +1,17 @@
 from celery import Celery, Task
 from celery.signals import setup_logging
-from enum import Enum
 
 from config import celery as celery_config
 from config.build import BUILD_ID
+from common.configure_logging import configure_logging
 
 
 MODULES_WITH_TASKS = [
-    'prioritizer',
-    'oozer'
+    'oozer',
+    'oozer.common',
+    'oozer.entities',
+    'oozer.metrics',
+    'sweep_builder',
 ]
 
 
@@ -37,6 +40,7 @@ def _alter_logger(*args, **kwargs):
     """
 
     # TODO: dress up root logger here under Celery
+    # configure_logging()
     pass
 
 

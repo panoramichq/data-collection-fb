@@ -26,6 +26,8 @@ redis==2.10.6
 requests==2.18.4          # via facebookads
 s3transfer==0.1.13        # via boto3
 six==1.11.0               # via facebookads, pynamodb, python-dateutil
+ujson==1.35
 urllib3==1.22             # via requests
 uvloop==0.9.1
 vine==1.1.4
+xxhash==1.0.1

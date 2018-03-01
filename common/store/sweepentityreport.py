@@ -31,7 +31,7 @@ class FacebookSweepEntityReport(BaseModel):
 
     report_type = attributes.UnicodeAttribute(attr_name='rt')
     ad_account_id = attributes.UnicodeAttribute(attr_name='aa')
-    entity_id = attributes.UnicodeAttribute(attr_name='eid')
+    entity_id = attributes.UnicodeAttribute(attr_name='eid', null=True)
     entity_type = attributes.UnicodeAttribute(null=True, attr_name='et')
     stage_id = attributes.NumberAttribute(null=True, attr_name='stid')
     failure_bucket = attributes.NumberAttribute(null=True, attr_name='fb')

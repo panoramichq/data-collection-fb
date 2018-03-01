@@ -7,6 +7,8 @@ class FailureBucket:
     Used largely by Prioritizer and partly by Sweep Looper (for early exit).
     """
 
+    Success = 0
+
     # Too hazy to be directly actionable.
     # Log and try again, i guess.
     Other = 1
@@ -19,3 +21,13 @@ class FailureBucket:
     # due to very large computation / memory / time needs to process such request
     # Typical action here is to form requests such that payloads become smaller.
     TooLarge = 1000
+
+
+# enum values are ints. Not a convenient thing to use as
+# keys / attr names. For convenience of being able to use
+# pretty names as keys:
+FailureBucket.attr_name_enum_value_map = {
+    k:v
+    for k,v in FailureBucket.__dict__.items()
+    if not k.startswith('_') and not callable(v) and not isinstance(v, classmethod)
+}
