@@ -1,4 +1,5 @@
 import gevent
+import logging
 import math
 import time
 
@@ -17,14 +18,22 @@ from oozer.common.job_context import JobContext
 from config import looper as looper_config
 
 
-def get_number_of_queued_jobs(zkey):
-    return get_redis().zcount(zkey, '-inf', '+inf') or 0
+logger = logging.getLogger(__name__)
 
 
-def iter_tasks_from_redis_zkey(zkey):
+def generate_job_queue_redis_key_from_sweep_id(sweep_id):
+    return f'{sweep_id}:jobs-queue'
+
+
+def get_number_of_queued_jobs(sweep_id):
+    return get_redis().zcount(generate_job_queue_redis_key_from_sweep_id(sweep_id), '-inf', '+inf') or 0
+
+
+def iter_tasks_from_redis_zkey(sweep_id):
     redis = get_redis()
     start = 0
     step = 200
+    zkey = generate_job_queue_redis_key_from_sweep_id(sweep_id)
 
     job_ids = redis.zrevrange(zkey, start, start+step)
 
@@ -87,7 +96,9 @@ def iter_tasks(sweep_id):
 
         celery_task = tasks_inventory.get(report_type, {}).get(entity_type)
 
-        if celery_task:
+        if not celery_task:
+            logger.warning(f"#{sweep_id}: Could not match job_id {job_id} to a worker.")
+        else:
             job_scope = JobScope(
                 parts,
                 sweep_id=sweep_id,
