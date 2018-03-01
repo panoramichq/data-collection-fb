@@ -6,7 +6,7 @@ from typing import Generator, Callable
 
 from common.connect.redis import get_redis
 from common.id_tools import parse_id
-from oozer.looper import generate_job_queue_redis_key_from_sweep_id
+from oozer.common.sorted_jobs_queue import SortedJobsQueue
 
 from .prioritizer.prioritized import iter_prioritized, PrioritizationClaim
 
@@ -17,82 +17,6 @@ logger = logging.getLogger(__name__)
 # :) Guess what for
 FIRST = 0
 LAST = -1
-
-
-class RedisSortedSetBatchWriter:
-
-    def __init__(self, sweep_id, batch_size=20):
-        """
-        Closure that exposes a callable that gets repeatedly called with item to add to one and same
-        SortedSet Redis key. The focus is on keeping track of some (batch_size) last additions
-        in memory and flushing out bundles of inserts to Redis.
-
-        An extra bonus in this particular case is help with repeat keys.
-        These collapse onto themselves in memory first, so writing out
-        20 distinct ID-score pairs as 1000 repeated ID-score pairs
-        will result in only one 20-strong batch written, where ID-score
-        pairs written will be those that are seen last under distinct ID.
-
-        We are saving IO hits to Redis on duplicate inserts.
-        We also know / expect that duplication comes in series (per our generator code)
-        where same Job id (with potentially gradually incrementing score) is communicated
-        as a stream, before a switch to a stream of other ID.
-
-        :param sweep_id:
-        :param batch_size:
-        """
-        self.redis_key = generate_job_queue_redis_key_from_sweep_id(sweep_id)
-        self.sweep_id = sweep_id
-        self.batch_size = batch_size
-        self.redis_client = get_redis()
-        self.batch = {}
-        self.cache = OrderedDict()
-        self.cache_max_size = 700
-        self.cnt = 0
-
-    def flush(self):
-        # zadd takes a list of key, score, key2, score2, ... arguments
-        # we need to convert dict into list of key, value, key2, value2, ...
-        args = [
-            item
-            for pair in self.batch.items()
-            for item in pair
-        ]
-        self.redis_client.zadd(self.redis_key, *args)
-        self.cnt += len(self.batch)
-        self.batch.clear()
-
-    def add(self, job_id, score):
-        if parse_id(job_id)['entity_id']:
-            # if entity ID is present, there is no way
-            # this could be a reused job
-            # (as only per-Parent jobs can be reused by children)
-            # Thus, we just add to the batch and move on
-            self.batch[job_id] = score
-        else: # this is some per-Parent job
-            # There is a chance it's in the larger cache with same exact score
-            if self.cache.get(job_id) == score:
-                # if it's there with same score, it was already flushed out
-                # as such. No point even adding it to batch.
-                pass
-            else:
-                # the job is either there with different score, or not there,
-                # but either way we need to write it out with a new score
-                self.batch[job_id] = score
-                self.cache[job_id] = score
-                while len(self.cache) > self.cache_max_size:
-                    self.cache.popitem()  # oldest
-
-        if len(self.batch) == self.batch_size:
-            self.flush()
-
-    def __enter__(self):
-        return self.add
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        if self.batch: # some sub-batch_size leftovers
-            self.flush()
-        logger.info(f"#{self.sweep_id}: Redis SortedSet Batcher wrote a total of {self.cnt} *unique* tasks")
 
 
 def iter_persist_prioritized(sweep_id, iter_prioritized=iter_prioritized):
@@ -106,7 +30,7 @@ def iter_persist_prioritized(sweep_id, iter_prioritized=iter_prioritized):
     :rtype: Generator[PrioritizationClaim]
     """
 
-    with RedisSortedSetBatchWriter(sweep_id) as add_to_queue:
+    with SortedJobsQueue(sweep_id).TasksWriter() as add_to_queue:
 
         for prioritization_claim in iter_prioritized():
 
