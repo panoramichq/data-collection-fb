@@ -65,7 +65,7 @@ def update_from_env(module_path, config_root_module='config', env_var_prefix=CON
 
     env_var_prefix_len = len(env_var_prefix_with_full_module_path)
     env_vars_found = [
-        (env_key[env_var_prefix_len:], os.environ[env_key])
+        (env_key[env_var_prefix_len:].upper(), os.environ[env_key])
         for env_key in os.environ.keys()
         if env_key.startswith(env_var_prefix_with_full_module_path)
     ]
@@ -82,6 +82,10 @@ def update_from_env(module_path, config_root_module='config', env_var_prefix=CON
     no_conversion = {str, type(None)}
 
     for key, value in env_vars_found:
+        # Since we can't rely on case sensitivity in env vars, we try lower-case
+        # and default to upper case if we don't find it
+        key = key.lower() if getattr(config_module, key.lower(), False) else key
+
         ExistingValueType = type(getattr(config_module, key, None))
 
         if ExistingValueType is bool:
