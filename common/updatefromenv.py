@@ -84,7 +84,7 @@ def update_from_env(module_path, config_root_module='config', env_var_prefix=CON
     for key, value in env_vars_found:
         # Since we can't rely on case sensitivity in env vars, we try lower-case
         # and default to upper case if we don't find it
-        key = key.lower() if getattr(config_module, key.lower(), False) else key
+        key = key.lower() if getattr(config_module, key.lower(), None) else key
 
         ExistingValueType = type(getattr(config_module, key, None))
 
