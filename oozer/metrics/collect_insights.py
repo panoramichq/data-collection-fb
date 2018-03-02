@@ -1,5 +1,5 @@
 import gevent
-from contextlib import contextmanager
+
 from datetime import datetime, date
 from facebookads.exceptions import FacebookRequestError
 from facebookads.adobjects.adsinsights import AdsInsights
@@ -200,75 +200,89 @@ def _convert_and_validate_date_format(dt):
     return dt.strftime('%Y-%m-%d')
 
 
-@contextmanager
-def NormalStore(job_scope):
+class BaseStoreHandler:
 
-    def store(datum):
-        cold_storage.store(datum, job_scope)
+    def __init__(self, job_scope):
+        self.job_scope = job_scope
 
-    yield store
+    def store(self, datum):
+        pass
 
+    def __enter__(self):
+        return self.store
 
-@contextmanager
-def MemorySpoolStore(job_scope):
-
-    data = []
-
-    def store(datum):
-        data.append(datum)
-
-    yield store
-
-    cold_storage.store(data, job_scope)
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        pass
 
 
-@contextmanager
-def ChunkDumpStore(job_scope, chunk_size=50):
+class NormalStore(BaseStoreHandler):
 
-    data = []
-    chunk_marker = 0
-
-    def store(datum):
-        global chunk_marker
-        data.append(datum)
-        if len(data) == chunk_size:
-            cold_storage.store(data, job_scope, chunk_marker)
-            chunk_marker += 1
-            data.clear()
-
-    yield store
-
-    if len(data):
-        cold_storage.store(data, job_scope, chunk_marker)
+    def store(self, datum):
+        cold_storage.store(datum, self.job_scope)
 
 
-@contextmanager
-def NaturallyNormativeChildStore(job_scope):
+class MemorySpoolStore(BaseStoreHandler):
 
-    normative_entity_type = job_scope.report_variant
+    def __init__(self, job_scope):
+        super().__init__(job_scope)
+        self.data = []
 
-    job_scope_base_data = job_scope.to_dict()
-    # since we are converting per-parent into per-child
-    # job signature, report_variant cannot be set
-    job_scope_base_data.update(
-        entity_type=normative_entity_type,
-        is_derivative=True, # this keeps the scope from being counted as done task by looper
-        report_variant=None,
-    )
+    def store(self, datum):
+        self.data.append(datum)
 
-    assert normative_entity_type in Entity.ALL
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        cold_storage.store(self.data, self.job_scope)
 
-    id_attribute_name = {
-        Entity.AdAccount: AdsInsights.Field.account_id,
-        Entity.Campaign: AdsInsights.Field.campaign_id,
-        Entity.AdSet: AdsInsights.Field.adset_id,
-        Entity.Ad: AdsInsights.Field.ad_id
-    }[normative_entity_type]
 
-    def store(datum):
+class ChunkDumpStore(BaseStoreHandler):
+
+    def __init__(self, job_scope, chunk_size=50):
+        super().__init__(job_scope)
+        self.data = []
+        self.chunk_marker = 0
+        self.chunk_size = chunk_size
+
+    def store(self, datum):
+        self.data.append(datum)
+        if len(self.data) == self.chunk_size:
+            cold_storage.store(self.data, self.job_scope, self.chunk_marker)
+            self.chunk_marker += 1
+            self.data.clear()
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if len(self.data):
+            cold_storage.store(self.data, self.job_scope, self.chunk_marker)
+
+
+class NaturallyNormativeChildStore(BaseStoreHandler):
+
+    def __init__(self, job_scope):
+        super().__init__(job_scope)
+
+        normative_entity_type = job_scope.report_variant
+        assert normative_entity_type in Entity.ALL
+
+        self.job_scope_base_data = job_scope.to_dict()
+        # since we are converting per-parent into per-child
+        # job signature, report_variant cannot be set
+        self.job_scope_base_data.update(
+            entity_type=normative_entity_type,
+            is_derivative=True, # this keeps the scope from being counted as done task by looper
+            report_variant=None,
+        )
+        self.id_attribute_name = {
+            Entity.AdAccount: AdsInsights.Field.account_id,
+            Entity.Campaign: AdsInsights.Field.campaign_id,
+            Entity.AdSet: AdsInsights.Field.adset_id,
+            Entity.Ad: AdsInsights.Field.ad_id
+        }[normative_entity_type]
+
+    def store(self, datum):
+        entity_id = datum.get(self.id_attribute_name) or datum.get('id')
+        assert entity_id, "This code must have an entity ID for building of unique insertion ID"
         normative_job_scope = JobScope(
-            job_scope_base_data,
-            entity_id=datum[id_attribute_name]
+            self.job_scope_base_data,
+            entity_id=entity_id
         )
         # and store data under that per-entity, normative JobScope.
         cold_storage.store(datum, normative_job_scope)
@@ -278,8 +292,6 @@ def NaturallyNormativeChildStore(job_scope):
         report_job_status_task.delay(
             FacebookInsightsJobStatus.InColdStore, normative_job_scope
         )
-
-    yield store
 
 
 class JobScopeParsed:

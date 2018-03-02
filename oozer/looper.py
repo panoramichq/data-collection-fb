@@ -3,46 +3,22 @@ import logging
 import math
 import time
 
-from collections import namedtuple
-from contextlib import contextmanager
+from collections import namedtuple, OrderedDict
 from itertools import islice
-from typing import Generator, Tuple
+from typing import Generator, Tuple, List
 
 from common.connect.redis import get_redis
 from common.enums.entity import Entity
 from common.enums.failure_bucket import FailureBucket
 from common.enums.reporttype import ReportType
 from common.id_tools import parse_id
-from oozer.common.job_scope import JobScope
-from oozer.common.job_context import JobContext
 from config import looper as looper_config
+from oozer.common.job_context import JobContext
+from oozer.common.job_scope import JobScope
+from oozer.common.sorted_jobs_queue import SortedJobsQueue
 
 
 logger = logging.getLogger(__name__)
-
-
-def generate_job_queue_redis_key_from_sweep_id(sweep_id):
-    return f'{sweep_id}:jobs-queue'
-
-
-def get_number_of_queued_jobs(sweep_id):
-    return get_redis().zcount(generate_job_queue_redis_key_from_sweep_id(sweep_id), '-inf', '+inf') or 0
-
-
-def iter_tasks_from_redis_zkey(sweep_id):
-    redis = get_redis()
-    start = 0
-    step = 200
-    zkey = generate_job_queue_redis_key_from_sweep_id(sweep_id)
-
-    job_ids = redis.zrevrange(zkey, start, start+step)
-
-    while job_ids:
-        for job_id in job_ids:
-            yield job_id.decode('utf8')
-
-        start += step
-        job_ids = redis.zrevrange(zkey, start, start+step)
 
 
 def get_tasks_map():
@@ -87,30 +63,31 @@ def iter_tasks(sweep_id):
 
     tasks_inventory = get_tasks_map()
 
-    for job_id in iter_tasks_from_redis_zkey(sweep_id):
+    with SortedJobsQueue(sweep_id).TasksReader() as jobs_iter:
+        for job_id in jobs_iter:
 
-        parts = parse_id(job_id)  # type: dict
+            parts = parse_id(job_id)  # type: dict
 
-        report_type = parts['report_type']
-        entity_type = parts['entity_type'] or parts['report_variant']
+            report_type = parts['report_type']
+            entity_type = parts['entity_type'] or parts['report_variant']
 
-        celery_task = tasks_inventory.get(report_type, {}).get(entity_type)
+            celery_task = tasks_inventory.get(report_type, {}).get(entity_type)
 
-        if not celery_task:
-            logger.warning(f"#{sweep_id}: Could not match job_id {job_id} to a worker.")
-        else:
-            job_scope = JobScope(
-                parts,
-                sweep_id=sweep_id,
-                tokens=[TOKEN]
-            )
+            if not celery_task:
+                logger.warning(f"#{sweep_id}: Could not match job_id {job_id} to a worker.")
+            else:
+                job_scope = JobScope(
+                    parts,
+                    sweep_id=sweep_id,
+                    tokens=[TOKEN]
+                )
 
-            # TODO: Add job context, at minimum entity hash data. TBD how to get
-            # this, could be Dynamo directly, or prepared by the sweep builder
-            # and sent along
-            job_context = JobContext()
+                # TODO: Add job context, at minimum entity hash data. TBD how to get
+                # this, could be Dynamo directly, or prepared by the sweep builder
+                # and sent along
+                job_context = JobContext()
 
-            yield celery_task, job_scope, job_context
+                yield celery_task, job_scope, job_context
 
 
 def create_decay_function(n, t, z=looper_config.DECAY_FN_START_MULTIPLIER):
@@ -395,7 +372,7 @@ def run_tasks(sweep_id, limit=None, time_slices=looper_config.FB_THROTTLING_WIND
     :return:
     """
 
-    n = limit or get_number_of_queued_jobs(sweep_id)
+    n = limit or SortedJobsQueue(sweep_id).get_queue_length()
     if n < time_slices:
         # you will have very few tasks released per period. Annoying
         # let's model oozer such that population is at least 10 tasks per time slice
