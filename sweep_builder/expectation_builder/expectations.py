@@ -4,6 +4,7 @@ from sweep_builder.reality_inferrer.reality import iter_reality, RealityClaim
 
 from .expectation_claim import ExpectationClaim
 from .report_inventory import entity_jobs_gens_map
+from .report_inventory.adaccount import ad_accounts_per_scope
 
 def iter_expectations(iter_reality=iter_reality):
     # type: (Callable[..., Generator[RealityClaim]]) -> Generator[ExpectationClaim]
@@ -20,6 +21,9 @@ def iter_expectations(iter_reality=iter_reality):
     """
 
     for reality_claim in iter_reality():
-        jobs_generators = entity_jobs_gens_map[reality_claim.entity_type]
-        for jobs_generator in jobs_generators:
-            yield from jobs_generator(reality_claim)
+        if reality_claim.scope:
+            yield from ad_accounts_per_scope(reality_claim)
+        else:
+            jobs_generators = entity_jobs_gens_map[reality_claim.entity_type]
+            for jobs_generator in jobs_generators:
+                yield from jobs_generator(reality_claim)
