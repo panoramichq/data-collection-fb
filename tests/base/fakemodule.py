@@ -4,8 +4,7 @@ import types
 from contextlib import contextmanager
 
 
-@contextmanager
-def FakeModule(module_name, module_body=None):
+class FakeModule:
     """
     Context manager that creates a fake, shallow module for testing and removes it on exit
 
@@ -22,26 +21,32 @@ def FakeModule(module_name, module_body=None):
     :rtype: types.ModuleType
     """
 
-    _modules_to_remove = []
-    _prior_parts = []
-    module = None
+    def __init__(self, module_name, module_body=None):
+        self.module_name = module_name
+        self.module_body = module_body
 
-    # need to insert preliminary steps in the path
-    for name_part in module_name.split('.'):
-        module_path = '.'.join(_prior_parts + [name_part])
-        if module_path not in sys.modules:
-            module = types.ModuleType(module_path)
-            _modules_to_remove.append(module_path)
-            sys.modules[module_path] = module
-        _prior_parts.append(name_part)
+    def __enter__(self):
+        self._modules_to_remove = _modules_to_remove = []
+        _prior_parts = []
+        module = None
 
-    if not module:
-        raise ValueError(f'Module name "{module_name}" cannot be faked as it already exists')
+        # need to insert preliminary steps in the path
+        for name_part in self.module_name.split('.'):
+            module_path = '.'.join(_prior_parts + [name_part])
+            if module_path not in sys.modules:
+                module = types.ModuleType(module_path)
+                _modules_to_remove.append(module_path)
+                sys.modules[module_path] = module
+            _prior_parts.append(name_part)
 
-    if module_body:
-        exec(module_body, module.__dict__)
+        if not module:
+            raise ValueError(f'Module name "{module_name}" cannot be faked as it already exists')
 
-    yield module
+        if self.module_body:
+            exec(self.module_body, module.__dict__)
 
-    for module_path in _modules_to_remove:
-        del sys.modules[module_path]
+        return module
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        for module_path in self._modules_to_remove:
+            del sys.modules[module_path]
