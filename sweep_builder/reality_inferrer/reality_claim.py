@@ -42,7 +42,7 @@ class RealityClaim:
 
     def __init__(self, _data=None, **more_data):
         self.update(_data, **more_data)
-        assert self.entity_id
+        assert self.entity_id or self.scope # if entity id is not set check if scope is set
         assert self.entity_type in Entity.ALL
 
     def update(self, _data=None, **more_data):
@@ -60,7 +60,8 @@ class RealityClaim:
         self.__dict__.update(**more_data)
 
     def __repr__(self):
-        return "<RealityClaim {} {}>".format(
+        return "<RealityClaim {} {} {}>".format(
+            self.scope,
             self.entity_type,
             self.entity_id
         )

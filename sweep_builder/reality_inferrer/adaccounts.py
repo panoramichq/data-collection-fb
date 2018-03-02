@@ -62,7 +62,7 @@ def iter_ad_account_id_tz_tokens():
     :return: A a generator yielding pairs of: ad_account_id and its associated set of platform tokens
     :rtype: Generator[Tuple[str, str, Set[str]]]
     """
-    for scope, tokens in _iter_scopes_tokens():
+    for scope, tokens in iter_scopes_tokens():
         if tokens:
             for record in _iter_active_ad_account_per_scope(scope):
                 yield record.ad_account_id, record.timezone, tokens
