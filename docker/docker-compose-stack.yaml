@@ -25,6 +25,9 @@ services:
       - fakes3
       - redis
       - dynamo
+#    environment:
+#      # uncomment this to allow sweep looper to recurse back into sweep builder
+#      APP_LOOPER_ALLOW_RECURSION: "true"
     command: python app.py worker longrunning
 
   app_default:

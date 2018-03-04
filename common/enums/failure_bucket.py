@@ -7,6 +7,10 @@ class FailureBucket:
     Used largely by Prioritizer and partly by Sweep Looper (for early exit).
     """
 
+    # Had to have it here because other code uses attributes from this enum
+    # to build Pulse object attributes. Not happy about this
+    # TODO: decouple Pulse attributes from this enum such that we don't have to stick this on "Failure"
+    WorkingOnIt = -100
     Success = 0
 
     # Too hazy to be directly actionable.

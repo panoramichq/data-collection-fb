@@ -15,7 +15,7 @@ def report_job_status_task(stage_status, job_scope):
     And status_context is some sort of dictionary that allows us to divine
     failure contexts
 
-    :param int|tuple stage_status:
+    :param int stage_status:
     :param JobScope job_scope:
     :return:
     """
