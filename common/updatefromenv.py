@@ -5,6 +5,10 @@ import sys
 CONFIG_ENV_VAR_PREFIX = 'APP_'
 
 
+class NotSet:
+    pass
+
+
 def update_from_env(module_path, config_root_module='config', env_var_prefix=CONFIG_ENV_VAR_PREFIX):
     """
     This function, when ran against some module containing attributes that we treat as config attributes,
@@ -65,7 +69,7 @@ def update_from_env(module_path, config_root_module='config', env_var_prefix=CON
 
     env_var_prefix_len = len(env_var_prefix_with_full_module_path)
     env_vars_found = [
-        (env_key[env_var_prefix_len:].upper(), os.environ[env_key])
+        (env_key[env_var_prefix_len:], os.environ[env_key])
         for env_key in os.environ.keys()
         if env_key.startswith(env_var_prefix_with_full_module_path)
     ]
@@ -82,20 +86,30 @@ def update_from_env(module_path, config_root_module='config', env_var_prefix=CON
     no_conversion = {str, type(None)}
 
     for key, value in env_vars_found:
-        # Since we can't rely on case sensitivity in env vars, we try lower-case
-        # and default to upper case if we don't find it
+
+        # https://github.com/unite-io/data-collection-fb/pull/33
+        # While many attribute names in the config modules can be in lower or mixed case,
+        # there is a chance these env vars are not communicated in proper case to us.
+        # This may happen at Terraform level (per Mike) or, potentially at some others.
+        # Here we try to bend over backwards to match the attribute name in various cases.
+
         key = key.lower() if getattr(config_module, key.lower(), None) else key
 
-        ExistingValueType = type(getattr(config_module, key, None))
-
-        if ExistingValueType is bool:
-            value = False if value in falsy_bool_as_string else value
-
-        setattr(
-            config_module,
-            key,
-            value if ExistingValueType in no_conversion else ExistingValueType(value)
-        )
-        # note that ExistingValueType(value) does not work for complex value types like lists
-        # no, if we run into that problem, will need to rethink this.
-        # Until then, let's just be happy that we deal with auto-reboxing of int and bool
+        # the ".upper()" part is frivolous at this point as the only scenario
+        # we discussed originally is when a native lower-cased attr is upper-cased
+        # by config system, so, only .lower() is needed, but keeping it for completeness
+        for key_variant in [key, key.lower(), key.upper()]:
+            original_value = getattr(config_module, key_variant, NotSet)
+            if original_value is not NotSet:
+                ExistingValueType = type(original_value)
+                if ExistingValueType is bool:
+                    value = False if value in falsy_bool_as_string else value
+                setattr(
+                    config_module,
+                    key_variant,
+                    value if ExistingValueType in no_conversion else ExistingValueType(value)
+                )
+                # note that ExistingValueType(value) does not work for complex value types like lists
+                # no, if we run into that problem, will need to rethink this.
+                # Until then, let's just be happy that we deal with auto-reboxing of int and bool
+                break  # actually it's safe to loop further because other keys will NOT match, but why waste CPU?
