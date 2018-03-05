@@ -98,9 +98,9 @@ class TestUploadToS3(TestCase):
             report_type='fb_entities_adaccount_campaigns',
             report_time=datetime.now(pytz.utc),
             report_id=uuid.uuid4().hex,
-            metadata={
-                'some': 'metadata'
-            }
+            # Construct date the same way as the sweep builder does it
+            range_start=datetime.strptime('2017-01-01', '%Y-%m-%d'),
+            range_end=datetime.strptime('2017-01-02', '%Y-%m-%d')
         )
 
         storage_key = cold_storage.store(dict(test_data), ctx)
@@ -108,7 +108,14 @@ class TestUploadToS3(TestCase):
 
         assert s3_obj.metadata == {
             'build_id': config.build.BUILD_ID,
-            'some': 'metadata'
+            'ad_account_id': test_data[Campaign.Field.account_id],
+            'entity_id': 'None',
+            'entity_type': 'None',
+            'platform': 'facebook',
+            'range_start': '2017-01-01',
+            'range_end': '2017-01-02',
+            'report_type': 'fb_entities_adaccount_campaigns',
+            'report_variant': 'None',
         }
 
     def test_key_s3_construction(self):
