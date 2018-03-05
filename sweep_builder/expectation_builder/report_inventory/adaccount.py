@@ -30,7 +30,7 @@ def ad_accounts_per_scope(reality_claim):
                 generate_id(
                     # Note absence of value for AdAccount
                     # This is "all AA per scope X" job.
-                    report_type=ReportType.entities,
+                    report_type=ReportType.console,
                     report_variant=Entity.AdAccount,
                     scope=reality_claim.scope
                 ),

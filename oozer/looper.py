@@ -30,7 +30,11 @@ def get_tasks_map():
     # handlers are often the same for each type because they
     # look at JobScope to figure out the particular data collection mode
     return {
+        ReportType.console: {
+          Entity.AdAccount: None, # FIXME: Fetch accounts from console
+        },
         ReportType.entities: {
+            Entity.AdAccount: None, # FIXME: Fetch account from facebook - regular pipeline
             Entity.Campaign: collect_entities_per_adaccount_task,
             Entity.AdSet: collect_entities_per_adaccount_task,
             Entity.Ad: collect_entities_per_adaccount_task,
