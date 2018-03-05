@@ -40,8 +40,8 @@ class TestEntityHasher(TestCase):
         )
 
         assert checksum == EntityHash(
-            data='f9226b08eaa500a1',
-            fields='4be66693c426f152'
+            data='7ec2311c415b0491',
+            fields='c1d441aa7f411a0e'
         )
 
     def test_field_selection(self):

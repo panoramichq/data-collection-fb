@@ -7,7 +7,7 @@ import pytest
 from oozer.common import job_scope
 from common.enums.failure_bucket import FailureBucket
 from common.enums.entity import Entity
-from oozer.common.report_job_status import JobStatus
+from oozer.common.enum import FacebookJobStatus
 from oozer.common.report_job_status import report_job_status
 from common.store.sweepentityreport import FacebookSweepEntityReport
 
@@ -15,6 +15,7 @@ from common.store.sweepentityreport import FacebookSweepEntityReport
 class TestReportJobStatus(TestCase):
 
     def _manufacture_job_scope(self):
+
         return job_scope.JobScope(
             ad_account_id='123',
             report_type='entity',
@@ -44,12 +45,9 @@ class TestReportJobStatus(TestCase):
         }
 
     def test_failure_bucket(self):
-        class BogusJobStatus(JobStatus):
-
-            SomeResult = -100, FailureBucket.Throttling
 
         ctx = self._manufacture_job_scope()
-        report_job_status(BogusJobStatus.SomeResult, ctx)
+        report_job_status(FacebookJobStatus.ThrottlingError, ctx)
 
         stored_data = FacebookSweepEntityReport.get(ctx.sweep_id, ctx.job_id)
 
@@ -58,20 +56,9 @@ class TestReportJobStatus(TestCase):
             'job_id': 'fb:123:::entity:C',
             'ad_account_id': '123',
             'entity_id': None,
-            'stage_id': BogusJobStatus.SomeResult[0],
+            'stage_id': FacebookJobStatus.ThrottlingError,
             'entity_type': None,
             'failure_bucket': FailureBucket.Throttling,
             'failure_error': None,
             'report_type': 'entity',
         }
-
-    def test_positive_failure_bucket_fails(self):
-
-        class BogusJobStatus(JobStatus):
-
-            SomeResult = 100, FailureBucket.Throttling
-
-        ctx = self._manufacture_job_scope()
-
-        with pytest.raises(AssertionError):
-            report_job_status(BogusJobStatus.SomeResult, ctx)
