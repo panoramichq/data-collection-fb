@@ -14,6 +14,6 @@ class ConsoleApi:
             headers={'x-auth-token': TOKEN },
             params= { 'platform': 'facebook' }
         )
-        # return f'{URL}/api/projects/platform-accounts', TOKEN
+
         return response.json()
 
