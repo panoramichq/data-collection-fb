@@ -29,9 +29,8 @@ class TestEntityHasher(TestCase):
     def _manufacture_test_entity(self):
         c = Campaign('3842799601730217')
         c['account_id'] = '2049751338645034'
-        c['budget_rebalance_flag'] = False
         c['buying_type'] = 'RESERVED'
-        c['configured_status'] = 'ACTIVE'
+        c['objective'] = 'VIDEO_VIEWS'
         return c
 
     def test_hash_calculation(self):
@@ -40,8 +39,8 @@ class TestEntityHasher(TestCase):
         )
 
         assert checksum == EntityHash(
-            data='f9226b08eaa500a1',
-            fields='4be66693c426f152'
+            data='e92f1414ef60429f',
+            fields='c1d441aa7f411a0e'
         )
 
     def test_field_selection(self):
@@ -56,7 +55,7 @@ class TestEntityHasher(TestCase):
         )
 
         # Check changing of value not selected does not break anything
-        entity['budget_rebalance_flag'] = 'whatever'
+        entity['objective'] = 'POST_ENGAGEMENT'
         checksum = _checksum_entity(
             entity, ['account_id', 'buying_type']
         )
