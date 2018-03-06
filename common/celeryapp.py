@@ -26,6 +26,12 @@ class RoutingKey:
     }
 
 
+class CeleryTask(Task):
+
+    ignore_result = True
+    max_retries = 0
+
+
 @setup_logging.connect
 def _alter_logger(*args, **kwargs):
     """
@@ -60,7 +66,9 @@ def get_celery_app(celery_config=celery_config):
     global _celery_app
 
     if not _celery_app:
-        _celery_app = Celery()
+        _celery_app = Celery(
+            task_cls=CeleryTask
+        )
         _celery_app.config_from_object(celery_config)
 
         # These are top-level module names for folders

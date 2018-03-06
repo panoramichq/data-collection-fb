@@ -7,53 +7,18 @@ from common.store.entityreport import FacebookEntityReport
 from common.enums.reporttype import ReportType
 from common.enums.failure_bucket import FailureBucket
 from common.tztools import now_in_tz
+from common.math import (
+    adapt_decay_rate_to_population,
+    get_decay_proportion,
+    get_fade_in_proportion,
+)
 
 
-def get_decay_ratio(units_in_past, decay_floor=0.15, rate=0.05):
-    """
-    Returns a number in the range from 1 to zero, indicating
-    remaining portion of the score to keep given the reporting
-    day is this far in the past.
-
-    1
-    ||
-    | \
-    |   \
-    |    `"-..______
-    ----------------
-    0              X
-
-    Used to discount significance of collection of data for older reporting periods
-
-    :param units_in_past: Number of days/minutes/units record of interest is in the past compared to now.
-    :param decay_floor: Proportion lower than which the score will NOT be reduced
-    :param rate:
-    :return:
-    """
-    # with above rate + floor, loses about half the score
-    # in about 15 units, approaching the floor by about 50th unit
-    return decay_floor + (1-decay_floor) * (1 - rate) ** units_in_past
-
-
-def get_fade_in_ratio(units_in_past, rate=0.05):
-    """
-    Returns a number in range between zero and 1 indicating
-    what portion of score to keep given the reporting time unit
-    is this far in the past.
-
-    1
-    |     ,_.------
-    |   /
-    | /
-    ||
-    ----------------
-    0              X
-
-    :param units_in_past:
-    :param rate:
-    :return:
-    """
-    return 1 - (1 - rate) ** units_in_past
+# This controls score decay for insights that are day-specific
+# the further in the past, the less we care.
+# The edge of what we care about is deemed to be \/ 2 years.
+DAYS_BACK_DECAY_RATE = adapt_decay_rate_to_population(365*2)
+MINUTES_AWAY_FROM_WHOLE_HOUR_DECAY_RATE = adapt_decay_rate_to_population(30)
 
 
 def get_minutes_away_from_whole_hour():
@@ -61,7 +26,6 @@ def get_minutes_away_from_whole_hour():
     if minute > 30:
         minute = 60 - minute
     return minute
-
 
 
 class ScoreCalculator:
@@ -194,7 +158,11 @@ class ScoreCalculator:
             if days_from_now < 0:
                 # which may happen if report_day is not in proper timezone
                 days_from_now = 0
-            score = score * get_decay_ratio(days_from_now, decay_floor=0.15, rate=0.05)
+            score = score * get_decay_proportion(
+                days_from_now,
+                rate=DAYS_BACK_DECAY_RATE,
+                decay_floor=0.10  # never decay to lower then 10% of the score
+            )
         elif report_type == ReportType.lifetime:
             # These don't have reporting day ranges.
             # But, these we need to try to collect "on the hour"
@@ -204,14 +172,18 @@ class ScoreCalculator:
             # O-clock snapping, greater age == greater score.
             minutes = get_minutes_away_from_whole_hour()
             # with these ratios 80% of the score is gone by 8th minute away from whole hour
-            score = score * get_decay_ratio(minutes, decay_floor=0, rate=0.2)
+            score = score * get_decay_proportion(
+                minutes,
+                rate=MINUTES_AWAY_FROM_WHOLE_HOUR_DECAY_RATE,
+                decay_floor=0.10  # never decay to lower then 10% of the score
+            )
             # but now we need to boost it back
 
         if collection_record and collection_record.last_success:
             seconds_old = (datetime.utcnow() - collection_record.last_success).seconds
             # at this rate, 80% of score id regained by 15th minute
             # and ~100% by 36th minute.
-            score = score * get_fade_in_ratio(seconds_old / 60, rate=0.1)
+            score = score * get_fade_in_proportion(seconds_old / 60, rate=0.1)
 
         score = int(score)
 

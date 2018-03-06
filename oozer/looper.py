@@ -12,6 +12,7 @@ from common.enums.entity import Entity
 from common.enums.failure_bucket import FailureBucket
 from common.enums.reporttype import ReportType
 from common.id_tools import parse_id
+from common.math import adapt_decay_rate_to_population, get_decay_proportion
 from config import looper as looper_config
 from oozer.common.job_context import JobContext
 from oozer.common.job_scope import JobScope
@@ -64,27 +65,32 @@ def iter_tasks(sweep_id):
     tasks_inventory = get_tasks_map()
 
     with SortedJobsQueue(sweep_id).TasksReader() as jobs_iter:
-        for job_id in jobs_iter:
+        for job_id, job_scope_additional_data, score in jobs_iter:
 
-            parts = parse_id(job_id)  # type: dict
+            job_id_parts = parse_id(job_id)  # type: dict
+            job_scope = JobScope(
+                job_scope_additional_data,
+                job_id_parts,
+                sweep_id=sweep_id
+            )
 
-            report_type = parts['report_type']
-            entity_type = parts['entity_type'] or parts['report_variant']
+            # TODO: remove. this is temp plug for dev
+            # Expect to have tokens inside job_scope_additional_data
+            if not job_scope.tokens:
+                job_scope.tokens = [TOKEN]
 
-            celery_task = tasks_inventory.get(report_type, {}).get(entity_type)
+            celery_task = tasks_inventory.get(
+                job_scope.report_type, {}
+            ).get(
+                job_scope.entity_type or job_scope.report_variant
+            )
 
             if not celery_task:
                 logger.warning(f"#{sweep_id}: Could not match job_id {job_id} to a worker.")
             else:
-                job_scope = JobScope(
-                    parts,
-                    sweep_id=sweep_id,
-                    tokens=[TOKEN]
-                )
-
-                # TODO: Add job context, at minimum entity hash data. TBD how to get
-                # this, could be Dynamo directly, or prepared by the sweep builder
-                # and sent along
+                # TODO: Decide what to do with this.
+                # Was designed for massive hash collection and such,
+                # but cannot have too much data in there because we pickle it and put in on Redis
                 job_context = JobContext()
 
                 yield celery_task, job_scope, job_context
@@ -140,7 +146,7 @@ def create_decay_function(n, t, z=looper_config.DECAY_FN_START_MULTIPLIER):
     From which we derive r:
         r = 2n / zk
 
-    Thus, slope of the hypotenuse can be computed as:
+    Thus, equation for slope of the hypotenuse can be computed as:
         y = zk - zk/r * x
 
     Which reduces to:
@@ -191,7 +197,7 @@ def find_area_covered_so_far(fn, x):
 
 class TaskOozer():
 
-    def __init__(self, n, t, time_slice_length=1):
+    def __init__(self, n, t, time_slice_length=1, z=looper_config.DECAY_FN_START_MULTIPLIER):
         """
         :param n: Number of tasks to release
         :param t: Time slices to release the tasks over
@@ -202,7 +208,7 @@ class TaskOozer():
 
         # doing this odd way of creating a method to trap decay_fn in the closure
         start_time = round(time.time()) - 1
-        decay_fn = create_decay_function(n, t)
+        decay_fn = create_decay_function(n, t, z)
         fn = lambda: find_area_covered_so_far(
             decay_fn,
             (round(time.time()) - start_time ) / time_slice_length
@@ -282,26 +288,40 @@ class SweepStatusTracker():
 
         key = self._gen_key(self.now_in_minutes())
         get_redis().hincrby(key, failure_bucket or FailureBucket.Success)
+        key = self._gen_key('aggregate')
+        get_redis().hincrby(key, failure_bucket or FailureBucket.Success)
 
-    def _get_trailing_minutes_data(self, minute):
+    def _get_aggregate_data(self, redis):
         # This mess is here just to get through the annoyance
         # of beating what used to be ints as keys AND values
         # back into ints from strings (into which Redis beats non-string
         # keys and values)
-        rr = get_redis()
+        return {
+            int(k): int(v)
+            for k, v in redis.hgetall(self._gen_key('aggregate')).items()
+        }
+
+    def _get_trailing_minutes_data(self, minute, redis):
+        # This mess is here just to get through the annoyance
+        # of beating what used to be ints as keys AND values
+        # back into ints from strings (into which Redis beats non-string
+        # keys and values)
         return [
             {
                 int(k): int(v)
-                for k, v in rr.hgetall(
-                self._gen_key(minute-i)
-            ).items()
+                for k, v in redis.hgetall(
+                    self._gen_key(minute-i)
+                ).items()
             }
             for i in range(0, 4)
         ]
 
     def get_pulse(self, minute=None, ignore_cache=False):
         """
-        This calculates some aggregate of status for the most recent jobs
+        This calculates some aggregate of status for the *most recent* jobs
+
+        Again, this pulse is representative of some LAST FEW MINUTES of processing
+        not of the entire sweep.
 
         Meaning of this is very particular to the use in Looper. No grand magic.
 
@@ -310,7 +330,9 @@ class SweepStatusTracker():
 
         minute = minute or self.now_in_minutes()
 
-        m0, m1, m2, m3 = self._get_trailing_minutes_data(minute)
+        redis = get_redis()
+
+        m0, m1, m2, m3 = self._get_trailing_minutes_data(minute, redis)
 
         # merge data from minute zero and minute one
         # because minute zero might have only started
@@ -323,7 +345,8 @@ class SweepStatusTracker():
             FailureBucket.Success: 0,
             FailureBucket.Other: 0,
             FailureBucket.Throttling: 0,
-            FailureBucket.TooLarge: 0
+            FailureBucket.TooLarge: 0,
+            FailureBucket.WorkingOnIt: 0
         }
 
         # Now the proportion of successes, failure
@@ -339,18 +362,25 @@ class SweepStatusTracker():
         # distant proportions.
         # Since these are voodoo numbers, feel free to rejiggle this formula,
         # but must adapt uses of them in looper below.
-        total_total = 0
-        for data, ratio in zip([m1, m2, m3], [80, 15, 5]):
-            total = sum(data.values())
-            if total:
-                total_total += total
+        for data, ratio in zip([m1, m2, m3], [0.80, 0.15, 0.05]):
+            minute_total = sum(data.values())
+            if minute_total:
                 for k in list(result.keys()):
-                    result[k] = result[k] + ratio * data.get(k, 0) / total
+                    contributor = ratio * data.get(k, 0) / minute_total
+                    result[k] = result[k] + contributor
 
+        aggregate_data = self._get_aggregate_data(redis)
+
+        # Again, note the split:
+        # - total is Done COUNT per entire sweep.
+        # - rest of values are proportion of 1 (percentage as decimal)
+        #   of specific outcomes in the last ~3 minutes of the run.
+        #   These ratios are not representative of entire sweep so far.
+        #   They are representative of "very recent" tail of sweep.
         pulse = Pulse(
-            Total=total_total,
+            Total=sum(aggregate_data.values()),
             **{
-                name: int(result.get(enum_value, 0))
+                name: result.get(enum_value, 0)
                 for name, enum_value in FailureBucket.attr_name_enum_value_map.items()
             }
         )
@@ -379,8 +409,13 @@ def run_tasks(sweep_id, limit=None, time_slices=looper_config.FB_THROTTLING_WIND
         # If we burn through tasks earlier as a result of that assumption - fine.
         n = time_slices * 10
 
-    max_running_time_seconds = time_slices * time_slice_length
-    be_done_by = time.time() + max_running_time_seconds
+    z = looper_config.DECAY_FN_START_MULTIPLIER
+
+    start_of_run_seconds = time.time()
+    max_normal_running_time_seconds = time_slices * time_slice_length
+    max_seed_running_time_seconds = max_normal_running_time_seconds * 1.3  # arbitrary
+    quarter_time = start_of_run_seconds + max_normal_running_time_seconds * 0.25
+    half_time = start_of_run_seconds + max_normal_running_time_seconds * 0.5
 
     cnt = 0
     _pulse_refresh_interval = 5  # seconds
@@ -390,19 +425,114 @@ def run_tasks(sweep_id, limit=None, time_slices=looper_config.FB_THROTTLING_WIND
     if limit:
         tasks_iter = islice(tasks_iter, 0, limit)
 
-    with TaskOozer(n, time_slices, time_slice_length) as ooze_task:
-        next_pulse_review_second = time.time() - 1  # set in past to force refresh
-        for celery_task, job_scope, job_context in tasks_iter:
 
-            if next_pulse_review_second < time.time():
+    with TaskOozer(n, time_slices, time_slice_length, z) as ooze_task:
+        next_pulse_review_second = time.time() + _pulse_refresh_interval
+
+        # now, don't freak out about us looping 4 time off the same exact generator
+        # the beauty of generator is that you can resume consuming from it
+        # as each loop is just asking g.__next__() on it. So, we can part-consume from it
+        # reflect on what we did and continue looping through for bit, stop and
+        # reflect a bit more etc etc.
+
+        # first some n jobs, it's kinda pointless checking on pulse.
+        # let's just shove them out of the door without
+        # thinking about pulse or failures.
+        # This makes sure that seed rounds that have so few
+        # tasks get all COMPLETELY pushed out.
+        for celery_task, job_scope, job_context in islice(tasks_iter, 0, 100):
+            # FYI: ooze_task blocks if we pushed too many tasks in the allotted time
+            # It will unblock by itself when it's time to release the task
+            ooze_task(celery_task, job_scope, job_context)
+            cnt += 1
+
+        # if there are 1st quarter tasks left in queue, burn them out
+        for celery_task, job_scope, job_context in tasks_iter:
+            ooze_task(celery_task, job_scope, job_context)
+            cnt += 1
+            if time.time() > quarter_time:
+                break  # to next for-loop
+
+        for celery_task, job_scope, job_context in tasks_iter:
+            # If we are here, it's start of 2nd quarter of our total time slice
+            # and we still have tasks to push out.
+            # At this point we should start caring about results
+            # We will look for most obvious signs of failure
+
+            now = time.time()
+            if next_pulse_review_second < now:
                 pulse = sweep_tracker.get_pulse()  # type: Pulse
                 if pulse.Total > 20:
-                    if pulse.Success < 20:
+                    if pulse.Success < 0.10: # percent
                         # failures across the board
-                        return cnt
-                    if pulse.Throttling > 40:
+                        # return cnt, pulse
+                        break
+                    if pulse.Throttling > 0.40: # percent
                         # time to give it a rest
-                        return cnt
+                        # return cnt, pulse
+                        break
+                next_pulse_review_second = now + _pulse_refresh_interval
+
+            # FYI: ooze_task blocks if we pushed too many tasks in the allotted time
+            # It will unblock by itself when it's time to release the task
+            ooze_task(celery_task, job_scope, job_context)
+            cnt += 1
+
+            if now > half_time:
+                break
+
+        # In second half of the loop, if we still have tasks to release
+        # we might need to cut the tail of the task queue if we now realize we will not
+        # burn through it all.
+        # For that we need this:
+        pulse = sweep_tracker.get_pulse()  # type: Pulse
+        half_time_done_cnt = pulse.Total
+        # Note, that we may be here in the first second of the sweep loop if we have
+        # some very few seed tasks. So, this is NOT guaranteed to be exactly the middle
+        # of the sweep loop as far as time is concerned. This could be "the end" of the loop
+        # as far as tasks oozing is concerned and "the very beginning" of the loop in terms of time.
+        # this value is "half_time" only if the next for loop has any items to process.
+        # So, don't do any "half" logic here. Do it inside this next for loop.
+        cut_off_at_cnt = n
+
+        for celery_task, job_scope, job_context in tasks_iter:
+            # If we are here, exactly start of 2nd half of our total time slice
+            # and we still have tasks to push out.
+
+            # since we need only one swing through the loop - just to ensure
+            # there is something there,
+            # could have done tasks_iter.__next__() wrapped in try-catch, but
+            # did not want to break the pattern.
+
+            cut_off_at_cnt = min(cut_off_at_cnt, half_time_done_cnt * 2)
+
+            ooze_task(celery_task, job_scope, job_context)
+            cnt += 1
+            break
+
+        for celery_task, job_scope, job_context in tasks_iter:
+            # If we are here, we are a little bit into 2nd half of our total time slice
+            # and we still have tasks to push out.
+
+            # At this point we should start caring about what we queue up,
+            # because by about half-time we need to know if we cut the cycle or not
+            # Here we are building linear equation derived from observing rate and speed of
+            # completion of the tasks we already pushed out and trying to predict
+            # what happens to jobs we would push out from this point on.
+
+            now = time.time()
+
+            if next_pulse_review_second < now:
+                pulse = sweep_tracker.get_pulse()  # type: Pulse
+                if pulse.Total > 20:
+                    if pulse.Success < 0.20: # percent
+                        # failures across the board
+                        # return cnt, pulse
+                        break
+                    if pulse.Throttling > 0.40: # percent
+                        # time to give it a rest
+                        # return cnt, pulse
+                        break
                 next_pulse_review_second = time.time() + _pulse_refresh_interval
 
             # FYI: ooze_task blocks if we pushed too many tasks in the allotted time
@@ -410,4 +540,89 @@ def run_tasks(sweep_id, limit=None, time_slices=looper_config.FB_THROTTLING_WIND
             ooze_task(celery_task, job_scope, job_context)
             cnt += 1
 
-    return cnt
+            if cnt > cut_off_at_cnt:
+                if cnt < n:
+                    logger.info(f"#{sweep_id}: Queueing cut at {cnt} jobs of total {n}")
+                break
+
+    logger.info(f"#{sweep_id}: Queued up {cnt} jobs")
+
+    # now we wait for either the time to run out or tasks to be done
+    # This part is icky. Here all we do is wait. One of the things we wait on - done count -
+    # is not guaranteed to be there ever. If we implemented error trapping in workers badly,
+    # then we'll wait forever... but that's why we also have time-based cut off, but
+    # that basically means that a single uncaught error in small sweeps (see under-500 logic below)
+    # results in this function running for at least 10 minutes
+    # (or whatever time_slices * time_slice_length is)
+    #
+    # TODO: split this off into separate waiter code/function from oozer code/function above.
+    #  (would do that myself but there are too many variables shared now... too much worky)
+
+    # arbitrary, but just has to be some "small" value
+    # that indicates this is one of earlier, "seed" sweeps
+    # where collection of stuff is super important
+
+    if cnt > 100:
+        should_be_done_cnt = int(cnt * 0.90)  # 90% is good enough
+        should_be_done_by = start_of_run_seconds + max_seed_running_time_seconds
+        _rate = adapt_decay_rate_to_population(max(cnt*2, looper_config.SANE_MAX_TASKS))
+        # this first picks a cnt-appropriate ratio between 1 and 0,
+        # depending on value of cnt. The closer it is to SANE_MAX_TASKS
+        # the *smaller* (closer to zero) that ratio is.
+        # Then expectation of "not even caring about the clock" is set
+        # based on cnt * that ratio
+        dont_even_look_at_clock_until_done_cnt = int(cnt * get_decay_proportion(
+            cnt,
+            rate=_rate
+        ))
+    else:
+        should_be_done_cnt = cnt
+        should_be_done_by = start_of_run_seconds + max_normal_running_time_seconds
+        dont_even_look_at_clock_until_done_cnt = cnt
+
+    really_really_kill_it_by = max(
+        should_be_done_by,
+        start_of_run_seconds + 60*30 # half hour
+    )
+
+    def its_time_to_quit(pulse):
+        # must have anything at all done
+        # otherwise logic below makes no sense
+        # This stops us from quitting in very beginning of the loop
+        # global dont_even_look_at_clock_until_done_cnt, really_really_kill_it_by, should_be_done_cnt
+
+        if should_be_done_cnt <= pulse.Total:
+            # Yey! all done!
+            return True
+
+        if pulse.Total:
+            # all other pulse types are "final" and are not good indicators of
+            # us still doing something. pulse.WorkingOnIt is the only one that may
+            # suggest that there is a reason to stay
+            if dont_even_look_at_clock_until_done_cnt > pulse.Total and pulse.WorkingOnIt:
+                return False
+            # no "else" Falling through on other conditionals
+
+            # This is some 10 minute mark. Hence us checking if we are still doing something
+            # long-running in the last 3 minutes.
+            if should_be_done_by < time.time() and not pulse.WorkingOnIt:
+                return True
+
+            # This is half-hour mark. No point waiting longer than this
+            # even if there are still workers there. They will die off at some point
+            if really_really_kill_it_by < time.time():
+                return True
+
+        return False
+
+    # we wait for certain number of tasks to be done, until we run out of waiting time
+    pulse = sweep_tracker.get_pulse()  # type: Pulse
+    while not its_time_to_quit(pulse):
+        running_time = int(time.time() - start_of_run_seconds)
+        logger.info(
+            f"#{sweep_id}: ({running_time} seconds in) Waiting on {cnt} jobs with last pulse being {pulse}"
+        )
+        gevent.sleep(time_slice_length)
+        pulse = sweep_tracker.get_pulse()  # type: Pulse
+
+    return cnt, pulse
