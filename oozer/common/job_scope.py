@@ -8,6 +8,22 @@ class JobScope:
 
     """
 
+    METADATA_STRING_FIELDS = {
+        'platform',
+        'ad_account_id',
+        'entity_id',
+        'entity_type',
+        'report_type',
+        'report_variant',
+    }
+
+    METADATA_DATE_FIELDS = {
+        'range_start',
+        'range_end',
+    }
+
+    METADATA_FIELDS = METADATA_STRING_FIELDS | METADATA_DATE_FIELDS
+
     # System information
     sweep_id = None
 
@@ -28,7 +44,6 @@ class JobScope:
 
     # Job performance things
     tokens = None
-    metadata = None
 
     # Indicates that this is a synthetically created instance of JobScope
     # (likely by the worker code to indicate some sub-level of work done)
@@ -41,8 +56,6 @@ class JobScope:
 
     def __init__(self, *args, **kwargs):
         self.update(*args, **kwargs)
-        # Normalize few things
-        self.metadata = self.metadata or {}
 
     def __repr__(self):
         return f'<JobScope {self.sweep_id}:{self.job_id}>'
@@ -71,3 +84,22 @@ class JobScope:
             range_end=self.range_end,
             namespace=self.namespace,
         )
+
+    @property
+    def metadata(self):
+        """
+        Assemble metadata from the job scope, dumping relevant information
+
+        :return dict: A dict of metadata (key/value)
+        """
+        metadata = {
+            x: str(getattr(self, x)) for x in self.METADATA_STRING_FIELDS
+        }
+
+        for date_field in self.METADATA_DATE_FIELDS:
+            metadata[date_field] = \
+                getattr(self, date_field).strftime('%Y-%m-%d') \
+                if getattr(self,date_field, None) \
+                else str(None)
+
+        return metadata
