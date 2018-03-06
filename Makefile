@@ -52,6 +52,19 @@ push_image: image
 .PHONY: image push_image
 
 #############
+# Redis cluster
+REDIS_CLUSTER_IMAGE_NAME:=redis-cluster
+REDIS_CLUSTER_IMAGE_NAME_FULL:=$(VENDOR_NAME)/$(REDIS_CLUSTER_IMAGE_NAME)
+
+image.redis-cluster:
+	docker build \
+		--no-cache \
+		-t $(REDIS_CLUSTER_IMAGE_NAME_FULL) \
+		-f docker/Dockerfile.redis-cluster ./docker
+
+.PHONY: image.redis-cluster
+
+#############
 # Dynamodb local management
 DYNAMO_IMAGE_NAME:=dynamodb
 DYNAMO_IMAGE_NAME_FULL:=$(VENDOR_NAME)/$(DYNAMO_IMAGE_NAME)
@@ -112,6 +125,7 @@ start-dev: .dynamodb_data .s3_data
 	DYNAMODIR=$(DYNAMODIR) \
 	FAKE_S3_IMAGE_NAME_FULL=${FAKE_S3_IMAGE_NAME_FULL} \
 	FAKES3DIR=$(FAKES3DIR) \
+	REDIS_CLUSTER_IMAGE_NAME_FULL=${REDIS_CLUSTER_IMAGE_NAME_FULL} \
 	IMAGE_NAME_FULL=$(IMAGE_NAME_FULL) \
 	USER_ID=$(shell id -u) \
 	GROUP_ID=$(shell id -g) \
@@ -124,6 +138,7 @@ start-stack: .dynamodb_data .s3_data
 	DYNAMODIR=$(DYNAMODIR) \
 	FAKE_S3_IMAGE_NAME_FULL=${FAKE_S3_IMAGE_NAME_FULL} \
 	FAKES3DIR=$(FAKES3DIR) \
+	REDIS_CLUSTER_IMAGE_NAME_FULL=${REDIS_CLUSTER_IMAGE_NAME_FULL} \
 	IMAGE_NAME_FULL=$(IMAGE_NAME_FULL) \
 	USER_ID=$(shell id -u) \
 	GROUP_ID=$(shell id -g) \
