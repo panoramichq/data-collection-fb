@@ -7,9 +7,7 @@ import config.build
 import hashlib
 import json
 import uuid
-import pytz
 
-from datetime import datetime
 from io import BytesIO
 
 from common import tztools
@@ -38,7 +36,7 @@ class TestUploadToS3(TestCase):
 
         :return Campaign: Facebook SDK campaign object
         """
-        test_campaign = Campaign(self.campaign_id)
+        test_campaign = Campaign(fbid or self.campaign_id)
         test_campaign[Campaign.Field.account_id] = self.ad_account_id
         test_campaign.update(data)
         return test_campaign.export_all_data()
@@ -61,8 +59,6 @@ class TestUploadToS3(TestCase):
         """
         Test the basic upload
         """
-        known_object_contents = f'{{"id": "{self.campaign_id}", "account_id": "{self.ad_account_id}"}}'.encode('utf8')
-
         test_campaign = self._fake_data_factory(
             self.campaign_id,
             **{
@@ -106,7 +102,7 @@ class TestUploadToS3(TestCase):
         s3_obj, _ = self._get_s3_object(storage_key)
 
         assert s3_obj.metadata == {
-            'build_id': 'latest',
+            'build_id': config.build.BUILD_ID,
             'job_id': ctx.job_id,
             'platform': 'facebook',
             'ad_account_id': ctx.ad_account_id,
