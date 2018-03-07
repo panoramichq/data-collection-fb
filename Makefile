@@ -149,11 +149,12 @@ start-stack: .dynamodb_data .s3_data
 
 #############
 # Test runner
-test: .dynamodb_data image.dynamo image.fakes3
+test: .dynamodb_data image.dynamo image.fakes3 image.redis-cluster
 	DYNAMO_IMAGE_NAME_FULL=$(DYNAMO_IMAGE_NAME_FULL) \
 	DYNAMODIR=$(DYNAMODIR) \
 	FAKE_S3_IMAGE_NAME_FULL=${FAKE_S3_IMAGE_NAME_FULL} \
 	FAKES3DIR=$(FAKES3DIR) \
+	REDIS_CLUSTER_IMAGE_NAME_FULL=${REDIS_CLUSTER_IMAGE_NAME_FULL} \
 	IMAGE_NAME_FULL=$(IMAGE_NAME_FULL) \
 	WORKDIR=/usr/src/app \
 	docker-compose -f docker/docker-compose-test.yaml run \
