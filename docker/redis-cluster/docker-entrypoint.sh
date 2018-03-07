@@ -1,10 +1,7 @@
 #!/bin/sh
 
 if [ "$1" = 'redis-cluster' ]; then
-    max_port=7007
-    if [ "$CLUSTER_ONLY" = "true" ]; then
-      max_port=7005
-    fi
+    max_port=7002
 
     for port in `seq 7000 $max_port`; do
       mkdir -p /redis-conf/${port}
@@ -14,20 +11,18 @@ if [ "$1" = 'redis-cluster' ]; then
         rm /redis-data/${port}/nodes.conf
       fi
 
-      if [ "$port" -lt "7006" ]; then
-        PORT=${port} envsubst < /redis-conf/redis-cluster.tmpl > /redis-conf/${port}/redis.conf
-      else
-        PORT=${port} envsubst < /redis-conf/redis.tmpl > /redis-conf/${port}/redis.conf
-      fi
+      PORT=${port} envsubst < /redis-conf/redis-cluster.tmpl > /redis-conf/${port}/redis.conf
     done
 
     bash /generate-supervisor-conf.sh $max_port > /etc/supervisor/supervisord.conf
 
     supervisord -c /etc/supervisor/supervisord.conf
-    sleep 5
+    sleep 3
 
-    IP=0.0.0.0
-    echo "yes" | ruby /redis/src/redis-trib.rb create --replicas 1 ${IP}:7000 ${IP}:7001 ${IP}:7002 ${IP}:7003 ${IP}:7004 ${IP}:7005
+    # Obtain host IP
+    IP=$(ifconfig eth0 | grep 'inet addr' | cut -d: -f2 | awk '{print $1}')
+
+    echo "yes" | ruby /redis/src/redis-trib.rb create --replicas 0 ${IP}:7000 ${IP}:7001 ${IP}:7002
     tail -f /var/log/supervisor/redis*.log
 else
   exec "$@"

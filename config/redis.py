@@ -3,7 +3,7 @@
 
 # When using AWS ElastiCache connect only to the "Configuration Endpoint" as
 # visible in the AWS console (hence we don't need multiple host addresses)
-URL = 'redis://redis:6379'
+URL = 'redis://redis-cluster:7000'
 
 
 from common.updatefromenv import update_from_env

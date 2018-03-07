@@ -2,6 +2,11 @@ version: '2.3'
 
 services:
 
+  redis-cluster:
+    extends:
+      file: docker-compose-base.yaml
+      service: redis-cluster
+
   redis:
     extends:
       file: docker-compose-base.yaml
@@ -25,6 +30,7 @@ services:
       - fakes3
       - redis
       - dynamo
+      - redis-cluster
 #    environment:
 #      # uncomment this to allow sweep looper to recurse back into sweep builder
 #      APP_LOOPER_ALLOW_RECURSION: "true"
@@ -39,4 +45,5 @@ services:
       - fakes3
       - redis
       - dynamo
+      - redis-cluster
     command: python app.py worker default

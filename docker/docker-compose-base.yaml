@@ -2,15 +2,20 @@ version: '2.3'
 
 services:
 
-  redis:
+  redis-cluster:
      image: ${REDIS_CLUSTER_IMAGE_NAME_FULL}
-#    TODO: Fix redis commands on the cluster
-#    image: redis:3
+#     ports:
+#      - 7000:7000
+#      - 7001:7001
+#      - 7002:7002
+
+  redis:
+    image: redis:3
 #    # ports:
 #    #  - 6379:6379
-#    command: redis-server --appendonly no --appendfsync no --stop-writes-on-bgsave-error no --maxmemory 1gb
-#    logging:
-#      driver: none
+    command: redis-server --appendonly no --appendfsync no --stop-writes-on-bgsave-error no --maxmemory 1gb
+    logging:
+      driver: none
 
   dynamo:
     image: ${DYNAMO_IMAGE_NAME_FULL}
