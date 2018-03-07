@@ -1,6 +1,6 @@
-from config import redis as redis_config
 import rediscluster
 
+from config import redis as redis_config
 
 def get_redis():
     """
