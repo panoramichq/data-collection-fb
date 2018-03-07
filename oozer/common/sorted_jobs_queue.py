@@ -170,7 +170,8 @@ class _TasksIter:
             front_row.sort(key=lambda o: o.score, reverse=True)
             score, job_id, gen = front_row.pop(0)
 
-            yield job_id
+            # job_id, JobScope data, Score
+            yield job_id, {}, score
             self.cnt += 1
 
             try:

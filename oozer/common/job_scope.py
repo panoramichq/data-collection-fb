@@ -28,7 +28,6 @@ class JobScope:
 
     # Job performance things
     tokens = None
-    metadata = None
 
     # Indicates that this is a synthetically created instance of JobScope
     # (likely by the worker code to indicate some sub-level of work done)
@@ -41,8 +40,6 @@ class JobScope:
 
     def __init__(self, *args, **kwargs):
         self.update(*args, **kwargs)
-        # Normalize few things
-        self.metadata = self.metadata or {}
 
     def __repr__(self):
         return f'<JobScope {self.sweep_id}:{self.job_id}>'

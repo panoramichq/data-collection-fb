@@ -1,5 +1,5 @@
-from facebookads.api import FacebookRequestError
 from typing import Generator
+from facebookads.exceptions import FacebookError
 
 from common.enums.entity import Entity
 from common.enums.failure_bucket import FailureBucket
@@ -11,13 +11,13 @@ from oozer.common.facebook_api import (
 )
 from oozer.common.job_context import JobContext
 from oozer.common.job_scope import JobScope
-from oozer.common.report_job_status import JobStatus
 from oozer.common.report_job_status_task import report_job_status_task
 from oozer.common.enum import (
     FB_CAMPAIGN_MODEL,
     FB_ADSET_MODEL,
     FB_AD_MODEL,
-    ENUM_VALUE_FB_MODEL_MAP
+    ENUM_VALUE_FB_MODEL_MAP,
+    FacebookJobStatus
 )
 from oozer.entities.entity_hash import _checksum_entity, _checksum_from_job_context
 from oozer.entities.feedback_entity_task import feedback_entity_task
@@ -52,25 +52,6 @@ def iter_native_entities_per_adaccount(ad_account, entity_type, fields=None):
     yield from getter_method(fields=fields_to_fetch)
 
 
-class FacebookEntityJobStatus(JobStatus):
-    """
-    Use this to communicate to give status reporter enough information to
-    figure out what the stage id means in terms of failures
-    """
-
-    # Progress states
-    Start = 100
-    EntitiesFetched = 200
-    EntityFetched = 200
-    InColdStore = 500
-
-    # Various error states
-    TooMuchData = (-500, FailureBucket.TooLarge)
-    ThrottlingError = (-700, FailureBucket.Throttling)
-    GenericFacebookError = -900
-    GenericError = -1000
-
-
 def iter_collect_entities_per_adaccount(job_scope, job_context):
     """
     Collects an arbitrary entity for an ad account
@@ -89,10 +70,12 @@ def iter_collect_entities_per_adaccount(job_scope, job_context):
 
     entity_type = job_scope.report_variant
 
-    report_job_status_task.delay(FacebookEntityJobStatus.Start, job_scope)
+    report_job_status_task.delay(FacebookJobStatus.Start, job_scope)
 
     try:
-        with FacebookApiContext(job_scope.token) as fb_ctx:
+        with FacebookApiContext(job_scope.token) as fb_ctx, \
+                cold_storage.ColdStoreQueue(200) as store:
+
             root_fb_entity = fb_ctx.to_fb_model(
                 job_scope.ad_account_id, Entity.AdAccount
             )
@@ -102,11 +85,6 @@ def iter_collect_entities_per_adaccount(job_scope, job_context):
             entity_type
         )
 
-        # Report on the effective task status
-        report_job_status_task.delay(
-            FacebookEntityJobStatus.EntitiesFetched, job_scope
-        )
-
         job_scope_base_data = job_scope.to_dict()
         job_scope_base_data.update(
             entity_type=entity_type,
@@ -114,6 +92,7 @@ def iter_collect_entities_per_adaccount(job_scope, job_context):
             report_variant=None,
         )
 
+        cnt = 0
         for entity in entities:
 
             # Externalize these for clarity
@@ -134,53 +113,59 @@ def iter_collect_entities_per_adaccount(job_scope, job_context):
             # to deal with right now
             if current_hash == entity_hash:
                 report_job_status_task.delay(
-                    FacebookEntityJobStatus.Done, normative_job_scope
+                    FacebookJobStatus.Done, normative_job_scope
                 )
                 # Don't need to save it / send it to cold store
                 continue  # to next entity
             else:
                 report_job_status_task.delay(
-                    FacebookEntityJobStatus.EntityFetched, normative_job_scope
+                    FacebookJobStatus.DataFetched, normative_job_scope
                 )
 
             # Store the individual datum, use job context for the cold
             # storage thing to divine whatever it needs from the job context
-            cold_storage.store(entity_data, normative_job_scope)
+            store(entity_data, normative_job_scope)
 
             # Signal to the system the new entity
             feedback_entity_task.delay(entity_data, entity_type, entity_hash)
 
             report_job_status_task.delay(
-                FacebookEntityJobStatus.Done, normative_job_scope
+                FacebookJobStatus.Done, normative_job_scope
             )
 
             yield entity_data
+            cnt += 1
+
+            if cnt % 100 == 0:
+                report_job_status_task.delay(
+                    FacebookJobStatus.DataFetched, job_scope
+                )
 
         # Report on the effective task status
         report_job_status_task.delay(
-            FacebookEntityJobStatus.Done, job_scope
+            FacebookJobStatus.Done, job_scope
         )
 
-    except FacebookRequestError as e:
+    except FacebookError as e:
         # Build ourselves the error inspector
         inspector = FacebookApiErrorInspector(e)
 
         # Is this a throttling error?
         if inspector.is_throttling_exception():
             report_job_status_task.delay(
-                FacebookEntityJobStatus.ThrottlingError, job_scope
+                FacebookJobStatus.ThrottlingError, job_scope
             )
 
         # Did we ask for too much data?
         elif inspector.is_too_large_data_exception():
             report_job_status_task.delay(
-                FacebookEntityJobStatus.TooMuchData, job_scope
+                FacebookJobStatus.TooMuchData, job_scope
             )
 
         # It's something else which we don't understand
         else:
             report_job_status_task.delay(
-                FacebookEntityJobStatus.GenericFacebookError, job_scope,
+                FacebookJobStatus.GenericFacebookError, job_scope,
             )
         raise
 
@@ -188,6 +173,6 @@ def iter_collect_entities_per_adaccount(job_scope, job_context):
         # This is a generic failure, which does not help us at all, so, we just
         # report it and bail
         report_job_status_task.delay(
-            FacebookEntityJobStatus.GenericError, job_scope
+            FacebookJobStatus.GenericError, job_scope
         )
         raise
