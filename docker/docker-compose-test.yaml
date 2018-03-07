@@ -12,11 +12,17 @@ services:
       file: docker-compose-base.yaml
       service: dynamo
 
+  fakes3:
+    extends:
+      file: docker-compose-base.yaml
+      service: fakes3
+
   app:
     extends:
       file: docker-compose-base.yaml
       service: app
     links:
+      - fakes3
       - redis
       - dynamo
-    command: pytest
+    command: bash -c "python bin/migrate.py && pytest"

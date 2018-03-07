@@ -1,7 +1,7 @@
 import gevent
 
 from datetime import datetime, date
-from facebookads.exceptions import FacebookRequestError
+from facebookads.exceptions import FacebookError
 from facebookads.adobjects.adsinsights import AdsInsights
 from facebookads.adobjects.abstractcrudobject import AbstractCrudObject
 from typing import Callable, Dict
@@ -21,7 +21,7 @@ from oozer.common.facebook_api import (
 from oozer.common.facebook_async_report import FacebookAsyncReportStatus
 from oozer.common.job_context import JobContext
 from oozer.common.job_scope import JobScope
-from oozer.common.report_job_status import JobStatus
+from oozer.common.report_job_status import FacebookJobStatus
 from oozer.common.report_job_status_task import report_job_status_task
 
 
@@ -125,22 +125,6 @@ DEFAULT_ATTRIBUTION_WINDOWS = [
     AdsInsights.ActionAttributionWindows.value_7d_click,
     AdsInsights.ActionAttributionWindows.value_28d_click,
 ]
-
-class FacebookInsightsJobStatus(JobStatus):
-    """
-    Use this to communicate to give status reporter enough information to
-    figure out what the stage id means in terms of failures
-    """
-
-    # Progress states
-    Start = 100
-    InColdStore = 500
-
-    # Various error states
-    TooMuchData = (-500, FailureBucket.TooLarge)
-    ThrottlingError = (-700, FailureBucket.Throttling)
-    GenericFacebookError = -900
-    GenericError = -1000
 
 
 def iter_insights(fb_entity, report_params):
@@ -290,7 +274,7 @@ class NaturallyNormativeChildStore(BaseStoreHandler):
         # must also communicate out the status inside of the for-loop
         # at the normative level.
         report_job_status_task.delay(
-            FacebookInsightsJobStatus.InColdStore, normative_job_scope
+            FacebookJobStatus.Done, normative_job_scope
         )
 
 
@@ -422,7 +406,7 @@ def iter_collect_insights(job_scope, job_context):
     :rtype: Generator[Dict]
     """
     # Report start of work
-    report_job_status_task.delay(FacebookInsightsJobStatus.Start, job_scope)
+    report_job_status_task.delay(FacebookJobStatus.Start, job_scope)
 
     try:
         scope_parsed = JobScopeParsed(job_scope)
@@ -431,40 +415,47 @@ def iter_collect_insights(job_scope, job_context):
             scope_parsed.report_params
         )
         with scope_parsed.DatumHandler(job_scope) as handle:
+            cnt = 0
             for datum in data_iter:
                 handle(datum)
                 yield datum
+                cnt += 1
+
+                if cnt % 100 == 0:
+                    report_job_status_task.delay(
+                        FacebookJobStatus.DataFetched, job_scope
+                    )
 
         report_job_status_task.delay(
-            FacebookInsightsJobStatus.InColdStore, job_scope
+            FacebookJobStatus.Done, job_scope
         )
 
-    except FacebookRequestError as e:
+    except FacebookError as e:
         # Build ourselves the error inspector
         inspector = FacebookApiErrorInspector(e)
 
         # Is this a throttling error?
         if inspector.is_throttling_exception():
             report_job_status_task.delay(
-                FacebookInsightsJobStatus.ThrottlingError, job_scope
+                FacebookJobStatus.ThrottlingError, job_scope
             )
 
         # Did we ask for too much data?
         elif inspector.is_too_large_data_exception():
             report_job_status_task.delay(
-                FacebookInsightsJobStatus.TooMuchData, job_scope
+                FacebookJobStatus.TooMuchData, job_scope
             )
 
         # It's something else which we don't understand
         else:
             report_job_status_task.delay(
-                FacebookInsightsJobStatus.GenericFacebookError, job_scope,
+                FacebookJobStatus.GenericFacebookError, job_scope,
             )
         raise
     except Exception:
         # This is a generic failure, which does not help us at all, so, we just
         # report it and bail
         report_job_status_task.delay(
-            FacebookInsightsJobStatus.GenericError, job_scope
+            FacebookJobStatus.GenericError, job_scope
         )
         raise
