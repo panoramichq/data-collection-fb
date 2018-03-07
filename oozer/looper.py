@@ -24,17 +24,17 @@ logger = logging.getLogger(__name__)
 def get_tasks_map():
     # inside of function call to avoid circular import errors
 
-    from oozer.entities.tasks import collect_entities_per_adaccount_task
+    from oozer.entities.tasks import collect_entities_per_adaccount_task, extract_adaccounts_task
     from oozer.metrics.tasks import collect_insights_task
 
     # handlers are often the same for each type because they
     # look at JobScope to figure out the particular data collection mode
     return {
         ReportType.console: {
-          Entity.AdAccount: None, # FIXME: Fetch accounts from console
+          Entity.AdAccount: extract_adaccounts_task,
         },
         ReportType.entities: {
-            Entity.AdAccount: None, # FIXME: Fetch account from facebook - regular pipeline
+            Entity.AdAccount: None, # FIXME: Fetch ad accounts from facebook - regular pipeline
             Entity.Campaign: collect_entities_per_adaccount_task,
             Entity.AdSet: collect_entities_per_adaccount_task,
             Entity.Ad: collect_entities_per_adaccount_task,

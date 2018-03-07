@@ -4,6 +4,9 @@ from common.celeryapp import get_celery_app
 from oozer.common.job_context import JobContext
 from oozer.common.job_scope import JobScope
 from oozer.common.console_api import ConsoleApi
+from common.store.entities import FacebookAdAccountEntity
+
+from common.store.scope import FacebookAdAccountScope, FacebookToken, DEFAULT_SCOPE
 
 from config.operam_console_api import TOKEN as CONSOLE_API_TOKEN
 
@@ -23,12 +26,18 @@ def extract_adaccounts_task(job_scope, job_context):
         f'{job_scope} started'
     )
 
+    console_client = ConsoleApi(CONSOLE_API_TOKEN)
+    accounts = console_client.get_active_accounts()
 
-    logger.info(job_context)
+    from pprint import pprint
+    pprint(accounts)
 
-    console_client =  ConsoleApi(CONSOLE_API_TOKEN)
-
-    for ad_account in console_client.get_active_accounts():
-        print(ad_account)
-
-
+    for ad_account in accounts:
+        record = FacebookAdAccountEntity.upsert(
+            DEFAULT_SCOPE,
+            ad_account['ad_account_id'],
+            is_active=True,
+            timezone=ad_account['timezone'],
+            updated_by_sweep_id=job_scope.sweep_id
+        )
+        print(record)
