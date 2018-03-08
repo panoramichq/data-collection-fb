@@ -65,10 +65,13 @@ class JobStatus:
     general case
     """
 
+    # Any job considered started is represented by 100
+    Start = 100
+    # Any job considered done is represented by 1000
     Done = 1000
-    """
-    Any job considered done is represented by 1000
-    """
+
+    # Any generic failure is represented by -1000 (negative Done)
+    GenericError = -1000
 
 
 class FacebookJobStatus(JobStatus):
@@ -78,7 +81,6 @@ class FacebookJobStatus(JobStatus):
     """
 
     # Progress states
-    Start = 100
     DataFetched = 200
     InColdStore = 500
 
@@ -90,7 +92,6 @@ class FacebookJobStatus(JobStatus):
     # TODO: plan for splitting this into 3: App | AdAccount | User
     ThrottlingError = -700
     GenericFacebookError = -900
-    GenericError = -1000
 
     failure_bucket_map = {
         DataFetched: FailureBucket.WorkingOnIt,
@@ -98,5 +99,5 @@ class FacebookJobStatus(JobStatus):
         TooMuchData: FailureBucket.TooLarge,
         ThrottlingError: FailureBucket.Throttling,
         GenericFacebookError: FailureBucket.Other,
-        GenericError: FailureBucket.Other
+        JobStatus.GenericError: FailureBucket.Other
     }
