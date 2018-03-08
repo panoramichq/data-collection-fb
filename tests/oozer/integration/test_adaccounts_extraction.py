@@ -23,4 +23,4 @@ class TestingAdaccountsExtraction(TestCase):
         with self.assertRaises(HTTPError) as ex:
             console_api.get_active_accounts()
 
-        assert '404' in str(ex)
+        assert '404' in str(ex.exception)
