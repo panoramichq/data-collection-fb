@@ -8,7 +8,7 @@ from config.operam_console_api import TOKEN
 
 # FIXME: check a console_integration decorator or change logic in integration
 # @integration
-class TestingAdaccountsExtraction(TestCase):
+class TestingConsoleApiClient(TestCase):
 
     def test_get_active_adaccounts_with_valid_token(self):
         console_api = ConsoleApi(TOKEN)
