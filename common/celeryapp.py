@@ -4,6 +4,7 @@ from celery.signals import setup_logging
 from config import celery as celery_config
 from config.build import BUILD_ID
 from common.configure_logging import configure_logging
+from common.sentry import configure_sentry
 
 
 MODULES_WITH_TASKS = [
@@ -118,5 +119,8 @@ def get_celery_app(celery_config=celery_config):
         _celery_app.conf.task_default_queue = pad_with_build_id(RoutingKey.default)
         _celery_app.conf.task_default_routing_key = RoutingKey.default
         _celery_app.conf.task_routes = (route_task,)
+
+        # Enable Sentry exception tracking
+        configure_sentry()
 
     return _celery_app

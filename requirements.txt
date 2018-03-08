@@ -22,6 +22,7 @@ kombu==4.1.0
 pynamodb==3.2.1
 python-dateutil==2.6.1    # via botocore, pynamodb
 pytz==2018.3
+raven==6.6.0
 redis==2.10.6
 requests==2.18.4          # via facebookads
 s3transfer==0.1.13        # via boto3
