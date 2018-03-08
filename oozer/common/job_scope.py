@@ -54,7 +54,11 @@ class JobScope:
         return self.tokens[0]
 
     def to_dict(self):
-        return self.__dict__.copy()
+        return {
+            k:v
+            for k, v in self.__dict__.items()
+            if v is not None
+        }
 
     @property
     def job_id(self):
