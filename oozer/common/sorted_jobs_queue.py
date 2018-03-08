@@ -11,7 +11,7 @@ from common.id_tools import parse_id
 logger = logging.getLogger(__name__)
 
 
-class _TasksWriter:
+class _JobsWriter:
 
     def __init__(self, sorted_jobs_queue_interface, batch_size=30):
         """
@@ -102,7 +102,7 @@ FrontRowParticipant = namedtuple(
 )
 
 
-class _TasksIter:
+class _JobsReader:
 
     def __init__(self, sorted_jobs_queue_interface, batch_size=200):
         """
@@ -249,7 +249,7 @@ class SortedJobsQueue:
             cnt += redis.zcount(key, '-inf', '+inf') or 0
         return cnt
 
-    def TasksWriter(self):
+    def JobsWriter(self):
         """
 
         Example::
@@ -261,9 +261,9 @@ class SortedJobsQueue:
 
         :return:
         """
-        return _TasksWriter(self)
+        return _JobsWriter(self)
 
-    def TasksReader(self):
+    def JobsReader(self):
         """
 
         Example:
@@ -275,4 +275,4 @@ class SortedJobsQueue:
 
         :return:
         """
-        return _TasksIter(self)
+        return _JobsReader(self)

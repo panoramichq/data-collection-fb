@@ -67,7 +67,7 @@ def iter_tasks(sweep_id):
 
     tasks_inventory = get_tasks_map()
 
-    with SortedJobsQueue(sweep_id).TasksReader() as jobs_iter:
+    with SortedJobsQueue(sweep_id).JobsReader() as jobs_iter:
         for job_id, job_scope_additional_data, score in jobs_iter:
 
             job_id_parts = parse_id(job_id)  # type: dict
