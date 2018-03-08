@@ -1,9 +1,8 @@
+from tests.base.testcase import TestCase, integration
 
 from requests.exceptions import HTTPError
 
 from oozer.common.console_api import ConsoleApi
-from tests.base.testcase import TestCase, integration
-
 from config.operam_console_api import TOKEN
 
 
