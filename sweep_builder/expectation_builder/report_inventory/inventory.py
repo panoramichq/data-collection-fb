@@ -57,7 +57,8 @@ entity_jobs_gens_map[Entity.AdSet] = [
 
 entity_jobs_gens_map[Entity.Ad] = [
     lifetime.lifetime_metrics_per_ad,
-    # breakdowns.day_age_gender_metrics_per_ad,
-    # breakdowns.day_dma_metrics_per_ad,
-    breakdowns.day_hour_metrics_per_ad
+    breakdowns.day_age_gender_metrics_per_ad,
+    breakdowns.day_dma_metrics_per_ad,
+    breakdowns.day_hour_metrics_per_ad,
+    breakdowns.day_platform_metrics_per_ad
 ]
