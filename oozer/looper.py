@@ -49,6 +49,9 @@ def get_tasks_map():
         },
         ReportType.day_hour: {
             Entity.Ad: collect_insights_task
+        },
+        ReportType.day_platform: {
+            Entity.Ad: collect_insights_task
         }
     }
 
