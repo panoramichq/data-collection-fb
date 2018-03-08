@@ -8,52 +8,17 @@ from itertools import islice
 from typing import Generator, Tuple, List
 
 from common.connect.redis import get_redis
-from common.enums.entity import Entity
 from common.enums.failure_bucket import FailureBucket
-from common.enums.reporttype import ReportType
 from common.id_tools import parse_id
 from common.math import adapt_decay_rate_to_population, get_decay_proportion
 from config import looper as looper_config
 from oozer.common.job_context import JobContext
 from oozer.common.job_scope import JobScope
 from oozer.common.sorted_jobs_queue import SortedJobsQueue
+from oozer.inventory import resolve_job_scope_to_celery_task
 
 
 logger = logging.getLogger(__name__)
-
-
-def get_tasks_map():
-    # inside of function call to avoid circular import errors
-
-    from oozer.entities.tasks import collect_entities_per_adaccount_task
-    from oozer.metrics.tasks import collect_insights_task
-
-    # handlers are often the same for each type because they
-    # look at JobScope to figure out the particular data collection mode
-    return {
-        ReportType.entities: {
-            Entity.Campaign: collect_entities_per_adaccount_task,
-            Entity.AdSet: collect_entities_per_adaccount_task,
-            Entity.Ad: collect_entities_per_adaccount_task,
-        },
-        ReportType.lifetime: {
-            Entity.Campaign: collect_insights_task,
-            Entity.AdSet: collect_insights_task,
-            Entity.Ad: collect_insights_task,
-        },
-        ReportType.day_age_gender: {
-            Entity.Ad: collect_insights_task
-        },
-        ReportType.day_dma: {
-            Entity.Ad: collect_insights_task
-        },
-        ReportType.day_hour: {
-            Entity.Ad: collect_insights_task
-        },
-        ReportType.day_platform: {
-            Entity.Ad: collect_insights_task
-        }
-    }
 
 
 def iter_tasks(sweep_id):
@@ -64,8 +29,6 @@ def iter_tasks(sweep_id):
     :rtype: Generator[Tuple[CeleryTask, JobScope, JobContext]]
     """
     from config.facebook import TOKEN
-
-    tasks_inventory = get_tasks_map()
 
     with SortedJobsQueue(sweep_id).JobsReader() as jobs_iter:
         for job_id, job_scope_additional_data, score in jobs_iter:
@@ -82,11 +45,7 @@ def iter_tasks(sweep_id):
             if not job_scope.tokens:
                 job_scope.tokens = [TOKEN]
 
-            celery_task = tasks_inventory.get(
-                job_scope.report_type, {}
-            ).get(
-                job_scope.entity_type or job_scope.report_variant
-            )
+            celery_task = resolve_job_scope_to_celery_task(job_scope)
 
             if not celery_task:
                 logger.warning(f"#{sweep_id}: Could not match job_id {job_id} to a worker.")
