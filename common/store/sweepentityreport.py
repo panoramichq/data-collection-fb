@@ -30,7 +30,8 @@ class FacebookSweepEntityReport(BaseModel):
     job_id = attributes.UnicodeAttribute(range_key=True, attr_name='jid')
 
     report_type = attributes.UnicodeAttribute(attr_name='rt')
-    ad_account_id = attributes.UnicodeAttribute(attr_name='aa')
+    # Field ad_account_id can be null for jobs that fetch ad accounts from console
+    ad_account_id = attributes.UnicodeAttribute(attr_name='aa', null=True)
     entity_id = attributes.UnicodeAttribute(attr_name='eid', null=True)
     entity_type = attributes.UnicodeAttribute(null=True, attr_name='et')
     stage_id = attributes.NumberAttribute(null=True, attr_name='stid')
