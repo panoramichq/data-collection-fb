@@ -48,7 +48,7 @@ def extract_adaccounts_task(job_scope, job_context):
                     updated_by_sweep_id=job_scope.sweep_id
                 )
             except PutError as ex:
-                # TODO: report_job_status_task.delay(ConsoleExtractionJobStatus.UpsertError, normative_job_scope)
+                # TODO: ? report_job_status_task.delay(ConsoleExtractionJobStatus.UpsertError, normative_job_scope)
                 ex_str = str(ex)
                 if 'ProvisionedThroughputExceededException' in ex_str:
                     logger.info(ex_str)
