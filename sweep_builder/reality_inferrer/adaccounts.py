@@ -15,7 +15,7 @@ Here we base our understanding of the world based on scraps of data
 these workers already collected some time before.
 """
 
-from typing import Generator, Tuple, Set
+from typing import Generator, Tuple
 
 from common.store import entities, scope
 
@@ -36,14 +36,12 @@ def iter_scopes_tokens():
         yield scope_record.scope, scope_record.tokens
 
 
-def _iter_active_ad_account_per_scope(scope):
+def iter_active_ad_accounts_per_scope():
     """
     :return: A generator of AdAccount IDs for AdAccounts marked "active" in our system
     :rtype: Generator[Tuple[str, Set[str]]]
     """
 
-    # .query() on FacebookAdAccountEntity does not hint well at type
-    # have do to it manually for IDE to pick it up
     aa_record = None  # type: entities.FacebookAdAccountEntity
 
     for aa_record in entities.FacebookAdAccountEntity.query(scope):
@@ -54,15 +52,3 @@ def _iter_active_ad_account_per_scope(scope):
         if aa_record.is_active:
             yield aa_record
 
-
-def iter_ad_account_id_tz_tokens():
-    """
-    Public API
-
-    :return: A a generator yielding pairs of: ad_account_id and its associated set of platform tokens
-    :rtype: Generator[Tuple[str, str, Set[str]]]
-    """
-    for scope, tokens in iter_scopes_tokens():
-        if tokens:
-            for record in _iter_active_ad_account_per_scope(scope):
-                yield record.ad_account_id, record.timezone, tokens

@@ -41,7 +41,7 @@ def extract_adaccounts_task(job_scope, job_context):
                 record = FacebookAdAccountEntity.upsert(
                     DEFAULT_SCOPE,
                     ad_account['ad_account_id'],
-                    is_active=True,
+                    is_active=True,  # TODO: Implement forgetting of ad accounts
                     timezone=ad_account['timezone'],
                     updated_by_sweep_id=job_scope.sweep_id
                 )
@@ -52,7 +52,6 @@ def extract_adaccounts_task(job_scope, job_context):
                     logger.info(ex_str)
                 else:
                     raise
-
 
         report_job_status_task.delay(JobStatus.Done, job_scope)
     except Exception as ex:
