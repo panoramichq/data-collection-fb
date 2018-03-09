@@ -51,7 +51,3 @@ def iter_reality():
                     timezone=ad_account.timezone,
                     tokens=tokens
                 )
-
-
-
-
