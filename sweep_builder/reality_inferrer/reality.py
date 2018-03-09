@@ -6,6 +6,8 @@ from .adaccounts import iter_ad_account_id_tz_tokens, iter_scopes_tokens
 from .entities import iter_entities_per_ad_account_id
 from .reality_claim import RealityClaim
 
+from config.operam_console_api import TOKEN as CONSOLE_API_TOKEN
+
 
 def iter_reality():
     """
@@ -23,10 +25,11 @@ def iter_reality():
         yield RealityClaim(
             scope=scope,
             entity_type=Entity.AdAccount,
-            tokens=['DUMMY']  # FIXME: replace with a token used to auth against the console API
+            tokens=[CONSOLE_API_TOKEN]
         )
 
     for ad_account_id, timezone, tokens in iter_ad_account_id_tz_tokens():
+        # FIXME: There isn't a worker for this at the moment
         # AdAccount level objects have their own data collection tasks
         # we always give them to prioritizer
         yield RealityClaim(

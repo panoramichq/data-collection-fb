@@ -8,9 +8,7 @@ from oozer.common.console_api import ConsoleApi
 from common.store.entities import FacebookAdAccountEntity
 
 from oozer.common.report_job_status_task import report_job_status_task
-from common.store.scope import FacebookAdAccountScope, FacebookToken, DEFAULT_SCOPE
-
-from config.operam_console_api import TOKEN as CONSOLE_API_TOKEN
+from common.store.scope import DEFAULT_SCOPE
 
 app = get_celery_app()
 logger = logging.getLogger(__name__)
@@ -33,7 +31,7 @@ def extract_adaccounts_task(job_scope, job_context):
     report_job_status_task.delay(JobStatus.Start, job_scope)
 
     try:
-        console_client = ConsoleApi(CONSOLE_API_TOKEN)
+        console_client = ConsoleApi(JobScope.token)
         accounts = console_client.get_active_accounts()
 
         for ad_account in accounts:
