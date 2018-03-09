@@ -41,7 +41,7 @@ REPORT_TYPE_FB_BREAKDOWN_ENUM = {
     ReportType.day_dma: [ AdsInsights.Breakdowns.dma ],
     ReportType.day_hour: [ AdsInsights.Breakdowns.hourly_stats_aggregated_by_advertiser_time_zone ],
     ReportType.day_platform: [
-        AdsInsights.Breakdowns.device_platform,
+        AdsInsights.Breakdowns.publisher_platform,
         AdsInsights.Breakdowns.platform_position
     ]
 }
