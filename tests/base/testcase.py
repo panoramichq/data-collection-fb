@@ -1,3 +1,6 @@
+import pkgutil
+from importlib import import_module
+
 from common.patch import patch_event_loop
 patch_event_loop()
 
@@ -50,10 +53,15 @@ class IntegrationTestCase(TestCase):
         self.token = TOKEN
 
 
-def integration(fn):
-    from config.facebook import TOKEN
-    if TOKEN and TOKEN != 'bogus token':
-        # it's overridden only in dev. In all other cases should be that bogus value
-        return fn
-    else:
-        return skip(fn)
+def integration(module='facebook'):
+    def check_module(fn):
+        allowed_modules = map(lambda x: x.name, pkgutil.iter_modules(['config']))
+        assert module in allowed_modules
+
+        MODULE_TOKEN = import_module(f'config.{module}').TOKEN
+        if MODULE_TOKEN and MODULE_TOKEN != 'bogus token':
+            # it's overridden only in dev. In all other cases should be that bogus value
+            return fn
+        else:
+            return skip(fn)
+    return check_module
