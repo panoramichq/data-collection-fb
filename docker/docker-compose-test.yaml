@@ -2,6 +2,11 @@ version: '2.3'
 
 services:
 
+  redis-cluster:
+    extends:
+      file: docker-compose-base.yaml
+      service: redis-cluster
+
   redis:
     extends:
       file: docker-compose-base.yaml
@@ -24,5 +29,6 @@ services:
     links:
       - fakes3
       - redis
+      - redis-cluster
       - dynamo
     command: bash -c "python bin/migrate.py && pytest"
