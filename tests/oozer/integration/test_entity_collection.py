@@ -11,7 +11,7 @@ from oozer.entities.collect_entities_per_adaccount import \
     iter_collect_entities_per_adaccount, iter_native_entities_per_adaccount
 
 
-@integration
+@integration('facebook')
 class TestingEntityCollection(TestCase):
 
     def test_fetch_all_campaigns(self):
@@ -65,7 +65,7 @@ class TestingEntityCollection(TestCase):
 
 class TestingEntityCollectionPipeline(TestCase):
 
-    @integration
+    @integration('facebook')
     def test_pipeline(self):
 
         job_scope = JobScope(

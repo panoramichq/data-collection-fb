@@ -17,7 +17,7 @@ from oozer.metrics.collect_insights import iter_insights, iter_collect_insights
 @skip
 class TestMetricsCollection(TestCase):
 
-    @integration
+    @integration('facebook')
     def test_fetch_insights_adaccount_campaigns_lifetime(self):
         with FacebookApiContext(TOKEN) as context:
 
@@ -30,7 +30,7 @@ class TestMetricsCollection(TestCase):
 
             assert metrics
 
-    @integration
+    @integration('facebook')
     def test_fetch_insights_adaccount_adsets_lifetime(self):
         with FacebookApiContext(TOKEN) as context:
             entity = context.to_fb_model(AD_ACCOUNT, Entity.AdAccount)
@@ -47,7 +47,7 @@ class TestMetricsCollection(TestCase):
 @skip
 class TestingMetricsCollectionPipeline(TestCase):
 
-    @integration
+    @integration('facebook')
     def test_lifetime_campaigns(self):
 
         job_scope = JobScope(
@@ -75,7 +75,7 @@ class TestingMetricsCollectionPipeline(TestCase):
         for datum, job_scope_inner, _ in captured_data:
             assert datum['campaign_id'] == job_scope_inner.entity_id
 
-    @integration
+    @integration('facebook')
     def test_hourly_ads_per_parent(self):
 
         job_scope = JobScope(
@@ -99,7 +99,7 @@ class TestingMetricsCollectionPipeline(TestCase):
                 if cnt == 4:
                     break
 
-    @integration
+    @integration('facebook')
     def test_hourly_ad(self):
 
         job_scope = JobScope(
