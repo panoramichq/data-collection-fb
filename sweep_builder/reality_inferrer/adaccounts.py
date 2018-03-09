@@ -36,8 +36,9 @@ def iter_scopes_tokens():
         yield scope_record.scope, scope_record.tokens
 
 
-def iter_active_ad_accounts_per_scope():
+def iter_active_ad_accounts_per_scope(scope):
     """
+    :param str scope: The FacebookAdAccountScope id
     :return: A generator of AdAccount IDs for AdAccounts marked "active" in our system
     :rtype: Generator[Tuple[str, Set[str]]]
     """
