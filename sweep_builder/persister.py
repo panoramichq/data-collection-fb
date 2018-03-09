@@ -30,7 +30,7 @@ def iter_persist_prioritized(sweep_id, iter_prioritized=iter_prioritized):
     :rtype: Generator[PrioritizationClaim]
     """
 
-    with SortedJobsQueue(sweep_id).TasksWriter() as add_to_queue:
+    with SortedJobsQueue(sweep_id).JobsWriter() as add_to_queue:
 
         for prioritization_claim in iter_prioritized():
 

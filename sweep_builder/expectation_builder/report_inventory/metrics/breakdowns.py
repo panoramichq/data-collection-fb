@@ -163,3 +163,9 @@ day_hour_metrics_per_ad = functools.partial(
     _day_metrics_per_ad,
     ReportType.day_hour
 )  # type: (RealityClaim) -> Generator[ExpectationClaim]
+
+
+day_platform_metrics_per_ad = functools.partial(
+    _day_metrics_per_ad,
+    ReportType.day_platform
+)  # type: (RealityClaim) -> Generator[ExpectationClaim]

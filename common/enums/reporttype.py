@@ -65,15 +65,18 @@ class ReportType:
         hour = 'hour'
         age_gender = 'agegender'
         dma = 'dma'
+        platform = 'platform'
 
     day_age_gender = f'day{Breakdown.age_gender}'
     day_dma = f'day{Breakdown.dma}'
     day_hour = f'day{Breakdown.hour}'
+    day_platform = f'day{Breakdown.platform}'
 
     ALL_DAY_BREAKDOWNS = {
         day_age_gender,
         day_dma,
         day_hour,
+        day_platform
     }
 
     ALL_METRICS = ALL_DAY_BREAKDOWNS | {

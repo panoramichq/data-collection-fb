@@ -124,7 +124,7 @@ def iter_collect_entities_per_adaccount(job_scope, job_context):
 
             # Store the individual datum, use job context for the cold
             # storage thing to divine whatever it needs from the job context
-            store(entity_data, normative_job_scope)
+            cold_storage.store(entity_data, normative_job_scope)
 
             # Signal to the system the new entity
             feedback_entity_task.delay(entity_data, entity_type, entity_hash)
