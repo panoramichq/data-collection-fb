@@ -60,8 +60,8 @@ class RealityClaim:
         self.__dict__.update(**more_data)
 
     def __repr__(self):
-        return "<RealityClaim {} {} {}>".format(
-            self.scope,
+        return "<{} {} {}>".format(
+            self.__class__.__name__,
             self.entity_type,
             self.entity_id
         )

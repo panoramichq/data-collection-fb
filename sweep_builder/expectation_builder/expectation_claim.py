@@ -29,11 +29,3 @@ class ExpectationClaim(RealityClaim):
             return self.job_signatures[0]
         except IndexError:
             return None
-
-
-    def __repr__(self):
-        return "<ExpectationClaim {} {} {}>".format(
-            self.scope,
-            self.entity_type,
-            self.entity_id
-        )
