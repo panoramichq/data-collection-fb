@@ -1,5 +1,5 @@
 import functools
-from contextlib import ContextDecorator, contextmanager
+from contextlib import ContextDecorator
 
 from datadog import DogStatsd
 
@@ -16,19 +16,27 @@ def _dict_as_statsd_tags(tags):
     return [f'{tag}:{tag_value}' for tag, tag_value in tags.items()]
 
 
-class MeasuringPrimivite:
+class MeasuringPrimitive(ContextDecorator):
     """
-    A wrapper for measuring functions that adds some application wide stuff.
+    A wrapper for measuring functions that adds some application wide stuff
+    and capabilities.
 
-    Namely:
-        - common metric tags for slicing the values
+    In general:
+        - common prefix for all metrics,
+        - default value for given metric measurement,
+        - different convenience ways to use the measuring function
+
+    In general, the signature of calls to given singular measurement method is:
+
+    measurement_function(value=10, tags={'my_tag': 'tag_value'}, sample_rate=0.5)
 
     Also, the wrapper gives you multiple ways to use particular measurement:
 
     - directly:
         For simple measurement one-off calls
 
-        you call Measure.increment('mymetric', value) and set the value
+        you call Measure.increment('mymetric', tags={'tag': 'val'})(value)
+            and set the value
 
     - context manager
 
@@ -52,75 +60,93 @@ class MeasuringPrimivite:
 
 
     """
-
-    class MeasurementContextWrapper(ContextDecorator):
-        """
-        Wrapper for our function, that
-        """
-
-        def __init__(self, measure_funciton, default_value, metric, tags, sample_rate):
-            self._statsd_func = measure_funciton
-            self._default_value = default_value
-            self._metric = metric
-            self._tags = tags
-            self._sample_rate = sample_rate
-
-        def measure(self, value=None):
-            """
-            Initiate the actual measurement
-
-            :param any value: Any value to be sent along to statsd
-            """
-            # Apply default value if needed
-            value = value or self._default_value
-
-            print("Sending value: " + str(value))
-            self._statsd_func(
-                self._metric,
-                value,
-                _dict_as_statsd_tags(self._tags),
-                self._sample_rate
-            )
-
-        def __call__(self, func):
-            """
-            Inject the measurement wrapper to the function
-            """
-            return super().__call__(functools.partial(func, measurement=self))
-
-        def __enter__(self):
-            return self
-
-        def __exit__(self, exc_type, exc_val, exc_tb):
-            pass
-
     def __init__(
-        self, measure_function, prefix=None, default_value=None,
+            self,
+            # Auto bound methods
+            measure_function, prefix, default_value,
+            # Actual invocation related methods
+            metric, tags=None, sample_rate=1
     ):
-        """
-        Instrument the function with prefix and default value
-        """
         self._statsd_func = measure_function
-        self._prefix = prefix
         self._default_value = default_value
 
-    def __call__(self, metric, tags=None, sample_rate=1):
-        """
-        Wrap so that this can be used as context manager or method decorator
-
-        :return ContextManager
-        """
+        # Add metric prefix
+        self._metric = '.'.join([prefix, metric])
 
         # We may have empty tags
-        tags = tags or {}
+        self._tags = tags or {}
 
-        # Add metric prefix
-        metric = '.'.join([self._prefix, metric])
+        self._sample_rate = sample_rate
 
-        return self.MeasurementContextWrapper(
-            self._statsd_func, self._default_value,
-            metric, tags, sample_rate,
+    def _measure(self, value):
+        """
+        Initiate the actual measurement
+
+        :param any value: Any value to be sent along to statsd
+        """
+        # Apply default value if needed
+        value = value or self._default_value
+
+        self._statsd_func(
+            self._metric,
+            value,
+            _dict_as_statsd_tags(self._tags),
+            self._sample_rate
         )
+
+    def __call__(self, argument):
+        """
+        Either we are calling this as the measurement function, and therefore
+        we want to actually send measure data, or, this is a decorator and
+        therefore, we call the super of ContextDecorator, to allow to be used
+        as such.
+
+        Note that we are injecting the attribute `measurement`, so that the
+        function has our metric available
+
+        Inject the measurement wrapper to the function.
+        """
+        if callable(argument):
+            return super().__call__(
+                functools.partial(argument, measurement=self)
+            )
+
+        self._measure(argument)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        pass
+
+
+class AutotimingMeasuringPrimitive(MeasuringPrimitive):
+    # TODO: This one for automatic timing
+
+    def __call__(self, argument):
+
+        if not callable(argument):
+            msg = "You cannot use autotiming measurement directly, use either " \
+                  "with a context manager or a decorator"
+            raise RuntimeError(msg)
+
+        raise NotImplementedError
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        pass
+
+
+class CounterMeasuringPrimitive(MeasuringPrimitive):
+    # TODO: This one for having increment/decrement on it on it's own
+
+    def increment(self, by_how_much):
+        pass
+
+    def decrement(self, by_how_much):
+        pass
 
 
 class MeasureWrapper:
@@ -131,7 +157,7 @@ class MeasureWrapper:
     Provided you create an instance measure = MeasureWrapper(*args), you can
     then use it like this:
 
-    measure.increment('metric', value)
+    measure.increment('metric')(value)
 
     or with context managers:
 
@@ -148,10 +174,19 @@ class MeasureWrapper:
 
     _statsd = None
 
-    increment = None   # type: MeasuringPrimivite
-    gauge = None       # type: MeasuringPrimivite
-    timing = None      # type: MeasuringPrimivite
-    set = None         # type: MeasuringPrimivite
+    # Statsd primitives
+    increment = None   # type: MeasuringPrimitive
+    decrement = None   # type: MeasuringPrimitive
+    gauge = None       # type: MeasuringPrimitive
+    timing = None      # type: MeasuringPrimitive
+    set = None         # type: MeasuringPrimitive
+
+    # Datadogs primitives
+    # TODO: include them too? Will be easy
+
+    # Our own little bit more interesting measuring primitives
+    counter = None     # type: MeasuringPrimitive
+    autotiming = None  # type: MeasuringPrimitive
 
     def __init__(
         self, enabled, statsd_host, statsd_port, prefix=None, default_tags=None
@@ -183,13 +218,19 @@ class MeasureWrapper:
             constant_tags=_dict_as_statsd_tags(default_tags)
         )
 
+        # TODO: add metric specific prefixes (low pri, probably)
+
         # Add measurement methods
         self.increment = self._wrap_measurement_method(
             self._statsd.increment, default_value=1, prefix=prefix
         )
+        self.decrement = self._wrap_measurement_method(
+            self._statsd.decrement, default_value=1, prefix=prefix
+        )
         self.gauge = self._wrap_measurement_method(
             self._statsd.gauge, prefix=prefix
         )
+
         self.timing = self._wrap_measurement_method(
             self._statsd.timing, prefix=prefix
         )
@@ -197,19 +238,26 @@ class MeasureWrapper:
             self._statsd.set, prefix=prefix
         )
 
+        # We had these before, check what we did there
+        # TODO: counter - attach specific ctx manager / deco , replace with 'count' and add incr/decr on it
+        # TODO: autotiming - attach specific ctx manager / deco to allow for "automatic" timing
+
     def _wrap_measurement_method(
         self, func, prefix, default_value=None
     ):
         """
-        We need to wrap the singular measurement function with
+        We need to wrap the singular measurement function with our
+        MeasuringPrimitive class, so that we can support various interfaces
+        on top of it
 
-        :param func:
-        :param prefix:
-        :param default_value:
-        :return:
+        :param function func: The function to be wrapped
+        :param string prefix: Common metric prefix
+        :param any default_value: Default value for the metric
+        :return function: The partial to be called on the MeasuringPrimitive
+            constructor
         """
-        return MeasuringPrimivite(
-            func, prefix=prefix, default_value=default_value,
+        return functools.partial(
+            MeasuringPrimitive, func, prefix, default_value
         )
 
     def _mock_measurement_methods(self):
@@ -227,10 +275,12 @@ class MeasureWrapper:
             def measure(self, value=None):
                 pass
 
-            def __call__(self, func):
-                return super().__call__(
-                    functools.partial(func, measurement=self)
-                )
+            def __call__(self, argument):
+                if callable(argument):
+                    return super().__call__(
+                        functools.partial(argument, measurement=self)
+                    )
+                # Do nothing otherwise
 
             def __enter__(self):
                 return self
@@ -239,6 +289,7 @@ class MeasureWrapper:
                 pass
 
         self.increment = MockContext
+        self.decrement = MockContext
         self.gauge = MockContext
         self.timing = MockContext
         self.set = MockContext

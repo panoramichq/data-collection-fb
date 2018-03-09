@@ -1,4 +1,7 @@
-ENABLED = True
+ENABLED = False
+"""
+Setting this to false will disable the metrics reporting altogether
+"""
 
 STATSD_SERVER = 'dd-agent'
 """
