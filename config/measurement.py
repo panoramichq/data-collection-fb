@@ -1,4 +1,4 @@
-ENABLE = False
+ENABLED = True
 
 STATSD_SERVER = 'dd-agent'
 """
