@@ -31,7 +31,7 @@ def extract_adaccounts_task(job_scope, job_context):
     report_job_status_task.delay(JobStatus.Start, job_scope)
 
     try:
-        console_client = ConsoleApi(JobScope.token)
+        console_client = ConsoleApi(job_scope.token)
         accounts = console_client.get_active_accounts()
 
         for ad_account in accounts:
