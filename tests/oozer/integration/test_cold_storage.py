@@ -99,12 +99,12 @@ class TestUploadToS3(TestCase):
             report_type=ReportType.entities,
         )
 
-        run_start = datetime.utcnow().replace(microsecond=0)
+        run_start = datetime.utcnow()
 
         storage_key = cold_storage.store(test_data, ctx)
         s3_obj, _ = self._get_s3_object(storage_key)
 
-        run_end = datetime.utcnow().replace(microsecond=0)
+        run_end = datetime.utcnow()
 
         # .store() generates its own timestamp, so checking
         # for exact time is not possible. hence we did the _start, _end range.
@@ -114,7 +114,8 @@ class TestUploadToS3(TestCase):
         # error here means value is not present or is wrong format.
         dt = datetime.strptime(
             extracted_at,
-            '%Y-%m-%dT%H:%M:%SZ'
+            # '2018-03-10T02:31:44.874854+00:00'
+            '%Y-%m-%dT%H:%M:%S.%f+00:00'
         )
         # some number of microseconds must have passed,
         # so testing in the range.
