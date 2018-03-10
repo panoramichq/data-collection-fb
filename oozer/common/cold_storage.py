@@ -107,6 +107,8 @@ def _job_scope_to_metadata(job_scope):
         for key, value in {
             'build_id': config.build.BUILD_ID,
             'job_id': job_scope.job_id,
+            # ISO format in UTC
+            'extracted_at': datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
             # although all of the below pieces are contained in the
             # job_id, it might be more convenient to have just these
             # in meta straight out.
