@@ -57,6 +57,17 @@ class AssetScope(BaseModel):
     # allow multiple tokens per AA)
     scope = attributes.UnicodeAttribute(hash_key=True, attr_name='scope')
 
+    # TODO: move storage of scope's API tokens, credentials to this model
+    # scope_api_credentials = Blah()
+    # while we have only one scope - Console - we can fake it
+    # by sending same exact token for all (ahem.. one and only) models
+    # This obviously needs to rethought at some point.
+    # (Part of the rethinking is that this record has to match a
+    #  particular partner API implementation that matches this scope
+    #  It's crazy to expect that AUTH will be exactly same and that it will
+    #  be just by token.)
+    scope_api_token = operam_console_api_config.TOKEN
+
     platform_token_ids = attributes.UnicodeSetAttribute(default=set, attr_name='tids')
 
     # Memoized in instance to avoid hitting DB all the time we are called.

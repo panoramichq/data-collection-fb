@@ -15,15 +15,14 @@ class RealityClaim:
     to add more data to context from the very bottom of the stack. Just extend this object.)
     """
 
-    # Used to mark the scope from which the reality is to be infered
-    # 'Console' for the data updated from the console api
-    # None otherwise
-    scope = None  # type: str
-
-    ad_account_id = None  # type: str
     # entity_id may be same value as ad_account_id for AdAccount types (for consistency of interface)
-    entity_id = None  # type: str
-    entity_type = None  # type: str
+    # entity_id value may actually be scope ID for claims of Scope's existence
+
+    entity_id = None  # type: str or None
+    entity_type = None  # type: str or None
+
+    ad_account_id = None  # type: str or None
+
     tokens = None  # type: Set[str]
 
     # Comes from parent AdAccount record
@@ -31,18 +30,13 @@ class RealityClaim:
 
     # Campaign, AdSet, Ad objects may have these set
     # Beginning of Life Datetime
-    bol = None  # type: datetime
+    bol = None  # type: datetime or None
     # End of Life Datetime
     eol = None  # type: Optional[datetime]
-    # Hash of field values sorted and seen last time
-    hash = None  # type: str
-    # hash of LIST of fields asked for last time
-    # (used to detect stale hashes.)
-    hash_fields = None  # type: str
 
     def __init__(self, _data=None, **more_data):
         self.update(_data, **more_data)
-        assert self.entity_id or self.scope # if entity id is not set check if scope is set
+        assert self.entity_id
         assert self.entity_type in Entity.ALL
 
     def update(self, _data=None, **more_data):

@@ -1,16 +1,18 @@
-import pkgutil
-from importlib import import_module
-
+# Patches must be imported and ran first
 from common.patch import patch_event_loop
 patch_event_loop()
-
 from common.facebook.patch import patch_facebook_sdk
 patch_facebook_sdk()
 
-from unittest import TestCase as _TestCase, skip
-from config.facebook import AD_ACCOUNT, AD_ACCOUNT_TIME_ZONE, TOKEN
+import pkgutil
+
+from importlib import import_module
+from unittest import TestCase as _TestCase, skip, mock
 
 from common.configure_logging import configure_logging
+from config.facebook import AD_ACCOUNT, AD_ACCOUNT_TIME_ZONE, TOKEN
+
+
 configure_logging()
 
 

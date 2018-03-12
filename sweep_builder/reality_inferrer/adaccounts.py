@@ -20,31 +20,28 @@ from typing import Generator, Tuple
 from common.store import entities, scope
 
 
-def iter_scopes_tokens():
+def iter_scopes():
+    # type: () -> Generator[scope.AssetScope]
     """
     :return: a generator of pairs of: tuple of scope id and its associated set of FB tokens
-    :rtype: Generator[Tuple[str, Set[str]]]
+    :rtype: Generator[scope.AssetScope]
     """
     # when we get real API that pairs AAs to their tokens,
     # throw all of this away
 
     # .query() on FacebookAdAccountEntity does not hint well at type
     # have do to it manually for IDE to pick it up
-    scope_record = None  # type: scope.FacebookAdAccountScope
-
-    for scope_record in scope.FacebookAdAccountScope.scan():
-        yield scope_record.scope, scope_record.tokens
+    yield from scope.AssetScope.scan()
 
 
 def iter_active_ad_accounts_per_scope(scope):
+    # type: (str) -> Generator[entities.FacebookAdAccountEntity]
     """
     :param str scope: The FacebookAdAccountScope id
     :return: A generator of AdAccount IDs for AdAccounts marked "active" in our system
-    :rtype: Generator[Tuple[str, Set[str]]]
+    :rtype: Generator[entities.FacebookAdAccountEntity]
     """
-
     aa_record = None  # type: entities.FacebookAdAccountEntity
-
     for aa_record in entities.FacebookAdAccountEntity.query(scope):
         # note that we can filter by this server-side,
         # but this involves setting up an index on the partition,

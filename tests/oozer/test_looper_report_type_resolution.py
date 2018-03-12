@@ -92,3 +92,21 @@ class TestEntityFeedback(TestCase):
                 )
 
                 assert inventory.resolve_job_scope_to_celery_task(job_scope), f"Entity {entity_type} must have report handler for {report_type}"
+
+    def test_scope_refresh_job_handlers_registration(self):
+
+        entity_types = [Entity.Scope]
+        report_types = [
+            ReportType.import_accounts,
+        ]
+
+        for entity_type in entity_types:
+
+            for report_type in report_types:
+
+                job_scope = self._job_scope_factory(
+                    report_type=report_type,
+                    report_variant=entity_type
+                )
+
+                assert inventory.resolve_job_scope_to_celery_task(job_scope), f"Entity {entity_type} must have report handler for {report_type}"
