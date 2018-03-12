@@ -8,6 +8,7 @@ import hashlib
 import json
 import uuid
 
+from datetime import datetime, timedelta
 from io import BytesIO
 
 from common import tztools
@@ -98,8 +99,28 @@ class TestUploadToS3(TestCase):
             report_type=ReportType.entities,
         )
 
+        run_start = datetime.utcnow()
+
         storage_key = cold_storage.store(test_data, ctx)
         s3_obj, _ = self._get_s3_object(storage_key)
+
+        run_end = datetime.utcnow()
+
+        # .store() generates its own timestamp, so checking
+        # for exact time is not possible. hence we did the _start, _end range.
+        # it must be an ISO string in UTC
+        extracted_at = s3_obj.metadata.pop('extracted_at')
+        # this mast parse without errors.
+        # error here means value is not present or is wrong format.
+        dt = datetime.strptime(
+            extracted_at,
+            # '2018-03-10T02:31:44.874854+00:00'
+            '%Y-%m-%dT%H:%M:%S.%f+00:00'
+        )
+        # some number of microseconds must have passed,
+        # so testing in the range.
+        assert dt >= run_start
+        assert dt <= run_end
 
         assert s3_obj.metadata == {
             'build_id': config.build.BUILD_ID,
