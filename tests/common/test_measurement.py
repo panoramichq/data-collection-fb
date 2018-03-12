@@ -5,231 +5,10 @@ import time
 from common.measurement import MeasureWrapper
 from config import measurement, build
 
-# TODO: Ugly as hell, fix later
-
 # TODO: Mock out actual statsd calls and verify it does what it's supposed to do
 
 
-class IncrMeasurementsWork:
-    """
-    No tests really, just verifying this thing works as expected
-    """
-
-    def test_incr_direct_measuring(self):
-        self.measure.increment('increment.direct')(1)
-
-    def test_incr_as_ctx_manager(self):
-
-        with self.measure.increment('increment.ctx') as measurement:
-            measurement(5)
-
-    def test_incr_as_decorator(self):
-
-        @self.measure.increment('increment.deco', tags={'my': 'custom_tag'})
-        def some_func(measurement):
-            measurement(10)
-
-        some_func()
-
-
-class DecrMeasurementsWork:
-    """
-    No tests really, just verifying this thing works as expected
-    """
-
-    def test_decr_direct_measuring(self):
-        self.measure.decrement('decrement.direct')(1)
-
-    def test_decr_as_ctx_manager(self):
-
-        with self.measure.decrement('decrement.ctx') as measurement:
-            measurement(5)
-
-    def test_decr_as_decorator(self):
-
-        @self.measure.decrement('decrement.deco', tags={'my': 'custom_tag'})
-        def some_func(measurement):
-            measurement(10)
-
-        some_func()
-
-
-class GaugeMeasurementsWork:
-    """
-    No tests really, just verifying this thing works as expected
-    """
-
-    def test_gauge_direct_measuring(self):
-        self.measure.gauge('gauge.direct')(1)
-
-    def test_gauge_as_ctx_manager(self):
-
-        with self.measure.gauge('gauge.ctx') as measurement:
-            measurement(5)
-
-    def test_gauge_as_decorator(self):
-
-        @self.measure.gauge('gauge.deco', tags={'my': 'custom_tag'})
-        def some_func(measurement):
-            measurement(10)
-
-        some_func()
-
-
-class SetMeasurementsWork:
-    """
-    No tests really, just verifying this thing works as expected
-    """
-
-    def test_set_direct_measuring(self):
-        self.measure.set('set.direct')(1)
-
-    def test_set_as_ctx_manager(self):
-
-        with self.measure.set('set.ctx') as measurement:
-            measurement(5)
-
-    def test_set_as_decorator(self):
-
-        @self.measure.set('set.deco', tags={'my': 'custom_tag'})
-        def some_func(measurement):
-            measurement(10)
-
-        some_func()
-
-
-class TimingMeasurementsWork:
-    """
-    No tests really, just verifying this thing works as expected
-    """
-
-    def test_timing_direct_measuring(self):
-        self.measure.timing('timing.direct')(1)
-
-    def test_timing_as_ctx_manager(self):
-
-        with self.measure.timing('timing.ctx') as measurement:
-            measurement(5)
-
-    def test_timing_as_decorator(self):
-
-        @self.measure.timing('timing.deco', tags={'my': 'custom_tag'})
-        def some_func(measurement):
-            measurement(10)
-
-        some_func()
-
-
-class AutotimingMeasurementsWork:
-    """
-       No tests really, just verifying this thing works as expected
-       """
-
-    def test_autotiming_direct_measuring_forbidden(self):
-
-        with self.assertRaises(RuntimeError):
-            self.measure.autotiming('autotiming.direct')(1)
-
-    def test_autotiming_as_ctx_manager(self):
-
-        with self.measure.autotiming('autotiming.ctx') as measurement:
-
-            # Sleep for a while so we can check the value
-            time.sleep(0.1)
-
-            mid_elapsed = measurement.elapsed
-            self.assertGreater(mid_elapsed, 0)
-
-            # Sleep for a while so we can check the value
-            time.sleep(0.1)
-
-            # For autotiming, this is forbidden
-            with self.assertRaises(RuntimeError):
-                measurement(5)
-
-        stop_time = measurement.elapsed
-        self.assertGreater(stop_time, mid_elapsed)
-
-        # Sleep for a while so we can check the value
-        time.sleep(0.1)
-
-        # Timer must be stopped at this time
-        self.assertEqual(stop_time, measurement.elapsed)
-
-    def test_autotiming_as_decorator(self):
-
-        @self.measure.autotiming('autotiming.deco', tags={'my': 'custom_tag'})
-        def some_func(measurement):
-            # Sleep for a while so we can check the value
-            time.sleep(0.1)
-
-            mid_elapsed = measurement.elapsed
-            self.assertGreater(mid_elapsed, 0)
-
-            # Sleep for a while so we can check the value
-            time.sleep(0.1)
-
-            # For autotiming, this is forbidden
-            with self.assertRaises(RuntimeError):
-                measurement(10)
-
-            return measurement, mid_elapsed
-
-        measurement, mid_elapsed = some_func()
-
-        stop_time = measurement.elapsed
-        self.assertGreater(stop_time, mid_elapsed)
-
-        # Sleep for a while so we can check the value
-        time.sleep(0.1)
-
-        # Timer must be stopped at this time
-        self.assertEqual(stop_time, measurement.elapsed)
-
-
-class CounterMeasurementsWork:
-
-    def test_counter_direct_measuring_forbidden(self):
-
-        with self.assertRaises(RuntimeError):
-            self.measure.counter('counter.direct')(1)
-
-    def test_counter_as_ctx_manager(self):
-        with self.measure.counter('counter.ctx') as measurement:
-
-            # Direct calls forbidden
-            with self.assertRaises(RuntimeError):
-                measurement('counter.ctx')(1)
-
-            # Increment/decrement by methods
-            measurement.increment(10)
-            self.assertEqual(10, measurement.total_value)
-
-            measurement.decrement(5)
-
-            self.assertEqual(5, measurement.total_value)
-
-            # Increment/decrement by operators
-            measurement += 15
-            self.assertEqual(20, measurement.total_value)
-
-            measurement -= 5
-            self.assertEqual(15, measurement.total_value)
-
-    def test_counter_as_decorator(self):
-        pass
-
-
-class TestMeasurementEnabledWorks(
-    IncrMeasurementsWork,
-    DecrMeasurementsWork,
-    GaugeMeasurementsWork,
-    SetMeasurementsWork,
-    TimingMeasurementsWork,
-    AutotimingMeasurementsWork,
-    CounterMeasurementsWork,
-    TestCase
-):
+class BaseMeasureTestCase(TestCase):
 
     def setUp(self):
         self.measure = MeasureWrapper(
@@ -243,26 +22,232 @@ class TestMeasurementEnabledWorks(
             }
         )
 
+    def _construct_measure(self, mtype, subtype, *args, **kwargs):
+        """
+        A helper to construct measures and give them the rights tags
 
-class TestMeasuremenDisabledWorks(
-    IncrMeasurementsWork,
-    DecrMeasurementsWork,
-    GaugeMeasurementsWork,
-    SetMeasurementsWork,
-    TimingMeasurementsWork,
-    AutotimingMeasurementsWork,
-    CounterMeasurementsWork,
-    TestCase
-):
+        :param string mtype: A type that needs to be available on the wrapper
+            (increment, decrement etc.)
+        :param string subtype: Just a tag, that should be unique in the test
+            case, the easiest way is to say what is the invocation method,
+            the tests use direct, ctx, deco
+        :return MeasurementWrapper: The wrapper for given measurement
+        """
+        return getattr(self.measure, mtype)(subtype, *args, **kwargs)
 
-    def setUp(self):
-        self.measure = MeasureWrapper(
-            enabled=False,
-            statsd_host=measurement.STATSD_SERVER,
-            statsd_port=measurement.STATSD_PORT,
-            prefix=measurement.METRIC_PREFIX,
-            default_tags={
-                'build_id': build.BUILD_ID,
-                'commit_id': build.COMMIT_ID,
-            }
-        )
+    def _test_direct_simple(
+        self, mtype, subtype='direct', value=1, *args, **kwargs
+    ):
+        measure = self._construct_measure(mtype, subtype, *args, **kwargs)
+        measure(value)
+        return measure
+
+    def _test_context_manager_simple(
+        self, mtype, subtype='ctx', value=5, *args, **kwargs
+    ):
+        with self._construct_measure(mtype, subtype, *args, **kwargs) as measure:
+            measure(value)
+        return measure
+
+    def _test_decorator_simple(
+            self, mtype, subtype='deco', value=10, *args, **kwargs
+    ):
+        @self._construct_measure(mtype, subtype, *args, **kwargs)
+        def some_func(measure):
+            measure(value)
+            return measure
+
+        return some_func()
+
+
+class TestIncrMeasurements(BaseMeasureTestCase):
+    """
+    No tests really, just verifying this thing works as expected
+    """
+
+    def test_direct_measuring(self):
+        measure = self._test_direct_simple('increment')
+
+    def test_as_ctx_manager(self):
+        measure = self._test_context_manager_simple('increment')
+
+    def test_as_decorator(self):
+        measure = self._test_decorator_simple('increment')
+
+
+class TestDecrMeasurements(BaseMeasureTestCase):
+    """
+    No tests really, just verifying this thing works as expected
+    """
+
+    def test_direct_measuring(self):
+        measure = self._test_direct_simple('decrement')
+
+    def test_as_ctx_manager(self):
+        measure = self._test_context_manager_simple('decrement')
+
+    def test_as_decorator(self):
+        measure = self._test_decorator_simple('decrement')
+
+
+class TestGaugeMeasurements(BaseMeasureTestCase):
+    """
+    No tests really, just verifying this thing works as expected
+    """
+
+    def test_direct_measuring(self):
+        measure = self._test_direct_simple('gauge')
+
+    def test_as_ctx_manager(self):
+        measure = self._test_context_manager_simple('gauge')
+
+    def test_as_decorator(self):
+        measure = self._test_decorator_simple('gauge')
+
+
+class TestSetMeasurements(BaseMeasureTestCase):
+    """
+    No tests really, just verifying this thing works as expected
+    """
+
+    def test_direct_measuring(self):
+        measure = self._test_direct_simple('set', tags={'my': 'custom-tag'})
+
+    def test_as_ctx_manager(self):
+        measure = self._test_context_manager_simple('set')
+
+    def test_as_decorator(self):
+        measure = self._test_decorator_simple('set')
+
+
+class TestTimingMeasurements(BaseMeasureTestCase):
+    """
+    No tests really, just verifying this thing works as expected
+    """
+
+    def test_direct_measuring(self):
+        measure = self._test_direct_simple('timing')
+
+    def test_as_ctx_manager(self):
+        measure = self._test_context_manager_simple('timing')
+
+    def test_as_decorator(self):
+        measure = self._test_decorator_simple('timing')
+
+
+class TestAutotimingMeasurements(BaseMeasureTestCase):
+    """
+       No tests really, just verifying this thing works as expected
+       """
+
+    def test_direct_measuring_forbidden(self):
+        with self.assertRaises(RuntimeError):
+            self._test_direct_simple('autotiming')
+
+    def test_as_ctx_manager(self):
+
+        with self._construct_measure('autotiming', 'ctx') as measure:
+
+            # Sleep for a while so we can check the value
+            time.sleep(0.1)
+
+            mid_elapsed = measure.elapsed
+            self.assertGreater(mid_elapsed, 0)
+
+            # Sleep for a while so we can check the value
+            time.sleep(0.1)
+
+            # For autotiming, this is forbidden
+            with self.assertRaises(RuntimeError):
+                measure(5)
+
+        stop_time = measure.elapsed
+        self.assertGreater(stop_time, mid_elapsed)
+
+        # Sleep for a while so we can check the value
+        time.sleep(0.1)
+
+        # Timer must be stopped at this time
+        self.assertEqual(stop_time, measure.elapsed)
+
+    def test_as_decorator(self):
+
+        @self._construct_measure('autotiming', 'deco')
+        def some_func(measure):
+            # Sleep for a while so we can check the value
+            time.sleep(0.1)
+
+            mid_elapsed = measure.elapsed
+            self.assertGreater(mid_elapsed, 0)
+
+            # Sleep for a while so we can check the value
+            time.sleep(0.1)
+
+            # For autotiming, this is forbidden
+            with self.assertRaises(RuntimeError):
+                measure(10)
+
+            return measure, mid_elapsed
+
+        measure, mid_elapsed = some_func()
+
+        stop_time = measure.elapsed
+        self.assertGreater(stop_time, mid_elapsed)
+
+        # Sleep for a while so we can check the value
+        time.sleep(0.1)
+
+        # Timer must be stopped at this time
+        self.assertEqual(stop_time, measure.elapsed)
+
+
+class TestCounterMeasurements(BaseMeasureTestCase):
+
+    def test_direct_measuring_forbidden(self):
+        with self.assertRaises(RuntimeError):
+            self._test_direct_simple('counter')
+
+    def test_as_ctx_manager(self):
+        with self._construct_measure('counter', 'ctx') as measure:
+
+            # Direct calls forbidden
+            with self.assertRaises(RuntimeError):
+                measure('counter.ctx')(1)
+
+            # Increment/decrement by methods
+            measure.increment(10)
+            self.assertEqual(10, measure.total_value)
+
+            measure.decrement(5)
+
+            self.assertEqual(5, measure.total_value)
+
+            # Increment/decrement by operators
+            measure += 15
+            self.assertEqual(20, measure.total_value)
+
+            measure -= 5
+            self.assertEqual(15, measure.total_value)
+
+    def test_as_decorator(self):
+
+        @self._construct_measure('counter', 'ctx')
+        def some_func(measure):
+            # Direct calls forbidden
+            with self.assertRaises(RuntimeError):
+                measure('counter.ctx')(1)
+
+            # Increment/decrement by methods
+            measure.increment(10)
+            self.assertEqual(10, measure.total_value)
+
+            measure.decrement(5)
+
+            self.assertEqual(5, measure.total_value)
+
+            # Increment/decrement by operators
+            measure += 15
+            self.assertEqual(20, measure.total_value)
+
+            measure -= 5
+            self.assertEqual(15, measure.total_value)

@@ -109,7 +109,7 @@ class MeasuringPrimitive(ContextDecorator):
         """
         if callable(argument):
             return super().__call__(
-                functools.partial(argument, measurement=self)
+                functools.partial(argument, measure=self)
             )
 
         self._measure(argument)
