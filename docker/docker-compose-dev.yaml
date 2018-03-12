@@ -38,11 +38,7 @@ services:
       APP_CELERY_task_always_eager: "true"
     command: bash
 
-  # Todo: fork this out into base for testing purposes
   dd-agent:
-    image: datadog/docker-dd-agent:latest
-    environment:
-      DD_HOSTNAME: tomas-docker
-      API_KEY: 887a5a65a5d2c1f71cd27c787dd9424c
-      SD_BACKEND: docker
-
+    extends:
+      file: docker-compose-base.yaml
+      service: dd-agent

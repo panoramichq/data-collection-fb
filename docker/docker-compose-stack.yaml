@@ -47,3 +47,8 @@ services:
       - dynamo
       - redis-cluster
     command: python app.py worker default
+
+  dd-agent:
+    extends:
+      file: docker-compose-base.yaml
+      service: dd-agent

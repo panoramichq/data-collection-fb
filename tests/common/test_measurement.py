@@ -34,7 +34,8 @@ class BaseMeasureTestCase(TestCase):
             the tests use direct, ctx, deco
         :return MeasurementWrapper: The wrapper for given measurement
         """
-        return getattr(self.measure, mtype)(subtype, *args, **kwargs)
+        method = getattr(self.measure, mtype)
+        return method('.'.join([mtype, subtype]), *args, **kwargs)
 
     def _test_direct_simple(
         self, mtype, subtype='direct', value=1, *args, **kwargs

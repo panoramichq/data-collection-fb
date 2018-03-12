@@ -262,7 +262,6 @@ class MeasureWrapper:
     @measure.increment('metric')
     def my_method(blah, measuring_context):
         measuring_context(value)
-
     """
 
     _statsd = None
@@ -278,8 +277,8 @@ class MeasureWrapper:
     # TODO: include them too? Will be easy
 
     # Our own little bit more interesting measuring primitives
-    counter = None     # type: MeasuringPrimitive
-    autotiming = None  # type: MeasuringPrimitive
+    counter = None     # type: CounterMeasuringPrimitive
+    autotiming = None  # type: AutotimingMeasuringPrimitive
 
     def __init__(
         self, enabled, statsd_host, statsd_port, prefix=None, default_tags=None
