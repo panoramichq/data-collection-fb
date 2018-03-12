@@ -4,7 +4,9 @@ from time import time
 
 from datadog.dogstatsd import DogStatsd
 
-from config import build, measurement
+import config.measurement
+import config.app
+import config.build
 
 
 def _dict_as_statsd_tags(tags):
@@ -53,9 +55,10 @@ class MeasuringPrimitive(ContextDecorator):
 
     - function decorator
 
-        Useful say for timers, but other uses are also available
+        Useful say for timers, but other uses are also available. If you want,
+        the measure reference, use bind=True in the decorator
 
-        @Measure.timer('mymetric')
+        @Measure.timer('mymetric', bind=True)
         def my_function(argument1, measure):
             measure(1234)
 
@@ -66,7 +69,7 @@ class MeasuringPrimitive(ContextDecorator):
             # Auto bound methods
             measure_function, prefix, default_value,
             # Actual invocation related methods
-            metric, tags=None, sample_rate=1
+            metric, tags=None, sample_rate=1, bind=False
     ):
         self._statsd_func = measure_function
         self._default_value = default_value
@@ -78,6 +81,8 @@ class MeasuringPrimitive(ContextDecorator):
         self._tags = tags or {}
 
         self._sample_rate = sample_rate
+
+        self._bind = bind
 
     def _measure(self, value):
         """
@@ -108,9 +113,12 @@ class MeasuringPrimitive(ContextDecorator):
         Inject the measurement wrapper to the function.
         """
         if callable(argument):
-            return super().__call__(
-                functools.partial(argument, measure=self)
-            )
+            if self._bind:
+                return super().__call__(
+                    functools.partial(argument, measure=self)
+                )
+
+            return super().__call__(functools.partial(argument))
 
         self._measure(argument)
 
@@ -151,6 +159,8 @@ class AutotimingMeasuringPrimitive(MeasuringPrimitive):
     def __call__(self, argument):
         """
         We are forbidding direct measurements here
+
+        @:return MeasuringPrimitive
         """
 
         if not callable(argument):
@@ -309,36 +319,36 @@ class MeasureWrapper:
         # Add measurement methods
         self.increment = self._wrap_measurement_method(
             enabled, self._statsd.increment, default_value=1,
-            prefix=self._join_with_prefix(measurement.PREFIX_COUNTER, prefix)
+            prefix=self._join_with_prefix(config.measurement.PREFIX_COUNTER, prefix)
         )
         self.decrement = self._wrap_measurement_method(
             enabled, self._statsd.decrement, default_value=1,
-            prefix=self._join_with_prefix(measurement.PREFIX_COUNTER, prefix)
+            prefix=self._join_with_prefix(config.measurement.PREFIX_COUNTER, prefix)
         )
         self.gauge = self._wrap_measurement_method(
             enabled, self._statsd.gauge,
-            prefix=self._join_with_prefix(measurement.PREFIX_GAUGE, prefix)
+            prefix=self._join_with_prefix(config.measurement.PREFIX_GAUGE, prefix)
         )
 
         self.timing = self._wrap_measurement_method(
             enabled, self._statsd.timing,
-            prefix=self._join_with_prefix(measurement.PREFIX_TIMING, prefix)
+            prefix=self._join_with_prefix(config.measurement.PREFIX_TIMING, prefix)
         )
         self.set = self._wrap_measurement_method(
             enabled, self._statsd.set,
-            prefix=self._join_with_prefix(measurement.PREFIX_SET, prefix)
+            prefix=self._join_with_prefix(config.measurement.PREFIX_SET, prefix)
         )
 
         # Our own augmented measurement primitives
         self.autotiming = self._wrap_measurement_method(
             enabled, self._statsd.timing,
-            prefix=self._join_with_prefix(measurement.PREFIX_TIMING, prefix),
+            prefix=self._join_with_prefix(config.measurement.PREFIX_TIMING, prefix),
             wrapper=AutotimingMeasuringPrimitive
         )
 
         self.counter = self._wrap_measurement_method(
             enabled, self._statsd.increment,
-            prefix=self._join_with_prefix(measurement.PREFIX_COUNTER, prefix),
+            prefix=self._join_with_prefix(config.measurement.PREFIX_COUNTER, prefix),
             wrapper=CounterMeasuringPrimitive
         )
 
@@ -378,12 +388,13 @@ class MeasureWrapper:
 
 # Instance of the measuring tools injected with configuration options
 Measure = MeasureWrapper(
-    enabled=measurement.ENABLED,
-    statsd_host=measurement.STATSD_SERVER,
-    statsd_port=measurement.STATSD_PORT,
-    prefix=measurement.METRIC_PREFIX,
+    enabled=config.measurement.ENABLED,
+    statsd_host=config.measurement.STATSD_SERVER,
+    statsd_port=config.measurement.STATSD_PORT,
+    prefix=config.measurement.METRIC_PREFIX,
     default_tags={
-        'build_id': build.BUILD_ID,
-        'commit_id': build.COMMIT_ID,
+        'environment': config.app.ENVIRONMENT,
+        'build_id': config.build.BUILD_ID,
+        'commit_id': config.build.COMMIT_ID,
     }
 )

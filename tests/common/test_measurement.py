@@ -54,7 +54,7 @@ class BaseMeasureTestCase(TestCase):
     def _test_decorator_simple(
             self, mtype, subtype='deco', value=10, *args, **kwargs
     ):
-        @self._construct_measure(mtype, subtype, *args, **kwargs)
+        @self._construct_measure(mtype, subtype, bind=True, *args, **kwargs)
         def some_func(measure):
             measure(value)
             return measure
@@ -174,7 +174,7 @@ class TestAutotimingMeasurements(BaseMeasureTestCase):
 
     def test_as_decorator(self):
 
-        @self._construct_measure('autotiming', 'deco')
+        @self._construct_measure('autotiming', 'deco', bind=True)
         def some_func(measure):
             # Sleep for a while so we can check the value
             time.sleep(0.1)
@@ -233,7 +233,7 @@ class TestCounterMeasurements(BaseMeasureTestCase):
 
     def test_as_decorator(self):
 
-        @self._construct_measure('counter', 'deco')
+        @self._construct_measure('counter', 'deco', bind=True)
         def some_func(measure):
             # Direct calls forbidden
             with self.assertRaises(RuntimeError):
