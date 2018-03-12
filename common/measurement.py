@@ -1,7 +1,8 @@
 import functools
 from contextlib import ContextDecorator
+from time import time
 
-from datadog import DogStatsd
+from datadog.dogstatsd import DogStatsd
 
 from config import build, measurement
 
@@ -121,32 +122,124 @@ class MeasuringPrimitive(ContextDecorator):
 
 
 class AutotimingMeasuringPrimitive(MeasuringPrimitive):
-    # TODO: This one for automatic timing
+    """
+    Provides automatic timing either for a context or as a decorator.
+
+    You cannot call this measure directly (as that would make no sense really)
+    """
+
+    _start = None
+    """
+    The time that elapsed during the runtime of this measurement
+    """
+
+    _stop = None
+    """
+    Stop time, if available
+    """
+
+    @property
+    def elapsed(self):
+        # Either we're still in flight, or this timer has been stopped
+        stop_time = self._stop or time()
+
+        # Normalize to millis
+        elapsed = stop_time - self._start
+        elapsed = int(round(1000 * elapsed))
+        return elapsed
 
     def __call__(self, argument):
+        """
+        We are forbidding direct measurements here
+        """
 
         if not callable(argument):
-            msg = "You cannot use autotiming measurement directly, use either " \
-                  "with a context manager or a decorator"
+            msg = "You cannot use autotiming measurement directly, use either" \
+                  " with a context manager or a decorator"
             raise RuntimeError(msg)
 
-        raise NotImplementedError
+        return super().__call__(argument)
 
     def __enter__(self):
-        return self
+        """
+        Kick off the timer
+        :return:
+        """
+        self._start = time()
+        return super().__enter__()
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        pass
+        """
+        Stop the timer and measure value
+        """
+        self._stop = time()
+        self._measure(self.elapsed)
+        super().__exit__(exc_type, exc_val, exc_tb)
 
 
 class CounterMeasuringPrimitive(MeasuringPrimitive):
-    # TODO: This one for having increment/decrement on it on it's own
+    """
+    Provides a different way how to use increment, decrement, as a convenience
+    method.
+
+    Useful specifically for decorators / context managers, where a value might
+    fluctuate over the course of the execution.
+
+    Convenience += and -= operators are also available
+    """
+
+    _total_value = 0
+    """
+    A running tally on the value. The value is here just to have a finger on it
+    if needed, but this is not what is sent to statsd really, and *may* span
+    over several statsd flushes, so this is value will *not* necessarily 
+    correspond to what you will see in measurement charts  
+    """
+
+    @property
+    def total_value(self):
+        return self._total_value
 
     def increment(self, by_how_much):
-        pass
+        """
+        Just send along the value
+        """
+        self._total_value += by_how_much
+        self._measure(by_how_much)
 
     def decrement(self, by_how_much):
-        pass
+        """
+        Inverts the value to negative
+        """
+        self._total_value -= by_how_much
+        self._measure(-by_how_much)
+
+    def __iadd__(self, other):
+        """
+        For use like measurement+=10
+        """
+        self.increment(other)
+        return self
+
+    def __isub__(self, other):
+        """
+        For use like measurement-=10
+        """
+        self.decrement(other)
+        return self
+
+    def __call__(self, argument):
+        """
+        We are forbidding direct measurements here, as you need to use either
+        direct methods or operators
+        """
+
+        if not callable(argument):
+            msg = "You cannot use counter measurement directly, use either" \
+                  " with a context manager or a decorator"
+            raise RuntimeError(msg)
+
+        return super().__call__(argument)
 
 
 class MeasureWrapper:
@@ -206,12 +299,6 @@ class MeasureWrapper:
         :param string prefix: Default prefix to add to all metrics
         :param dict|None default_tags: Default tags to add to all metrics
         """
-
-        # If this is disabled, mock the methods and bail
-        if not enabled:
-            self._mock_measurement_methods()
-            return
-
         # Setup stats connection
         self._statsd = DogStatsd(
             host=statsd_host, port=statsd_port,
@@ -222,77 +309,59 @@ class MeasureWrapper:
 
         # Add measurement methods
         self.increment = self._wrap_measurement_method(
-            self._statsd.increment, default_value=1, prefix=prefix
+            enabled, self._statsd.increment, default_value=1, prefix=prefix
         )
         self.decrement = self._wrap_measurement_method(
-            self._statsd.decrement, default_value=1, prefix=prefix
+            enabled, self._statsd.decrement, default_value=1, prefix=prefix
         )
         self.gauge = self._wrap_measurement_method(
-            self._statsd.gauge, prefix=prefix
+            enabled, self._statsd.gauge, prefix=prefix
         )
 
         self.timing = self._wrap_measurement_method(
-            self._statsd.timing, prefix=prefix
+            enabled, self._statsd.timing, prefix=prefix
         )
         self.set = self._wrap_measurement_method(
-            self._statsd.set, prefix=prefix
+            enabled, self._statsd.set, prefix=prefix
         )
 
-        # We had these before, check what we did there
-        # TODO: counter - attach specific ctx manager / deco , replace with 'count' and add incr/decr on it
-        # TODO: autotiming - attach specific ctx manager / deco to allow for "automatic" timing
+        # Our own augmented measurement primitives
+        self.autotiming = self._wrap_measurement_method(
+            enabled, self._statsd.timing, prefix=prefix,
+            wrapper=AutotimingMeasuringPrimitive
+        )
+
+        self.counter = self._wrap_measurement_method(
+            enabled, self._statsd.increment, prefix=prefix,
+            wrapper=CounterMeasuringPrimitive
+        )
 
     def _wrap_measurement_method(
-        self, func, prefix, default_value=None
+        self, enabled, func, prefix, default_value=None, wrapper=None
     ):
         """
         We need to wrap the singular measurement function with our
-        MeasuringPrimitive class, so that we can support various interfaces
-        on top of it
+        MeasuringPrimitive (or a subclass thereof) class, so that we can support
+        various interfaces on top of it.
 
+        If the measurements are disabled, we just replace the statsd function do
+        nothing.
+
+        :param bool enabled: Whether the measurement should actually send it's
+            values
         :param function func: The function to be wrapped
         :param string prefix: Common metric prefix
         :param any default_value: Default value for the metric
+        :param MeasuringPrimitive wrapper: The wrapper class to use
         :return function: The partial to be called on the MeasuringPrimitive
             constructor
         """
+        if not enabled:
+            func = lambda *args, **kwargs: None
+
         return functools.partial(
-            MeasuringPrimitive, func, prefix, default_value
+            wrapper or MeasuringPrimitive, func, prefix, default_value
         )
-
-    def _mock_measurement_methods(self):
-        """
-        Mocks the measurement methods, so that the code still works if we
-        disable the reporting. This way the code does not complain, and we
-        keep the testability of the inner wrappers, because no need to propagate
-        disabled state
-        """
-        class MockContext(ContextDecorator):
-
-            def __init__(self, *args, **kwargs):
-                pass
-
-            def measure(self, value=None):
-                pass
-
-            def __call__(self, argument):
-                if callable(argument):
-                    return super().__call__(
-                        functools.partial(argument, measurement=self)
-                    )
-                # Do nothing otherwise
-
-            def __enter__(self):
-                return self
-
-            def __exit__(self, exc_type, exc_val, exc_tb):
-                pass
-
-        self.increment = MockContext
-        self.decrement = MockContext
-        self.gauge = MockContext
-        self.timing = MockContext
-        self.set = MockContext
 
 
 # Instance of the measuring tools injected with configuration options
