@@ -1,6 +1,7 @@
 from common.enums.entity import Entity
 from common.memoize import memoized_property
 from config import dynamodb as dynamodb_config
+from config import operam_console_api as operam_console_api_config
 
 from .base import BaseMeta, BaseModel, attributes
 
@@ -16,7 +17,7 @@ DEFAULT_SCOPE = 'Console'
 # by proper tokens-to-AdAccount management API
 
 
-class FacebookToken(BaseModel):
+class PlatformToken(BaseModel):
     """
     At this time we have no corporate API for
     (a) management of platform user token assets and linking them to FB entities
@@ -32,10 +33,10 @@ class FacebookToken(BaseModel):
     token = attributes.UnicodeAttribute(attr_name='t')
 
 
-class FacebookAdAccountScope(BaseModel):
+class AssetScope(BaseModel):
     """
     Stores metadata specific to "Scope" that acts as grouping element
-    for a collection of Ad Accounts
+    for a collection of attached top-level assets like Ad Accounts
 
     This is approximately mapped to a Facebook User (token) or some
     cohesive source of Ad Accounts.
@@ -55,27 +56,28 @@ class FacebookAdAccountScope(BaseModel):
     # (Later this relationship may need to be inverted to
     # allow multiple tokens per AA)
     scope = attributes.UnicodeAttribute(hash_key=True, attr_name='scope')
-    token_ids = attributes.UnicodeSetAttribute(default=set, attr_name='tids')
+
+    platform_token_ids = attributes.UnicodeSetAttribute(default=set, attr_name='tids')
 
     # Memoized in instance to avoid hitting DB all the time we are called.
     @property
     @memoized_property
-    def tokens(self):
+    def platform_tokens(self):
         """
         Returns a set of actual FB tokens that token_ids attribute point to by ids
         :return:
         """
         return {
             record.token
-            for record in FacebookToken.scan(
-                FacebookToken.token_id.is_in(*self.token_ids)
+            for record in PlatformToken.scan(
+                PlatformToken.token_id.is_in(*self.platform_token_ids)
             )
         }
 
     @property
-    def token(self):
+    def platform_token(self):
         try:
-            return list(self.tokens)[0]
+            return list(self.platform_tokens)[0]
         except IndexError:
             return None
 
@@ -90,8 +92,8 @@ def sync_schema(brute_force=False):
     from pynamodb.exceptions import TableError, TableDoesNotExist
 
     tables = [
-        FacebookAdAccountScope,
-        FacebookToken
+        AssetScope,
+        PlatformToken
     ]
 
     for table in tables:
