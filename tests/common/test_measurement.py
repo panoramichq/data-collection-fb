@@ -6,6 +6,7 @@ from common.measurement import MeasureWrapper
 from config import measurement, build
 
 # TODO: Mock out actual statsd calls and verify it does what it's supposed to do
+# TODO: Run for disabled env too
 
 
 class BaseMeasureTestCase(TestCase):
