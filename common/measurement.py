@@ -72,7 +72,7 @@ class MeasuringPrimitive(ContextDecorator):
         self._default_value = default_value
 
         # Add metric prefix
-        self._metric = '.'.join([prefix, metric])
+        self._metric = '.'.join(filter(None, [prefix, metric]))
 
         # We may have empty tags
         self._tags = tags or {}
@@ -308,30 +308,37 @@ class MeasureWrapper:
 
         # Add measurement methods
         self.increment = self._wrap_measurement_method(
-            enabled, self._statsd.increment, default_value=1, prefix=prefix
+            enabled, self._statsd.increment, default_value=1,
+            prefix=self._join_with_prefix(measurement.PREFIX_COUNTER, prefix)
         )
         self.decrement = self._wrap_measurement_method(
-            enabled, self._statsd.decrement, default_value=1, prefix=prefix
+            enabled, self._statsd.decrement, default_value=1,
+            prefix=self._join_with_prefix(measurement.PREFIX_COUNTER, prefix)
         )
         self.gauge = self._wrap_measurement_method(
-            enabled, self._statsd.gauge, prefix=prefix
+            enabled, self._statsd.gauge,
+            prefix=self._join_with_prefix(measurement.PREFIX_GAUGE, prefix)
         )
 
         self.timing = self._wrap_measurement_method(
-            enabled, self._statsd.timing, prefix=prefix
+            enabled, self._statsd.timing,
+            prefix=self._join_with_prefix(measurement.PREFIX_TIMING, prefix)
         )
         self.set = self._wrap_measurement_method(
-            enabled, self._statsd.set, prefix=prefix
+            enabled, self._statsd.set,
+            prefix=self._join_with_prefix(measurement.PREFIX_SET, prefix)
         )
 
         # Our own augmented measurement primitives
         self.autotiming = self._wrap_measurement_method(
-            enabled, self._statsd.timing, prefix=prefix,
+            enabled, self._statsd.timing,
+            prefix=self._join_with_prefix(measurement.PREFIX_TIMING, prefix),
             wrapper=AutotimingMeasuringPrimitive
         )
 
         self.counter = self._wrap_measurement_method(
-            enabled, self._statsd.increment, prefix=prefix,
+            enabled, self._statsd.increment,
+            prefix=self._join_with_prefix(measurement.PREFIX_COUNTER, prefix),
             wrapper=CounterMeasuringPrimitive
         )
 
@@ -362,6 +369,12 @@ class MeasureWrapper:
             wrapper or MeasuringPrimitive, func, prefix, default_value
         )
 
+    def _join_with_prefix(self, value_prefix, global_prefix):
+        """
+        Joins prefixes together, useful for combining global and metric type
+        specific prefix
+        """
+        return '.'.join(filter(None, [global_prefix, value_prefix]))
 
 # Instance of the measuring tools injected with configuration options
 Measure = MeasureWrapper(

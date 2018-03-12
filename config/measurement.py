@@ -18,7 +18,7 @@ METRIC_PREFIX = 'data-collection-fb'
 All custom metrics will be prefixed with the value (and dot at the end)
 """
 
-PREFIX_COUNTER = None
+PREFIX_COUNTER = 'counter-prefix'
 PREFIX_TIMING = None
 PREFIX_GAUGE = None
 PREFIX_SET = None

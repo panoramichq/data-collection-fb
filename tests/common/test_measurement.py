@@ -214,7 +214,7 @@ class TestCounterMeasurements(BaseMeasureTestCase):
 
             # Direct calls forbidden
             with self.assertRaises(RuntimeError):
-                measure('counter.ctx')(1)
+                measure(1)
 
             # Increment/decrement by methods
             measure.increment(10)
@@ -233,11 +233,11 @@ class TestCounterMeasurements(BaseMeasureTestCase):
 
     def test_as_decorator(self):
 
-        @self._construct_measure('counter', 'ctx')
+        @self._construct_measure('counter', 'deco')
         def some_func(measure):
             # Direct calls forbidden
             with self.assertRaises(RuntimeError):
-                measure('counter.ctx')(1)
+                measure(1)
 
             # Increment/decrement by methods
             measure.increment(10)
