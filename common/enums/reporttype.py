@@ -33,7 +33,7 @@ class ReportType:
     # An effort is made to avoid using separator-type characters (: | _ etc) in the values
     # because these are often used as fragments in compound IDs that use separator type characters.
 
-    console = 'console' # reporty type that asks console about active
+    import_accounts = 'import_accounts' # given scope, import AdAccounts (as associated data) from scope
 
     entities = 'entities'  # multiple entities per some parent
 
