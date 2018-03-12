@@ -165,6 +165,9 @@ test: .dynamodb_data image.dynamo image.fakes3 image.redis-cluster
 #############
 # requirement files management
 requirements-compile:
-	pip-compile requirements.base.src && \
-	pip-compile requirements.src && \
-	pip-compile requirements.dev.src
+	docker run \
+		-v $(PWD):$(WORKDIR) \
+		--rm $(IMAGE_NAME_FULL):latest \
+	    /bin/bash -c "pip-compile requirements.base.src && \
+	    			  pip-compile requirements.src && \
+	    			  pip-compile requirements.dev.src"
