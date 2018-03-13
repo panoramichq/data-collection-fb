@@ -6,7 +6,6 @@ from oozer.common.console_api import ConsoleApi
 from config.operam_console_api import TOKEN
 
 
-# FIXME: check a console_integration decorator or change logic in integration
 @integration('operam_console_api')
 class TestingConsoleApiClient(TestCase):
 
