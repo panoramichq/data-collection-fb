@@ -170,6 +170,9 @@ class _JobsReader:
             front_row.sort(key=lambda o: o.score, reverse=True)
             score, job_id, gen = front_row.pop(0)
 
+            # Notice we are sending blank JobScope data below.
+            # This will be replaced by a query for job parameters
+            # which will most likely be stored under a job_id derived key in redis
             # job_id, JobScope data, Score
             yield job_id, {}, score
             self.cnt += 1
