@@ -1,6 +1,7 @@
 import logging
 
 from common.celeryapp import get_celery_app
+from common.measurement import Measure
 from oozer.common.job_scope import JobScope
 
 
@@ -9,6 +10,8 @@ app = get_celery_app()
 
 
 @app.task
+@Measure.autotiming(__name__, function_name_as_metric=True)
+@Measure.counter(__name__, function_name_as_metric=True, count_once=True)
 def report_job_status_task(stage_status, job_scope):
     """
     We take job scope to divine basic information about the job itself.

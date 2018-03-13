@@ -1,12 +1,15 @@
 import functools
 from contextlib import ContextDecorator
 from time import time
+import logging
 
 from datadog.dogstatsd import DogStatsd
 
 import config.measurement
 import config.app
 import config.build
+
+logger = logging.getLogger(__name__)
 
 
 def _dict_as_statsd_tags(tags):
@@ -69,7 +72,9 @@ class MeasuringPrimitive(ContextDecorator):
             # Auto bound methods
             measure_function, prefix, default_value,
             # Actual invocation related methods
-            metric, tags=None, sample_rate=1, bind=False
+            metric, tags=None, sample_rate=1,
+            # Binding options and so on
+            bind=False, function_name_as_metric=False
     ):
         self._statsd_func = measure_function
         self._default_value = default_value
@@ -82,7 +87,37 @@ class MeasuringPrimitive(ContextDecorator):
 
         self._sample_rate = sample_rate
 
+        # Decorators only: If bind is true, it will bind this measuring
+        # primitive as `measure` function argument
         self._bind = bind
+
+        # Decorators only: If function_name_as_metric is true, it will append
+        # the function name to the metric name, joined on . (dot) character
+        self._function_name_as_metric = function_name_as_metric
+
+    def _wrap_callable(self, func, hook=None):
+        """
+        Wraps a function you would supply when overriding `__call__` somewhere
+        down the chain for callables. Useful for not messing up autonaming of
+        metrics and having always a "well-behaved' decorators.
+
+        Extending this to pre and post hooks is also pretty simple obviously, if
+        we need to do that
+
+        :param callable func: The callable we are wrapping
+        :param callable hook: If supplied, will be called as part of the wrapper
+            The optionality is given the fact it is encouraged to use this
+            wrapper everywhere for clarity
+        :return:
+        """
+
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            if hook:
+                hook()
+            return func(*args, **kwargs)
+
+        return wrapper
 
     def _measure(self, value):
         """
@@ -93,6 +128,7 @@ class MeasuringPrimitive(ContextDecorator):
         # Apply default value if needed
         value = value or self._default_value
 
+        logger.debug(f"Submitting metric: {self._metric}")
         self._statsd_func(
             self._metric,
             value,
@@ -113,12 +149,17 @@ class MeasuringPrimitive(ContextDecorator):
         Inject the measurement wrapper to the function.
         """
         if callable(argument):
-            if self._bind:
-                return super().__call__(
-                    functools.partial(argument, measure=self)
-                )
+            # This means we are using this as decorator
 
-            return super().__call__(functools.partial(argument))
+            # Optionally bind the measure to the function
+            if self._bind:
+                argument = functools.partial(argument, measure=self)
+
+            # Optionally append callable name as metric name
+            if self._function_name_as_metric:
+                self._metric = '.'.join([self._metric, argument.__name__])
+
+            return super().__call__(self._wrap_callable(argument))
 
         self._measure(argument)
 
@@ -168,7 +209,7 @@ class AutotimingMeasuringPrimitive(MeasuringPrimitive):
                   " with a context manager or a decorator"
             raise RuntimeError(msg)
 
-        return super().__call__(argument)
+        return super().__call__(self._wrap_callable(argument))
 
     def __enter__(self):
         """
@@ -206,6 +247,20 @@ class CounterMeasuringPrimitive(MeasuringPrimitive):
     correspond to what you will see in measurement charts  
     """
 
+    _count_once = False
+    """
+    If this is set to true, the counter will ensure that the counter will be
+    always set to 1 at the beginning (you may increment it further if you wish)
+    """
+
+    def __init__(self, *args, count_once=False, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # If set to true, we will ensure that this metric will be sent along
+        # *at minimum* with count of one (eg when entered or called through a
+        # deco, `increment` is called
+        self._count_once = count_once
+
     @property
     def total_value(self):
         return self._total_value
@@ -238,6 +293,13 @@ class CounterMeasuringPrimitive(MeasuringPrimitive):
         self.decrement(other)
         return self
 
+    def _wrapper_hook(self):
+        """
+        Automatically increment once, regardless of what the situation is
+        """
+        if self._count_once:
+            self.increment(1)
+
     def __call__(self, argument):
         """
         We are forbidding direct measurements here, as you need to use either
@@ -249,7 +311,46 @@ class CounterMeasuringPrimitive(MeasuringPrimitive):
                   " with a context manager or a decorator"
             raise RuntimeError(msg)
 
-        return super().__call__(argument)
+        return super().__call__(self._wrap_callable(argument, self._wrapper_hook))
+
+
+# TODO: Think about whether we actually want something like this...
+# class CompoundMeasuringPrimitives:
+#     """
+#     This simplifies the usage of measuring primitives that you would often use
+#     together, so you do not have to decorate them everywhere.
+#
+#     This is just a container that creates combined decorators
+#     """
+#
+#     @classmethod
+#     def _create_compound_measuring_primitive(cls, *args):
+#         """
+#         Wraps a list of measuring primitives together
+#         :return MeasuringPrimitive
+#         """
+#         if len(args) < 2:
+#             raise RuntimeError(
+#                 "You need to supply at leas 2 measuring primitives"
+#             )
+#
+#         def wrapper(func):
+#             # Boot with the initial function
+#             compound = func
+#
+#             for measure_function in args:
+#                 compound = measure_function(compound)
+#
+#             return compound
+#
+#         return wrapper
+#
+#     @classmethod
+#     def function_time_and_count(cls, metric):
+#         return cls._create_compound_measuring_primitive(
+#             Measure.counter(metric, function_name_as_metric=True, count_once=True),
+#             Measure.autotiming(metric, function_name_as_metric=True)
+#         )
 
 
 class MeasureWrapper:
@@ -313,8 +414,6 @@ class MeasureWrapper:
             host=statsd_host, port=statsd_port,
             constant_tags=_dict_as_statsd_tags(default_tags)
         )
-
-        # TODO: add metric specific prefixes (low pri, probably)
 
         # Add measurement methods
         self.increment = self._wrap_measurement_method(

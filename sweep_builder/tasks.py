@@ -1,18 +1,22 @@
 import logging
 
 from common.celeryapp import get_celery_app, RoutingKey
-
+from common.measurement import Measure
 
 app = get_celery_app()
 logger = logging.getLogger(__name__)
 
 
 @app.task(routing_key=RoutingKey.longrunning)
+@Measure.autotiming(__name__, function_name_as_metric=True)
+@Measure.counter(__name__, function_name_as_metric=True, count_once=True)
 def echo(message='This is Long-Running queue'):
     print(message)
 
 
 @app.task(routing_key=RoutingKey.longrunning)
+@Measure.autotiming(__name__, function_name_as_metric=True)
+@Measure.counter(__name__, function_name_as_metric=True, count_once=True)
 def sweep_builder_task(sweep_id=None, start_looper=True):
 
     from datetime import datetime
