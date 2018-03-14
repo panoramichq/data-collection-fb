@@ -12,9 +12,9 @@ class TokenManager:
         redis = get_redis()
         redis.zadd(self.queue_key, **dict((token, 0) for token in tokens))
 
-    def touch(self, token):
+    def report_usage(self, token, usage_count=1):
         redis = get_redis()
-        redis.zincrby(self.queue_key, token, 1)
+        redis.zincrby(self.queue_key, token, usage_count)
 
     def get_best_token(self):
         redis = get_redis()

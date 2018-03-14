@@ -41,7 +41,7 @@ class TestingTokenManager(TestCase):
         assert token_manager.get_token_count() == 2
 
         # Used the first token
-        token_manager.touch(first_token)
+        token_manager.report_usage(first_token)
 
         assert token_manager.get_best_token() == second_token
 
