@@ -6,11 +6,10 @@ patch_facebook_sdk()
 
 import pkgutil
 
-from importlib import import_module
-from unittest import TestCase as _TestCase, skip, mock
-
 from common.configure_logging import configure_logging
 from config.facebook import AD_ACCOUNT, AD_ACCOUNT_TIME_ZONE, TOKEN
+from importlib import import_module
+from unittest import TestCase as _TestCase, skip, mock
 
 
 configure_logging()

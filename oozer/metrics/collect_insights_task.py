@@ -1,6 +1,7 @@
 import logging
 
 from common.celeryapp import get_celery_app
+from common.measurement import Measure
 from oozer.common.job_context import JobContext
 from oozer.common.job_scope import JobScope
 from .collect_insights import iter_collect_insights
@@ -13,6 +14,8 @@ app = get_celery_app()
 
 
 @app.task
+@Measure.timer(__name__, function_name_as_metric=True)
+@Measure.counter(__name__, function_name_as_metric=True, count_once=True)
 def collect_insights_task(job_scope, job_context):
     """
     :param JobScope job_scope:
