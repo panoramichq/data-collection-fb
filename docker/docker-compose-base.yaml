@@ -57,3 +57,14 @@ services:
     volumes:
       # >..< because this file is nested one level deep
       - ..:${WORKDIR}
+
+#  # if you intend to send metrics somewhere, uncomment
+#  dd-agent:
+#    image: ${DDOG_IMAGE_NAME_FULL}
+#    environment:
+#      DD_HOSTNAME: ${DDOG_HOSTNAME}
+#      # If you don't set this value, DDog agent will complain, but from the code
+#      # it will look as if it's successfully sending stuff (which is good for
+#      # tests and all). If you do, you will actually submit metric values to
+#      # DataDog, so be careful to use some testing account.
+#      API_KEY: ${DDOG_API_KEY}

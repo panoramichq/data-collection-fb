@@ -22,6 +22,11 @@ services:
       file: docker-compose-base.yaml
       service: fakes3
 
+#  dd-agent:
+#    extends:
+#      file: docker-compose-base.yaml
+#      service: dd-agent
+
   app:
     extends:
       file: docker-compose-base.yaml
@@ -31,7 +36,10 @@ services:
       - redis
       - redis-cluster
       - dynamo
+#    depends_on:
+#      - dd-agent
     environment:
+#      APP_MEASUREMENT_STATSD_SERVER: 'dd-agent'
       APP_LOGGING_LEVEL: 'INFO'
       APP_CELERY_task_eager_propagates: "true"
       APP_CELERY_task_always_eager: "true"

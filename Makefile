@@ -23,6 +23,14 @@ BUILD_ID?=latest
 BUILD_ID:=$(if $(CIRCLE_BUILD_NUM),$(CIRCLE_BUILD_NUM),$(BUILD_ID))
 COMMIT_ID=$(if $(CIRCLE_SHA1),$(CIRCLE_SHA1),$(shell git rev-parse --short HEAD))
 
+# Datadog instrumentation agent
+DDOG_IMAGE_NAME:=datadog/docker-dd-agent
+DDOG_IMAGE_VERSION:=12.5.5223-dogstatsd-alpine
+DDOG_IMAGE_NAME_FULL:=$(DDOG_IMAGE_NAME):$(DDOG_IMAGE_VERSION)
+DDOG_HOSTNAME:=$(VENDOR_NAME)-$(IMAGE_NAME)-datadog
+# Setting this to weird value won't allow the agent to actually submit stuff
+DDOG_API_KEY:=$(if $(DDOG_API_KEY),$(DDOG_API_KEY),__none__)
+
 PYTHONUSERBASE_INNER=/usr/src/lib
 WORKDIR=/usr/src/app
 
@@ -126,6 +134,9 @@ start-dev: .dynamodb_data .s3_data
 	FAKE_S3_IMAGE_NAME_FULL=${FAKE_S3_IMAGE_NAME_FULL} \
 	FAKES3DIR=$(FAKES3DIR) \
 	REDIS_CLUSTER_IMAGE_NAME_FULL=${REDIS_CLUSTER_IMAGE_NAME_FULL} \
+	DDOG_IMAGE_NAME_FULL=${DDOG_IMAGE_NAME_FULL} \
+	DDOG_HOSTNAME=${DDOG_HOSTNAME} \
+	DDOG_API_KEY=${DDOG_API_KEY} \
 	IMAGE_NAME_FULL=$(IMAGE_NAME_FULL) \
 	USER_ID=$(shell id -u) \
 	GROUP_ID=$(shell id -g) \
@@ -139,13 +150,32 @@ start-stack: .dynamodb_data .s3_data
 	FAKE_S3_IMAGE_NAME_FULL=${FAKE_S3_IMAGE_NAME_FULL} \
 	FAKES3DIR=$(FAKES3DIR) \
 	REDIS_CLUSTER_IMAGE_NAME_FULL=${REDIS_CLUSTER_IMAGE_NAME_FULL} \
+	DDOG_IMAGE_NAME_FULL=${DDOG_IMAGE_NAME_FULL} \
+	DDOG_HOSTNAME=${DDOG_HOSTNAME} \
+	DDOG_API_KEY=${DDOG_API_KEY} \
 	IMAGE_NAME_FULL=$(IMAGE_NAME_FULL) \
 	USER_ID=$(shell id -u) \
 	GROUP_ID=$(shell id -g) \
 	WORKDIR=$(WORKDIR) \
 	docker-compose -f docker/docker-compose-stack.yaml up
 
-.PHONY: start-dev start-stack
+# use this to completely remove the stack containers
+drop-stack:
+	DYNAMO_IMAGE_NAME_FULL=$(DYNAMO_IMAGE_NAME_FULL) \
+	DYNAMODIR=$(DYNAMODIR) \
+	FAKE_S3_IMAGE_NAME_FULL=${FAKE_S3_IMAGE_NAME_FULL} \
+	FAKES3DIR=$(FAKES3DIR) \
+	REDIS_CLUSTER_IMAGE_NAME_FULL=${REDIS_CLUSTER_IMAGE_NAME_FULL} \
+	DDOG_IMAGE_NAME_FULL=${DDOG_IMAGE_NAME_FULL} \
+	DDOG_HOSTNAME=${DDOG_HOSTNAME} \
+	DDOG_API_KEY=${DDOG_API_KEY} \
+	IMAGE_NAME_FULL=$(IMAGE_NAME_FULL) \
+	USER_ID=$(shell id -u) \
+	GROUP_ID=$(shell id -g) \
+	WORKDIR=$(WORKDIR) \
+	docker-compose -f docker/docker-compose-stack.yaml down
+
+.PHONY: start-dev start-stack drop-stack
 
 #############
 # Test runner
@@ -155,6 +185,9 @@ test: .dynamodb_data image.dynamo image.fakes3 image.redis-cluster
 	FAKE_S3_IMAGE_NAME_FULL=${FAKE_S3_IMAGE_NAME_FULL} \
 	FAKES3DIR=$(FAKES3DIR) \
 	REDIS_CLUSTER_IMAGE_NAME_FULL=${REDIS_CLUSTER_IMAGE_NAME_FULL} \
+	DDOG_IMAGE_NAME_FULL=${DDOG_IMAGE_NAME_FULL} \
+	DDOG_HOSTNAME=${DDOG_HOSTNAME} \
+	DDOG_API_KEY=${DDOG_API_KEY} \
 	IMAGE_NAME_FULL=$(IMAGE_NAME_FULL) \
 	WORKDIR=/usr/src/app \
 	docker-compose -f docker/docker-compose-test.yaml run \
