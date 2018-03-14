@@ -1,9 +1,9 @@
 # must be first, as it does event loop patching and other "first" things
-from tests.base.testcase import TestCase
+from tests.base.testcase import TestCase, mock
 import time
 
-from common.measurement import MeasureWrapper
-from config import measurement, build
+from common.measurement import MeasureWrapper, TimerMeasuringPrimitive
+from config import measurement, build, application
 
 # TODO: Mock out actual statsd calls and verify it does what it's supposed to do
 # TODO: Run for disabled env too
@@ -12,11 +12,11 @@ from config import measurement, build
 class BaseMeasureTestCase(TestCase):
 
     def setUp(self):
-        self.measure = MeasureWrapper(
-            enabled=True,
-            statsd_host=measurement.STATSD_SERVER,
-            statsd_port=measurement.STATSD_PORT,
-            prefix=measurement.METRIC_PREFIX,
+
+        self.Measure = MeasureWrapper(
+            host='localhost',
+            port=measurement.STATSD_PORT,
+            # prefix=application.NAME,
             default_tags={
                 'build_id': build.BUILD_ID,
                 'commit_id': build.COMMIT_ID,
@@ -34,7 +34,7 @@ class BaseMeasureTestCase(TestCase):
             the tests use direct, ctx, deco
         :return MeasurementWrapper: The wrapper for given measurement
         """
-        method = getattr(self.measure, mtype)
+        method = getattr(self.Measure, mtype)
         return method('.'.join([mtype, subtype]), *args, **kwargs)
 
     def _test_direct_simple(
@@ -144,63 +144,64 @@ class TestAutotimingMeasurements(BaseMeasureTestCase):
 
     def test_direct_measuring_forbidden(self):
         with self.assertRaises(RuntimeError):
-            self._test_direct_simple('autotiming')
+            self._test_direct_simple('timer')
 
     def test_as_ctx_manager(self):
 
-        with self._construct_measure('autotiming', 'ctx') as measure:
+        entropy = 5
+        now_values = [
+            entropy + 0, # start time
+            entropy + 1.5, # first .elapsed call time
+            entropy + 2.75  # exit - end time
+        ]
+        with mock.patch.object(TimerMeasuringPrimitive, '_get_now_in_seconds', side_effect=now_values):
 
-            # Sleep for a while so we can check the value
-            time.sleep(0.1)
+            with self._construct_measure('timer', 'ctx') as timer:
 
-            mid_elapsed = measure.elapsed
-            self.assertGreater(mid_elapsed, 0)
+                # pretend to sleep here for 1.5 seconds
 
-            # Sleep for a while so we can check the value
-            time.sleep(0.1)
+                assert timer.elapsed == 1.5 * 1000
 
-            # For autotiming, this is forbidden
-            with self.assertRaises(RuntimeError):
-                measure(5)
+                # For timer, this is forbidden
+                with self.assertRaises(RuntimeError):
+                    timer(5)
 
-        stop_time = measure.elapsed
-        self.assertGreater(stop_time, mid_elapsed)
+                # pretend to sleep here for extra 1.25 seconds
 
-        # Sleep for a while so we can check the value
-        time.sleep(0.1)
-
-        # Timer must be stopped at this time
-        self.assertEqual(stop_time, measure.elapsed)
+            assert timer.elapsed == 2.75 * 1000
+            # asking for it again does not change the time
+            assert timer.elapsed == 2.75 * 1000
 
     def test_as_decorator(self):
 
-        @self._construct_measure('autotiming', 'deco', bind=True)
-        def some_func(measure):
-            # Sleep for a while so we can check the value
-            time.sleep(0.1)
+        entropy = 7
+        now_values = [
+            entropy + 0, # start time
+            entropy + 1.5, # first .elapsed call time
+            entropy + 2.75  # exit - end time
+        ]
+        with mock.patch.object(TimerMeasuringPrimitive, '_get_now_in_seconds', side_effect=now_values):
 
-            mid_elapsed = measure.elapsed
-            self.assertGreater(mid_elapsed, 0)
+            @self._construct_measure('timer', 'deco', bind='timer')
+            def some_func(timer):
 
-            # Sleep for a while so we can check the value
-            time.sleep(0.1)
+                # pretend to sleep here for 1.5 seconds
+                # before hitting .elapsed
+                assert timer.elapsed == 1.5 * 1000
 
-            # For autotiming, this is forbidden
-            with self.assertRaises(RuntimeError):
-                measure(10)
+                # For timer, this is forbidden
+                with self.assertRaises(RuntimeError):
+                    timer(10)
 
-            return measure, mid_elapsed
+                # pretend to sleep here for extra 1.25 seconds
+                # before exiting
+                return timer
 
-        measure, mid_elapsed = some_func()
+            timer = some_func()
 
-        stop_time = measure.elapsed
-        self.assertGreater(stop_time, mid_elapsed)
-
-        # Sleep for a while so we can check the value
-        time.sleep(0.1)
-
-        # Timer must be stopped at this time
-        self.assertEqual(stop_time, measure.elapsed)
+            assert timer.elapsed == 2.75 * 1000
+            # asking for it again does not change the time
+            assert timer.elapsed == 2.75 * 1000
 
 
 class TestCounterMeasurements(BaseMeasureTestCase):

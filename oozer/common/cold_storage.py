@@ -129,7 +129,8 @@ def _job_scope_to_metadata(job_scope):
     }
 
 
-@Measure.autotiming(__name__)
+@Measure.timer(__name__, function_name_as_metric=True)
+@Measure.counter(__name__, function_name_as_metric=True, count_once=True)
 def store(data, job_scope, chunk_marker=0):
     """
     Adds the item to the current buffer (by JSON dumping it) and Uploads the

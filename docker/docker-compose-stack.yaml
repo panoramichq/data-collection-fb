@@ -22,6 +22,11 @@ services:
       file: docker-compose-base.yaml
       service: fakes3
 
+#  dd-agent:
+#    extends:
+#      file: docker-compose-base.yaml
+#      service: dd-agent
+
   app_longrunning:
     extends:
       file: docker-compose-base.yaml
@@ -31,7 +36,10 @@ services:
       - redis
       - dynamo
       - redis-cluster
+#    depends_on:
+#      - dd-agent
 #    environment:
+#      APP_MEASUREMENT_STATSD_SERVER: 'dd-agent'
 #      # uncomment this to allow sweep looper to recurse back into sweep builder
 #      APP_LOOPER_ALLOW_RECURSION: "true"
     command: python app.py worker longrunning
@@ -46,9 +54,9 @@ services:
       - redis
       - dynamo
       - redis-cluster
+    environment:
+      APP_LOGGING_LEVEL: 'INFO'
+#      APP_MEASUREMENT_STATSD_SERVER: 'dd-agent'
+#    depends_on:
+#      - dd-agent
     command: python app.py worker default
-
-  dd-agent:
-    extends:
-      file: docker-compose-base.yaml
-      service: dd-agent
