@@ -4,7 +4,7 @@ patch_event_loop()
 from common.facebook.patch import patch_facebook_sdk
 patch_facebook_sdk()
 
-from unittest import TestCase as _TestCase, skip
+from unittest import TestCase as _TestCase, skip, mock
 from config.facebook import AD_ACCOUNT, AD_ACCOUNT_TIME_ZONE, TOKEN
 
 from common.configure_logging import configure_logging

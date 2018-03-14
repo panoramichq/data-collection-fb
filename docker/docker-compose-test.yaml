@@ -32,8 +32,3 @@ services:
       - redis-cluster
       - dynamo
     command: bash -c "python bin/migrate.py && pytest"
-
-  dd-agent:
-    extends:
-      file: docker-compose-base.yaml
-      service: dd-agent

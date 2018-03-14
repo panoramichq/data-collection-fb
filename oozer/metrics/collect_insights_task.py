@@ -14,7 +14,7 @@ app = get_celery_app()
 
 
 @app.task
-@Measure.autotiming(__name__, function_name_as_metric=True)
+@Measure.timer(__name__, function_name_as_metric=True)
 @Measure.counter(__name__, function_name_as_metric=True, count_once=True)
 def collect_insights_task(job_scope, job_context):
     """

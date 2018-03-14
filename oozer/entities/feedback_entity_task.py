@@ -8,7 +8,7 @@ app = get_celery_app()
 
 
 @app.task
-@Measure.autotiming(__name__, function_name_as_metric=True)
+@Measure.timer(__name__, function_name_as_metric=True)
 @Measure.counter(__name__, function_name_as_metric=True, count_once=True)
 def feedback_entity_task(entity_data, entity_type, entity_hash_pair):
     """

@@ -10,7 +10,7 @@ app = get_celery_app()
 
 
 @app.task
-@Measure.autotiming(__name__, function_name_as_metric=True)
+@Measure.timer(__name__, function_name_as_metric=True)
 @Measure.counter(__name__, function_name_as_metric=True, count_once=True)
 def report_job_status_task(stage_status, job_scope):
     """

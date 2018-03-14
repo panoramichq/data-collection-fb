@@ -1,9 +1,4 @@
-ENABLED = False
-"""
-Setting this to false will disable the metrics reporting altogether
-"""
-
-STATSD_SERVER = 'dd-agent'
+STATSD_SERVER = 'localhost'
 """
 The address of the statsd server you will be sending measurements to
 """
@@ -25,3 +20,6 @@ PREFIX_SET = 'sets'
 """
 Prefixes for individual metric types
 """
+
+from common.updatefromenv import update_from_env
+update_from_env(__name__)

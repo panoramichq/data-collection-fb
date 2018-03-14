@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 @app.task
-@Measure.autotiming(__name__, function_name_as_metric=True)
+@Measure.timer(__name__, function_name_as_metric=True)
 @Measure.counter(__name__, function_name_as_metric=True, count_once=True)
 def collect_entities_per_adaccount_task(job_scope, job_context):
     """

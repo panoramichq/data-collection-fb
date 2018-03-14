@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 @app.task(routing_key=RoutingKey.longrunning)
-@Measure.autotiming(__name__, function_name_as_metric=True)
+@Measure.timer(__name__, function_name_as_metric=True)
 @Measure.counter(__name__, function_name_as_metric=True, count_once=True)
 def sweep_looper_task(sweep_id):
     from oozer.looper import run_tasks, Pulse
