@@ -1,12 +1,15 @@
 import logging
 
 from common.celeryapp import get_celery_app
+from common.measurement import Measure
 
 logger = logging.getLogger(__name__)
 app = get_celery_app()
 
 
 @app.task
+@Measure.timer(__name__, function_name_as_metric=True)
+@Measure.counter(__name__, function_name_as_metric=True, count_once=True)
 def feedback_entity_task(entity_data, entity_type, entity_hash_pair):
     """
     This task is to feedback information about entity collected by updating
