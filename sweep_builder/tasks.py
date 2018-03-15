@@ -27,6 +27,11 @@ def sweep_builder_task(sweep_id=None, start_looper=True):
 
     sweep_id = sweep_id or datetime.utcnow().strftime('%Y%m%d%H%M%S')
 
+    # In the jobs persister we purposefully avoid persisting
+    # anything besides the Job ID. This means that things like tokens
+    # and other data on *Claim is lost.
+    # As long as we are doing that, we need to leave tokens somewhere
+    # for workers to pick up.
     init_tokens(sweep_id)
 
     logger.info(f"#{sweep_id} Starting sweep")

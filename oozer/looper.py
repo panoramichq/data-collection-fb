@@ -11,7 +11,6 @@ from common.connect.redis import get_redis
 from common.enums.failure_bucket import FailureBucket
 from common.id_tools import parse_id
 from common.math import adapt_decay_rate_to_population, get_decay_proportion
-from common.tokens import TokenManager
 from config import looper as looper_config
 from oozer.common.job_context import JobContext
 from oozer.common.job_scope import JobScope
@@ -29,8 +28,6 @@ def iter_tasks(sweep_id):
     :param str sweep_id:
     :rtype: Generator[Tuple[CeleryTask, JobScope, JobContext]]
     """
-    from config.facebook import TOKEN
-
     with SortedJobsQueue(sweep_id).JobsReader() as jobs_iter:
         for job_id, job_scope_additional_data, score in jobs_iter:
 
@@ -40,9 +37,6 @@ def iter_tasks(sweep_id):
                 job_id_parts,
                 sweep_id=sweep_id
             )
-
-            token = TokenManager(job_scope.namespace, sweep_id).get_best_token()
-            job_scope.tokens = [token]
 
             celery_task = resolve_job_scope_to_celery_task(job_scope)
 

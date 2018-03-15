@@ -2,6 +2,8 @@ import logging
 
 from typing import Generator
 
+import config.application
+
 from common.enums.entity import Entity
 from common.enums.reporttype import ReportType
 from common.id_tools import generate_id
@@ -35,7 +37,7 @@ def ad_accounts_per_scope(reality_claim):
         job_signatures = [
             JobSignature.bind(
                 generate_id(
-                    namespace='operam',  # TODO: agree on the namespace value for "internal" tasks
+                    namespace=config.application.UNIVERSAL_ID_SYSTEM_NAMESPACE,
                     # Note absence of value for AdAccount
                     # This is "all AA per scope X" job.
                     entity_id=reality_claim.entity_id,

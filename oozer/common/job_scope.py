@@ -13,8 +13,6 @@ class JobScope:
     # System information
     sweep_id = None
 
-    platform = 'facebook'
-
     # Job ID components parsed
     namespace = 'fb'  # used for generating Job IDs from this data
 

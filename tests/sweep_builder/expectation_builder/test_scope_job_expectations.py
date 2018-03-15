@@ -1,6 +1,8 @@
 # must be first, as it does event loop patching and other "first" things
 from tests.base.testcase import TestCase, skip, mock
 
+import config.application
+
 from common.enums.entity import Entity
 from common.enums.reporttype import ReportType
 from common.id_tools import generate_id
@@ -58,7 +60,7 @@ class ScopeJobsExpectationsTests(TestCase):
         job_signature = expectation_claim.job_signatures[0]
 
         assert job_signature.job_id == generate_id(
-            namespace='operam',  # TODO: settle on namespace for internal objects like that
+            namespace=config.application.UNIVERSAL_ID_SYSTEM_NAMESPACE,
             entity_type=Entity.Scope,
             entity_id=entity_id,
             report_type=ReportType.import_accounts,

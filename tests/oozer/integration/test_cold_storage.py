@@ -125,7 +125,7 @@ class TestUploadToS3(TestCase):
         assert s3_obj.metadata == {
             'build_id': config.build.BUILD_ID,
             'job_id': ctx.job_id,
-            'platform': 'facebook',
+            'platform': 'fb',
             'ad_account_id': ctx.ad_account_id,
             'report_type': ReportType.entities,
             'platform_api_version': 'v2.11'
@@ -153,7 +153,7 @@ class TestUploadToS3(TestCase):
             .hexdigest()[:6]
 
         zulu_time = params["report_time"].strftime("%Y-%m-%dT%H:%M:%SZ")
-        expected_key = f'facebook/{account_prefix}-{params["ad_account_id"]}' \
+        expected_key = f'fb/{account_prefix}-{params["ad_account_id"]}' \
                        f'/{params["report_type"]}' \
                        f'/{params["report_time"].strftime("%Y")}' \
                        f'/{params["report_time"].strftime("%m")}' \
