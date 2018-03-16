@@ -14,7 +14,7 @@ from common.enums.entity import Entity
 from common.enums.failure_bucket import FailureBucket
 from common.enums.reporttype import ReportType
 from common.tokens import PlatformTokenManager
-from oozer.common import cold_storage
+from oozer.common.cold_storage import batch_store
 from oozer.common.facebook_api import FacebookApiContext, FacebookApiErrorInspector
 from oozer.common.facebook_async_report import FacebookAsyncReportStatus
 from oozer.common.job_context import JobContext
@@ -192,7 +192,7 @@ def _convert_and_validate_date_format(dt):
 class JobScopeParsed:
 
     report_params = None  # type: dict
-    DatumHandler = None  # type: Callable[JobScope, Callable[Dict, None]]
+    datum_handler = None  # type: Callable[Dict, None]
     report_root_fb_entity = None  # type: AbstractCrudObject
 
     def __init__(self, job_scope):
@@ -265,9 +265,15 @@ class JobScopeParsed:
         is_whole_report_bundle_write = (
             # must be one of those per-day reports
             job_scope.report_type in ReportType.ALL_DAY_BREAKDOWNS
+            # except for DMA-based data, as these can be very long,
+            # - 10s of thousands of records per day
+            and not job_scope.report_type == ReportType.day_dma
             # and the report is per single entity ID
             and job_scope.entity_id and not job_scope.report_variant
             # and report is for a single calendar day
+            # ReportType.ALL_DAY_BREAKDOWNS means there must be a non-Null
+            # value in time_range, but we check anyway
+            and self.report_params['time_range']['since']
             and self.report_params['time_range']['since'] == self.report_params['time_range']['until']
         )
 
@@ -287,14 +293,27 @@ class JobScopeParsed:
             and not is_whole_report_bundle_write
         )
 
-        if is_naturally_normative_child:
-            self.DatumHandler = NaturallyNormativeChildStore
-        elif is_whole_report_bundle_write:
-            self.DatumHandler = MemorySpoolStore
-        elif is_chunk_write:
-            self.DatumHandler = ChunkDumpStore
+        # Disabled but kept for reference to compare to shorter version immediately below
+        # These represent good range of choices for cold store handlers.
+        # When / if there is value to it, steal from this commented out code.
+        # if is_naturally_normative_child:
+        #     self.datum_handler = batch_store.NaturallyNormativeChildStore(job_scope)
+        # elif is_whole_report_bundle_write:
+        #     self.datum_handler = batch_store.MemorySpoolStore(job_scope)
+        # elif is_chunk_write:
+        #     self.datum_handler = batch_store.ChunkDumpStore(job_scope)
+        # else:
+        #     self.datum_handler = batch_store.NormalStore(job_scope)
+
+        # let's be more aggressive about doing bundled writes to cold store
+        # and (temporarily) get away from "normative" and single-datum writes
+        # There are two ways we can get closer to bundled writes:
+        #  - spool entire report in memory and flush out at the end, when we know we can tolerate that
+        #  - spool large chunks of report in memory and flush them periodically if we fear large sizes in report.
+        if is_whole_report_bundle_write:
+            self.datum_handler = batch_store.MemorySpoolStore(job_scope)
         else:
-            self.DatumHandler = NormalStore
+            self.datum_handler = batch_store.ChunkDumpStore(job_scope, chunk_size=200)
 
         with FacebookApiContext(job_scope.token) as fb_ctx:
             self.report_root_fb_entity = fb_ctx.to_fb_model(
@@ -344,10 +363,10 @@ def iter_collect_insights(job_scope, job_context):
             scope_parsed.report_root_fb_entity,
             scope_parsed.report_params
         )
-        with scope_parsed.DatumHandler(job_scope) as handle:
+        with scope_parsed.datum_handler as store:
             cnt = 0
             for datum in data_iter:
-                handle(datum)
+                store(datum)
                 yield datum
                 cnt += 1
 
