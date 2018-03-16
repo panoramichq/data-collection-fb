@@ -118,12 +118,14 @@ jobs:
 
       - checkout
 
+      # Install AWS CLI
+      - run: sudo pip install awscli --upgrade
+
       - run : |
-          sudo pip install awscli --upgrade
           export AWS_REGION=us-east-1
           export IMAGE_NAME_FULL=`cat /tmp/workspace/image_url`
-          sh .circleci/deploy.sh --cluster 1c5595_data_collection --service celery --task 1c5595_datacol_celery ${IMAGE_NAME_FULL}
-          sh .circleci/deploy.sh --cluster 1c5595_data_collection --service celery-long --task 1c5595_datacol_celery_long ${IMAGE_NAME_FULL}
+          bash .circleci/deploy.sh --cluster 1c5595_data_collection --service celery --task 1c5595_datacol_celery ${IMAGE_NAME_FULL}
+          bash .circleci/deploy.sh --cluster 1c5595_data_collection --service celery-long --task 1c5595_datacol_celery_long ${IMAGE_NAME_FULL}
 
 workflows:
   version: 2

@@ -22,10 +22,11 @@ deploy_cluster() {
         echo "Error updating service."
         return 1
     fi
+    echo "Updated service, waiting for deployment"
 
     # # wait for older revisions to disappear
     # # not really necessary, but nice for demos
-    for attempt in {1..30}; do
+    for attempt in {1..60}; do
         if STALE=$(aws ecs describe-services --cluster $CLUSTER_NAME --services $SERVICE_NAME | \
                        $JQ ".services[0].deployments | .[] | select(.taskDefinition != \"$REVISION\") | .taskDefinition"); then
             echo "Waiting for stale deployments:"
@@ -37,7 +38,7 @@ deploy_cluster() {
         fi
     done
     echo "Service update took too long."
-    return 1
+    return 0
 }
 
 make_task_def(){
