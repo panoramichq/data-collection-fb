@@ -1,9 +1,10 @@
 import gevent
 
 from datetime import datetime, date
-from facebookads.exceptions import FacebookError
-from facebookads.adobjects.adsinsights import AdsInsights
 from facebookads.adobjects.abstractcrudobject import AbstractCrudObject
+from facebookads.adobjects.adreportrun import AdReportRun
+from facebookads.adobjects.adsinsights import AdsInsights
+from facebookads.exceptions import FacebookError
 from typing import Callable, Dict
 
 from config.facebook import INSIGHTS_POLLING_INTERVAL, \
@@ -12,12 +13,9 @@ from config.facebook import INSIGHTS_POLLING_INTERVAL, \
 from common.enums.entity import Entity
 from common.enums.failure_bucket import FailureBucket
 from common.enums.reporttype import ReportType
-from facebookads.adobjects.adreportrun import AdReportRun
+from common.tokens import PlatformTokenManager
 from oozer.common import cold_storage
-from oozer.common.facebook_api import (
-    FacebookApiContext,
-    FacebookApiErrorInspector
-)
+from oozer.common.facebook_api import FacebookApiContext, FacebookApiErrorInspector
 from oozer.common.facebook_async_report import FacebookAsyncReportStatus
 from oozer.common.job_context import JobContext
 from oozer.common.job_scope import JobScope
@@ -416,6 +414,25 @@ def iter_collect_insights(job_scope, job_context):
     report_job_status_task.delay(FacebookJobStatus.Start, job_scope)
 
     try:
+        if not job_scope.tokens:
+            raise ValueError(
+                f"Job {job_scope.job_id} cannot proceed. No platform tokens provided."
+            )
+
+        token = job_scope.token
+        # We don't use it for getting a token. Something else that calls us does.
+        # However, we use it to report usages of the token we got.
+        token_manager = PlatformTokenManager.from_job_scope(job_scope)
+
+    except Exception:
+        # This is a generic failure, which does not help us at all, so, we just
+        # report it and bail
+        report_job_status_task.delay(
+            FacebookJobStatus.GenericError, job_scope
+        )
+        raise
+
+    try:
         scope_parsed = JobScopeParsed(job_scope)
         data_iter = iter_insights(
             scope_parsed.report_root_fb_entity,
@@ -432,10 +449,15 @@ def iter_collect_insights(job_scope, job_context):
                     report_job_status_task.delay(
                         FacebookJobStatus.DataFetched, job_scope
                     )
+                    # default paging size for entities per parent
+                    # is typically around 25. So, each 100 results
+                    # means about 4 hits to FB
+                    token_manager.report_usage(token, 4)
 
         report_job_status_task.delay(
             FacebookJobStatus.Done, job_scope
         )
+        token_manager.report_usage(token)
 
     except FacebookError as e:
         # Build ourselves the error inspector
@@ -443,26 +465,28 @@ def iter_collect_insights(job_scope, job_context):
 
         # Is this a throttling error?
         if inspector.is_throttling_exception():
-            report_job_status_task.delay(
-                FacebookJobStatus.ThrottlingError, job_scope
-            )
+            failure_status = FacebookJobStatus.ThrottlingError
+            failure_bucket = FailureBucket.Throttling
 
         # Did we ask for too much data?
         elif inspector.is_too_large_data_exception():
-            report_job_status_task.delay(
-                FacebookJobStatus.TooMuchData, job_scope
-            )
+            failure_status = FacebookJobStatus.TooMuchData
+            failure_bucket = FailureBucket.TooLarge
 
         # It's something else which we don't understand
         else:
-            report_job_status_task.delay(
-                FacebookJobStatus.GenericFacebookError, job_scope,
-            )
+            failure_status = FacebookJobStatus.GenericFacebookError
+            failure_bucket = FailureBucket.Other
+
+        report_job_status_task.delay(failure_status, job_scope)
+        token_manager.report_usage_per_failure_bucket(token, failure_bucket)
         raise
+
     except Exception:
         # This is a generic failure, which does not help us at all, so, we just
         # report it and bail
         report_job_status_task.delay(
             FacebookJobStatus.GenericError, job_scope
         )
+        token_manager.report_usage_per_failure_bucket(token, FailureBucket.Other)
         raise

@@ -65,6 +65,7 @@ def generate_id(
     "parent" value from the hierarchy. This applies up to the "family of report"
     switch.
     """
+    assert namespace, 'Namespace is a required parameter for id generation'
 
     if ad_account_id is None:
         ad_account_id = ''

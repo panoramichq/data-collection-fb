@@ -9,7 +9,7 @@ from common.enums.entity import Entity
 from common.enums.reporttype import ReportType
 from oozer.common.job_scope import JobScope
 from oozer import inventory
-from tests.base.random import get_string_id
+from tests.base.random import gen_string_id
 from unittest.mock import patch, Mock, ANY
 
 from oozer.looper import iter_tasks
@@ -24,8 +24,8 @@ class TestEntityFeedback(TestCase):
     def _job_scope_factory(self, **data):
 
         base_data = dict(
-            sweep_id = get_string_id(),
-            ad_account_id = get_string_id(),
+            sweep_id = gen_string_id(),
+            ad_account_id = gen_string_id(),
             entity_id = None,
             entity_type = None,
             report_type = None,
@@ -80,6 +80,24 @@ class TestEntityFeedback(TestCase):
         entity_types = [Entity.Campaign, Entity.AdSet, Entity.Ad]
         report_types = [
             ReportType.lifetime,
+        ]
+
+        for entity_type in entity_types:
+
+            for report_type in report_types:
+
+                job_scope = self._job_scope_factory(
+                    report_type=report_type,
+                    report_variant=entity_type
+                )
+
+                assert inventory.resolve_job_scope_to_celery_task(job_scope), f"Entity {entity_type} must have report handler for {report_type}"
+
+    def test_scope_refresh_job_handlers_registration(self):
+
+        entity_types = [Entity.Scope]
+        report_types = [
+            ReportType.import_accounts,
         ]
 
         for entity_type in entity_types:

@@ -1,11 +1,7 @@
 import logging
 
-from collections import OrderedDict
-from contextlib import contextmanager
 from typing import Generator, Callable
 
-from common.connect.redis import get_redis
-from common.id_tools import parse_id
 from oozer.common.sorted_jobs_queue import SortedJobsQueue
 
 from .prioritizer.prioritized import iter_prioritized, PrioritizationClaim

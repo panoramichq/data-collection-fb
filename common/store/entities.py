@@ -49,8 +49,8 @@ class FacebookAdAccountEntity(BaseModel):
     @property
     @memoized_property
     def scope_model(self):
-        from .scope import FacebookAdAccountScope
-        return FacebookAdAccountScope.get(self.scope)
+        from .scope import AssetScope
+        return AssetScope.get(self.scope)
 
     def to_fb_sdk_ad_account(self, api=None):
         """
@@ -68,7 +68,7 @@ class FacebookAdAccountEntity(BaseModel):
             # Try to pass api value at all times in prod code to avoid using this.
             # Allowing to omit the API value to simplify use of this API in
             # testing in console.
-            api = FacebookAdsApi(FacebookSession(access_token=self.scope_model.token))
+            api = FacebookAdsApi(FacebookSession(access_token=self.scope_model.platform_token))
 
         return AdAccount(fbid=f'act_{self.ad_account_id}', api=api)
 

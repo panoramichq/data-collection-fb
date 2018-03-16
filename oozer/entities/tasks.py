@@ -1,2 +1,3 @@
 from .feedback_entity_task import feedback_entity_task
 from .collect_entities_per_adaccount_task import collect_entities_per_adaccount_task
+from .import_ad_accounts_task import import_ad_accounts_task

@@ -15,37 +15,33 @@ Here we base our understanding of the world based on scraps of data
 these workers already collected some time before.
 """
 
-from typing import Generator, Tuple, Set
+from typing import Generator, Tuple
 
 from common.store import entities, scope
 
 
-def _iter_scopes_tokens():
+def iter_scopes():
+    # type: () -> Generator[scope.AssetScope]
     """
     :return: a generator of pairs of: tuple of scope id and its associated set of FB tokens
-    :rtype: Generator[Tuple[str, Set[str]]]
+    :rtype: Generator[scope.AssetScope]
     """
     # when we get real API that pairs AAs to their tokens,
     # throw all of this away
 
     # .query() on FacebookAdAccountEntity does not hint well at type
     # have do to it manually for IDE to pick it up
-    scope_record = None  # type: scope.FacebookAdAccountScope
-
-    for scope_record in scope.FacebookAdAccountScope.scan():
-        yield scope_record.scope, scope_record.tokens
+    yield from scope.AssetScope.scan()
 
 
-def _iter_active_ad_account_per_scope(scope):
+def iter_active_ad_accounts_per_scope(scope):
+    # type: (str) -> Generator[entities.FacebookAdAccountEntity]
     """
+    :param str scope: The FacebookAdAccountScope id
     :return: A generator of AdAccount IDs for AdAccounts marked "active" in our system
-    :rtype: Generator[Tuple[str, Set[str]]]
+    :rtype: Generator[entities.FacebookAdAccountEntity]
     """
-
-    # .query() on FacebookAdAccountEntity does not hint well at type
-    # have do to it manually for IDE to pick it up
     aa_record = None  # type: entities.FacebookAdAccountEntity
-
     for aa_record in entities.FacebookAdAccountEntity.query(scope):
         # note that we can filter by this server-side,
         # but this involves setting up an index on the partition,
@@ -54,15 +50,3 @@ def _iter_active_ad_account_per_scope(scope):
         if aa_record.is_active:
             yield aa_record
 
-
-def iter_ad_account_id_tz_tokens():
-    """
-    Public API
-
-    :return: A a generator yielding pairs of: ad_account_id and its associated set of platform tokens
-    :rtype: Generator[Tuple[str, str, Set[str]]]
-    """
-    for scope, tokens in _iter_scopes_tokens():
-        if tokens:
-            for record in _iter_active_ad_account_per_scope(scope):
-                yield record.ad_account_id, record.timezone, tokens

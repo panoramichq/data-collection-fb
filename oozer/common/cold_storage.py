@@ -68,7 +68,7 @@ def _job_scope_to_storage_key(job_scope, chunk_marker=0):
 
     job_id = job_scope.job_id + ('-'+str(chunk_marker) if chunk_marker else '')
 
-    key = f'{job_scope.platform}/' \
+    key = f'{job_scope.namespace}/' \
           f'{prefix}-{job_scope.ad_account_id}/' \
           f'{job_scope.report_type}/' \
           f'{report_run_time.strftime("%Y")}/' \
@@ -113,7 +113,7 @@ def _job_scope_to_metadata(job_scope):
             # although all of the below pieces are contained in the
             # job_id, it might be more convenient to have just these
             # in meta straight out.
-            'platform': job_scope.platform,
+            'platform': job_scope.namespace,
             'ad_account_id': job_scope.ad_account_id,
             'report_type': job_scope.report_type,
             'entity_type': job_scope.entity_type or job_scope.report_variant,

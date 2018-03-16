@@ -28,8 +28,6 @@ def iter_tasks(sweep_id):
     :param str sweep_id:
     :rtype: Generator[Tuple[CeleryTask, JobScope, JobContext]]
     """
-    from config.facebook import TOKEN
-
     with SortedJobsQueue(sweep_id).JobsReader() as jobs_iter:
         for job_id, job_scope_additional_data, score in jobs_iter:
 
@@ -39,11 +37,6 @@ def iter_tasks(sweep_id):
                 job_id_parts,
                 sweep_id=sweep_id
             )
-
-            # TODO: remove. this is temp plug for dev
-            # Expect to have tokens inside job_scope_additional_data
-            if not job_scope.tokens:
-                job_scope.tokens = [TOKEN]
 
             celery_task = resolve_job_scope_to_celery_task(job_scope)
 
@@ -386,7 +379,6 @@ def run_tasks(sweep_id, limit=None, time_slices=looper_config.FB_THROTTLING_WIND
     tasks_iter = iter_tasks(sweep_id)
     if limit:
         tasks_iter = islice(tasks_iter, 0, limit)
-
 
     with TaskOozer(n, time_slices, time_slice_length, z) as ooze_task:
         next_pulse_review_second = time.time() + _pulse_refresh_interval

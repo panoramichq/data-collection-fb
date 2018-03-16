@@ -1,13 +1,9 @@
-import xxhash
-
-from collections import namedtuple
-from datetime import datetime
-from facebookads.adobjects import ad
-from facebookads.exceptions import FacebookError
 from typing import Generator
+from facebookads.exceptions import FacebookError
 
 from common.enums.entity import Entity
 from common.enums.failure_bucket import FailureBucket
+from common.tokens import PlatformTokenManager
 from oozer.common import cold_storage
 from oozer.common.facebook_api import (
     FacebookApiContext,
@@ -24,19 +20,8 @@ from oozer.common.enum import (
     ENUM_VALUE_FB_MODEL_MAP,
     FacebookJobStatus
 )
+from oozer.entities.entity_hash import _checksum_entity, _checksum_from_job_context
 from oozer.entities.feedback_entity_task import feedback_entity_task
-
-
-class EntityHash(namedtuple('EntityHash', ['data', 'fields'])):
-    """
-    Container for the hash to make it a little bit nicer
-    """
-
-    def __eq__(self, other):
-        """
-        Add equality operator for easy checking
-        """
-        return self.data == other.data and self.fields == other.fields
 
 
 def iter_native_entities_per_adaccount(ad_account, entity_type, fields=None):
@@ -68,59 +53,6 @@ def iter_native_entities_per_adaccount(ad_account, entity_type, fields=None):
     yield from getter_method(fields=fields_to_fetch)
 
 
-def _checksum_entity(entity, fields=None):
-    """
-    Compute a hash of the entity fields that we consider stable, to be able
-    to tell apart entities that have / have not changed in between runs.
-
-    This method requires an intrinsic knowledge of "what the entity is".
-
-    :return EntityHash: The hashes for the entity itself and
-        and fields hashed
-    """
-
-    # Drop fields we don't care about
-    blacklist = {
-        FB_CAMPAIGN_MODEL: [],
-        FB_ADSET_MODEL: [],
-        FB_AD_MODEL: [ad.Ad.Field.recommendations]
-    }
-
-    fields = fields or get_default_fields(entity.__class__)
-
-    # Run through blacklist
-    fields = filter(lambda f: f not in blacklist[entity.__class__], fields)
-
-    raw_data = entity.export_all_data()
-
-    data_hash = xxhash.xxh64()
-    fields_hash = xxhash.xxh64()
-
-    for field in fields:
-        data_hash.update(str(raw_data.get(field, '')))
-        fields_hash.update(field)
-
-    return EntityHash(
-        data=data_hash.hexdigest(),
-        fields=fields_hash.hexdigest()
-    )
-
-
-def _checksum_from_job_context(job_context, entity_id):
-    """
-    Recreate the EntityHash object from JobContext provided
-
-    :param JobContext job_context: The provided job context
-    :param string entity_id:
-
-    :return EntityHash: The reconstructed EntityHash object
-    """
-    current_hash_raw = job_context.entity_checksums.get(
-        entity_id, (None, None)
-    )
-    return EntityHash(*current_hash_raw)
-
-
 def iter_collect_entities_per_adaccount(job_scope, job_context):
     """
     Collects an arbitrary entity for an ad account
@@ -130,21 +62,39 @@ def iter_collect_entities_per_adaccount(job_scope, job_context):
     :rtype: Generator[Dict]
     """
 
-    # This handler specifically expects to do per-parent
-    # entity fetching, thus requiring proper entity enum in report_variant
-    if job_scope.report_variant not in Entity.ALL:
-        raise ValueError(
-            f"Report level {job_scope.report_variant} specified is not one of supported values: {Entity.ALL}"
-        )
-
-    entity_type = job_scope.report_variant
-
     report_job_status_task.delay(FacebookJobStatus.Start, job_scope)
 
     try:
-        with FacebookApiContext(job_scope.token) as fb_ctx, \
-                cold_storage.ColdStoreQueue(200) as store:
+        # This handler specifically expects to do per-parent
+        # entity fetching, thus requiring proper entity enum in report_variant
+        if job_scope.report_variant not in Entity.ALL:
+            raise ValueError(
+                f"Report level {job_scope.report_variant} specified is not one of supported values: {Entity.ALL}"
+            )
 
+        entity_type = job_scope.report_variant
+
+        token = job_scope.token
+        if not token:
+            raise ValueError(
+                f"Job {job_scope.job_id} cannot proceed. No platform tokens provided."
+            )
+
+        # We don't use it for getting a token. Something else that calls us does.
+        # However, we use it to report usages of the token we got.
+        token_manager = PlatformTokenManager.from_job_scope(job_scope)
+
+    except Exception:
+        # This is a generic failure, which does not help us at all, so, we just
+        # report it and bail
+        report_job_status_task.delay(
+            FacebookJobStatus.GenericError, job_scope
+        )
+        raise
+
+
+    try:
+        with FacebookApiContext(token) as fb_ctx:
             root_fb_entity = fb_ctx.to_fb_model(
                 job_scope.ad_account_id, Entity.AdAccount
             )
@@ -209,11 +159,16 @@ def iter_collect_entities_per_adaccount(job_scope, job_context):
                 report_job_status_task.delay(
                     FacebookJobStatus.DataFetched, job_scope
                 )
+                # default paging size for entities per parent
+                # is typically around 25. So, each 100 results
+                # means about 4 hits to FB
+                token_manager.report_usage(token, 4)
 
         # Report on the effective task status
         report_job_status_task.delay(
             FacebookJobStatus.Done, job_scope
         )
+        token_manager.report_usage(token, 1)
 
     except FacebookError as e:
         # Build ourselves the error inspector
@@ -221,21 +176,21 @@ def iter_collect_entities_per_adaccount(job_scope, job_context):
 
         # Is this a throttling error?
         if inspector.is_throttling_exception():
-            report_job_status_task.delay(
-                FacebookJobStatus.ThrottlingError, job_scope
-            )
+            failure_status = FacebookJobStatus.ThrottlingError
+            failure_bucket = FailureBucket.Throttling
 
         # Did we ask for too much data?
         elif inspector.is_too_large_data_exception():
-            report_job_status_task.delay(
-                FacebookJobStatus.TooMuchData, job_scope
-            )
+            failure_status = FacebookJobStatus.TooMuchData
+            failure_bucket = FailureBucket.TooLarge
 
         # It's something else which we don't understand
         else:
-            report_job_status_task.delay(
-                FacebookJobStatus.GenericFacebookError, job_scope,
-            )
+            failure_status = FacebookJobStatus.GenericFacebookError
+            failure_bucket = FailureBucket.Other
+
+        report_job_status_task.delay(failure_status, job_scope)
+        token_manager.report_usage_per_failure_bucket(token, failure_bucket)
         raise
 
     except Exception:
@@ -244,4 +199,5 @@ def iter_collect_entities_per_adaccount(job_scope, job_context):
         report_job_status_task.delay(
             FacebookJobStatus.GenericError, job_scope
         )
+        token_manager.report_usage_per_failure_bucket(token, FailureBucket.Other)
         raise

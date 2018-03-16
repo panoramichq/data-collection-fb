@@ -1,3 +1,5 @@
+from datetime import datetime, date
+
 from common.id_tools import generate_id
 
 
@@ -11,23 +13,21 @@ class JobScope:
     # System information
     sweep_id = None
 
-    platform = 'facebook'
-
     # Job ID components parsed
     namespace = 'fb'  # used for generating Job IDs from this data
-    ad_account_id = None
 
-    entity_id = None
-    entity_type = None
+    ad_account_id = None  # type: str or None
 
-    report_type = None
-    report_variant = None
+    entity_id = None  # type: str or None
+    entity_type = None  # type: str or None
 
-    range_start = None
-    range_end = None
+    report_type = None  # type: str
+    report_variant = None  # type: str or None
 
-    # Job performance things
-    tokens = None
+    range_start = None  # type: str or datetime or date or None
+    range_end = None  # type: str or datetime or date or None
+
+    tokens = None  # type: list
 
     # Indicates that this is a synthetically created instance of JobScope
     # (likely by the worker code to indicate some sub-level of work done)
@@ -51,7 +51,7 @@ class JobScope:
 
     @property
     def token(self):
-        return self.tokens[0]
+        return self.tokens[0] if self.tokens else None
 
     def to_dict(self):
         return {

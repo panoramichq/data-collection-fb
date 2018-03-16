@@ -70,8 +70,6 @@ image.redis-cluster:
 		-t $(REDIS_CLUSTER_IMAGE_NAME_FULL) \
 		-f docker/Dockerfile.redis-cluster ./docker
 
-.PHONY: image.redis-cluster
-
 #############
 # Dynamodb local management
 DYNAMO_IMAGE_NAME:=dynamodb
@@ -85,7 +83,6 @@ image.dynamo:
 		--build-arg DYNAMODB_VERSION=latest \
 		-f docker/Dockerfile.dynamodb .
 
-.PHONY: image.dynamo
 #############
 # Fake s3 local management
 FAKE_S3_IMAGE_NAME:=fakes3
@@ -98,6 +95,10 @@ image.fakes3:
 		-t ${FAKE_S3_IMAGE_NAME_FULL} \
 		--build-arg FAKES3_VERSION=1.2.1 \
 		-f docker/Dockerfile.fakes3 .
+
+
+images: image.dynamo image.fakes3 image.redis-cluster image
+.PHONY: image.dynamo image.fakes3 image.redis-cluster
 
 #############
 # Dev Helpers

@@ -15,7 +15,7 @@ class BaseModelTests(TestCase):
 
         # purposefully messing with real attr names to test .to_dict()
         class TestModel(BaseModel):
-            Meta = BaseMeta(random.get_string_id())
+            Meta = BaseMeta(random.gen_string_id())
             primary_id = attributes.UnicodeAttribute(hash_key=True, attr_name='pid')
             secondary_id = attributes.UnicodeAttribute(range_key=True, attr_name='sid')
             data = attributes.UnicodeAttribute(null=True, attr_name='d')
@@ -27,8 +27,8 @@ class BaseModelTests(TestCase):
 
     def test_base_model_to_dict(self):
 
-        pid = random.get_string_id()
-        sid = random.get_string_id()
+        pid = random.gen_string_id()
+        sid = random.gen_string_id()
         data = self.Model(pid, sid, data='primary data').to_dict()
 
         assert data == dict(
@@ -40,8 +40,8 @@ class BaseModelTests(TestCase):
 
     def test_base_model_upsert(self):
 
-        pid = random.get_string_id()
-        sid = random.get_string_id()
+        pid = random.gen_string_id()
+        sid = random.gen_string_id()
 
         # no record should exist, but upsert should succeed
 
@@ -98,7 +98,7 @@ class BaseModelToDictFieldsTests(TestCase):
 
             _additional_fields = {'record_type'}
 
-            Meta = BaseMeta(random.get_string_id())
+            Meta = BaseMeta(random.gen_string_id())
 
             primary_id = attributes.UnicodeAttribute(hash_key=True, attr_name='pid')
             secondary_id = attributes.UnicodeAttribute(range_key=True, attr_name='sid')
@@ -106,8 +106,8 @@ class BaseModelToDictFieldsTests(TestCase):
 
             record_type = 'SUPER_RECORD'
 
-        pid = random.get_string_id()
-        sid = random.get_string_id()
+        pid = random.gen_string_id()
+        sid = random.gen_string_id()
 
         # ARG!!! for some reason instantiation further below
         # needs to have the table actually exist. Nuts!
@@ -146,7 +146,7 @@ class BaseModelToDictFieldsTests(TestCase):
                 'record_type'
             }
 
-            Meta = BaseMeta(random.get_string_id())
+            Meta = BaseMeta(random.gen_string_id())
 
             primary_id = attributes.UnicodeAttribute(hash_key=True, attr_name='pid')
             secondary_id = attributes.UnicodeAttribute(range_key=True, attr_name='sid')
@@ -154,8 +154,8 @@ class BaseModelToDictFieldsTests(TestCase):
 
             record_type = 'SUPER_RECORD'
 
-        pid = random.get_string_id()
-        sid = random.get_string_id()
+        pid = random.gen_string_id()
+        sid = random.gen_string_id()
 
         # ARG!!! for some reason instantiation further below
         # needs to have the table actually exist. Nuts!

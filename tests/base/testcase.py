@@ -1,13 +1,17 @@
+# Patches must be imported and ran first
 from common.patch import patch_event_loop
 patch_event_loop()
-
 from common.facebook.patch import patch_facebook_sdk
 patch_facebook_sdk()
 
-from unittest import TestCase as _TestCase, skip, mock
-from config.facebook import AD_ACCOUNT, AD_ACCOUNT_TIME_ZONE, TOKEN
+import pkgutil
 
 from common.configure_logging import configure_logging
+from config.facebook import AD_ACCOUNT, AD_ACCOUNT_TIME_ZONE, TOKEN
+from importlib import import_module
+from unittest import TestCase as _TestCase, skip, mock
+
+
 configure_logging()
 
 
@@ -50,10 +54,15 @@ class IntegrationTestCase(TestCase):
         self.token = TOKEN
 
 
-def integration(fn):
-    from config.facebook import TOKEN
-    if TOKEN and TOKEN != 'bogus token':
-        # it's overridden only in dev. In all other cases should be that bogus value
-        return fn
-    else:
-        return skip(fn)
+def integration(module='facebook'):
+    def check_module(fn):
+        allowed_modules = map(lambda x: x.name, pkgutil.iter_modules(['config']))
+        assert module in allowed_modules
+
+        MODULE_TOKEN = import_module(f'config.{module}').TOKEN
+        if MODULE_TOKEN and MODULE_TOKEN != 'bogus token':
+            # it's overridden only in dev. In all other cases should be that bogus value
+            return fn
+        else:
+            return skip(fn)
+    return check_module
