@@ -3,7 +3,6 @@ from . import (
     entityreport,
     jobreport,
     scope,
-    sweepentityreport,
 )
 
 
@@ -12,7 +11,6 @@ modules_with_models = [
     entityreport,
     jobreport,
     scope,
-    sweepentityreport,
 ]
 
 
