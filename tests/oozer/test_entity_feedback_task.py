@@ -7,7 +7,7 @@ from common.facebook.entity_model_map import MODEL_ENTITY_TYPE_MAP as FB_MODEL_E
 from common.store.entities import ENTITY_TYPE_MODEL_MAP as ENTITY_TYPE_DB_MODEL_MAP
 from facebookads.adobjects import campaign, adset, ad
 from oozer.entities.tasks import feedback_entity_task
-from tests.base.random import get_string_id
+from tests.base.random import gen_string_id
 
 
 class TestEntityFeedback(TestCase):
@@ -29,8 +29,8 @@ class TestEntityFeedback(TestCase):
         :return AbstractCrudObject: The manufactured entity
         """
 
-        ad_account_id = ad_account_id or get_string_id()
-        entity_id = entity_id or get_string_id()
+        ad_account_id = ad_account_id or gen_string_id()
+        entity_id = entity_id or gen_string_id()
 
         entity = entity_klazz(entity_id)
         entity[entity.Field.account_id] = ad_account_id
@@ -58,8 +58,8 @@ class TestEntityFeedback(TestCase):
         entity_type = FB_MODEL_ENTITY_TYPE_MAP[FBModel]
         DBModel = ENTITY_TYPE_DB_MODEL_MAP[entity_type]
 
-        aaid = get_string_id()
-        eid = get_string_id()
+        aaid = gen_string_id()
+        eid = gen_string_id()
 
         entity_data = dict(
             # returned value here is FB SDK model, hence the dict( above.
@@ -132,8 +132,8 @@ class TestEntityFeedback(TestCase):
             entity_type = FB_MODEL_ENTITY_TYPE_MAP[FBModel]
             DBModel = ENTITY_TYPE_DB_MODEL_MAP[entity_type]
 
-            aaid = get_string_id()
-            eid = get_string_id()
+            aaid = gen_string_id()
+            eid = gen_string_id()
 
             # created_time = datetime.utcnow() - timedelta(days=-5),
             # updated_time = datetime.utcnow()

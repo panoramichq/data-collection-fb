@@ -51,7 +51,7 @@ class JobScope:
 
     @property
     def token(self):
-        return self.tokens[0]
+        return self.tokens[0] if self.tokens else None
 
     def to_dict(self):
         return {

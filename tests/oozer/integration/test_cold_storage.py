@@ -17,7 +17,7 @@ from common.enums.reporttype import ReportType
 from facebookads.adobjects.campaign import Campaign
 from oozer.common import cold_storage
 from oozer.common.job_scope import JobScope
-from tests.base.random import get_string_id
+from tests.base.random import gen_string_id
 
 
 class TestUploadToS3(TestCase):
@@ -28,8 +28,8 @@ class TestUploadToS3(TestCase):
     def setUp(self):
         super().setUp()
 
-        self.campaign_id = get_string_id()
-        self.ad_account_id = get_string_id()
+        self.campaign_id = gen_string_id()
+        self.ad_account_id = gen_string_id()
 
     def _fake_data_factory(self, fbid=None, **data):
         """

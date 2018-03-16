@@ -20,6 +20,7 @@ def configure_logging(level=LEVEL):
         'celery.app.trace',
         'celery.worker.autoscale',
         'celery.worker.strategy',
+        'datadog.dogstatsd',
         'pynamodb',
     ]
     for module in to_mute:

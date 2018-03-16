@@ -1,5 +1,5 @@
 from common.enums.entity import Entity
-from common.memoize import memoized_property
+from common.memoize import memoized_property, MemoizeMixin
 from config import dynamodb as dynamodb_config
 from config import operam_console_api as operam_console_api_config
 
@@ -33,7 +33,7 @@ class PlatformToken(BaseModel):
     token = attributes.UnicodeAttribute(attr_name='t')
 
 
-class AssetScope(BaseModel):
+class AssetScope(BaseModel, MemoizeMixin):
     """
     Stores metadata specific to "Scope" that acts as grouping element
     for a collection of attached top-level assets like Ad Accounts

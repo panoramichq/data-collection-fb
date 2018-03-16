@@ -4,7 +4,9 @@ from typing import List, Set, Union, Optional
 import config.application
 
 from common.connect.redis import get_redis
+from common.enums.entity import Entity
 from common.enums.failure_bucket import FailureBucket
+from common.enums.reporttype import ReportType
 from oozer.common.job_scope import JobScope
 
 
@@ -21,7 +23,6 @@ failure_bucket_count_map = {
 class PlatformTokenManager:
 
     def __init__(self, asset_scope, sweep_id):
-        self.sweep_id = sweep_id
         self.queue_key = f'{asset_scope}-{sweep_id}-sorted-token-queue'
         self._redis = get_redis()
 
@@ -46,14 +47,13 @@ class PlatformTokenManager:
         "read" sides right next to each other to ensure they are in sync.
         Otherwise, yeah, this feels like it should be elsewhere.
 
-        :param scope_entity:
+        :param common.store.scope.AssetScope scope_entity:
         :param sweep_id:
         :return:
         """
 
-        # for Scope-centric refresh jobs, job namespace is internal
-        # and tokens are those pointing to internal system
-        asset_scope = config.application.UNIVERSAL_ID_SYSTEM_NAMESPACE
+        # for Scope-centric refresh jobs, entity_id element is the Scope ID
+        asset_scope = scope_entity.scope
         tokens = [scope_entity.scope_api_token]
 
         PlatformTokenManager(
@@ -92,14 +92,24 @@ class PlatformTokenManager:
         # while we have support for many many scopes,
         # here we temporarily collapse all
         # `fb` namespace jobs into one, single token pool
-        # and all system (config.application.UNIVERSAL_ID_SYSTEM_NAMESPACE)
-        # jobs into another single pool.
         # TODO: when Scope ID is on JobScope object, change this to act per Scope ID
 
+        # for Scope-specific jobs,
+        #  parent_id is absent,
+        #  namespace is set to config.application.UNIVERSAL_ID_SYSTEM_NAMESPACE
+        #  entity_id element is the Scope ID
+        #  entity_type is Entity.Scope
+
+        if job_scope.entity_type == Entity.Scope:
+            asset_scope = job_scope.entity_id
+        else:
+            # TODO: This needs to be scope ID somehow eventually
+            # as platform tokens are grouped per scope ID
+            # Until then, we, effectively, will have only one tokens pool
+            asset_scope = job_scope.namespace  # likely something like 'fb' or 'tw'
+
         return PlatformTokenManager(
-            # values currently possible here are default JobScope.namespace = 'fb'
-            # or whatever config.application.UNIVERSAL_ID_SYSTEM_NAMESPACE is
-            job_scope.namespace,  # this should be ScopeID instead, eventually?
+            asset_scope,
             job_scope.sweep_id
         )
 

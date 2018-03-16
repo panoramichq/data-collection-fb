@@ -74,12 +74,11 @@ def iter_collect_entities_per_adaccount(job_scope, job_context):
 
         entity_type = job_scope.report_variant
 
-        if not job_scope.tokens:
+        token = job_scope.token
+        if not token:
             raise ValueError(
                 f"Job {job_scope.job_id} cannot proceed. No platform tokens provided."
             )
-
-        token = job_scope.token
 
         # We don't use it for getting a token. Something else that calls us does.
         # However, we use it to report usages of the token we got.

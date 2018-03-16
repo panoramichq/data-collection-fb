@@ -1,6 +1,7 @@
 import requests
 from config.operam_console_api import URL
 
+
 class ConsoleApi:
     token = None  # type: str
 

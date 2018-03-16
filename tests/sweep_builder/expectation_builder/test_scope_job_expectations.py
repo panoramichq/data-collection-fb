@@ -8,7 +8,7 @@ from common.enums.reporttype import ReportType
 from common.id_tools import generate_id
 from sweep_builder.expectation_builder.expectations import iter_expectations
 from sweep_builder.reality_inferrer.reality import RealityClaim
-from tests.base.random import get_string_id
+from tests.base.random import gen_string_id
 
 
 class ScopeJobsExpectationsTests(TestCase):
@@ -17,7 +17,7 @@ class ScopeJobsExpectationsTests(TestCase):
 
         reality_claim = RealityClaim(
             entity_type=Entity.Scope,
-            entity_id=get_string_id(),
+            entity_id=gen_string_id(),
             tokens=[]
         )
 
@@ -33,7 +33,7 @@ class ScopeJobsExpectationsTests(TestCase):
 
     def test_aa_import_expectation_generated_on_token(self):
 
-        entity_id = get_string_id()
+        entity_id = gen_string_id()
 
         reality_claim = RealityClaim(
             entity_type=Entity.Scope,
