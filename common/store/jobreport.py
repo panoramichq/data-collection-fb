@@ -160,53 +160,7 @@ from config import dynamodb as dynamodb_config
 from .base import BaseMeta, BaseModel, attributes
 
 
-class JobReportEntityExpectationAdAccountIndex(BaseModel, MemoizeMixin):
-    """
-    Indexing table.
-
-    Records all jobs we have seen per ad account.
-
-    Used for iterating over JobReportEntityExpectation table
-    """
-
-    Meta = BaseMeta(
-        dynamodb_config.JOB_REPORT_ENTITY_EXPECTATION_AD_ACCOUNT_INDEX_TABLE
-    )
-
-    ad_account_id = attributes.UnicodeAttribute(hash_key=True, attr_name='aaid')
-
-    # only effective, per-parent job IDs go here - those corresponding to
-    # per-parent job IDs stored in JobReportEntityExpectation
-    job_id = attributes.UnicodeAttribute(range_key=True, attr_name='jid')
-
-
-class JobReportEntityExpectation(BaseModel, MemoizeMixin):
-
-    Meta = BaseMeta(
-        dynamodb_config.JOB_REPORT_ENTITY_EXPECTATION_TABLE
-    )
-
-    # only special kind of job IDs go here - those corresponding to
-    # per-parent jobs. Per entity job IDs have no business being here.
-    # This is done to paint a picture of fill of data per some parent.
-    job_id = attributes.UnicodeAttribute(hash_key=True, attr_name='jid')
-
-    # child's entity ID
-    entity_id = attributes.UnicodeAttribute(range_key=True, attr_name='eid')
-
-    # the actual values of expectation_* attributes are largely irrelevant.
-    # The fact that this record exists is already evident that expectation
-    # existed and must be fulfilled.
-    # Only tangible value to this record is in seeing how stale the
-    # expectation is in figuring out if it's still a reasonable expectation
-    # or something left around from long-ago deleted item that we should stop
-    # caring about.
-
-    last_expectation_dt = attributes.UTCDateTimeAttribute(null=True, attr_name='edt')
-    last_expectation_sweep_id = attributes.UnicodeAttribute(null=True, attr_name='esid')
-
-
-class JobReportEntityOutcome(BaseModel, MemoizeMixin):
+class JobReport(BaseModel, MemoizeMixin):
     # this table is split from JobReportEntityExpectation
     # in order to allow blind massive upserts of JobReportEntityExpectation
     # and JobReportEntityOutcome records without caring about
@@ -219,7 +173,7 @@ class JobReportEntityOutcome(BaseModel, MemoizeMixin):
     # more than fast occasional reads.
 
     Meta = BaseMeta(
-        dynamodb_config.JOB_REPORT_ENTITY_OUTCOME_TABLE
+        dynamodb_config.JOB_REPORT_TABLE
     )
 
     # value of job_id here could be super weird.
@@ -234,28 +188,15 @@ class JobReportEntityOutcome(BaseModel, MemoizeMixin):
     # and entity_id for use in this table only.
     job_id = attributes.UnicodeAttribute(hash_key=True, attr_name='jid')
 
+    last_progress_dt = attributes.UTCDateTimeAttribute(null=True, attr_name='pdt')
+    last_progress_stage_id = attributes.NumberAttribute(null=True, attr_name='pstid')
+    last_progress_sweep_id = attributes.UnicodeAttribute(null=True, attr_name='psid')
+
     last_success_dt = attributes.UTCDateTimeAttribute(null=True, attr_name='sdt')
     last_success_sweep_id = attributes.UnicodeAttribute(null=True, attr_name='ssid')
 
-    # note of what actual jobID resulted in success of collection of this record
-    last_success_effective_job_id = attributes.UnicodeAttribute(null=True, attr_name='sdof')
-
-    # for the purposes of this table, we don't care about failures.
-    # what's interesting to us is aggregation of successes per parent
-    # Failures are temporary - to be dealt with with time.
-    # Successes are eventual and inevitable
-
-
-class JobReportFailure(BaseModel, MemoizeMixin):
-
-    Meta = BaseMeta(
-        dynamodb_config.JOB_REPORT_FAILURE_TABLE
-    )
-
-    job_id = attributes.UnicodeAttribute(hash_key=True, attr_name='jid')
-
     last_failure_dt = attributes.UTCDateTimeAttribute(null=True, attr_name='fdt')
-    last_failure_seconds = attributes.NumberAttribute(null=True, attr_name='fsec')
+    last_failure_stage_id = attributes.NumberAttribute(null=True, attr_name='fstid')
     last_failure_sweep_id = attributes.UnicodeAttribute(null=True, attr_name='fsid')
 
     last_failure_error = attributes.UnicodeAttribute(null=True, attr_name='fmessage')
@@ -272,10 +213,7 @@ def sync_schema(brute_force=False):
     from pynamodb.exceptions import TableError, TableDoesNotExist
 
     tables = [
-        JobReportEntityExpectationAdAccountIndex,
-        JobReportEntityExpectation,
-        JobReportEntityOutcome,
-        JobReportFailure,
+        JobReport
     ]
 
     for table in tables:

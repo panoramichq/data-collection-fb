@@ -14,7 +14,7 @@ FB_SWEEP_ENTITY_REPORT_TYPE_TABLE = 'SweepEntityReport'
 FB_TOKEN_TABLE = 'FacebookPlatformToken'
 JOB_REPORT_ENTITY_EXPECTATION_AD_ACCOUNT_INDEX_TABLE = 'JobReportEntityExpectationAdAccountIndex'
 JOB_REPORT_ENTITY_EXPECTATION_TABLE = 'JobReportEntityExpectation'
-JOB_REPORT_ENTITY_OUTCOME_TABLE = 'JobReportEntityOutcome'
+JOB_REPORT_TABLE = 'JobReport'
 JOB_REPORT_FAILURE_TABLE = 'JobReportFailure'
 
 

@@ -1,7 +1,6 @@
 import logging
 
 from common.enums.failure_bucket import FailureBucket
-from common.store.sweepentityreport import FacebookSweepEntityReport
 from oozer.common.job_scope import JobScope
 from oozer.common.enum import FacebookJobStatus
 
@@ -52,15 +51,15 @@ def report_job_status(stage_id, job_scope):
                     f'#{job_scope.sweep_id} Done status report "{job_scope.job_id}": "{status_bucket}"'
                 )
 
-    FacebookSweepEntityReport(
-        job_scope.sweep_id,
-        job_scope.job_id,
-        report_type=job_scope.report_type,
-        ad_account_id=job_scope.ad_account_id,
-        entity_id=job_scope.entity_id,
-        entity_type=job_scope.entity_type,
-        stage_id=stage_id,
-        failure_bucket=status_bucket
-    ).save()
+    # FacebookSweepEntityReport(
+    #     job_scope.sweep_id,
+    #     job_scope.job_id,
+    #     report_type=job_scope.report_type,
+    #     ad_account_id=job_scope.ad_account_id,
+    #     entity_id=job_scope.entity_id,
+    #     entity_type=job_scope.entity_type,
+    #     stage_id=stage_id,
+    #     failure_bucket=status_bucket
+    # ).save()
 
     logger.debug(f"#:job {job_scope.job_id} reported completion stage {stage_id} (bucketed as {status_bucket})")
