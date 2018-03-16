@@ -19,7 +19,7 @@ def report_job_status(stage_id, job_scope):
     :param JobScope job_scope: The job scope that is attached to this particular
         report
     """
-    # This will be refactored at the souce
+    # This will be refactored at the source
     # TODO: move this import to top of file then
     from oozer.looper import SweepStatusTracker
 
@@ -36,6 +36,21 @@ def report_job_status(stage_id, job_scope):
     if status_bucket is not None and not job_scope.is_derivative:
         with SweepStatusTracker(job_scope.sweep_id) as tracker:
             tracker.report_status(status_bucket)
+            if status_bucket < 0:
+                # one of those "i am still alive" status reports.
+                logger.debug(
+                    f'#{job_scope.sweep_id} Temporary status report "{job_scope.job_id}": "{status_bucket}"'
+                )
+            elif status_bucket > 0:
+                # "terminal" Failed
+                logger.warning(
+                    f'#{job_scope.sweep_id} Failure status report "{job_scope.job_id}": "{status_bucket}"'
+                )
+            else: # is zero
+                # "terminal" Done
+                logger.info(
+                    f'#{job_scope.sweep_id} Done status report "{job_scope.job_id}": "{status_bucket}"'
+                )
 
     FacebookSweepEntityReport(
         job_scope.sweep_id,

@@ -224,6 +224,8 @@ class SweepStatusTracker():
     def now_in_minutes():
         return int(time.time()/60)
 
+    _aggregate_record_marker = 'aggregate'
+
     def report_status(self, failure_bucket=None):
         """
         Every effective job calls this to indicate done-ness and severity of done-ness
@@ -241,10 +243,20 @@ class SweepStatusTracker():
         # outter key, inside of which value for each of inner keys will be growing,
         # until we fall onto next minute, when we start fresh.
 
+        if failure_bucket is None:
+            failure_bucket = FailureBucket.Success
+
         key = self._gen_key(self.now_in_minutes())
-        get_redis().hincrby(key, failure_bucket or FailureBucket.Success)
-        key = self._gen_key('aggregate')
-        get_redis().hincrby(key, failure_bucket or FailureBucket.Success)
+        get_redis().hincrby(key, failure_bucket)
+        if failure_bucket < 0:
+            # it's one of those temporary "i am still doing work" status types
+            # like WorkingOnIt = -100
+            # we don't roll those into aggregate numbers
+            # as that would result in double-counting jobs
+            pass
+        else:
+            key = self._gen_key(self._aggregate_record_marker)
+            get_redis().hincrby(key, failure_bucket)
 
     def _get_aggregate_data(self, redis):
         # This mess is here just to get through the annoyance
@@ -253,7 +265,7 @@ class SweepStatusTracker():
         # keys and values)
         return {
             int(k): int(v)
-            for k, v in redis.hgetall(self._gen_key('aggregate')).items()
+            for k, v in redis.hgetall(self._gen_key(self._aggregate_record_marker)).items()
         }
 
     def _get_trailing_minutes_data(self, minute, redis):
