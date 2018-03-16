@@ -146,4 +146,4 @@ workflows:
 
       - deploy_staging:
           requires:
-            - hold_for_staging_deploy
+            - hold_for_deploy_staging
