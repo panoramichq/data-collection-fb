@@ -8,11 +8,9 @@ def patch_twitter_sdk():
 
     def account_promoted_tweets(self, id=None, **kwargs):
         """
-        Returns a collection of promotable users available to the
+        Returns a collection of promotable tweets available to the
         current account.
         """
         return self._load_resource(PromotedTweet, id, **kwargs)
 
     Account.promoted_tweets = account_promoted_tweets
-
-
