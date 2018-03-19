@@ -1,6 +1,7 @@
 -r requirements.base.txt
 boto3==1.5.27
 facebookads==2.11.3
+twitter-ads==2.0.1
 pynamodb==3.2.1
 ujson==1.35
 xxhash==1.0.1
