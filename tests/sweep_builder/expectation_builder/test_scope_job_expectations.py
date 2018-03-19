@@ -1,10 +1,10 @@
 # must be first, as it does event loop patching and other "first" things
-from tests.base.testcase import TestCase, skip, mock
+from tests.base.testcase import TestCase, mock
 
 import config.application
 
-from common.enums.entity import Entity
-from common.enums.reporttype import ReportType
+from common.facebook.enums.entity import Entity
+from common.facebook.enums.reporttype import ReportType
 from common.id_tools import generate_id
 from sweep_builder.expectation_builder.expectations import iter_expectations
 from sweep_builder.reality_inferrer.reality import RealityClaim

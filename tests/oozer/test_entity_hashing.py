@@ -5,7 +5,7 @@ import pytz
 from facebookads.adobjects.campaign import Campaign
 
 from oozer.common import job_scope
-from common.enums.entity import Entity
+from common.facebook.enums.entity import Entity
 
 from config.facebook import AD_ACCOUNT, TOKEN
 

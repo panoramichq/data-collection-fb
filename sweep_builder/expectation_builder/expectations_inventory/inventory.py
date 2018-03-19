@@ -3,9 +3,9 @@ This file contains a mapping of normative report type labels to entities that
 require these reports and to report task implementations effectively fulfilling
 the normative report requirement.
 """
-from typing import Dict, List, Optional, Callable, Generator
+from typing import Dict, List, Generator
 
-from common.enums.entity import Entity
+from common.facebook.enums.entity import Entity
 
 from sweep_builder.reality_inferrer.reality_claim import RealityClaim
 from sweep_builder.expectation_builder.expectation_claim import ExpectationClaim

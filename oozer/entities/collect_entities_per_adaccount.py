@@ -1,7 +1,7 @@
 from typing import Generator
 from facebookads.exceptions import FacebookError
 
-from common.enums.entity import Entity
+from common.facebook.enums.entity import Entity
 from common.enums.failure_bucket import FailureBucket
 from common.tokens import PlatformTokenManager
 from oozer.common import cold_storage

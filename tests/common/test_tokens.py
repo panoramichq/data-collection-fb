@@ -1,7 +1,7 @@
 # must be first, as it does event loop patching and other "first" things
-from tests.base.testcase import TestCase, mock
+from tests.base.testcase import TestCase
 
-from common.enums.entity import Entity
+from common.facebook.enums.entity import Entity
 from common.enums.failure_bucket import FailureBucket
 from common.store.scope import AssetScope
 from common.tokens import PlatformTokenManager

@@ -5,10 +5,10 @@ from unittest import mock, skip
 
 from config.facebook import TOKEN, AD_ACCOUNT
 
-from common.enums.entity import Entity
+from common.facebook.enums.entity import Entity
 from oozer.common.facebook_api import FacebookApiContext
 from oozer.common.job_scope import JobScope
-from common.enums.reporttype import ReportType
+from common.facebook.enums.reporttype import ReportType
 from oozer.common import cold_storage
 
 from oozer.metrics.collect_insights import iter_insights, iter_collect_insights

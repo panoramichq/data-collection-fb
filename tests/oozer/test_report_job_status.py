@@ -2,11 +2,10 @@
 from tests.base.testcase import TestCase
 from datetime import datetime
 import pytz
-import pytest
 
 from oozer.common import job_scope
 from common.enums.failure_bucket import FailureBucket
-from common.enums.entity import Entity
+from common.facebook.enums.entity import Entity
 from oozer.common.enum import FacebookJobStatus
 from oozer.common.report_job_status import report_job_status
 from common.store.sweepentityreport import FacebookSweepEntityReport

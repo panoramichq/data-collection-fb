@@ -1,10 +1,10 @@
 import functools
 
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 from typing import Generator
 
-from common.enums.entity import Entity
-from common.enums.reporttype import ReportType
+from common.facebook.enums.entity import Entity
+from common.facebook.enums.reporttype import ReportType
 from common.id_tools import generate_id
 from common.job_signature import JobSignature
 from sweep_builder.expectation_builder.expectation_claim import ExpectationClaim

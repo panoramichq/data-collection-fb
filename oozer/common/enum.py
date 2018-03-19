@@ -5,7 +5,7 @@ from facebookads.adobjects import (
     campaign
 )
 
-from common.enums.entity import Entity
+from common.facebook.enums.entity import Entity
 from common.enums.failure_bucket import FailureBucket
 
 

@@ -6,8 +6,8 @@ from sweep_builder.reality_inferrer.reality_claim import RealityClaim
 from sweep_builder.expectation_builder.expectation_claim import ExpectationClaim
 from common.id_tools import generate_id
 from common.job_signature import JobSignature
-from common.enums.reporttype import ReportType
-from common.enums.entity import Entity
+from common.facebook.enums.reporttype import ReportType
+from common.facebook.enums.entity import Entity
 
 
 def entities_per_ad_account(entity_type, reality_claim):

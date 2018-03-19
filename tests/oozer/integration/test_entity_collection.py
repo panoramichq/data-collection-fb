@@ -2,7 +2,7 @@ from datetime import datetime
 
 from tests.base.testcase import TestCase, integration
 
-from common.enums.entity import Entity
+from common.facebook.enums.entity import Entity
 from config.facebook import TOKEN, AD_ACCOUNT
 from oozer.common.job_scope import JobScope
 from oozer.common.facebook_api import FacebookApiContext

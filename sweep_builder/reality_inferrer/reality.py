@@ -1,13 +1,10 @@
 from typing import Generator
 
-from common.enums.entity import Entity
-from common.store import entities
+from common.facebook.enums.entity import Entity
 
 from .adaccounts import iter_scopes, iter_active_ad_accounts_per_scope
 from .entities import iter_entities_per_ad_account_id
 from .reality_claim import RealityClaim
-
-from config.operam_console_api import TOKEN as CONSOLE_API_TOKEN
 
 
 def iter_reality():

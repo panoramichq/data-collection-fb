@@ -1,4 +1,4 @@
-from common.enums.entity import Entity
+from common.facebook.enums.entity import Entity
 from facebookads.adobjects.ad import Ad
 from facebookads.adobjects.adaccount import AdAccount
 from facebookads.adobjects.adset import AdSet

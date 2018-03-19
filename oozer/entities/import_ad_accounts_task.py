@@ -1,10 +1,9 @@
 import logging
 
-from collections import defaultdict
 from pynamodb.exceptions import PutError
 
 from common.celeryapp import get_celery_app
-from common.enums.entity import Entity
+from common.facebook.enums.entity import Entity
 from common.store.entities import FacebookAdAccountEntity
 from common.store.scope import DEFAULT_SCOPE
 from common.tokens import PlatformTokenManager

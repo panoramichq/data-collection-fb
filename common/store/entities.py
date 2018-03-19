@@ -1,4 +1,4 @@
-from common.enums.entity import Entity
+from common.facebook.enums.entity import Entity
 from common.memoize import memoized_property
 from config import dynamodb as dynamodb_config
 
