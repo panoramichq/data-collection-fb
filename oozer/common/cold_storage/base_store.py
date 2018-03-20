@@ -61,9 +61,6 @@ def _job_scope_to_storage_key(job_scope, chunk_marker=0):
 
     prefix = hashlib.md5(job_scope.ad_account_id.encode()).hexdigest()[:6]
     report_run_time = datetime.utcnow()
-    zulu_time = report_run_time.strftime('%Y-%m-%dT%H:%M:%SZ')
-
-    job_id = job_scope.job_id + ('-'+str(chunk_marker) if chunk_marker else '')
 
     key = f'{job_scope.namespace}/' \
           f'{prefix}-{job_scope.ad_account_id}/' \
@@ -71,10 +68,9 @@ def _job_scope_to_storage_key(job_scope, chunk_marker=0):
           f'{report_run_time.strftime("%Y")}/' \
           f'{report_run_time.strftime("%m")}/' \
           f'{report_run_time.strftime("%d")}/' \
-          f'{zulu_time}-{job_id}.json'
-
-    # need this to make it work in local fake S3
-    # return key.replace(':', '_')
+          f'{report_run_time.strftime("%Y-%m-%dT%H:%M:%SZ")}-' \
+          f'{job_scope.job_id}' \
+          f'{"-"+str(chunk_marker) if chunk_marker else ""}.json'
 
     return key
 
