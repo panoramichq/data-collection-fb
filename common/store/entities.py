@@ -26,7 +26,7 @@ class TwitterAdAccountEntity(BaseModel):
     # allow multiple tokens per AA)
     scope = attributes.UnicodeAttribute(hash_key=True, attr_name='scope')
 
-    account_id = attributes.UnicodeAttribute(range_key=True, attr_name='aaid')
+    ad_account_id = attributes.UnicodeAttribute(range_key=True, attr_name='aaid')
 
     # copied indicator of activity from Console DB per each sync
     # (alternative to deletion. To be discussed later if deletion is better)
@@ -44,7 +44,7 @@ class TwitterAdAccountEntity(BaseModel):
     # in that AdAccount's timezone (not UTC).
     timezone = attributes.UnicodeAttribute(attr_name='tz')
 
-    entity_type = Entity.Account
+    entity_type = Entity.AdAccount
 
     @property
     @memoized_property
@@ -91,7 +91,7 @@ class TwitterEntityBaseMixin:
 
     # Note that each Entity is keyed by, effectively, a compound key: ad_account_id+entity_id
     # This allows us to issue queries like "Get all objects per ad_account_id" rather quickly
-    account_id = attributes.UnicodeAttribute(hash_key=True, attr_name='aid')
+    ad_account_id = attributes.UnicodeAttribute(hash_key=True, attr_name='aaid')
     # do NOT set an index on secondary keys (unless you really really need it)
     # In DynamoDB this limits the table size to 10GB
     # Without secondary key index, table size is unbounded.

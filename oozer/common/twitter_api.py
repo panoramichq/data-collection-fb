@@ -57,7 +57,7 @@ class TwitterApiContext:
         """
 
         entity_constructor = {
-            Entity.Account: self.client.accounts,
+            Entity.AdAccount: self.client.accounts,
             Entity.Campaign: TW_ADACCOUNT_MODEL(client=self.client).campaigns,
             Entity.LineItem: TW_ADACCOUNT_MODEL(client=self.client).line_items,
             Entity.PromotedTweet: TW_ADACCOUNT_MODEL(client=self.client).promoted_tweets
