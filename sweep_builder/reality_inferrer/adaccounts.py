@@ -39,10 +39,10 @@ def iter_active_ad_accounts_per_scope(scope):
     """
     :param str scope: The FacebookAdAccountScope id
     :return: A generator of AdAccount IDs for AdAccounts marked "active" in our system
-    :rtype: Generator[entities.FacebookAdAccountEntity]
+    :rtype: Generator[entities.TwitterAdAccountEntity]
     """
-    aa_record = None  # type: entities.FacebookAdAccountEntity
-    for aa_record in entities.FacebookAdAccountEntity.query(scope):
+    aa_record = None  # type: entities.TwitterAdAccountEntity
+    for aa_record in entities.TwitterAdAccountEntity.query(scope):
         # note that we can filter by this server-side,
         # but this involves setting up an index on the partition,
         # which may limit the size of the partition.

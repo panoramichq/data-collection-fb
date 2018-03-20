@@ -1,15 +1,15 @@
-from common.facebook.enums.entity import Entity
+from common.twitter.enums.entity import Entity
 from common.memoize import memoized_property
 from config import dynamodb as dynamodb_config
 
 from .base import BaseMeta, BaseModel, attributes
 
 
-class FacebookAdAccountEntity(BaseModel):
+class TwitterAdAccountEntity(BaseModel):
     """
     Represents a single facebook ad account entity
     """
-    Meta = BaseMeta(dynamodb_config.FB_AD_ACCOUNT_ENTITY_TABLE)
+    Meta = BaseMeta(dynamodb_config.TW_AD_ACCOUNT_ENTITY_TABLE)
 
     _additional_fields = {
         'entity_type'
@@ -26,7 +26,7 @@ class FacebookAdAccountEntity(BaseModel):
     # allow multiple tokens per AA)
     scope = attributes.UnicodeAttribute(hash_key=True, attr_name='scope')
 
-    ad_account_id = attributes.UnicodeAttribute(range_key=True, attr_name='aaid')
+    account_id = attributes.UnicodeAttribute(range_key=True, attr_name='aaid')
 
     # copied indicator of activity from Console DB per each sync
     # (alternative to deletion. To be discussed later if deletion is better)
@@ -44,7 +44,7 @@ class FacebookAdAccountEntity(BaseModel):
     # in that AdAccount's timezone (not UTC).
     timezone = attributes.UnicodeAttribute(attr_name='tz')
 
-    entity_type = Entity.AdAccount
+    entity_type = Entity.Account
 
     @property
     @memoized_property
@@ -52,28 +52,33 @@ class FacebookAdAccountEntity(BaseModel):
         from .scope import AssetScope
         return AssetScope.get(self.scope)
 
-    def to_fb_sdk_ad_account(self, api=None):
+    def to_tw_sdk_ad_account(self, client=None):
         """
         Returns an instance of Facebook Ads SDK AdAccount model
         with ID matching this DB model's ID
 
-        :param facebookads.api.FacebookAdsApi api: FB Ads SDK Api instance with token baked in.
-        :rtype: facebookads.adobjects.adaccount.AdAccount
+        :param twitter_ads.client.Client client: Twitter API client that is already set up
+        :rtype: twitter_ads.
         """
-        from facebookads.api import FacebookAdsApi, FacebookSession
-        from facebookads.adobjects.adaccount import AdAccount
+        from twitter_ads.client import Client, Account
 
-        if not api:
+        if not client:
             # This is very expensive call. Takes 2 DB hits to get token value
             # Try to pass api value at all times in prod code to avoid using this.
             # Allowing to omit the API value to simplify use of this API in
             # testing in console.
-            api = FacebookAdsApi(FacebookSession(access_token=self.scope_model.platform_token))
+            platform_token = self.scope_model.platform_token
+            client = Client(
+                consumer_key=platform_token.consumer_key,
+                consumer_secret= platform_token.consumer_secret,
+                access_token=platform_token.token,
+                access_token_secret=platform_token.secret
+            )
 
-        return AdAccount(fbid=f'act_{self.ad_account_id}', api=api)
+        return Account(client=client)
 
 
-class FacebookEntityBaseMixin:
+class TwitterEntityBaseMixin:
     """
     Use this mixin for describing Facebook entity existence tables
     """
@@ -86,7 +91,7 @@ class FacebookEntityBaseMixin:
 
     # Note that each Entity is keyed by, effectively, a compound key: ad_account_id+entity_id
     # This allows us to issue queries like "Get all objects per ad_account_id" rather quickly
-    ad_account_id = attributes.UnicodeAttribute(hash_key=True, attr_name='aaid')
+    account_id = attributes.UnicodeAttribute(hash_key=True, attr_name='aid')
     # do NOT set an index on secondary keys (unless you really really need it)
     # In DynamoDB this limits the table size to 10GB
     # Without secondary key index, table size is unbounded.
@@ -112,41 +117,41 @@ class EntityBaseMeta(BaseMeta):
     write_capacity_units = 10
 
 
-class FacebookCampaignEntity(FacebookEntityBaseMixin, BaseModel):
+class TwitterCampaignEntity(TwitterEntityBaseMixin, BaseModel):
     """
     Represents a single facebook campaign entity
     """
-    Meta = EntityBaseMeta(dynamodb_config.FB_CAMPAIGN_ENTITY_TABLE)
+    Meta = EntityBaseMeta(dynamodb_config.TW_CAMPAIGN_ENTITY_TABLE)
 
     entity_type = Entity.Campaign
 
 
-class FacebookAdsetEntity(FacebookEntityBaseMixin, BaseModel):
+class TwitterLineItemEntity(TwitterEntityBaseMixin, BaseModel):
     """
     Represent a single facebook adset entity
     """
-    Meta = EntityBaseMeta(dynamodb_config.FB_ADSET_ENTITY_TABLE)
+    Meta = EntityBaseMeta(dynamodb_config.TW_ADSET_ENTITY_TABLE)
 
-    entity_type = Entity.AdSet
+    entity_type = Entity.LineItem
 
 
-class FacebookAdEntity(FacebookEntityBaseMixin, BaseModel):
+class TwitterPromotedTweetEntity(TwitterEntityBaseMixin, BaseModel):
     """
     Represents a single facebook ad entity
     """
-    Meta = EntityBaseMeta(dynamodb_config.FB_AD_ENTITY_TABLE)
+    Meta = EntityBaseMeta(dynamodb_config.TW_AD_ENTITY_TABLE)
 
-    entity_type = Entity.Ad
+    entity_type = Entity.PromotedTweet
 
 
 # Used to map from entity_type str to Model for persistence-style tasks
 ENTITY_TYPE_MODEL_MAP = {
     model.entity_type: model
     for model in [
-        FacebookAdAccountEntity,
-        FacebookCampaignEntity,
-        FacebookAdsetEntity,
-        FacebookAdEntity
+        TwitterAdAccountEntity,
+        TwitterCampaignEntity,
+        TwitterLineItemEntity,
+        TwitterPromotedTweetEntity
     ]
 }
 
@@ -161,10 +166,10 @@ def sync_schema(brute_force=False):
     from pynamodb.exceptions import TableError, TableDoesNotExist
 
     tables = [
-        FacebookAdAccountEntity,
-        FacebookCampaignEntity,
-        FacebookAdsetEntity,
-        FacebookAdEntity
+        TwitterAdAccountEntity,
+        TwitterCampaignEntity,
+        TwitterLineItemEntity,
+        TwitterPromotedTweetEntity
     ]
 
     for table in tables:

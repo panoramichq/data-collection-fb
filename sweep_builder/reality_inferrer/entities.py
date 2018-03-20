@@ -27,9 +27,9 @@ def iter_entities_per_ad_account_id(ad_account_id, fields=None):
     """
 
     entity_models = [
-        entities.FacebookCampaignEntity,
-        entities.FacebookAdsetEntity,
-        entities.FacebookAdEntity,
+        entities.TwitterCampaignEntity,
+        entities.TwitterLineItemEntity,
+        entities.TwitterPromotedTweetEntity,
     ]
 
     for EntityModel in entity_models:

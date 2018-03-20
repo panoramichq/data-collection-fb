@@ -19,7 +19,7 @@ def do_it_all():
     # per given token (hardcoded / passed through configs)
 
     from common.store.scope import AssetScope, PlatformToken, DEFAULT_SCOPE
-    from common.store.entities import FacebookAdAccountEntity
+    from common.store.entities import TwitterAdAccountEntity
     from config.facebook import TOKEN, AD_ACCOUNT, AD_ACCOUNT_TIME_ZONE
 
     # this is silly. This means that only one token per scope is possible. Rethink.
@@ -28,7 +28,7 @@ def do_it_all():
     AssetScope.upsert(DEFAULT_SCOPE, platform_token_ids={token_id})
 
     if AD_ACCOUNT:
-        FacebookAdAccountEntity.upsert(
+        TwitterAdAccountEntity.upsert(
             DEFAULT_SCOPE,
             AD_ACCOUNT,
             is_active=True,

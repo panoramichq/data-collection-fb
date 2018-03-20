@@ -5,13 +5,13 @@ class Entity:
     # source of some assets collection
     Scope = 'Scope'
 
-    AdAccount = 'AA'
+    Account = 'AA'
     Campaign = 'C'
     LineItem = 'LI'
     PromotedTweet = 'PT'
 
     ALL = {
-        AdAccount,
+        Account,
         Campaign,
         LineItem,
         PromotedTweet,

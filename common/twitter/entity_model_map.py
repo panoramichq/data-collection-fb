@@ -5,7 +5,7 @@ from twitter_ads.creative import PromotedTweet
 from common.twitter.enums.entity import Entity
 
 ENTITY_TYPE_MODEL_MAP = {
-    Entity.AdAccount: Account,
+    Entity.Account: Account,
     Entity.Campaign: Campaign,
     Entity.LineItem: LineItem,
     Entity.PromotedTweet: PromotedTweet
