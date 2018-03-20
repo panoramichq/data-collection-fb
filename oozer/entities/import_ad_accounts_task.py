@@ -54,7 +54,8 @@ def import_ad_accounts_task(job_scope, job_context):
             # logging.warning(f'No registered AdAccount extractor API for scope "{job_scope.entity_id}"')
             # how about we raise in Celery Tasks and have a custom exception handler set at base Task
             raise ValueError(f'No registered AdAccount extractor API for scope "{job_scope.entity_id}"')
-        api = Api(token)
+
+        api = Api(token, 'twitter')
 
         logger.info(
             f'{job_scope} started'

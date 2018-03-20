@@ -10,14 +10,14 @@ from config.operam_console_api import TOKEN
 class TestingConsoleApiClient(TestCase):
 
     def test_get_active_adaccounts_with_valid_token(self):
-        console_api = ConsoleApi(TOKEN)
+        console_api = ConsoleApi(TOKEN, 'twitter')
 
         accounts = console_api.get_active_accounts()
 
         assert accounts
 
     def test_get_active_adaccounts_with_invalid_token(self):
-        console_api = ConsoleApi('DUMMY_TOKEN')
+        console_api = ConsoleApi('DUMMY_TOKEN', 'twitter')
 
         with self.assertRaises(HTTPError) as ex:
             console_api.get_active_accounts()
