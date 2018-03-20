@@ -1,6 +1,5 @@
 from . import (
     entities,
-    entityreport,
     jobreport,
     scope,
 )
@@ -8,7 +7,6 @@ from . import (
 
 modules_with_models = [
     entities,
-    entityreport,
     jobreport,
     scope,
 ]
