@@ -14,9 +14,7 @@ class TestingEntityCollection(TestCase):
 
 
     def test_fetch_campaigns_per_account(self):
-        client = Client(CONSUMER_KEY, CONSUMER_SECRET, TOKEN, SECRET)
-
-        import ipdb; ipdb.set_trace()
+        # client = Client(CONSUMER_KEY, CONSUMER_SECRET, TOKEN, SECRET)
 
         with TwitterApiContext(CONSUMER_KEY, CONSUMER_SECRET, TOKEN, SECRET) as ctx:
             ad_account = ctx.to_tw_model(AD_ACCOUNT, Entity.AdAccount)
