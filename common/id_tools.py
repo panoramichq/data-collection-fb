@@ -118,3 +118,8 @@ def parse_id(job_id, fields=fields):
             pass
 
     return data
+
+
+def parse_id_parts(job_id):
+    # type: (str) -> JobIdParts
+    return JobIdParts(**parse_id(job_id))
