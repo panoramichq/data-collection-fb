@@ -8,7 +8,7 @@ from common.enums.failure_bucket import FailureBucket
 from common.facebook.enums.entity import Entity
 from oozer.common.enum import FacebookJobStatus
 from oozer.common.report_job_status import report_job_status
-from common.store.sweepentityreport import FacebookSweepEntityReport
+from common.store.sweepentityreport import TwitterSweepEntityReport
 
 
 class TestReportJobStatus(TestCase):
@@ -29,7 +29,7 @@ class TestReportJobStatus(TestCase):
 
         report_job_status(123, ctx)
 
-        stored_data = FacebookSweepEntityReport.get(ctx.sweep_id, ctx.job_id)
+        stored_data = TwitterSweepEntityReport.get(ctx.sweep_id, ctx.job_id)
 
         assert stored_data.to_dict() == {
             'sweep_id': '12',
@@ -48,7 +48,7 @@ class TestReportJobStatus(TestCase):
         ctx = self._manufacture_job_scope()
         report_job_status(FacebookJobStatus.ThrottlingError, ctx)
 
-        stored_data = FacebookSweepEntityReport.get(ctx.sweep_id, ctx.job_id)
+        stored_data = TwitterSweepEntityReport.get(ctx.sweep_id, ctx.job_id)
 
         assert stored_data.to_dict() == {
             'sweep_id': '12',

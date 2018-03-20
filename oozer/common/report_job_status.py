@@ -1,7 +1,7 @@
 import logging
 
 from common.enums.failure_bucket import FailureBucket
-from common.store.sweepentityreport import FacebookSweepEntityReport
+from common.store.sweepentityreport import TwitterSweepEntityReport
 from oozer.common.job_scope import JobScope
 from oozer.common.enum import FacebookJobStatus
 
@@ -52,7 +52,7 @@ def report_job_status(stage_id, job_scope):
                     f'#{job_scope.sweep_id} Done status report "{job_scope.job_id}": "{status_bucket}"'
                 )
 
-    FacebookSweepEntityReport(
+    TwitterSweepEntityReport(
         job_scope.sweep_id,
         job_scope.job_id,
         report_type=job_scope.report_type,

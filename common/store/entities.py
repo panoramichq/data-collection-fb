@@ -130,7 +130,7 @@ class TwitterLineItemEntity(TwitterEntityBaseMixin, BaseModel):
     """
     Represent a single facebook adset entity
     """
-    Meta = EntityBaseMeta(dynamodb_config.TW_ADSET_ENTITY_TABLE)
+    Meta = EntityBaseMeta(dynamodb_config.TW_LINE_ITEM_ENTITY_TABLE)
 
     entity_type = Entity.LineItem
 
@@ -139,7 +139,7 @@ class TwitterPromotedTweetEntity(TwitterEntityBaseMixin, BaseModel):
     """
     Represents a single facebook ad entity
     """
-    Meta = EntityBaseMeta(dynamodb_config.TW_AD_ENTITY_TABLE)
+    Meta = EntityBaseMeta(dynamodb_config.TW_PROMOTED_TWEET_ENTITY_TABLE)
 
     entity_type = Entity.PromotedTweet
 

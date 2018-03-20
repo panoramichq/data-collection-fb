@@ -3,7 +3,7 @@ from collections import OrderedDict
 
 from common.job_signature import JobSignature
 from common.id_tools import parse_id, generate_id
-from common.store.entityreport import FacebookEntityReport
+from common.store.entityreport import TwitterEntityReport
 from common.facebook.enums.reporttype import ReportType
 from common.enums.failure_bucket import FailureBucket
 from common.tztools import now_in_tz
@@ -80,7 +80,7 @@ class ScoreCalculator:
             coverage_period = report_type  # they don't have date.
 
         try:
-            collection_record = FacebookEntityReport.get(
+            collection_record = TwitterEntityReport.get(
                 generate_id(
                     ad_account_id=ad_account_id,
                     entity_type=entity_type,
@@ -92,7 +92,7 @@ class ScoreCalculator:
             )
         # TODO: proper error here
         except:
-            collection_record = None  # type: FacebookEntityReport
+            collection_record = None  # type: TwitterEntityReport
 
         score = 0
 

@@ -3,12 +3,12 @@ from config import dynamodb as dynamodb_config
 from .base import BaseMeta, BaseModel, attributes
 
 
-class FacebookEntityReport(BaseModel):
+class TwitterEntityReport(BaseModel):
     """
     Use this mixin for describing Facebook entity existence tables
     """
     Meta = BaseMeta(
-        dynamodb_config.FB_ENTITY_REPORT_TYPE_TABLE,
+        dynamodb_config.TW_ENTITY_REPORT_TYPE_TABLE,
         read_capacity_units=5,
         write_capacity_units=20
     )
@@ -47,7 +47,7 @@ def sync_schema(brute_force=False):
     from pynamodb.exceptions import TableError, TableDoesNotExist
 
     tables = [
-        FacebookEntityReport
+        TwitterEntityReport
     ]
 
     for table in tables:
