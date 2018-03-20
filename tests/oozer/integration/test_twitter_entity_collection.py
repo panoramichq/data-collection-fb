@@ -1,10 +1,11 @@
+from pytest import skip
+
 from tests.base.testcase import TestCase, integration
 from pprint import pprint
 
 from common.twitter.enums.entity import Entity
 from oozer.common.twitter_api import TwitterApiContext
 
-from twitter_ads.client import Client
 from config.twitter import CONSUMER_KEY, CONSUMER_SECRET, TOKEN, SECRET, AD_ACCOUNT
 
 from oozer.entities.twitter.collect_entities_per_adaccount import iter_native_entities_per_adaccount
@@ -23,6 +24,7 @@ class TestingEntityCollection(TestCase):
             for entity in iter_native_entities_per_adaccount(ad_account, Entity.Campaign):
                 count += 1
                 pprint(entity)
+                break
 
             assert count
 
@@ -34,6 +36,7 @@ class TestingEntityCollection(TestCase):
             for entity in iter_native_entities_per_adaccount(ad_account, Entity.LineItem):
                 count += 1
                 pprint(entity)
+                break
 
             assert count
 
@@ -45,10 +48,12 @@ class TestingEntityCollection(TestCase):
             for entity in iter_native_entities_per_adaccount(ad_account, Entity.PromotedTweet):
                 count += 1
                 pprint(entity)
+                break
 
             assert count
 
 
+@skip
 class TestingEntityCollectionPipeline(TestCase):
 
     @integration('twitter')
