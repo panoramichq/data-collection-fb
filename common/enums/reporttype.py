@@ -33,9 +33,18 @@ class ReportType:
     # An effort is made to avoid using separator-type characters (: | _ etc) in the values
     # because these are often used as fragments in compound IDs that use separator type characters.
 
-    import_accounts = 'import_accounts' # given scope, import AdAccounts (as associated data) from scope
+    # given scope, import AdAccounts (as associated data) from scope
+    import_accounts = 'import_accounts'
 
-    entities = 'entities'  # multiple entities per some parent
+    # Part of "done-ness" calculation system
+    # used to wrap bundles of persisted expectations to Cold Store
+    sync_expectations = 'sync_expectations'
+
+    # Part of "done-ness" calculation system
+    # used to wrap payloads communicating "done with job X" payloads to to Cold Store
+    sync_status = 'sync_status'
+
+    entities = 'entities'
 
     lifetime = 'lifetime'
     # day_hour is a bastardisation of
