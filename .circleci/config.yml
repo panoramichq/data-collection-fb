@@ -108,6 +108,24 @@ jobs:
           eval $(aws ecr get-login --region us-west-2 --no-include-email)
           make test
 
+  deploy_staging:
+    docker:
+      - image: circleci/python:3.6-jessie-node
+
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+
+      - checkout
+
+      # Install AWS CLI
+      - run: sudo pip install awscli --upgrade
+
+      - run : |
+          export AWS_REGION=us-east-1
+          export IMAGE_NAME_FULL=`cat /tmp/workspace/image_url`
+          bash .circleci/deploy.sh --cluster 1c5595_data_collection --service celery --task 1c5595_datacol_celery ${IMAGE_NAME_FULL}
+          bash .circleci/deploy.sh --cluster 1c5595_data_collection --service celery-long --task 1c5595_datacol_celery_long ${IMAGE_NAME_FULL}
 
 workflows:
   version: 2
@@ -122,3 +140,12 @@ workflows:
       - publish_to_docker_hub_and_prod:
           requires:
             - build_image
+
+      - hold_for_deploy_staging:
+          type: approval
+          requires:
+           - run_tests
+
+      - deploy_staging:
+          requires:
+            - hold_for_deploy_staging
