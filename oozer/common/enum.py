@@ -74,6 +74,16 @@ class JobStatus:
     GenericError = -1000
 
 
+class TwitterJobStatus(JobStatus):
+    """
+    Use this to communicate to give status reporter enough information to
+    figure out what the stage id means in terms of failures
+    """
+
+    # Progress states
+    DataFetched = 200
+    InColdStore = 500
+
 class FacebookJobStatus(JobStatus):
     """
     Use this to communicate to give status reporter enough information to

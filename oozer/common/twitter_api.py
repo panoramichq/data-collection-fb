@@ -37,7 +37,12 @@ class TwitterApiContext:
         """
 
         """
-        self.client = Client(self.consumer_key, self.consumer_secret, self.token, self.secret)
+        self.client = Client(
+            consumer_key=self.consumer_key,
+            consumer_secret=self.consumer_secret,
+            access_token=self.token,
+            access_token_secret=self.secret
+        )
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):

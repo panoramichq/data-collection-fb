@@ -14,7 +14,7 @@ class JobScope:
     sweep_id = None
 
     # Job ID components parsed
-    namespace = 'fb'  # used for generating Job IDs from this data
+    namespace = 'tw'  # used for generating Job IDs from this data
 
     ad_account_id = None  # type: str or None
 
