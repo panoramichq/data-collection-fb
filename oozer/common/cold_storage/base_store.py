@@ -16,10 +16,8 @@ s3://operam-reports/facebook/2d700d-1629501014003404/fb_insights_campaign_daily/
 
 """
 import boto3
-import gevent
-import gevent.pool
-import gevent.queue
 import hashlib
+import io
 import logging
 import time
 # ujson is faster for massive amounts of small data units
@@ -33,7 +31,6 @@ import time
 # http://artem.krylysov.com/blog/2015/09/29/benchmark-python-json-libraries/
 import ujson as json
 
-from collections import namedtuple
 from datetime import datetime, timezone
 from facebookads.api import FacebookAdsApi
 from common.measurement import Measure
@@ -64,9 +61,6 @@ def _job_scope_to_storage_key(job_scope, chunk_marker=0):
 
     prefix = hashlib.md5(job_scope.ad_account_id.encode()).hexdigest()[:6]
     report_run_time = datetime.utcnow()
-    zulu_time = report_run_time.strftime('%Y-%m-%dT%H:%M:%SZ')
-
-    job_id = job_scope.job_id + ('-'+str(chunk_marker) if chunk_marker else '')
 
     key = f'{job_scope.namespace}/' \
           f'{prefix}-{job_scope.ad_account_id}/' \
@@ -74,10 +68,9 @@ def _job_scope_to_storage_key(job_scope, chunk_marker=0):
           f'{report_run_time.strftime("%Y")}/' \
           f'{report_run_time.strftime("%m")}/' \
           f'{report_run_time.strftime("%d")}/' \
-          f'{zulu_time}-{job_id}.json'
-
-    # need this to make it work in local fake S3
-    # return key.replace(':', '_')
+          f'{report_run_time.strftime("%Y-%m-%dT%H:%M:%SZ")}-' \
+          f'{job_scope.job_id}' \
+          f'{"-"+str(chunk_marker) if chunk_marker else ""}.json'
 
     return key
 
@@ -164,110 +157,14 @@ def store(data, job_scope, chunk_marker=0):
     return key
 
 
-ColdStoreSave = namedtuple(
-    'ColdStoreSave',
-    [
-        'args',
-        'first_attempt_seconds',
-        'retry_cnt'
-    ]
-)
+def load(key):
+    ff = io.BytesIO()
+    _bucket.download_fileobj(key, ff)
+    ff.seek(0)
+    return ff
 
 
-class ColdStoreQueue:
-    """
-    Turns direct calls to save something into Cold Store into
-    an asynchronous backgrounded worker pool that work hard to
-    save the thing and retry intelligently.
-    """
-
-    max_tries = 3
-
-    def __init__(self, queue_size=None, num_workers=10):
-        """
-        :param queue_size: If set, makes the queue blocking
-        :type queue_size: None or int
-        """
-        self.queue = gevent.queue.JoinableQueue(queue_size)
-        self.pool = gevent.pool.Pool(num_workers)
-
-        # Geventlets do NOT bubble up their errors to parent process
-        # They log the error, but not bubble it up
-        # This is our trick to make them bubble up
-        # All Geventlets can set this single attribute
-        self.last_exception = None
-
-        for num in range(num_workers):
-            self.pool.spawn(self._print)
-
-    def store(self, data, job_scope, chunk_marker=0):
-        if self.last_exception:
-            raise self.last_exception
-
-        self.queue.put(
-            ColdStoreSave(
-                (data, job_scope, chunk_marker),
-                time.time(),
-                0
-            )
-        )
-
-    def _print(self):
-        while not self.last_exception:
-            save = self.queue.get()  # type: ColdStoreSave
-            data, job_scope, chunk_marker = save.args
-
-            if data < 10 and data % 2 == 0:
-                print(f'< {data} - deferring')
-                self.queue.put_nowait(
-                    ColdStoreSave(
-                        (data + 20, '', ''),
-                        save.first_attempt_seconds,
-                        save.retry_cnt + 1
-                    )
-                )
-            elif data % 2 == 0:
-                self.last_exception = Exception(f'! {data}')
-                # print(f'< {data} - start')
-                # gevent.sleep(2)
-                # print(f'< {data} - end')
-            else:
-                print(f'< {data} - donzie')
-
-            # try:
-            #     store(data, job_scope, chunk_marker)
-            # except Exception as ex:
-            #     logger.exception(f'This happened {ex}')
-
-            self.queue.task_done()
-
-    def _worker(self):
-        while not self.last_exception:
-            save = self.queue.get()  # type: ColdStoreSave
-            data, job_scope, chunk_marker = save.args
-
-            try:
-                store(data, job_scope, chunk_marker)
-            except Exception as ex:
-                logger.exception(f'While saving to S3 ({save.retry_cnt} try): {ex}')
-                self.last_exception = ex
-            self.queue.task_done()
-
-        # when exceptions happen, if we don't drain the queue
-        # the consuming code may be forever blocked on the queue.put() call
-        # here we burn of the rest of the queue in order to
-        # get to the error
-        while True:
-            save = self.queue.get()  # type: ColdStoreSave
-            self.queue.task_done()
-            logger.exception(f'Discarding cold store bound payload in anticipation of throwing exception')
-
-    def __enter__(self):
-        return self.store
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        if not self.last_exception:
-            self.queue.join()
-        self.pool.kill()
-        if self.last_exception and not exc_val:
-            raise self.last_exception
+def load_data(key):
+    return json.load(
+        load(key)
+    )

@@ -1,16 +1,14 @@
 from . import (
     entities,
-    entityreport,
+    jobreport,
     scope,
-    sweepentityreport,
 )
 
 
 modules_with_models = [
     entities,
-    entityreport,
+    jobreport,
     scope,
-    sweepentityreport,
 ]
 
 

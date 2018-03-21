@@ -1,7 +1,13 @@
 import logging
 
+from collections import defaultdict
+from datetime import datetime
 from typing import Generator, Callable
 
+from common.enums.entity import Entity
+from common.connect.redis import get_redis
+from common.store import jobreport
+from oozer.common.expecations_store import JobExpectationsWriter
 from oozer.common.sorted_jobs_queue import SortedJobsQueue
 
 from .prioritizer.prioritized import iter_prioritized, PrioritizationClaim
@@ -15,6 +21,13 @@ FIRST = 0
 LAST = -1
 
 
+subject_to_expectation_publication = {
+    Entity.Campaign,
+    Entity.AdSet,
+    Entity.Ad
+}
+
+
 def iter_persist_prioritized(sweep_id, iter_prioritized=iter_prioritized):
     # type: (str, Callable[..., Generator[PrioritizationClaim]]) -> Generator[PrioritizationClaim]
     """
@@ -26,7 +39,8 @@ def iter_persist_prioritized(sweep_id, iter_prioritized=iter_prioritized):
     :rtype: Generator[PrioritizationClaim]
     """
 
-    with SortedJobsQueue(sweep_id).JobsWriter() as add_to_queue:
+    with SortedJobsQueue(sweep_id).JobsWriter() as add_to_queue, \
+        JobExpectationsWriter(sweep_id) as expectation_add:
 
         for prioritization_claim in iter_prioritized():
 
@@ -110,9 +124,33 @@ def iter_persist_prioritized(sweep_id, iter_prioritized=iter_prioritized):
             # as mentioned earlier, at this time we expect at most 2 job variants
             #  - normative (always present) (data per E ID or data per Es per AA ID)
             #  - effective (optional) (blah per AA)
-            _, job_id = score_job_id_pairs[LAST]
+            _, job_id_effective = score_job_id_pairs[LAST]
             score = max(score for score, _ in score_job_id_pairs)
 
-            add_to_queue(job_id, score)
+            # we are adding only per-parent job to the queue
+            add_to_queue(job_id_effective, score)
+
+            # This is our cheap way of ensuring that we are dealing
+            # with platform-bound job that we need to report our expectations for
+            is_subject_to_expectation_publication = (
+                prioritization_claim.ad_account_id is not None
+                and prioritization_claim.entity_id is not None
+                and prioritization_claim.entity_type in subject_to_expectation_publication
+            )
+
+            if is_subject_to_expectation_publication:
+                # For purpose of accounting for expectations,
+                # must save the normative job to right table
+                # Normative job_id comes first score_job_id_pairs
+                _, job_id_normative = score_job_id_pairs[FIRST]
+
+                # TODO: contemplate parsing these instead and making sure they are norm vs eff
+                # at this point all this checks is that we have more than one job_id scheduled
+                if job_id_normative != job_id_effective:
+                    expectation_add(
+                        job_id_effective,
+                        prioritization_claim.ad_account_id,
+                        prioritization_claim.entity_id
+                    )
 
             yield prioritization_claim

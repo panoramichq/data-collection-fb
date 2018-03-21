@@ -10,7 +10,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 # ^ MIT license
 
 from typing import Generator
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 
 
 def dt_to_other_timezone(dt, destination_timezone_name, origin_timezone_name='UTC'):
@@ -88,6 +88,16 @@ def now_in_tz(timezone_name):
         datetime.utcnow(),
         timezone_name
     )
+
+
+def now():
+    """
+    Here only for one reason. To homogenize the derivation of "now" DT
+    to be one what is always timezone-aware per UTC
+
+    :rtype: datetime
+    """
+    return datetime.now(timezone.utc)
 
 
 def dt_to_timestamp(dt):

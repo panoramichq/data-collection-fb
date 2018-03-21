@@ -48,7 +48,9 @@ def iter_tasks(sweep_id):
                 # but cannot have too much data in there because we pickle it and put in on Redis
                 job_context = JobContext()
 
-                yield celery_task, job_scope, job_context
+                yield celery_task, job_scope, job_context, score
+
+                logger.info(f"#{sweep_id}: Scheduling job_id {job_id} with score {score}.")
 
 
 def create_decay_function(n, t, z=looper_config.DECAY_FN_START_MULTIPLIER):
@@ -391,6 +393,15 @@ def run_tasks(sweep_id, limit=None, time_slices=looper_config.FB_THROTTLING_WIND
     tasks_iter = iter_tasks(sweep_id)
     if limit:
         tasks_iter = islice(tasks_iter, 0, limit)
+
+    def task_iter_score_gate(tasks_iter):
+        for celery_task, job_scope, job_context, score in tasks_iter:
+            if score < 2: # arbitrary
+                # cut the flow of tasks
+                return
+            yield celery_task, job_scope, job_context
+
+    tasks_iter = task_iter_score_gate(tasks_iter)
 
     with TaskOozer(n, time_slices, time_slice_length, z) as ooze_task:
         next_pulse_review_second = time.time() + _pulse_refresh_interval
