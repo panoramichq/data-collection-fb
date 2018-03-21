@@ -7,6 +7,7 @@ import logging
 import bugsnag
 from bugsnag.celery import connect_failure_handler
 
+from config.application import ENVIRONMENT
 from config.bugsnag import API_KEY
 from config.build import BUILD_ID
 
@@ -27,7 +28,8 @@ def configure_bugsnag():
     bugsnag.configure(
         api_key=API_KEY,
         project_root=os.path.abspath(os.path.join(os.path.dirname(__file__), '..')),
-        app_version=BUILD_ID
+        app_version=BUILD_ID,
+        release_stage=ENVIRONMENT
     )
 
     # register a handler to capture celery errors

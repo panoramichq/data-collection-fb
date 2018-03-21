@@ -1,4 +1,4 @@
-ENVIRONMENT = 'testing'
+ENVIRONMENT = 'dev'
 """
 Environment the application runs in
 """
