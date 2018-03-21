@@ -25,14 +25,6 @@ import argparse
 import sys
 import os
 
-# Setup bugsnag for exception reporting
-from config.bugsnag import API_KEY
-import bugsnag
-bugsnag.configure(
-    api_key=API_KEY,
-    project_root=os.path.abspath(os.path.dirname(__file__))
-)
-
 from common.configure_logging import configure_logging
 configure_logging()
 

@@ -1,4 +1,4 @@
-API_KEY = '97434e242f846c0981f7d146a11f5b75'
+API_KEY = None
 """
 The API key corresponding to our project
 """
