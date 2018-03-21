@@ -1,8 +1,6 @@
 import logging
 
-from datetime import datetime
-
-import config.application
+from datetime import datetime, date
 
 from common.enums.failure_bucket import FailureBucket
 from common.enums.reporttype import ReportType
@@ -13,6 +11,37 @@ from oozer.common.job_scope import JobScope
 
 
 logger = logging.getLogger(__name__)
+
+
+_to_date_string_if_set = lambda v: v.strftime('%Y-%m-%d') if isinstance(v, (date, datetime)) else v
+
+
+def _report_job_done_to_cold_store(job_scope):
+    """
+    :param JobScope job_scope:
+    :return:
+    """
+
+    reporting_job_scope = JobScope(
+        sweep_id=job_scope.sweep_id,
+        ad_account_id=job_scope.ad_account_id,
+        report_type=ReportType.sync_status
+    )
+
+    cold_storage.store(
+        dict(
+            job_id=job_scope.job_id,
+            account_id=job_scope.ad_account_id,
+            entity_type=job_scope.entity_type,
+            entity_id=job_scope.entity_id,
+            report_type=job_scope.report_type,
+            report_variant=job_scope.report_variant,
+            range_start=_to_date_string_if_set(job_scope.range_start),
+            range_end=_to_date_string_if_set(job_scope.range_end),
+            platform_namespace=job_scope.namespace,
+        ),
+        reporting_job_scope
+    )
 
 
 def report_job_status(stage_id, job_scope):
@@ -100,26 +129,4 @@ def report_job_status(stage_id, job_scope):
         # which is the value for external platform namespace
         # We don't want to report jobs for other namespaces (yet)
         if is_done and job_scope.namespace == JobScope.namespace:
-
-            reporting_job_scope = JobScope(
-                sweep_id=job_scope.sweep_id,
-                namespace=config.application.UNIVERSAL_ID_SYSTEM_NAMESPACE,
-                ad_account_id=job_scope.ad_account_id,
-                report_type=ReportType.sync_status
-            )
-
-            cold_storage.store(
-                dict(
-                    job_id=job_scope.job_id,
-                    # status='done',  # discuss value and attr name with Mike
-                    ad_account_id=job_scope.ad_account_id,
-                    entity_type=job_scope.entity_type,
-                    entity_id=job_scope.entity_id,
-                    report_type=job_scope.report_type,
-                    report_variant=job_scope.report_variant,
-                    range_start=job_scope.range_start,
-                    range_end=job_scope.range_end,
-                    platform_namespace=job_scope.namespace,
-                ),
-                reporting_job_scope
-            )
+            _report_job_done_to_cold_store(job_scope)

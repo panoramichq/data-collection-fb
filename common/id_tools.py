@@ -105,17 +105,17 @@ def parse_id(job_id, fields=fields):
         for key, value in zip_longest(fields, job_id.split(':')[:len(fields)])
     }
 
-    to_date = lambda value: datetime.strptime(value, '%Y-%m-%d').date() if value else value
-
-    # range_start, range_end are not guaranteed to be date objects,
-    # but in majority of cases, they can be.
-    # When they are not dates, they are some object id
-    # indicating range of IDs to scan (say, Scope ID)
-    for key in ['range_start', 'range_end']:
-        try:
-            data[key] = to_date(data[key])
-        except ValueError:
-            pass
+    # to_date = lambda value: datetime.strptime(value, '%Y-%m-%d').date() if value else value
+    #
+    # # range_start, range_end are not guaranteed to be date objects,
+    # # but in majority of cases, they can be.
+    # # When they are not dates, they are some object id
+    # # indicating range of IDs to scan (say, Scope ID)
+    # for key in ['range_start', 'range_end']:
+    #     try:
+    #         data[key] = to_date(data[key])
+    #     except ValueError:
+    #         pass
 
     return data
 
