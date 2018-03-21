@@ -6,6 +6,7 @@ from facebookads.adobjects import ad
 
 from oozer.common.enum import FB_CAMPAIGN_MODEL, FB_ADSET_MODEL, FB_AD_MODEL
 from oozer.common.facebook_api import get_default_fields
+from oozer.common.twitter_api import TW_CAMPAIGN_MODEL, TW_LINE_ITEM_MODEL, TW_PROMOTED_TWEET_MODEL
 
 
 class EntityHash(namedtuple('EntityHash', ['data', 'fields'])):
@@ -33,14 +34,17 @@ def checksum_entity(entity, fields=None):
 
     # Drop fields we don't care about
     blacklist = {
+        TW_CAMPAIGN_MODEL: [],
+        TW_LINE_ITEM_MODEL: [],
+        TW_PROMOTED_TWEET_MODEL: []
     }
 
-    fields = fields or get_default_fields(entity.__class__)
+    fields = entity.to_params().keys()
 
     # Run through blacklist
     fields = filter(lambda f: f not in blacklist[entity.__class__], fields)
 
-    raw_data = entity.export_all_data()
+    raw_data = entity.to_params()
 
     data_hash = xxhash.xxh64()
     fields_hash = xxhash.xxh64()
