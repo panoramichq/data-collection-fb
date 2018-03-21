@@ -20,7 +20,7 @@ from oozer.common.enum import (
     ENUM_VALUE_FB_MODEL_MAP,
     FacebookJobStatus
 )
-from oozer.entities.entity_hash import _checksum_entity, _checksum_from_job_context
+from oozer.entities.entity_hash import checksum_entity, checksum_from_job_context
 from oozer.entities.feedback_entity_task import feedback_entity_task
 
 
@@ -115,10 +115,10 @@ def iter_collect_entities_per_adaccount(job_scope, job_context):
         for entity in entities:
 
             # Externalize these for clarity
-            current_hash = _checksum_from_job_context(
+            current_hash = checksum_from_job_context(
                 job_context, entity['id']
             )
-            entity_hash = _checksum_entity(entity)
+            entity_hash = checksum_entity(entity)
             entity_data = entity.export_all_data()
 
             normative_job_scope = JobScope(

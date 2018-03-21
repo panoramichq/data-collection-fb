@@ -20,7 +20,7 @@ class EntityHash(namedtuple('EntityHash', ['data', 'fields'])):
         return self.data == other.data and self.fields == other.fields
 
 
-def _checksum_entity(entity, fields=None):
+def checksum_entity(entity, fields=None):
     """
     Compute a hash of the entity fields that we consider stable, to be able
     to tell apart entities that have / have not changed in between runs.
@@ -33,9 +33,6 @@ def _checksum_entity(entity, fields=None):
 
     # Drop fields we don't care about
     blacklist = {
-        FB_CAMPAIGN_MODEL: [],
-        FB_ADSET_MODEL: [],
-        FB_AD_MODEL: [ad.Ad.Field.recommendations]
     }
 
     fields = fields or get_default_fields(entity.__class__)
@@ -58,7 +55,7 @@ def _checksum_entity(entity, fields=None):
     )
 
 
-def _checksum_from_job_context(job_context, entity_id):
+def checksum_from_job_context(job_context, entity_id):
     """
     Recreate the EntityHash object from JobContext provided
 
