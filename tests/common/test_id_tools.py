@@ -9,3 +9,7 @@ class TestingIdTools(TestCase):
             generate_id(namespace=None)
 
         assert 'Namespace is a required parameter' in str(ex.exception)
+
+    def test_it_works_with_nulls(self):
+
+        generate_id()

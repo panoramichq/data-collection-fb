@@ -8,6 +8,7 @@ from itertools import zip_longest
 
 
 NAMESPACE = 'fb'
+ID_DELIMITER = '|'
 
 
 fields = [
@@ -90,19 +91,23 @@ def generate_id(
     elif isinstance(range_end, (date, datetime)):
         range_end = range_end.strftime('%Y-%m-%d')
 
-    return (
-        f"{namespace}:{ad_account_id}" +
-        f":{entity_type}:{entity_id}" +
-        f":{report_type}:{report_variant}" +
-        f":{range_start}:{range_end}"
-    ).strip(':')
+    return ID_DELIMITER.join([
+        namespace,
+        ad_account_id,
+        entity_type,
+        entity_id,
+        report_type,
+        report_variant,
+        range_start,
+        range_end
+    ]).strip(ID_DELIMITER)
 
 
 def parse_id(job_id, fields=fields):
 
     data = {
         key: value or None
-        for key, value in zip_longest(fields, job_id.split(':')[:len(fields)])
+        for key, value in zip_longest(fields, job_id.split(ID_DELIMITER)[:len(fields)])
     }
 
     to_date = lambda value: datetime.strptime(value, '%Y-%m-%d').date() if value else value
