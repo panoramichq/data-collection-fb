@@ -44,6 +44,12 @@ class ReportType:
     # used to wrap payloads communicating "done with job X" payloads to to Cold Store
     sync_status = 'sync_status'
 
+    MUST_RUN_EVERY_SWEEP = {
+        import_accounts,
+        sync_expectations,
+        sync_status
+    }
+
     entities = 'entities'
 
     lifetime = 'lifetime'

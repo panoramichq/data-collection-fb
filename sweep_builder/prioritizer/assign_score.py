@@ -92,6 +92,9 @@ class ScoreCalculator:
             # give it highest score to give it a good chance.
             return 1000
 
+        if job_id_parts.report_type in ReportType.MUST_RUN_EVERY_SWEEP:
+            return 1000
+
         # if we are here, we have Platform-flavored job
 
         is_per_parent_job = bool(not entity_type and report_variant)

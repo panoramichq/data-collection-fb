@@ -90,17 +90,37 @@ class JobExpectationsWriter:
         pass
 
 
-def iter_expectations(sweep_id):
+def iter_expectations_per_ad_account(ad_account_id, sweep_id):
+    """
+    Yield JobIDs corresponding to expecations set per this AA ID, SweepID
+    :param ad_account_id:
+    :param sweep_id:
+    :return:
+    """
+    redis = get_redis()
+    aa_level_key = _aa_job_index_key_template(
+        sweep_id=sweep_id,
+        ad_account_id=ad_account_id
+    )
+    for job_id in redis.sscan_iter(aa_level_key):
+        yield job_id.decode('utf8')
 
+
+def iter_expectations_ad_accounts(sweep_id):
+    """
+    Yields ad account IDs for which we have expectations
+
+    :param sweep_id:
+    :return:
+    """
     redis = get_redis()
     sweep_level_key = _sweep_aa_index_key_template(
         sweep_id=sweep_id
     )
     for ad_account_id in redis.sscan_iter(sweep_level_key):
-        ad_account_id = ad_account_id.decode('utf8')
-        aa_level_key = _aa_job_index_key_template(
-            sweep_id=sweep_id,
-            ad_account_id=ad_account_id
-        )
-        for job_id in redis.sscan_iter(aa_level_key):
-            yield job_id.decode('utf8')
+        yield ad_account_id.decode('utf8')
+
+
+def iter_expectations(sweep_id):
+    for ad_account_id in iter_expectations_ad_accounts(sweep_id):
+        yield from iter_expectations_per_ad_account(ad_account_id, sweep_id)

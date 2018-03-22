@@ -48,3 +48,35 @@ def ad_accounts_per_scope(reality_claim):
             )
         ]
     )
+
+
+def sync_expectations_per_ad_account(reality_claim):
+    # type: (RealityClaim) -> Generator[ExpectationClaim]
+    """
+    Generates "Communicate all calculated expectation Job IDs to Cold Store" job ID
+
+    To be used by Scope-level RealityClaim / ExpectationClaim.
+
+    :param RealityClaim reality_claim:
+    :rtype: Generator[ExpectationClaim]
+    """
+
+    if not reality_claim.ad_account_id:
+        ValueError("AdAccountID value is missing")
+
+    if reality_claim.entity_type != Entity.AdAccount:
+        ValueError("Only AdAccount-level expectations may generate this job signature")
+
+    yield ExpectationClaim(
+        reality_claim.to_dict(),
+        job_signatures = [
+            JobSignature.bind(
+                generate_id(
+                    ad_account_id=reality_claim.ad_account_id,
+                    entity_id=reality_claim.ad_account_id,
+                    entity_type=reality_claim.entity_type,
+                    report_type=ReportType.sync_expectations
+                )
+            )
+        ]
+    )
