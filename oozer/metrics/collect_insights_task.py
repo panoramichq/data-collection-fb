@@ -5,7 +5,7 @@ from common.measurement import Measure
 from common.tokens import PlatformTokenManager
 from oozer.common.job_context import JobContext
 from oozer.common.job_scope import JobScope
-from .collect_insights import iter_collect_insights
+from oozer.metrics.facebook.collect_insights import iter_collect_insights
 
 
 logger = logging.getLogger(__name__)

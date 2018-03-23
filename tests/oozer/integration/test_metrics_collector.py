@@ -11,7 +11,7 @@ from oozer.common.job_scope import JobScope
 from common.facebook.enums.reporttype import ReportType
 from oozer.common import cold_storage
 
-from oozer.metrics.collect_insights import iter_insights, iter_collect_insights
+from oozer.metrics.facebook.collect_insights import iter_insights, iter_collect_insights
 
 
 @skip
