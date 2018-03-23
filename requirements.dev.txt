@@ -59,7 +59,7 @@ simplegeneric==0.8.1      # via ipython
 simplejson==3.13.2
 six==1.11.0
 traitlets==4.3.2          # via ipython
-twitter-ads==2.0.1
+twitter-ads==3.0.0
 ujson==1.35
 urllib3==1.22
 uvloop==0.9.1
