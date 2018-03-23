@@ -29,7 +29,7 @@ def patch_twitter_sdk():
     def resource_to_dict(self):
         params = self.to_params()
 
-        if isinstance(self, Campaign) or isinstance(self, LineItem):
+        if self.__class__ in [Campaign, LineItem, PromotedTweet]:
             params['account_id'] = self.account.id
 
         return params

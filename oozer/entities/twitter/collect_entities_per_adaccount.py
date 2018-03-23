@@ -105,7 +105,7 @@ def iter_collect_entities_per_adaccount(job_scope, job_context):
             # storage thing to divine whatever it needs from the job context
             cold_storage.store(entity_data, normative_job_scope)
 
-            # FIXME: Signal the new entity to the system
+            # Signal the new entity to the system
             feedback_entity_task.delay(entity_data, entity_type, entity_checksum)
 
             report_job_status_task.delay(

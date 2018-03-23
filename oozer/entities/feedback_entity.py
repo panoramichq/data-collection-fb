@@ -3,7 +3,7 @@ from dateutil.parser import parse as parse_iso_datetime_string
 
 from common.store.entities import ENTITY_TYPE_MODEL_MAP
 from common.tztools import dt_to_other_timezone
-from common.facebook.enums.entity import Entity
+from common.twitter.enums.entity import Entity
 
 
 def _parse_fb_datetime(value):
@@ -49,15 +49,11 @@ def feedback_entity(entity_data, entity_type, entity_hash_pair):
     entity_id = entity_data['id']
     ad_account_id = entity_data['account_id']
 
-    bol = _parse_fb_datetime(entity_data.get('start_time'))
+    bol = _parse_fb_datetime(entity_data.get('start_time') or entity_data.get('created_at'))
 
-    # End of Life (for metrics purposes) occurs when Entity status
-    # turns from whatever, to "irreversible death" - Archived or Deleted.
-    # We guess that last update is a safe bet to treat as "it was turned off then" datetime
-    # Thus speculatively deriving EOL from the last update if "irreversible death" is detected
-    eol = _parse_fb_datetime(entity_data.get('end_time')) \
-        if (entity_data.get('entity_status')) \
-        else None
+    # TODO: eol for Twitter is a bit trickier because end_time is not be even present on PromotedTweets
+    # there is also a servable status for campaigns that can be false while they are ACTIVE
+    eol = _parse_fb_datetime(entity_data.get('end_time'))
 
     # Note on Model.attr | value use:
     # This is a way to express "set if does not exist" logic

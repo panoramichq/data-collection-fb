@@ -15,7 +15,7 @@ from oozer.entities.twitter.collect_entities_per_adaccount import iter_native_en
 from config.twitter import CONSUMER_KEY, CONSUMER_SECRET, TOKEN, SECRET, AD_ACCOUNT
 
 
-
+# @skip
 @integration('twitter')
 class TestingNativeEntityCollection(TestCase):
 
@@ -54,10 +54,12 @@ class TestingNativeEntityCollection(TestCase):
             assert count
 
 
+# @skip
+@integration('twitter')
 class TestingEntityCollectionPipeline(TestCase):
 
-    @integration('twitter')
-    def test_pipeline(self):
+    # @skip
+    def test_pipeline_for_campaigns(self):
 
         job_scope = JobScope(
             ad_account_id=AD_ACCOUNT,
@@ -75,9 +77,56 @@ class TestingEntityCollectionPipeline(TestCase):
         cnt = 0
         for datum in data_iter:
             cnt += 1
-            pprint('')
             pprint(datum)
-            pprint('')
+            if cnt == 4:
+                break
+
+        assert cnt
+
+    # @skip
+    def test_pipeline_for_line_items(self):
+
+        job_scope = JobScope(
+            ad_account_id=AD_ACCOUNT,
+            report_time=datetime.utcnow(),
+            report_type='entities',
+            report_variant=Entity.LineItem,
+            sweep_id='1'
+        )
+
+        data_iter = iter_collect_entities_per_adaccount(
+            job_scope,
+            JobContext()
+        )
+
+        cnt = 0
+        for datum in data_iter:
+            cnt += 1
+            pprint(datum)
+            if cnt == 4:
+                break
+
+        assert cnt
+
+    def test_pipeline_for_promoted_tweets(self):
+
+        job_scope = JobScope(
+            ad_account_id=AD_ACCOUNT,
+            report_time=datetime.utcnow(),
+            report_type='entities',
+            report_variant=Entity.PromotedTweet,
+            sweep_id='1'
+        )
+
+        data_iter = iter_collect_entities_per_adaccount(
+            job_scope,
+            JobContext()
+        )
+
+        cnt = 0
+        for datum in data_iter:
+            cnt += 1
+            pprint(datum)
             if cnt == 4:
                 break
 
