@@ -6,7 +6,7 @@ from common.tokens import PlatformTokenManager
 from oozer.common.job_context import JobContext
 from oozer.common.job_scope import JobScope
 
-from .collect_entities_per_adaccount import iter_collect_entities_per_adaccount
+from oozer.entities.twitter.collect_entities_per_adaccount import iter_collect_entities_per_adaccount
 
 
 app = get_celery_app()
@@ -28,15 +28,7 @@ def collect_entities_per_adaccount_task(job_scope, job_context):
         f'{job_scope} started'
     )
 
-    if not job_scope.tokens:
-        good_token = PlatformTokenManager.from_job_scope(job_scope).get_best_token()
-        if good_token is not None:
-            job_scope.tokens = [good_token]
-        # Note. we don't handle a situation here when
-        # job still does not get a token. That's on purpose.
-        # Job will check for a token again and if it finds none,
-        # will generate appropriate reporting actions
-        # Here we prep, but don't complain.
+    # FIXME: Use a token manager to query for auth (so far done manually in iter_collect_entities_per_adaccount)
 
     cnt = 0
     data_iter = iter_collect_entities_per_adaccount(

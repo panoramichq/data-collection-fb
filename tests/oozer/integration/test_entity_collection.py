@@ -7,7 +7,7 @@ from config.facebook import TOKEN, AD_ACCOUNT
 from oozer.common.job_scope import JobScope
 from oozer.common.facebook_api import FacebookApiContext
 from oozer.common.job_context import JobContext
-from oozer.entities.collect_entities_per_adaccount import \
+from oozer.entities.facebook.collect_entities_per_adaccount import \
     iter_collect_entities_per_adaccount, iter_native_entities_per_adaccount
 
 
