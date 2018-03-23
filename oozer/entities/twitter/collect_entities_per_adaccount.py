@@ -12,6 +12,7 @@ import oozer.entities.entity_hash as entity_hash
 from oozer.common.enum import TwitterJobStatus
 
 from config.twitter import TOKEN, SECRET, CONSUMER_KEY, CONSUMER_SECRET
+from oozer.entities.feedback_entity_task import feedback_entity_task
 
 
 def iter_native_entities_per_adaccount(ad_account, entity_type):
@@ -78,7 +79,7 @@ def iter_collect_entities_per_adaccount(job_scope, job_context):
             )
 
             entity_checksum = entity_hash.checksum_entity(entity)
-            entity_data = entity.to_params()
+            entity_data = entity.to_dict()
 
             normative_job_scope = JobScope(
                 job_scope_base_data,
@@ -105,7 +106,7 @@ def iter_collect_entities_per_adaccount(job_scope, job_context):
             cold_storage.store(entity_data, normative_job_scope)
 
             # FIXME: Signal the new entity to the system
-            # feedback_entity_task.delay(entity_data, entity_type, entity_hash)
+            feedback_entity_task.delay(entity_data, entity_type, entity_checksum)
 
             report_job_status_task.delay(
                 TwitterJobStatus.Done, normative_job_scope

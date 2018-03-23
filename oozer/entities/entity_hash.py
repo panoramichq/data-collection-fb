@@ -39,12 +39,12 @@ def checksum_entity(entity, fields=None):
         TW_PROMOTED_TWEET_MODEL: []
     }
 
-    fields = entity.to_params().keys()
+    fields = entity.to_dict().keys()
 
     # Run through blacklist
     fields = filter(lambda f: f not in blacklist[entity.__class__], fields)
 
-    raw_data = entity.to_params()
+    raw_data = entity.to_dict()
 
     data_hash = xxhash.xxh64()
     fields_hash = xxhash.xxh64()

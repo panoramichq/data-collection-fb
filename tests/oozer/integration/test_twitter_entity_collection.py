@@ -73,8 +73,6 @@ class TestingEntityCollectionPipeline(TestCase):
         )
 
         cnt = 0
-
-        cnt = 0
         for datum in data_iter:
             cnt += 1
             pprint('')
@@ -84,4 +82,3 @@ class TestingEntityCollectionPipeline(TestCase):
                 break
 
         assert cnt
-        assert 1 == 0, 'Not implemented'

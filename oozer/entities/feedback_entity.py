@@ -39,7 +39,6 @@ def feedback_entity(entity_data, entity_type, entity_hash_pair):
         itself and fields hashes that we can use
 
     """
-
     if entity_type not in Entity.ALL:
         raise ValueError(f'Argument "entity_type" must be one of {Entity.ALL}. Received "{entity_type}" instead.')
     if not isinstance(entity_data, dict):
@@ -50,14 +49,14 @@ def feedback_entity(entity_data, entity_type, entity_hash_pair):
     entity_id = entity_data['id']
     ad_account_id = entity_data['account_id']
 
-    bol = _parse_fb_datetime(entity_data.get('created_time'))
+    bol = _parse_fb_datetime(entity_data.get('start_time'))
 
     # End of Life (for metrics purposes) occurs when Entity status
     # turns from whatever, to "irreversible death" - Archived or Deleted.
     # We guess that last update is a safe bet to treat as "it was turned off then" datetime
     # Thus speculatively deriving EOL from the last update if "irreversible death" is detected
-    eol = _parse_fb_datetime(entity_data.get('updated_time')) \
-        if (entity_data.get('configured_status') or entity_data.get('effective_status')) in ['ARCHIVED', 'DELETED'] \
+    eol = _parse_fb_datetime(entity_data.get('end_time')) \
+        if (entity_data.get('entity_status')) \
         else None
 
     # Note on Model.attr | value use:
