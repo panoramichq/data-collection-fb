@@ -17,6 +17,7 @@ class JobScope:
     namespace = 'fb'  # used for generating Job IDs from this data
 
     ad_account_id = None  # type: str or None
+    ad_account_timezone_name = None  # type: str or None
 
     entity_id = None  # type: str or None
     entity_type = None  # type: str or None
@@ -40,6 +41,11 @@ class JobScope:
 
     def __init__(self, *args, **kwargs):
         self.update(*args, **kwargs)
+
+    def __eq__(self, other):
+        if isinstance(other, self.__class__):
+            return self.to_dict() == other.to_dict()
+        return False
 
     def __repr__(self):
         return f'<JobScope {self.sweep_id}:{self.job_id}>'

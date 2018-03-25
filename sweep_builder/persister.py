@@ -118,7 +118,7 @@ def iter_persist_prioritized(sweep_id, iter_prioritized=iter_prioritized):
             # don't care about JobSignature's args, kwargs at this point
             score_job_id_pairs = [
                 (score, job_id)
-                for score, (job_id, _, _) in prioritization_claim.score_job_pairs
+                for score, (job_id, job_args, job_kwargs) in prioritization_claim.score_job_pairs
             ]
 
             # as mentioned earlier, at this time we expect at most 2 job variants
@@ -128,7 +128,27 @@ def iter_persist_prioritized(sweep_id, iter_prioritized=iter_prioritized):
             score = max(score for score, _ in score_job_id_pairs)
 
             # we are adding only per-parent job to the queue
-            add_to_queue(job_id_effective, score)
+            add_to_queue(
+                job_id_effective,
+                score,
+                # Following are JobScope attributes we don't store on JobID
+                # so we need to store them separately.
+                # See JobScope object for exact attr names.
+                # At this point persister forms the
+                # auxiliary data blob for saving on Data Flower.
+                # We don't have to do that here.
+                # It can be pre-computed and placed on the JobSignature
+                # TODO: contemplate moving auxiliary data formation to
+                #       place where JobSignatures are generated and use that
+                #       data for Data Flower (as it was originally intended
+                #       but not implemented because saving each job's data
+                #       individually to Data Flower was too slow)
+                # So, here you would unpack
+                # **job_kwargs
+                # that you get from prioritization_claim.score_job_pairs
+                # ... Until then:
+                ad_account_timezone_name=prioritization_claim.timezone
+            )
 
             # This is our cheap way of ensuring that we are dealing
             # with platform-bound job that we need to report our expectations for
