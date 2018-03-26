@@ -75,7 +75,7 @@ def process_celery_worker_command(command_line_values):
     celery_app.worker_main(celery_worker_args)
 
 
-def start_sweep(command_line_values):
+def process_start_command(command_line_values):
     """
     :param _CommandLineValues command_line_values:
     """
@@ -93,7 +93,7 @@ def start_sweep(command_line_values):
 
 commands = {
     'worker': process_celery_worker_command,
-    'start': start_sweep
+    'start': process_start_command
 }
 
 
