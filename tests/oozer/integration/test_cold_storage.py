@@ -14,7 +14,6 @@ from io import BytesIO
 from common import tztools
 from common.facebook.enums.entity import Entity
 from common.facebook.enums.reporttype import ReportType
-from facebookads.adobjects.campaign import Campaign
 from oozer.common import cold_storage
 from oozer.common.job_scope import JobScope
 from tests.base.random import gen_string_id
@@ -31,16 +30,19 @@ class TestUploadToS3(TestCase):
         self.campaign_id = gen_string_id()
         self.ad_account_id = gen_string_id()
 
-    def _fake_data_factory(self, fbid=None, **data):
+    def _fake_data_factory(self, twid=None, **data):
         """
         Fake campaign factory for testing purposes
 
         :return Campaign: Facebook SDK campaign object
         """
-        test_campaign = Campaign(fbid or self.campaign_id)
-        test_campaign[Campaign.Field.account_id] = self.ad_account_id
+        test_campaign = dict(
+            id=self.campaign_id,
+            account_id=self.ad_account_id
+        )
+
         test_campaign.update(data)
-        return test_campaign.export_all_data()
+        return test_campaign
 
     def _get_s3_object(self, key):
         """
@@ -63,7 +65,7 @@ class TestUploadToS3(TestCase):
         test_campaign = self._fake_data_factory(
             self.campaign_id,
             **{
-                Campaign.Field.account_id: self.ad_account_id
+                'account_id': self.ad_account_id
             }
         )
 
@@ -85,8 +87,8 @@ class TestUploadToS3(TestCase):
         # Note that the value is an array of one or more elements.
         # it's always an array
         assert json.load(fileobj_under_test) == [{
-            "id": self.campaign_id,
-            "account_id": self.ad_account_id
+            'id': self.campaign_id,
+            'account_id': self.ad_account_id
         }]
 
     def test_metadata_stored(self):
@@ -95,7 +97,7 @@ class TestUploadToS3(TestCase):
         """
         test_data = self._fake_data_factory()
         ctx = JobScope(
-            ad_account_id=test_data[Campaign.Field.account_id],
+            ad_account_id=test_data['account_id'],
             report_type=ReportType.entities,
         )
 
@@ -125,7 +127,7 @@ class TestUploadToS3(TestCase):
         assert s3_obj.metadata == {
             'build_id': config.build.BUILD_ID,
             'job_id': ctx.job_id,
-            'platform': 'fb',
+            'platform': 'tw',
             'ad_account_id': ctx.ad_account_id,
             'report_type': ReportType.entities,
             'platform_api_version': 'v2.11'
@@ -138,8 +140,8 @@ class TestUploadToS3(TestCase):
         test_data = self._fake_data_factory()
 
         params = {
-            'ad_account_id': test_data[Campaign.Field.account_id],
-            'report_type': 'fb_entities_adaccount_campaigns',
+            'ad_account_id': test_data['account_id'],
+            'report_type': 'tw_entities_adaccount_campaigns',
             'report_time': tztools.now_in_tz('UTC'),
             'report_id': uuid.uuid4().hex,
             'request_metadata': {}
@@ -153,7 +155,7 @@ class TestUploadToS3(TestCase):
             .hexdigest()[:6]
 
         zulu_time = params["report_time"].strftime("%Y-%m-%dT%H:%M:%SZ")
-        expected_key = f'fb/{account_prefix}-{params["ad_account_id"]}' \
+        expected_key = f'tw/{account_prefix}-{params["ad_account_id"]}' \
                        f'/{params["report_type"]}' \
                        f'/{params["report_time"].strftime("%Y")}' \
                        f'/{params["report_time"].strftime("%m")}' \
