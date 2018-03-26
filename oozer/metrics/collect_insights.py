@@ -1,3 +1,4 @@
+import functools
 import gevent
 
 from datetime import datetime, date
@@ -21,6 +22,9 @@ from oozer.common.job_context import JobContext
 from oozer.common.job_scope import JobScope
 from oozer.common.report_job_status import FacebookJobStatus
 from oozer.common.report_job_status_task import report_job_status_task
+from oozer.common.vendor_data import add_vendor_data
+
+from .vendor_data_extractor import report_type_vendor_data_extractor_map
 
 
 ENUM_LEVEL_MAP = {
@@ -131,40 +135,6 @@ DEFAULT_ATTRIBUTION_WINDOWS = [
     AdsInsights.ActionAttributionWindows.value_28d_click,
 ]
 
-
-def iter_insights(fb_entity, report_params):
-    """
-    Run the actual execution of the insights job
-
-    :param AbstractCrudObject fb_entity: The ads api facebook entity instance
-    :param dict report_params: FB API report params
-    """
-
-    report_status_obj = fb_entity.get_insights(
-        params=report_params,
-        async=True
-    )  # type: AdReportRun
-
-    report_tracker = FacebookAsyncReportStatus(report_status_obj)
-
-    polling_interval = INSIGHTS_STARTING_POLLING_INTERVAL
-    while not report_tracker.is_complete:
-        # My prior history of interaction with FB's API for async reports
-        # tells me they need a little bit of time to bake the report status record fully
-        # Asking for its status immediately very very often provided bogus results:
-        # - "Failed" while it's just being constructed, then switching to "pending" then to final state
-        # - "Successful" while it's just being constructed, then switching to "pending" then to final state
-        # So sleeping a little before asking for it first time is better then sleeping
-        # AFTER asking for status the first time. Sleep first.
-        # TODO: change this to Gevent sleep or change whole thing into a generator that
-        # yields nothing until it raises exception for failure or returns Generator with data.
-        gevent.sleep(polling_interval)
-        report_tracker.refresh()
-        polling_interval = INSIGHTS_POLLING_INTERVAL
-
-    return report_tracker.iter_report_data()
-
-
 def _convert_and_validate_date_format(dt):
     """
     Converts incoming values that may represent a date
@@ -216,12 +186,14 @@ class JobScopeParsed:
         if is_per_parent_report:
             entity_id = job_scope.ad_account_id
             entity_type = Entity.AdAccount
+            entity_type_reporting = job_scope.report_variant
             self.report_params.update(
                 level=ENUM_LEVEL_MAP[job_scope.report_variant]
             )
         else: # direct, per-entity report
             entity_id = job_scope.entity_id
             entity_type = job_scope.entity_type
+            entity_type_reporting = entity_type
             self.report_params.update(
                 level=ENUM_LEVEL_MAP[entity_type]
             )
@@ -320,98 +292,175 @@ class JobScopeParsed:
                 entity_id, entity_type
             )
 
+        # here we configure code that will augment each datum with  record ID
+        vendor_data_extractor = report_type_vendor_data_extractor_map[job_scope.report_type]
+        if job_scope.report_type == ReportType.day_hour:
+            # hour report type's ID extractor function needs extra leading arg - timezone
+            vendor_data_extractor = functools.partial(vendor_data_extractor, job_scope.ad_account_timezone_name)
 
-def iter_collect_insights(job_scope, job_context):
+        aux_data = dict(
+            ad_account_id=job_scope.ad_account_id,
+            entity_type=entity_type_reporting,
+            report_type=job_scope.report_type,
+        )
+
+        self.augment_with_vendor_data = lambda data: add_vendor_data(
+            data,
+            **vendor_data_extractor(data, **aux_data)
+        )
+
+
+class Insights:
     """
-    Central, *GENERIC* implementation of insights fetcher task
+    You might be wondering why this is a class.
+    What's the point of attaching static methods to it?
 
-    The goal of this method is to be the entry point for
-    metrics fetching Celery tasks. This method is expected to parse
-    the JobScope object, figure out that needs to be done
-    based on data in the JobScope object and convert that data into
-    proper parameters for calling FB
+    Ease of testing.
 
-    :param JobScope job_scope: The JobScope as we get it from the task itself
-    :param JobContext job_context: A job context we use for entity checksums
-    :rtype: Generator[Dict]
+    It's a pain to mock out calls to iter_insights if it was a module
+    function, because it's already imported and is baked into some calling
+    code in iter_collect_insights by reference.
+
+    With it being a static child of this class, mocking becomes simple:
+
+    with mock.patch.object(Insights, 'iter_insights', return_value=[{}]):
+       Insights.iter_collect_insights(blah) # will use our mock
+
+    No need to fight the import chain or patch modules in clever ways.
+    This is all about moving faster through code, where faster test creation is
+    at premium.
     """
-    # Report start of work
-    report_job_status_task.delay(FacebookJobStatus.Start, job_scope)
 
-    try:
-        if not job_scope.tokens:
-            raise ValueError(
-                f"Job {job_scope.job_id} cannot proceed. No platform tokens provided."
+    @staticmethod
+    def iter_insights(fb_entity, report_params):
+        """
+        Run the actual execution of the insights job
+
+        :param AbstractCrudObject fb_entity: The ads api facebook entity instance
+        :param dict report_params: FB API report params
+        """
+
+        report_status_obj = fb_entity.get_insights(
+            params=report_params,
+            async=True
+        )  # type: AdReportRun
+
+        report_tracker = FacebookAsyncReportStatus(report_status_obj)
+
+        polling_interval = INSIGHTS_STARTING_POLLING_INTERVAL
+        while not report_tracker.is_complete:
+            # My prior history of interaction with FB's API for async reports
+            # tells me they need a little bit of time to bake the report status record fully
+            # Asking for its status immediately very very often provided bogus results:
+            # - "Failed" while it's just being constructed, then switching to "pending" then to final state
+            # - "Successful" while it's just being constructed, then switching to "pending" then to final state
+            # So sleeping a little before asking for it first time is better then sleeping
+            # AFTER asking for status the first time. Sleep first.
+            # TODO: change this to Gevent sleep or change whole thing into a generator that
+            # yields nothing until it raises exception for failure or returns Generator with data.
+            gevent.sleep(polling_interval)
+            report_tracker.refresh()
+            polling_interval = INSIGHTS_POLLING_INTERVAL
+
+        return report_tracker.iter_report_data()
+
+    @classmethod
+    def iter_collect_insights(cls, job_scope, job_context):
+        """
+        Central, *GENERIC* implementation of insights fetcher task
+
+        The goal of this method is to be the entry point for
+        metrics fetching Celery tasks. This method is expected to parse
+        the JobScope object, figure out that needs to be done
+        based on data in the JobScope object and convert that data into
+        proper parameters for calling FB
+
+        :param JobScope job_scope: The JobScope as we get it from the task itself
+        :param JobContext job_context: A job context we use for entity checksums
+        :rtype: Generator[Dict]
+        """
+        # Report start of work
+        report_job_status_task.delay(FacebookJobStatus.Start, job_scope)
+
+        try:
+            if not job_scope.tokens:
+                raise ValueError(
+                    f"Job {job_scope.job_id} cannot proceed. No platform tokens provided."
+                )
+
+            token = job_scope.token
+            # We don't use it for getting a token. Something else that calls us does.
+            # However, we use it to report usages of the token we got.
+            token_manager = PlatformTokenManager.from_job_scope(job_scope)
+
+        except Exception:
+            # This is a generic failure, which does not help us at all, so, we just
+            # report it and bail
+            report_job_status_task.delay(
+                FacebookJobStatus.GenericError, job_scope
             )
+            raise
 
-        token = job_scope.token
-        # We don't use it for getting a token. Something else that calls us does.
-        # However, we use it to report usages of the token we got.
-        token_manager = PlatformTokenManager.from_job_scope(job_scope)
+        try:
+            scope_parsed = JobScopeParsed(job_scope)
+            data_iter = cls.iter_insights(
+                scope_parsed.report_root_fb_entity,
+                scope_parsed.report_params
+            )
+            with scope_parsed.datum_handler as store:
+                cnt = 0
+                for datum in data_iter:
 
-    except Exception:
-        # This is a generic failure, which does not help us at all, so, we just
-        # report it and bail
-        report_job_status_task.delay(
-            FacebookJobStatus.GenericError, job_scope
-        )
-        raise
+                    # this computes values for and adds _oprm data object
+                    # to each datum that passes through us.
+                    scope_parsed.augment_with_vendor_data(datum)
 
-    try:
-        scope_parsed = JobScopeParsed(job_scope)
-        data_iter = iter_insights(
-            scope_parsed.report_root_fb_entity,
-            scope_parsed.report_params
-        )
-        with scope_parsed.datum_handler as store:
-            cnt = 0
-            for datum in data_iter:
-                store(datum)
-                yield datum
-                cnt += 1
+                    store(datum)
+                    yield datum
+                    cnt += 1
 
-                if cnt % 100 == 0:
-                    report_job_status_task.delay(
-                        FacebookJobStatus.DataFetched, job_scope
-                    )
-                    # default paging size for entities per parent
-                    # is typically around 25. So, each 100 results
-                    # means about 4 hits to FB
-                    token_manager.report_usage(token, 4)
+                    if cnt % 100 == 0:
+                        report_job_status_task.delay(
+                            FacebookJobStatus.DataFetched, job_scope
+                        )
+                        # default paging size for entities per parent
+                        # is typically around 25. So, each 100 results
+                        # means about 4 hits to FB
+                        token_manager.report_usage(token, 4)
 
-        report_job_status_task.delay(
-            FacebookJobStatus.Done, job_scope
-        )
-        token_manager.report_usage(token)
+            report_job_status_task.delay(
+                FacebookJobStatus.Done, job_scope
+            )
+            token_manager.report_usage(token)
 
-    except FacebookError as e:
-        # Build ourselves the error inspector
-        inspector = FacebookApiErrorInspector(e)
+        except FacebookError as e:
+            # Build ourselves the error inspector
+            inspector = FacebookApiErrorInspector(e)
 
-        # Is this a throttling error?
-        if inspector.is_throttling_exception():
-            failure_status = FacebookJobStatus.ThrottlingError
-            failure_bucket = FailureBucket.Throttling
+            # Is this a throttling error?
+            if inspector.is_throttling_exception():
+                failure_status = FacebookJobStatus.ThrottlingError
+                failure_bucket = FailureBucket.Throttling
 
-        # Did we ask for too much data?
-        elif inspector.is_too_large_data_exception():
-            failure_status = FacebookJobStatus.TooMuchData
-            failure_bucket = FailureBucket.TooLarge
+            # Did we ask for too much data?
+            elif inspector.is_too_large_data_exception():
+                failure_status = FacebookJobStatus.TooMuchData
+                failure_bucket = FailureBucket.TooLarge
 
-        # It's something else which we don't understand
-        else:
-            failure_status = FacebookJobStatus.GenericFacebookError
-            failure_bucket = FailureBucket.Other
+            # It's something else which we don't understand
+            else:
+                failure_status = FacebookJobStatus.GenericFacebookError
+                failure_bucket = FailureBucket.Other
 
-        report_job_status_task.delay(failure_status, job_scope)
-        token_manager.report_usage_per_failure_bucket(token, failure_bucket)
-        raise
+            report_job_status_task.delay(failure_status, job_scope)
+            token_manager.report_usage_per_failure_bucket(token, failure_bucket)
+            raise
 
-    except Exception:
-        # This is a generic failure, which does not help us at all, so, we just
-        # report it and bail
-        report_job_status_task.delay(
-            FacebookJobStatus.GenericError, job_scope
-        )
-        token_manager.report_usage_per_failure_bucket(token, FailureBucket.Other)
-        raise
+        except Exception:
+            # This is a generic failure, which does not help us at all, so, we just
+            # report it and bail
+            report_job_status_task.delay(
+                FacebookJobStatus.GenericError, job_scope
+            )
+            token_manager.report_usage_per_failure_bucket(token, FailureBucket.Other)
+            raise
