@@ -62,7 +62,7 @@ push_image: image
 #############
 # Redis cluster
 REDIS_CLUSTER_IMAGE_NAME:=redis-cluster
-REDIS_CLUSTER_IMAGE_NAME_FULL:=$(VENDOR_NAME)/$(REDIS_CLUSTER_IMAGE_NAME)
+REDIS_CLUSTER_IMAGE_NAME_FULL:=operam/$(REDIS_CLUSTER_IMAGE_NAME)
 
 image.redis-cluster:
 	docker build \
@@ -72,8 +72,8 @@ image.redis-cluster:
 
 #############
 # Dynamodb local management
-DYNAMO_IMAGE_NAME:=dynamodb
-DYNAMO_IMAGE_NAME_FULL:=$(VENDOR_NAME)/$(DYNAMO_IMAGE_NAME)
+DYNAMO_IMAGE_NAME:=local-dynamodb
+DYNAMO_IMAGE_NAME_FULL:=operam/$(DYNAMO_IMAGE_NAME)
 
 # Build DynamoDB image
 image.dynamo:
@@ -86,7 +86,7 @@ image.dynamo:
 #############
 # Fake s3 local management
 FAKE_S3_IMAGE_NAME:=fakes3
-FAKE_S3_IMAGE_NAME_FULL:=${VENDOR_NAME}/${FAKE_S3_IMAGE_NAME}
+FAKE_S3_IMAGE_NAME_FULL:=operam/${FAKE_S3_IMAGE_NAME}
 
 # Build Fake S3 image
 image.fakes3:
@@ -180,7 +180,7 @@ drop-stack:
 
 #############
 # Test runner
-test: .dynamodb_data image.dynamo image.fakes3 image.redis-cluster
+test: .dynamodb_data
 	DYNAMO_IMAGE_NAME_FULL=$(DYNAMO_IMAGE_NAME_FULL) \
 	DYNAMODIR=$(DYNAMODIR) \
 	FAKE_S3_IMAGE_NAME_FULL=${FAKE_S3_IMAGE_NAME_FULL} \
