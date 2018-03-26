@@ -1,6 +1,7 @@
 from typing import Optional
 
-from pynamodb.models import Model
+from queue import deque
+from pynamodb.models import Model, BatchWrite as _BatchWrite
 from pynamodb import attributes
 from pynamodb.expressions.update import Action as PynamoDBAction
 
@@ -41,6 +42,62 @@ def _convert_to_pynamodb_expression(cls, value, attr_name):
     return getattr(cls, attr_name).set(value)
 
 
+class BatchWrite(_BatchWrite):
+
+    def __init__(self, model, auto_commit=True, key_cache_size=500):
+        super().__init__(model, auto_commit=auto_commit)
+        self._key_cache = set()
+        self._key_cache_order = deque()
+        self._key_cache_remaining = key_cache_size
+
+    def upsert_deduped(self, *primary_keys, **data):
+        """
+        A variant of upsert() that tries not to write too much
+        when it detects reuse of the primary key.
+
+        Only first record is let out, but because
+        the key cache is finite, same key may be considered "first"
+        if it repeats outside of cache size recycle.
+
+        :param primary_keys:
+        :param data:
+        :return:
+        """
+        if primary_keys in self._key_cache:
+            return
+
+        self._key_cache.add(primary_keys)
+
+        # we are popping off cache in FIFO order
+        self._key_cache_order.append(primary_keys)  # on right side
+        if self._key_cache_remaining is 0:
+            item = self._key_cache_order.popleft()
+            self._key_cache.remove(item)
+        else:
+            self._key_cache_remaining -= 1
+
+        self.upsert(*primary_keys, **data)
+
+    def upsert(self, *primary_keys, **data):
+        """
+        Convenience method that saves us from initing model by hand
+        when using base BatchWrite.save(model_instance)
+
+        Not really an update, since entire model is overwritten,
+        but, luckily, quietly whether it exists or not.
+
+        :param primary_keys:
+        :param data:
+        :return:
+        """
+        self.save(
+            self.model(
+                *primary_keys,
+                **data
+            )
+        )
+
+
 class BaseModel(Model):
     """
     Base PynamoDB models is cool, but needs more coolness. This is us.
@@ -75,6 +132,17 @@ class BaseModel(Model):
 
         model.update(actions=actions)
         return model
+
+    @classmethod
+    def batch_write(cls, auto_commit=True):
+        """
+        Returns a context manager for a batch operation'
+
+        Overrides base method. Returns enhanced version of BatchWrite.
+
+        :param auto_commit: Commits writes automatically if `True`
+        """
+        return BatchWrite(cls, auto_commit=auto_commit)
 
     # allows to_dict method to learn about additional attributes / fields
     # on the model that we consider canonical, but these are not actually

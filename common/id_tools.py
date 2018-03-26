@@ -2,6 +2,7 @@
 The purpose of this module is to handle mapping of various naming conventions we
 are giving to actionable items in the system back and forth.
 """
+from collections import namedtuple
 from datetime import date, datetime
 from itertools import zip_longest
 
@@ -19,6 +20,9 @@ fields = [
     "range_start",
     "range_end",
 ]
+
+
+JobIdParts = namedtuple('JobIdParts', fields)
 
 
 def generate_id(
@@ -114,3 +118,8 @@ def parse_id(job_id, fields=fields):
             pass
 
     return data
+
+
+def parse_id_parts(job_id):
+    # type: (str) -> JobIdParts
+    return JobIdParts(**parse_id(job_id))

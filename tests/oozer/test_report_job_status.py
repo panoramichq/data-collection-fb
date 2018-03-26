@@ -1,64 +1,59 @@
 # must be first, as it does event loop patching and other "first" things
-from tests.base.testcase import TestCase
+from tests.base.testcase import TestCase, mock
+
 from datetime import datetime
-import pytz
-import pytest
 
-from oozer.common import job_scope
-from common.enums.failure_bucket import FailureBucket
 from common.enums.entity import Entity
-from oozer.common.enum import FacebookJobStatus
-from oozer.common.report_job_status import report_job_status
-from common.store.sweepentityreport import FacebookSweepEntityReport
+from common.enums.reporttype import ReportType
+from common.tztools import now
+from oozer.common import cold_storage
+from oozer.common import report_job_status
+from oozer.common.job_scope import JobScope
+from tests.base import random
 
 
-class TestReportJobStatus(TestCase):
+class TestJobDoneReporter(TestCase):
 
-    def _manufacture_job_scope(self):
+    maxDiff = None
 
-        return job_scope.JobScope(
-            ad_account_id='123',
-            report_type='entity',
-            report_time=datetime.now(pytz.utc),
-            report_id="some_id",
-            sweep_id='12',
-            report_variant=Entity.Campaign
+    def test_right_data_is_communicated_on_done_signal(self):
+
+        range_start = now()
+        range_start_should_be = range_start.strftime('%Y-%m-%d')
+
+        job_scope = JobScope(
+            sweep_id=random.gen_string_id(),
+            ad_account_id=random.gen_string_id(),
+            report_type=ReportType.day_hour,
+            report_variant=Entity.Ad,
+            range_start=now()
         )
 
-    def test_basic_sweep_report_stored(self):
-        ctx = self._manufacture_job_scope()
+        with mock.patch.object(cold_storage, 'store') as store:
+            report_job_status._report_job_done_to_cold_store(
+                job_scope
+            )
 
-        report_job_status(123, ctx)
+        assert store.called
+        aa, kk = store.call_args
+        assert not kk
+        data, job_scope_reported = aa
 
-        stored_data = FacebookSweepEntityReport.get(ctx.sweep_id, ctx.job_id)
-
-        assert stored_data.to_dict() == {
-            'sweep_id': '12',
-            'job_id': 'fb:123:::entity:C',
-            'ad_account_id': '123',
-            'stage_id': 123,
-            'entity_id': None,
+        assert data == {
+            'job_id': job_scope.job_id,
+            # missing "ad_" is intentional.
+            # this matches this attr name as sent by FB
+            # and ysed by us elsewhere in the company
+            'account_id': job_scope.ad_account_id,
             'entity_type': None,
-            'failure_bucket': None,
-            'failure_error': None,
-            'report_type': 'entity',
+            'entity_id': None,
+            'report_type': ReportType.day_hour,
+            'report_variant': Entity.Ad,
+            'range_start': range_start_should_be,
+            'range_end': None,
+            'platform_namespace': JobScope.namespace  # default platform value
         }
 
-    def test_failure_bucket(self):
-
-        ctx = self._manufacture_job_scope()
-        report_job_status(FacebookJobStatus.ThrottlingError, ctx)
-
-        stored_data = FacebookSweepEntityReport.get(ctx.sweep_id, ctx.job_id)
-
-        assert stored_data.to_dict() == {
-            'sweep_id': '12',
-            'job_id': 'fb:123:::entity:C',
-            'ad_account_id': '123',
-            'entity_id': None,
-            'stage_id': FacebookJobStatus.ThrottlingError,
-            'entity_type': None,
-            'failure_bucket': FailureBucket.Throttling,
-            'failure_error': None,
-            'report_type': 'entity',
-        }
+        assert job_scope_reported.sweep_id == job_scope.sweep_id
+        assert job_scope_reported.ad_account_id == job_scope.ad_account_id
+        assert job_scope_reported.report_type == ReportType.sync_status

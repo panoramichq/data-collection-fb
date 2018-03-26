@@ -4,7 +4,7 @@ from facebookads.exceptions import FacebookError
 from common.enums.entity import Entity
 from common.enums.failure_bucket import FailureBucket
 from common.tokens import PlatformTokenManager
-from oozer.common import cold_storage
+from oozer.common.cold_storage.batch_store import ChunkDumpStore
 from oozer.common.facebook_api import (
     FacebookApiContext,
     FacebookApiErrorInspector,
@@ -111,64 +111,35 @@ def iter_collect_entities_per_adaccount(job_scope, job_context):
             report_variant=None,
         )
 
-        cnt = 0
-        for entity in entities:
+        with ChunkDumpStore(job_scope, chunk_size=200) as store:
+            cnt = 0
+            for entity in entities:
+                entity_data = entity.export_all_data()
 
-            # Externalize these for clarity
-            current_hash = _checksum_from_job_context(
-                job_context, entity['id']
-            )
-            entity_hash = _checksum_entity(entity)
-            entity_data = entity.export_all_data()
+                # Store the individual datum, use job context for the cold
+                # storage thing to divine whatever it needs from the job context
+                store(entity_data)
 
-            normative_job_scope = JobScope(
-                job_scope_base_data,
-                entity_id=entity_data.get('id')
-            )
+                # Signal to the system the new entity
+                feedback_entity_task.delay(entity_data, entity_type, [None, None])
 
-            # Check whether we actually need to put this into the ETL
-            # pipeline it is possible that a given entity has not changed
-            # since last time we checked and therefore it is not necessary
-            # to deal with right now
-            if current_hash == entity_hash:
-                report_job_status_task.delay(
-                    FacebookJobStatus.Done, normative_job_scope
-                )
-                # Don't need to save it / send it to cold store
-                continue  # to next entity
-            else:
-                report_job_status_task.delay(
-                    FacebookJobStatus.DataFetched, normative_job_scope
-                )
+                yield entity_data
+                cnt += 1
 
-            # Store the individual datum, use job context for the cold
-            # storage thing to divine whatever it needs from the job context
-            cold_storage.store(entity_data, normative_job_scope)
-
-            # Signal to the system the new entity
-            feedback_entity_task.delay(entity_data, entity_type, entity_hash)
-
-            report_job_status_task.delay(
-                FacebookJobStatus.Done, normative_job_scope
-            )
-
-            yield entity_data
-            cnt += 1
-
-            if cnt % 100 == 0:
-                report_job_status_task.delay(
-                    FacebookJobStatus.DataFetched, job_scope
-                )
-                # default paging size for entities per parent
-                # is typically around 25. So, each 100 results
-                # means about 4 hits to FB
-                token_manager.report_usage(token, 4)
+                if cnt % 100 == 0:
+                    report_job_status_task.delay(
+                        FacebookJobStatus.DataFetched, job_scope
+                    )
+                    # default paging size for entities per parent
+                    # is typically around 25. So, each 100 results
+                    # means about 4 hits to FB
+                    token_manager.report_usage(token, 4)
 
         # Report on the effective task status
         report_job_status_task.delay(
             FacebookJobStatus.Done, job_scope
         )
-        token_manager.report_usage(token, 1)
+        token_manager.report_usage(token)
 
     except FacebookError as e:
         # Build ourselves the error inspector

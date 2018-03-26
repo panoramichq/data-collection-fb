@@ -4,9 +4,13 @@ from oozer.common.job_scope import JobScope
 from oozer.entities.import_ad_accounts_task import import_ad_accounts_task
 from oozer.entities.tasks import collect_entities_per_adaccount_task
 from oozer.metrics.tasks import collect_insights_task
+from oozer.sync_expectations_task import sync_expectations_task
 
 
 entity_report_handler_map = {
+    ReportType.sync_expectations: {
+        Entity.AdAccount: sync_expectations_task
+    },
     ReportType.import_accounts: {
         Entity.Scope: import_ad_accounts_task,
     },

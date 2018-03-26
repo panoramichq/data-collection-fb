@@ -16,7 +16,7 @@ from sweep_builder.expectation_builder.expectation_claim import ExpectationClaim
 entity_expectation_generator_map = {}  # type: Dict[str, List[(RealityClaim) -> Generator[ExpectationClaim]]]
 
 
-from .adaccount import ad_accounts_per_scope
+from .adaccount import ad_accounts_per_scope, sync_expectations_per_ad_account
 
 
 entity_expectation_generator_map[Entity.Scope] = [
@@ -39,7 +39,8 @@ from .entities import (
 entity_expectation_generator_map[Entity.AdAccount] = [
     campaign_entities_per_ad_account,
     adset_entities_per_ad_account,
-    ad_entities_per_ad_account
+    ad_entities_per_ad_account,
+    sync_expectations_per_ad_account
 ]
 
 
