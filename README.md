@@ -36,4 +36,4 @@ When adding dependencies needed for testing or local development, place them in 
 
 #### Compiling dependencies
 
-TODO
+To compile the dependencies run `make requirements-compile`, this runs the `pip-compile` on the requirement file chain. As we run pip install when building images, to rebuild the packages quit the stack and run `make image` to rebuild the image or run `pip install -r requirements.txt` directly in the container (you should also be able to update the packages with [`pip-sync`](https://github.com/jazzband/pip-tools#example-usage-for-pip-sync)).
