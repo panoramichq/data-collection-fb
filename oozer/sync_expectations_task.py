@@ -60,7 +60,7 @@ def sync_expectations(job_scope):
                     store(
                         dict(
                             job_id=job_id,
-                            # status='expectation',  # discuss value and attr name with Mike
+                            # status='expected',
                             account_id=job_id_parts.ad_account_id,
                             entity_type=job_id_parts.entity_type,
                             entity_id=job_id_parts.entity_id,
