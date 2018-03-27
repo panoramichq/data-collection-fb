@@ -130,12 +130,9 @@ drop-stack:
 
 #############
 # Test runner
-test: .dynamodb_data
+test: .dynamodb_data .s3_data
 	DYNAMODIR=$(DYNAMODIR) \
 	FAKES3DIR=$(FAKES3DIR) \
-	DDOG_IMAGE_NAME_FULL=${DDOG_IMAGE_NAME_FULL} \
-	DDOG_HOSTNAME=${DDOG_HOSTNAME} \
-	DDOG_API_KEY=${DDOG_API_KEY} \
 	IMAGE_NAME_FULL=$(IMAGE_NAME_FULL) \
 	WORKDIR=/usr/src/app \
 	docker-compose -f docker/docker-compose-test.yaml run \
