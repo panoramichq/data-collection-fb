@@ -3,7 +3,6 @@ from tests.base.testcase import TestCase, integration
 from datetime import datetime
 from unittest import skip
 from pprint import pprint
-from twitter_ads.client import Client
 
 from common.twitter.enums.entity import Entity
 from oozer.common.job_scope import JobScope
@@ -24,6 +23,7 @@ class TestingNativeEntityCollection(TestCase):
 
             count = 0
             for campaign in iter_native_entities_per_adaccount(ad_account, Entity.Campaign):
+                print(campaign.id)
                 count += 1
                 break
 
