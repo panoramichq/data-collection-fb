@@ -144,7 +144,11 @@ workflows:
       - hold_for_deploy_staging:
           type: approval
           requires:
-           - run_tests
+            - run_tests
+          filters:
+            branches:
+              only:
+                - staging
 
       - deploy_staging:
           requires:
