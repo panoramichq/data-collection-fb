@@ -43,6 +43,15 @@ class _CommandLineValues(argparse.Namespace):
     worker_type = 'str'
 
 
+class StarterWorkerType:
+
+    sweep = 'sweep'
+
+    ALL = {
+        sweep
+    }
+
+
 def process_celery_worker_command(command_line_values):
     """
     :param _CommandLineValues command_line_values:
@@ -66,8 +75,25 @@ def process_celery_worker_command(command_line_values):
     celery_app.worker_main(celery_worker_args)
 
 
+def process_start_command(command_line_values):
+    """
+    :param _CommandLineValues command_line_values:
+    """
+    if command_line_values.worker_type == StarterWorkerType.sweep:
+        from sweep_builder.tasks import sweep_builder_task
+        sweep_builder_task.delay(
+            sweep_id=None,
+            start_looper=True
+        )
+        return
+
+    # we never get values that are not on the list of valid ones
+    # OptParser complains about that first, so, here we only get the ones
+    # we declare in opt parser config as supported options.
+
 commands = {
-    'worker': process_celery_worker_command
+    'worker': process_celery_worker_command,
+    'start': process_start_command
 }
 
 
@@ -95,6 +121,13 @@ def parse_args(argv):
         'worker_type',
         choices=RoutingKey.ALL,
         help='Pick Celery routing key value this worker will be responsible for',
+    )
+
+    starter_subparser = subparsers.add_parser('start')
+    starter_subparser.add_argument(
+        'worker_type',
+        choices=StarterWorkerType.ALL,
+        help='Command that makes it ever slightly easier to start certain worker types.',
     )
 
     return parser.parse_args(argv)
