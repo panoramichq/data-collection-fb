@@ -317,7 +317,7 @@ class VendorDataUniversalIdExtraction(TestCase):
                 '', # report variant
                 '2018-06-02', # Range start.
                 '', # Range end
-                #### extra stuff special to age,gender
+                #### extra stuff special to DMA
                 "Some+Long-running+Value+%28spaces%2Bparens%29",
             ])
 

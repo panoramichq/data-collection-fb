@@ -4,13 +4,8 @@ from tests.base.testcase import TestCase, mock
 from common.enums.entity import Entity
 from common.enums.reporttype import ReportType
 from common.id_tools import generate_universal_id
-from common.tokens import PlatformTokenManager
-from common.store.entities import FacebookAdAccountEntity
 from oozer.common.cold_storage.batch_store import ChunkDumpStore
-from oozer.common.console_api import ConsoleApi
 from oozer.common.job_scope import JobScope
-from oozer.common.enum import JobStatus
-from oozer.common.report_job_status_task import report_job_status_task
 from oozer.entities.collect_entities_per_adaccount import iter_collect_entities_per_adaccount
 from oozer.entities.collect_entities_per_adaccount import FB_AD_MODEL, FB_ADSET_MODEL, FB_CAMPAIGN_MODEL, FB_ADACCOUNT_MODEL
 
@@ -62,9 +57,9 @@ class TestCollectEntitiesPerAdAccount(TestCase):
 
             fb_data = FB_MODEL(fbid=fbid)
             fb_data[FB_MODEL.Field.account_id] = self.ad_account_id
-            rr = [fb_data]
+            entities_data = [fb_data]
 
-            with mock.patch.object(FB_ADACCOUNT_MODEL, get_method_name, return_value=rr), \
+            with mock.patch.object(FB_ADACCOUNT_MODEL, get_method_name, return_value=entities_data), \
                  mock.patch.object(ChunkDumpStore, 'store') as store:
 
                 data_received = list(iter_collect_entities_per_adaccount(job_scope, None))
