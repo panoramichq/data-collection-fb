@@ -1,10 +1,12 @@
-from typing import Generator
+from typing import Generator, Optional, Union
 from facebookads.exceptions import FacebookError
 
 from common.enums.entity import Entity
 from common.enums.failure_bucket import FailureBucket
 from common.tokens import PlatformTokenManager
+from common.id_tools import generate_universal_id
 from oozer.common.cold_storage.batch_store import ChunkDumpStore
+from oozer.common.vendor_data import add_vendor_data
 from oozer.common.facebook_api import (
     FacebookApiContext,
     FacebookApiErrorInspector,
@@ -14,6 +16,7 @@ from oozer.common.job_context import JobContext
 from oozer.common.job_scope import JobScope
 from oozer.common.report_job_status_task import report_job_status_task
 from oozer.common.enum import (
+    FB_ADACCOUNT_MODEL,
     FB_CAMPAIGN_MODEL,
     FB_ADSET_MODEL,
     FB_AD_MODEL,
@@ -24,7 +27,10 @@ from oozer.entities.entity_hash import _checksum_entity, _checksum_from_job_cont
 from oozer.entities.feedback_entity_task import feedback_entity_task
 
 
+
+
 def iter_native_entities_per_adaccount(ad_account, entity_type, fields=None):
+    # type: (FB_ADACCOUNT_MODEL, str, Optional[list]) -> Generator[Union[FB_CAMPAIGN_MODEL, FB_ADSET_MODEL, FB_AD_MODEL]]
     """
     Generic getter for entities from the AdAccount edge
 
@@ -61,7 +67,6 @@ def iter_collect_entities_per_adaccount(job_scope, job_context):
     :param JobContext job_context: A job context we use for entity checksums
     :rtype: Generator[Dict]
     """
-
     report_job_status_task.delay(FacebookJobStatus.Start, job_scope)
 
     try:
@@ -92,7 +97,6 @@ def iter_collect_entities_per_adaccount(job_scope, job_context):
         )
         raise
 
-
     try:
         with FacebookApiContext(token) as fb_ctx:
             root_fb_entity = fb_ctx.to_fb_model(
@@ -104,10 +108,9 @@ def iter_collect_entities_per_adaccount(job_scope, job_context):
             entity_type
         )
 
-        job_scope_base_data = job_scope.to_dict()
-        job_scope_base_data.update(
+        record_id_base_data = job_scope.to_dict()
+        record_id_base_data.update(
             entity_type=entity_type,
-            is_derivative=True, # this keeps the scope from being counted as done task by looper
             report_variant=None,
         )
 
@@ -115,6 +118,13 @@ def iter_collect_entities_per_adaccount(job_scope, job_context):
             cnt = 0
             for entity in entities:
                 entity_data = entity.export_all_data()
+                entity_data = add_vendor_data(
+                    entity_data,
+                    id=generate_universal_id(
+                        entity_id=entity_data.get(entity.Field.id),
+                        **record_id_base_data
+                    )
+                )
 
                 # Store the individual datum, use job context for the cold
                 # storage thing to divine whatever it needs from the job context

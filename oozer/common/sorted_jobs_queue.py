@@ -1,3 +1,4 @@
+import ujson as json
 import logging
 import random
 
@@ -5,10 +6,14 @@ from collections import namedtuple, OrderedDict
 from typing import Generator, Tuple, List
 
 from common.connect.redis import get_redis
-from common.id_tools import parse_id
+from common.id_tools import parse_id_parts
 
 
 logger = logging.getLogger(__name__)
+
+
+class NotSet:
+    pass
 
 
 class _JobsWriter:
@@ -35,6 +40,7 @@ class _JobsWriter:
         self.batch = {}
         self.batch_size = batch_size
         self.cache = OrderedDict()
+        self.processed_job_scope_data_ad_account_ids = set()
         self.cache_max_size = 700
         self.cnt = 0
         self.redis_client = get_redis()
@@ -59,8 +65,28 @@ class _JobsWriter:
         self.cnt += len(self.batch)
         self.batch.clear()
 
-    def add_to_queue(self, job_id, score):
-        if parse_id(job_id)['entity_id']:
+    def write_job_scope_data(self, job_scope_data, job_id_parts):
+        # scope_data are chunks of data we elsewhere refer to as "petals" in Data Flower
+        # these are units of context data that were not encoded into the job ID,
+        # but that are still needed for successful execution of the job.
+        # what you have there are things like ad account's time zone, possibly tokens,
+        # possibly
+        # However, saving potentially same exact thing for all millions of jobs queued up would be nuts
+        # So, instead, we'll save the data only for every new ad account ID we see.
+        if job_id_parts.ad_account_id not in self.processed_job_scope_data_ad_account_ids:
+            self.processed_job_scope_data_ad_account_ids.add(job_id_parts.ad_account_id)
+            self.redis_client.set(
+                self.sorted_jobs_queue_interface.get_payload_key(job_id_parts.ad_account_id),
+                json.dumps(job_scope_data)
+            )
+
+    def add_to_queue(self, job_id, score, **job_scope_data):
+        job_id_parts = parse_id_parts(job_id)
+
+        if job_scope_data:
+            self.write_job_scope_data(job_scope_data, job_id_parts)
+
+        if job_id_parts.entity_id:
             # if entity ID is present, there is no way
             # this could be a reused job
             # (as only per-Parent jobs can be reused by children)
@@ -110,6 +136,7 @@ class _JobsReader:
         """
         self.batch_size = batch_size
         self.cnt = 0
+        self.ad_account_id_job_scope_data_map = OrderedDict()
         self.sorted_jobs_queue_interface = sorted_jobs_queue_interface
 
     @staticmethod
@@ -123,6 +150,32 @@ class _JobsReader:
                 yield job_id.decode('utf8'), score
             start += step
             job_id_score_pairs = redis.zrevrange(key, start, start+step)
+
+    def read_job_scope_data(self, job_id, max_cache_size=4000):
+        """
+        :param job_id:
+        :param max_cache_size:
+        :rtype: dict
+        """
+        # This is the Read part of Data Flower code in _JobsWriter's add_to_queue
+        # Here we pick up that auxiliary data that Writer created for this job
+        # Note that for now, Writer creates a per-ad_account_id payloads only
+        # So, we don't have to read data payloads for every job. Only first
+        # time we see a given ad account ID do we have to go and fetch the data.
+        # Hence, here we don't read the data by JobID but by ad_account_id.
+        job_id_parts = parse_id_parts(job_id)
+        job_data = self.ad_account_id_job_scope_data_map.get(job_id_parts.ad_account_id, NotSet)
+        if job_data is NotSet:
+            job_data = json.loads(
+                get_redis().get(
+                    self.sorted_jobs_queue_interface.get_payload_key(job_id_parts.ad_account_id)
+                ) or '{}'
+            )
+            self.ad_account_id_job_scope_data_map[job_id_parts.ad_account_id] = job_data
+            while len(self.ad_account_id_job_scope_data_map) > max_cache_size: #
+                self.ad_account_id_job_scope_data_map.popitem()  # oldest
+
+        return job_data
 
     def iter_jobs(self):
         """
@@ -170,11 +223,10 @@ class _JobsReader:
             front_row.sort(key=lambda o: o.score, reverse=True)
             score, job_id, gen = front_row.pop(0)
 
-            # Notice we are sending blank JobScope data below.
-            # This will be replaced by a query for job parameters
-            # which will most likely be stored under a job_id derived key in redis
-            # job_id, JobScope data, Score
-            yield job_id, {}, score
+            ##### \/ this is the actual signature of the iterator we return \/ #####
+            yield job_id, self.read_job_scope_data(job_id), score
+            ##### /\ this is the actual signature of the iterator we return /\ #####
+
             self.cnt += 1
 
             try:
@@ -228,6 +280,16 @@ class SortedJobsQueue:
         self._queue_key_base = f'{sweep_id}-sorted-jobs-queue-'
         self._payload_key_base = f'{sweep_id}-sorted-jobs-data-'
 
+    def get_payload_key(self, ad_account_id):
+        """
+        For the time being we are optimizing the store of job data
+        to be per parent Ad Account (so that we write it to Redis
+        only once per AdAccountID as opposed to for every job.
+        :param ad_account_id:
+        :return:
+        """
+        return self._payload_key_base + ad_account_id
+
     def get_queue_key(self, value=None, shard_id=None):
         if shard_id is not None:
             return self._queue_key_base + str(shard_id)
@@ -257,10 +319,10 @@ class SortedJobsQueue:
 
         Example::
 
-            with SortedJobsQueue(sweep_id).TasksWriter() as add_to_queue:
+            with SortedJobsQueue(sweep_id).JobsWriter() as add_to_queue:
                 for job_id, score in scored_jobs:
                     # writes tasks to distributed sorting queues
-                    add_to_queue(job_id, score)
+                    add_to_queue(job_id, score, **job_scope_extra_data)
 
         :return:
         """
@@ -271,9 +333,9 @@ class SortedJobsQueue:
 
         Example:
 
-            with SortedJobsQueue(sweep_id).TasksReader() as jobs_iter:
+            with SortedJobsQueue(sweep_id).JobsReader() as jobs_iter:
                 # tasks_iter yields job_ids sorted by insertion score
-                for job_id in jobs_iter:
+                for job_id, job_data, score in jobs_iter:
                     do_something(job_id)
 
         :return:

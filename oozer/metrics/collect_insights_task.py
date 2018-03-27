@@ -5,7 +5,7 @@ from common.measurement import Measure
 from common.tokens import PlatformTokenManager
 from oozer.common.job_context import JobContext
 from oozer.common.job_scope import JobScope
-from .collect_insights import iter_collect_insights
+from .collect_insights import Insights
 
 
 logger = logging.getLogger(__name__)
@@ -37,7 +37,7 @@ def collect_insights_task(job_scope, job_context):
         # Here we prep, but don't complain.
 
     cnt = 0
-    data_iter = iter_collect_insights(
+    data_iter = Insights.iter_collect_insights(
         job_scope, job_context
     )
     for datum in data_iter:
