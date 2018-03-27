@@ -16,6 +16,7 @@ class TestReportJobStatus(TestCase):
     def _manufacture_job_scope(self):
 
         return job_scope.JobScope(
+            namespace='fb',  # FIXME: Rewrite for Twitter
             ad_account_id='123',
             report_type='entity',
             report_time=datetime.now(pytz.utc),
