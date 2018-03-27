@@ -60,47 +60,6 @@ push_image: image
 .PHONY: image push_image
 
 #############
-# Redis cluster
-REDIS_CLUSTER_IMAGE_NAME:=redis-cluster
-REDIS_CLUSTER_IMAGE_NAME_FULL:=operam/$(REDIS_CLUSTER_IMAGE_NAME)
-
-image.redis-cluster:
-	docker build \
-		--no-cache \
-		-t $(REDIS_CLUSTER_IMAGE_NAME_FULL) \
-		-f docker/Dockerfile.redis-cluster ./docker
-
-#############
-# Dynamodb local management
-DYNAMO_IMAGE_NAME:=local-dynamodb
-DYNAMO_IMAGE_NAME_FULL:=operam/$(DYNAMO_IMAGE_NAME)
-
-# Build DynamoDB image
-image.dynamo:
-	docker build \
-		--no-cache \
-		-t $(DYNAMO_IMAGE_NAME_FULL) \
-		--build-arg DYNAMODB_VERSION=latest \
-		-f docker/Dockerfile.dynamodb .
-
-#############
-# Fake s3 local management
-FAKE_S3_IMAGE_NAME:=fakes3
-FAKE_S3_IMAGE_NAME_FULL:=operam/${FAKE_S3_IMAGE_NAME}
-
-# Build Fake S3 image
-image.fakes3:
-	docker build \
-		--no-cache \
-		-t ${FAKE_S3_IMAGE_NAME_FULL} \
-		--build-arg FAKES3_VERSION=1.2.1 \
-		-f docker/Dockerfile.fakes3 .
-
-
-images: image.dynamo image.fakes3 image.redis-cluster image
-.PHONY: image.dynamo image.fakes3 image.redis-cluster
-
-#############
 # Dev Helpers
 
 # Copying PYTHONUSEBASE folder from container to local machine to allow IDE introspection
@@ -130,11 +89,8 @@ FAKES3DIR:=/s3_data
 
 # use this for interactive console dev and running unit tests
 start-dev: .dynamodb_data .s3_data
-	DYNAMO_IMAGE_NAME_FULL=$(DYNAMO_IMAGE_NAME_FULL) \
 	DYNAMODIR=$(DYNAMODIR) \
-	FAKE_S3_IMAGE_NAME_FULL=${FAKE_S3_IMAGE_NAME_FULL} \
 	FAKES3DIR=$(FAKES3DIR) \
-	REDIS_CLUSTER_IMAGE_NAME_FULL=${REDIS_CLUSTER_IMAGE_NAME_FULL} \
 	DDOG_IMAGE_NAME_FULL=${DDOG_IMAGE_NAME_FULL} \
 	DDOG_HOSTNAME=${DDOG_HOSTNAME} \
 	DDOG_API_KEY=${DDOG_API_KEY} \
@@ -146,11 +102,8 @@ start-dev: .dynamodb_data .s3_data
 
 # use this for standing up entire stack on its own and interacting with it remotely
 start-stack: .dynamodb_data .s3_data
-	DYNAMO_IMAGE_NAME_FULL=$(DYNAMO_IMAGE_NAME_FULL) \
 	DYNAMODIR=$(DYNAMODIR) \
-	FAKE_S3_IMAGE_NAME_FULL=${FAKE_S3_IMAGE_NAME_FULL} \
 	FAKES3DIR=$(FAKES3DIR) \
-	REDIS_CLUSTER_IMAGE_NAME_FULL=${REDIS_CLUSTER_IMAGE_NAME_FULL} \
 	DDOG_IMAGE_NAME_FULL=${DDOG_IMAGE_NAME_FULL} \
 	DDOG_HOSTNAME=${DDOG_HOSTNAME} \
 	DDOG_API_KEY=${DDOG_API_KEY} \
@@ -162,11 +115,8 @@ start-stack: .dynamodb_data .s3_data
 
 # use this to completely remove the stack containers
 drop-stack:
-	DYNAMO_IMAGE_NAME_FULL=$(DYNAMO_IMAGE_NAME_FULL) \
 	DYNAMODIR=$(DYNAMODIR) \
-	FAKE_S3_IMAGE_NAME_FULL=${FAKE_S3_IMAGE_NAME_FULL} \
 	FAKES3DIR=$(FAKES3DIR) \
-	REDIS_CLUSTER_IMAGE_NAME_FULL=${REDIS_CLUSTER_IMAGE_NAME_FULL} \
 	DDOG_IMAGE_NAME_FULL=${DDOG_IMAGE_NAME_FULL} \
 	DDOG_HOSTNAME=${DDOG_HOSTNAME} \
 	DDOG_API_KEY=${DDOG_API_KEY} \
@@ -181,11 +131,8 @@ drop-stack:
 #############
 # Test runner
 test: .dynamodb_data
-	DYNAMO_IMAGE_NAME_FULL=$(DYNAMO_IMAGE_NAME_FULL) \
 	DYNAMODIR=$(DYNAMODIR) \
-	FAKE_S3_IMAGE_NAME_FULL=${FAKE_S3_IMAGE_NAME_FULL} \
 	FAKES3DIR=$(FAKES3DIR) \
-	REDIS_CLUSTER_IMAGE_NAME_FULL=${REDIS_CLUSTER_IMAGE_NAME_FULL} \
 	DDOG_IMAGE_NAME_FULL=${DDOG_IMAGE_NAME_FULL} \
 	DDOG_HOSTNAME=${DDOG_HOSTNAME} \
 	DDOG_API_KEY=${DDOG_API_KEY} \
