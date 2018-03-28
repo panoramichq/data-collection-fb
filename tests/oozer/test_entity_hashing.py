@@ -9,7 +9,7 @@ from common.enums.entity import Entity
 
 from config.facebook import AD_ACCOUNT, TOKEN
 
-from oozer.entities.entity_hash import EntityHash, _checksum_entity
+from oozer.entities.entity_hash import EntityHash, checksum_entity
 
 
 class TestEntityHasher(TestCase):
@@ -33,7 +33,7 @@ class TestEntityHasher(TestCase):
         return c
 
     def test_hash_calculation(self):
-        checksum = _checksum_entity(
+        checksum = checksum_entity(
             self._manufacture_test_entity()
         )
 
@@ -44,7 +44,7 @@ class TestEntityHasher(TestCase):
 
     def test_field_selection(self):
         entity = self._manufacture_test_entity()
-        checksum = _checksum_entity(
+        checksum = checksum_entity(
             entity, ['account_id', 'buying_type']
         )
 
@@ -55,7 +55,7 @@ class TestEntityHasher(TestCase):
 
         # Check changing of value not selected does not break anything
         entity['objective'] = 'POST_ENGAGEMENT'
-        checksum = _checksum_entity(
+        checksum = checksum_entity(
             entity, ['account_id', 'buying_type']
         )
 

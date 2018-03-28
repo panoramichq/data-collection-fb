@@ -23,7 +23,7 @@ from oozer.common.enum import (
     ENUM_VALUE_FB_MODEL_MAP,
     FacebookJobStatus
 )
-from oozer.entities.entity_hash import _checksum_entity, _checksum_from_job_context
+from oozer.entities.entity_hash import checksum_entity, checksum_from_job_context
 from oozer.entities.feedback_entity_task import feedback_entity_task
 
 
