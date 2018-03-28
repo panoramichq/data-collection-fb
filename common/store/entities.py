@@ -73,7 +73,7 @@ class AdAccountEntity(BaseModel):
         return AdAccount(fbid=f'act_{self.ad_account_id}', api=api)
 
 
-class FacebookEntityBaseMixin:
+class EntityBaseMixin:
     """
     Use this mixin for describing Facebook entity existence tables
     """
@@ -112,29 +112,29 @@ class EntityBaseMeta(BaseMeta):
     write_capacity_units = 10
 
 
-class FacebookCampaignEntity(FacebookEntityBaseMixin, BaseModel):
+class CampaignEntity(EntityBaseMixin, BaseModel):
     """
     Represents a single facebook campaign entity
     """
-    Meta = EntityBaseMeta(dynamodb_config.FB_CAMPAIGN_ENTITY_TABLE)
+    Meta = EntityBaseMeta(dynamodb_config.CAMPAIGN_ENTITY_TABLE)
 
     entity_type = Entity.Campaign
 
 
-class FacebookAdsetEntity(FacebookEntityBaseMixin, BaseModel):
+class AdsetEntity(EntityBaseMixin, BaseModel):
     """
     Represent a single facebook adset entity
     """
-    Meta = EntityBaseMeta(dynamodb_config.FB_ADSET_ENTITY_TABLE)
+    Meta = EntityBaseMeta(dynamodb_config.ADSET_ENTITY_TABLE)
 
     entity_type = Entity.AdSet
 
 
-class FacebookAdEntity(FacebookEntityBaseMixin, BaseModel):
+class AdEntity(EntityBaseMixin, BaseModel):
     """
     Represents a single facebook ad entity
     """
-    Meta = EntityBaseMeta(dynamodb_config.FB_AD_ENTITY_TABLE)
+    Meta = EntityBaseMeta(dynamodb_config.AD_ENTITY_TABLE)
 
     entity_type = Entity.Ad
 
@@ -144,9 +144,9 @@ ENTITY_TYPE_MODEL_MAP = {
     model.entity_type: model
     for model in [
         AdAccountEntity,
-        FacebookCampaignEntity,
-        FacebookAdsetEntity,
-        FacebookAdEntity
+        CampaignEntity,
+        AdsetEntity,
+        AdEntity
     ]
 }
 
@@ -162,9 +162,9 @@ def sync_schema(brute_force=False):
 
     tables = [
         AdAccountEntity,
-        FacebookCampaignEntity,
-        FacebookAdsetEntity,
-        FacebookAdEntity
+        CampaignEntity,
+        AdsetEntity,
+        AdEntity
     ]
 
     for table in tables:

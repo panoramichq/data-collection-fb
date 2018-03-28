@@ -5,10 +5,10 @@
 HOST = None
 
 AD_ACCOUNT_ENTITY_TABLE = 'FacebookAdAccountEntity'
-FB_AD_ACCOUNT_SCOPE_TABLE = 'FacebookAdAccountScope'
-FB_AD_ENTITY_TABLE = 'FacebookAdEntity'
-FB_ADSET_ENTITY_TABLE = 'FacebookAdsetEntity'
-FB_CAMPAIGN_ENTITY_TABLE = 'FacebookCampaignEntity'
+AD_ACCOUNT_SCOPE_TABLE = 'FacebookAdAccountScope'
+AD_ENTITY_TABLE = 'FacebookAdEntity'
+ADSET_ENTITY_TABLE = 'FacebookAdsetEntity'
+CAMPAIGN_ENTITY_TABLE = 'FacebookCampaignEntity'
 FB_TOKEN_TABLE = 'FacebookPlatformToken'
 JOB_REPORT_TABLE = 'JobReport'
 

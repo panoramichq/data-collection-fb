@@ -44,7 +44,7 @@ class AssetScope(BaseModel, MemoizeMixin):
     Initially used for tracking / managing the per-sweep sync of Ad Account IDs from
     Console into our internal store for later iteration over that collection.
     """
-    Meta = BaseMeta(dynamodb_config.FB_AD_ACCOUNT_SCOPE_TABLE)
+    Meta = BaseMeta(dynamodb_config.AD_ACCOUNT_SCOPE_TABLE)
 
     # scope is an ephemeral scoping element
     # Imagine "operam business manager system user" being one of the scope's values.
