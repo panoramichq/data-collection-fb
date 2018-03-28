@@ -10,8 +10,8 @@ from common.bugsnag import configure_bugsnag
 MODULES_WITH_TASKS = [
     'oozer',
     'oozer.common',
-    'oozer.entities',
-    'oozer.metrics',
+    'oozer.facebook.entities',
+    'oozer.facebook.metrics',
     'sweep_builder',
 ]
 

@@ -23,7 +23,7 @@ from oozer.common.enum import (
     ENUM_VALUE_FB_MODEL_MAP,
     ExternalPlatformJobStatus
 )
-from oozer.entities.feedback_entity_task import feedback_entity_task
+from oozer.facebook.entities.feedback_entity_task import feedback_entity_task
 
 
 

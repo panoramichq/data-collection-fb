@@ -9,7 +9,7 @@ from oozer.common.console_api import ConsoleApi
 from oozer.common.job_scope import JobScope
 from oozer.common.enum import JobStatus
 from oozer.common.report_job_status_task import report_job_status_task
-from oozer.entities.import_ad_accounts_task import import_ad_accounts_task, scope_api_map
+from oozer.facebook.entities.import_ad_accounts_task import import_ad_accounts_task, scope_api_map
 from tests.base import random
 
 

@@ -7,7 +7,7 @@ from common import id_tools
 from common.facebook.enums.entity import Entity
 from common.facebook.enums.reporttype import ReportType
 from oozer.common.cold_storage.batch_store import ChunkDumpStore
-from oozer.metrics import collect_insights, vendor_data_extractor
+from oozer.facebook.metrics import collect_insights, vendor_data_extractor
 from oozer.common.job_scope import JobScope
 from tests.base import random
 

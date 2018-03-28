@@ -1,7 +1,7 @@
 from tests.base.testcase import TestCase, integration
 
 from typing import Dict, List, Tuple
-from unittest import mock, skip
+from unittest import mock
 
 from config.facebook import TOKEN, AD_ACCOUNT
 
@@ -11,7 +11,7 @@ from oozer.common.job_scope import JobScope
 from common.facebook.enums.reporttype import ReportType
 from oozer.common import cold_storage
 
-from oozer.metrics.collect_insights import Insights
+from oozer.facebook.metrics.collect_insights import Insights
 
 
 @integration('facebook')

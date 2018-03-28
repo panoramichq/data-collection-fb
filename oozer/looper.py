@@ -3,9 +3,9 @@ import logging
 import math
 import time
 
-from collections import namedtuple, OrderedDict
+from collections import namedtuple
 from itertools import islice
-from typing import Generator, Tuple, List
+from typing import Generator, Tuple
 
 from common.connect.redis import get_redis
 from common.enums.failure_bucket import FailureBucket
@@ -15,7 +15,7 @@ from config import looper as looper_config
 from oozer.common.job_context import JobContext
 from oozer.common.job_scope import JobScope
 from oozer.common.sorted_jobs_queue import SortedJobsQueue
-from oozer.inventory import resolve_job_scope_to_celery_task
+from oozer.facebook.inventory import resolve_job_scope_to_celery_task
 
 
 logger = logging.getLogger(__name__)

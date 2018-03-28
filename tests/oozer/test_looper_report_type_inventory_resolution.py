@@ -4,7 +4,7 @@ from tests.base.testcase import TestCase
 from common.facebook.enums.entity import Entity
 from common.facebook.enums.reporttype import ReportType
 from oozer.common.job_scope import JobScope
-from oozer import inventory
+from oozer.facebook import inventory
 from tests.base.random import gen_string_id
 
 
