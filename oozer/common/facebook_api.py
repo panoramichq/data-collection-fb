@@ -119,7 +119,7 @@ _default_fields_map = {
     # AdAccount: ['id'],
     Campaign: [
         'account_id',
-        # 'adlabels',
+        'adlabels',
         # 'boosted_object_id',
         # 'brand_lift_studies',
         # 'budget_rebalance_flag',
@@ -195,7 +195,7 @@ _default_fields_map = {
     Ad: [
         'account_id',
         # 'ad_review_feedback', <----- !!!!!!!!!
-        # 'adlabels', <----- !!!!!!!!!
+        # 'adlabels', # <----- !!!!!!!!!
         # 'adset', <----- !!!!!!!!!
         'adset_id',
         # 'adset_spec', <----- !!!!!!!!!

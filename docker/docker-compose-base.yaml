@@ -3,7 +3,7 @@ version: '2.3'
 services:
 
   redis-cluster:
-     image: ${REDIS_CLUSTER_IMAGE_NAME_FULL}
+     image: operam/redis-cluster
 #     ports:
 #      - 7000:7000
 #      - 7001:7001
@@ -18,7 +18,7 @@ services:
       driver: none
 
   dynamo:
-    image: ${DYNAMO_IMAGE_NAME_FULL}
+    image: operam/local-dynamodb
     # ports:
     #  - 8000:8000
     volumes:
@@ -28,7 +28,7 @@ services:
       - ../.dynamodb_data:${DYNAMODIR}
 
   fakes3:
-    image: ${FAKE_S3_IMAGE_NAME_FULL}
+    image: operam/fakes3
     # ports:
     #  - 4444:4444
     volumes:

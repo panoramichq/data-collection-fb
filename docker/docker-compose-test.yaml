@@ -31,4 +31,20 @@ services:
       - redis
       - redis-cluster
       - dynamo
-    command: bash -c "python bin/migrate.py && pytest"
+    environment:
+      APP_LOGGING_LEVEL: 'INFO'
+      APP_CELERY_task_eager_propagates: "true"
+      APP_CELERY_task_always_eager: "true"
+    # redis cluster does not come up quickly enough, so sleep 3
+    # There is probably a way to have checks on "when it's up" in docker
+    # but feeling lazy here.
+    # TODO: switch to use of health route / ping for "up" detection for Redis-cluster
+    command: bash -c "python bin/migrate.py && sleep 3 && pytest"
+    # Note that because we inherit from docker-compose-base.yaml::app
+    # we mount PWD as working folder inside the container.
+    # Thus, we are actually NOT testing the insides of the image,
+    # but just build artifacts of the image outside of working
+    # folder and actually rely on contents of PWD for actual code to test.
+    # Without this behavior, because we exclude tests from the build,
+    # there'd be nothing to run inside the image anyway...
+    # TODO: rethink this

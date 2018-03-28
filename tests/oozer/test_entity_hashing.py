@@ -39,7 +39,7 @@ class TestEntityHasher(TestCase):
 
         assert checksum == EntityHash(
             data='e92f1414ef60429f',
-            fields='ae4bf294cdfa2f3a'
+            fields='0d96d28039c4c9b8'
         )
 
     def test_field_selection(self):
