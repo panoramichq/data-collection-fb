@@ -14,7 +14,6 @@ from oozer.common import cold_storage
 from oozer.metrics.collect_insights import Insights
 
 
-@skip
 @integration('facebook')
 class IntegrationTestingMetricsCollection(TestCase):
 
@@ -62,7 +61,7 @@ class IntegrationTestingMetricsCollection(TestCase):
                 break
             assert datum
 
-@skip
+
 @integration('facebook')
 class IntegrationTestingMetricsCollectionPipeline(TestCase):
 

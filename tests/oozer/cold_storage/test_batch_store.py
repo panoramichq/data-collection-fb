@@ -25,7 +25,6 @@ class TestBatchStore(TestCase):
             report_type=ReportType.entities,
         )
 
-    @skip
     def test_normal_store_works(self):
 
         # Here we shoot all teh way to S3 for one reason:
