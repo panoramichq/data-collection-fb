@@ -3,7 +3,7 @@ from dateutil.parser import parse as parse_iso_datetime_string
 
 from common.store.entities import ENTITY_TYPE_MODEL_MAP
 from common.tztools import dt_to_other_timezone
-from common.enums.entity import Entity
+from common.facebook.enums.entity import Entity
 
 
 def _parse_fb_datetime(value):

@@ -1,11 +1,10 @@
-from datetime import date, datetime
-from collections import defaultdict, OrderedDict
+from collections import OrderedDict
 
 import config.application
 
 from common.enums.failure_bucket import FailureBucket
-from common.enums.reporttype import ReportType
-from common.id_tools import parse_id_parts, generate_id
+from common.facebook.enums.reporttype import ReportType
+from common.id_tools import parse_id_parts
 from common.job_signature import JobSignature
 from common.store.jobreport import JobReport
 from common.tztools import now_in_tz, now

@@ -1,7 +1,6 @@
 import logging
 
 from common.celeryapp import get_celery_app
-from common.enums.entity import Entity
 from common.measurement import Measure
 from common.tokens import PlatformTokenManager
 from oozer.common.job_context import JobContext

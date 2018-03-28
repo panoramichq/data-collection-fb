@@ -1,17 +1,16 @@
 # must be first, as it does event loop patching and other "first" things
 from tests.base.testcase import TestCase, mock, skip
 
-from common.enums.entity import Entity
-from common.enums.reporttype import ReportType
+from common.facebook.enums.entity import Entity
+from common.facebook.enums.reporttype import ReportType
 from oozer.common.job_scope import JobScope
 from tests.base.random import gen_string_id
 
 from oozer.common.cold_storage.batch_store import (
     ChunkDumpStore,
-    MemorySpoolStore,
     NormalStore,
 )
-from oozer.common.cold_storage.base_store import load_data, load
+from oozer.common.cold_storage.base_store import load_data
 
 
 class TestBatchStore(TestCase):

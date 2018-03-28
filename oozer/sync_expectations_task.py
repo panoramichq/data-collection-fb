@@ -1,12 +1,10 @@
-import config.application
-
 from datetime import datetime, date
 
 from common.celeryapp import get_celery_app
 from common.id_tools import parse_id_parts
 from common.measurement import Measure
-from common.enums.reporttype import ReportType
-from common.enums.entity import Entity
+from common.facebook.enums.reporttype import ReportType
+from common.facebook.enums.entity import Entity
 from oozer.common.cold_storage.batch_store import ChunkDumpStore
 from oozer.common.enum import JobStatus
 from oozer.common import expecations_store

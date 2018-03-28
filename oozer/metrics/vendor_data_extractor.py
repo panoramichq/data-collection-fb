@@ -1,8 +1,8 @@
-from datetime import datetime, date
+from datetime import datetime
 from facebookads.adobjects.adsinsights import AdsInsights
 
-from common.enums.entity import Entity
-from common.enums.reporttype import ReportType
+from common.facebook.enums.entity import Entity
+from common.facebook.enums.reporttype import ReportType
 from common.id_tools import generate_universal_id, universal_id_fields
 from common.tztools import dt_to_other_timezone
 

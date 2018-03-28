@@ -1,19 +1,16 @@
 # must be first, as it does event loop patching and other "first" things
 from tests.base.testcase import TestCase, mock
 
-from common.enums.entity import Entity
-from common.enums.reporttype import ReportType
+from common.facebook.enums.entity import Entity
+from common.facebook.enums.reporttype import ReportType
 from common.id_tools import generate_id, parse_id_parts
 from common.tztools import now
-from oozer import inventory
 from oozer.common import cold_storage
 from oozer.common import expecations_store
 from oozer.common.job_scope import JobScope
 from oozer.common.enum import JobStatus
-from oozer.common.sorted_jobs_queue import SortedJobsQueue
 from oozer import sync_expectations_task
 from tests.base import random
-from unittest.mock import patch, Mock, ANY
 
 
 class TestSyncExcpectationsTask(TestCase):

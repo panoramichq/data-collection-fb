@@ -3,7 +3,7 @@ import logging
 from facebookads.adobjects.adsinsights import AdsInsights
 from typing import Dict, List, Union, Optional
 
-from common.enums.entity import Entity
+from common.facebook.enums.entity import Entity
 from oozer.common.job_scope import JobScope
 from oozer.common.enum import JobStatus
 

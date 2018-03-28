@@ -8,12 +8,12 @@ import hashlib
 import json
 import uuid
 
-from datetime import datetime, timedelta
+from datetime import datetime
 from io import BytesIO
 
 from common import tztools
-from common.enums.entity import Entity
-from common.enums.reporttype import ReportType
+from common.facebook.enums.entity import Entity
+from common.facebook.enums.reporttype import ReportType
 from facebookads.adobjects.campaign import Campaign
 from oozer.common import cold_storage
 from oozer.common.job_scope import JobScope

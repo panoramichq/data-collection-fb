@@ -1,12 +1,8 @@
 import logging
 
-from collections import defaultdict
-from datetime import datetime
 from typing import Generator, Callable
 
-from common.enums.entity import Entity
-from common.connect.redis import get_redis
-from common.store import jobreport
+from common.facebook.enums.entity import Entity
 from oozer.common.expecations_store import JobExpectationsWriter
 from oozer.common.sorted_jobs_queue import SortedJobsQueue
 

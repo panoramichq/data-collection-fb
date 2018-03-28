@@ -1,7 +1,7 @@
 from typing import Generator, Optional, Union
 from facebookads.exceptions import FacebookError
 
-from common.enums.entity import Entity
+from common.facebook.enums.entity import Entity
 from common.enums.failure_bucket import FailureBucket
 from common.tokens import PlatformTokenManager
 from common.id_tools import generate_universal_id
@@ -23,7 +23,6 @@ from oozer.common.enum import (
     ENUM_VALUE_FB_MODEL_MAP,
     ExternalPlatformJobStatus
 )
-from oozer.entities.entity_hash import checksum_entity, checksum_from_job_context
 from oozer.entities.feedback_entity_task import feedback_entity_task
 
 

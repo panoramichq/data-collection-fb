@@ -1,18 +1,11 @@
 # must be first, as it does event loop patching and other "first" things
-from oozer.common.sorted_jobs_queue import SortedJobsQueue
 from tests.base.testcase import TestCase
 
-from contextlib import contextmanager
-from datetime import datetime, timezone, timedelta
-
-from common.enums.entity import Entity
-from common.enums.reporttype import ReportType
+from common.facebook.enums.entity import Entity
+from common.facebook.enums.reporttype import ReportType
 from oozer.common.job_scope import JobScope
 from oozer import inventory
 from tests.base.random import gen_string_id
-from unittest.mock import patch, Mock, ANY
-
-from oozer.looper import iter_tasks
 
 
 class TestEntityFeedback(TestCase):

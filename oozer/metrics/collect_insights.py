@@ -11,9 +11,9 @@ from typing import Callable, Dict
 from config.facebook import INSIGHTS_POLLING_INTERVAL, \
     INSIGHTS_STARTING_POLLING_INTERVAL
 
-from common.enums.entity import Entity
 from common.enums.failure_bucket import FailureBucket
-from common.enums.reporttype import ReportType
+from common.facebook.enums.entity import Entity
+from common.facebook.enums.reporttype import ReportType
 from common.tokens import PlatformTokenManager
 from oozer.common.cold_storage import batch_store
 from oozer.common.facebook_api import FacebookApiContext, FacebookApiErrorInspector

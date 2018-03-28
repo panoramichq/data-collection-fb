@@ -3,7 +3,7 @@ import logging
 from datetime import datetime, date
 
 from common.enums.failure_bucket import FailureBucket
-from common.enums.reporttype import ReportType
+from common.facebook.enums.reporttype import ReportType
 from common.store.jobreport import JobReport
 from oozer.common import cold_storage
 from oozer.common.enum import ExternalPlatformJobStatus

@@ -4,8 +4,8 @@ from tests.base.testcase import TestCase, mock
 import functools
 
 from common import id_tools
-from common.enums.entity import Entity
-from common.enums.reporttype import ReportType
+from common.facebook.enums.entity import Entity
+from common.facebook.enums.reporttype import ReportType
 from oozer.common.cold_storage.batch_store import ChunkDumpStore
 from oozer.metrics import collect_insights, vendor_data_extractor
 from oozer.common.job_scope import JobScope

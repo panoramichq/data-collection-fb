@@ -1,10 +1,8 @@
 # must be first, as it does event loop patching and other "first" things
 from tests.base.testcase import TestCase, mock
 
-from datetime import datetime
-
-from common.enums.entity import Entity
-from common.enums.reporttype import ReportType
+from common.facebook.enums.entity import Entity
+from common.facebook.enums.reporttype import ReportType
 from common.tztools import now
 from oozer.common import cold_storage
 from oozer.common import report_job_status

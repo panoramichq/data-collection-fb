@@ -1,5 +1,5 @@
-from common.enums.entity import Entity
-from common.enums.reporttype import ReportType
+from common.facebook.enums.entity import Entity
+from common.facebook.enums.reporttype import ReportType
 from oozer.common.job_scope import JobScope
 from oozer.entities.import_ad_accounts_task import import_ad_accounts_task
 from oozer.entities.tasks import collect_entities_per_adaccount_task

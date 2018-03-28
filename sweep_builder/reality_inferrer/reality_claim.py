@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional, Set
 
-from common.enums.entity import Entity
+from common.facebook.enums.entity import Entity
 
 
 class RealityClaim:

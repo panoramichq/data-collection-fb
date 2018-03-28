@@ -1,12 +1,8 @@
-from itertools import zip_longest
-from typing import List, Set, Union, Optional
-
-import config.application
+from typing import Union, Optional
 
 from common.connect.redis import get_redis
-from common.enums.entity import Entity
+from common.facebook.enums.entity import Entity
 from common.enums.failure_bucket import FailureBucket
-from common.enums.reporttype import ReportType
 from oozer.common.job_scope import JobScope
 
 
