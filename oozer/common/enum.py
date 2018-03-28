@@ -74,7 +74,7 @@ class JobStatus:
     GenericError = -1000
 
 
-class FacebookJobStatus(JobStatus):
+class ExternalPlatformJobStatus(JobStatus):
     """
     Use this to communicate to give status reporter enough information to
     figure out what the stage id means in terms of failures
@@ -91,13 +91,13 @@ class FacebookJobStatus(JobStatus):
     # FB API throttling kicked in. At this point we don't diff if its App vs AdAccount vs User throttling.
     # TODO: plan for splitting this into 3: App | AdAccount | User
     ThrottlingError = -700
-    GenericFacebookError = -900
+    GenericPlatformError = -900
 
     failure_bucket_map = {
         DataFetched: FailureBucket.WorkingOnIt,
         JobStatus.Done: FailureBucket.Success,
         TooMuchData: FailureBucket.TooLarge,
         ThrottlingError: FailureBucket.Throttling,
-        GenericFacebookError: FailureBucket.Other,
+        GenericPlatformError: FailureBucket.Other,
         JobStatus.GenericError: FailureBucket.Other
     }
