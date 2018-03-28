@@ -4,7 +4,7 @@
 # region settings
 HOST = None
 
-FB_AD_ACCOUNT_ENTITY_TABLE = 'FacebookAdAccountEntity'
+AD_ACCOUNT_ENTITY_TABLE = 'FacebookAdAccountEntity'
 FB_AD_ACCOUNT_SCOPE_TABLE = 'FacebookAdAccountScope'
 FB_AD_ENTITY_TABLE = 'FacebookAdEntity'
 FB_ADSET_ENTITY_TABLE = 'FacebookAdsetEntity'

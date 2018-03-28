@@ -5,11 +5,11 @@ from config import dynamodb as dynamodb_config
 from .base import BaseMeta, BaseModel, attributes
 
 
-class FacebookAdAccountEntity(BaseModel):
+class AdAccountEntity(BaseModel):
     """
     Represents a single facebook ad account entity
     """
-    Meta = BaseMeta(dynamodb_config.FB_AD_ACCOUNT_ENTITY_TABLE)
+    Meta = BaseMeta(dynamodb_config.AD_ACCOUNT_ENTITY_TABLE)
 
     _additional_fields = {
         'entity_type'
@@ -143,7 +143,7 @@ class FacebookAdEntity(FacebookEntityBaseMixin, BaseModel):
 ENTITY_TYPE_MODEL_MAP = {
     model.entity_type: model
     for model in [
-        FacebookAdAccountEntity,
+        AdAccountEntity,
         FacebookCampaignEntity,
         FacebookAdsetEntity,
         FacebookAdEntity
@@ -161,7 +161,7 @@ def sync_schema(brute_force=False):
     from pynamodb.exceptions import TableError, TableDoesNotExist
 
     tables = [
-        FacebookAdAccountEntity,
+        AdAccountEntity,
         FacebookCampaignEntity,
         FacebookAdsetEntity,
         FacebookAdEntity
