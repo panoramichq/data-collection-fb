@@ -153,7 +153,7 @@ _default_fields_map = {
         'bid_amount',
         'bid_info',
         'billing_event',
-        # 'budget_remaining',  # per chat with Product, DS, DO NOT FETCH OR RELY ON THIS
+        'budget_remaining',  #TODO: Temp enable. Migrate Console away from use.
         # 'campaign',
         'campaign_id',
         # 'campaign_spec',
