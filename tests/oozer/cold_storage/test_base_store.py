@@ -1,14 +1,14 @@
 # must be first, as it does event loop patching and other "first" things
-from tests.base.testcase import TestCase
+from tests.base.testcase import TestCase, mock
 
 import boto3
 import config.aws
 import config.build
-import hashlib
+import xxhash
 import json
 import uuid
 
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from io import BytesIO
 
 from common import tztools
@@ -131,33 +131,145 @@ class TestUploadToS3(TestCase):
             'platform_api_version': 'v2.11'
         }
 
-    def test_key_s3_construction(self):
+
+class TestingS3KeyGeneration(TestCase):
+
+    def test_key_s3_date_less(self):
         """
         Check that the key is constructed as we expect
         """
-        test_data = self._fake_data_factory()
+        import common.tztools
 
-        params = {
-            'ad_account_id': test_data[Campaign.Field.account_id],
-            'report_type': 'fb_entities_adaccount_campaigns',
-            'report_time': tztools.now_in_tz('UTC'),
-            'report_id': uuid.uuid4().hex,
-            'request_metadata': {}
-        }
+        job_scope = JobScope(
+            ad_account_id=gen_string_id(),
+            report_type=ReportType.entities,
+            report_variant=Entity.Campaign
+        )
 
-        scope = JobScope(**params)
+        now_dt = datetime(2000, 1, 2, 3, 4, 5)
+        with mock.patch.object(common.tztools, 'now', return_value=now_dt) as now_mocked, \
+            mock.patch.object(uuid, 'uuid4', return_value='UUID-HERE'):
 
-        storage_key = cold_storage.store(dict(test_data), scope)
+            storage_key = cold_storage.store({'data': 'yeah!'}, job_scope)
 
-        account_prefix = hashlib.md5(params['ad_account_id'].encode()) \
-            .hexdigest()[:6]
+        assert now_mocked.called
 
-        zulu_time = params["report_time"].strftime("%Y-%m-%dT%H:%M:%SZ")
-        expected_key = f'fb/{account_prefix}-{params["ad_account_id"]}' \
-                       f'/{params["report_type"]}' \
-                       f'/{params["report_time"].strftime("%Y")}' \
-                       f'/{params["report_time"].strftime("%m")}' \
-                       f'/{params["report_time"].strftime("%d")}/{zulu_time}-' \
-                       f'{scope.job_id}.json'
+        prefix = xxhash.xxh64(job_scope.ad_account_id).hexdigest()[:6]
+
+        expected_key = f'fb/' \
+                  f'{prefix}-{job_scope.ad_account_id}/' \
+                  f'{job_scope.report_type}/' \
+                  f'{now_dt.strftime("%Y")}/' \
+                  f'{now_dt.strftime("%m")}/' \
+                  f'{now_dt.strftime("%d")}/' \
+                  f'{now_dt.strftime("%Y-%m-%dT%H:%M:%SZ")}-' \
+                  f'{job_scope.job_id}-' \
+                  f'UUID-HERE' \
+                  f'.json'
+
+        assert storage_key == expected_key
+
+    def test_key_s3_incomprehensible_range_start(self):
+        """
+        Check that the key is constructed as we expect
+        """
+        import common.tztools
+
+        job_scope = JobScope(
+            ad_account_id=gen_string_id(),
+            report_type=ReportType.day_platform,
+            report_variant=Entity.Campaign,
+            range_start='blah-blah'
+        )
+
+        # even though range_start is provided ^ above, it's not date-like and we
+        # should be ok with that and just fall back to datetime.utcnow()
+        now_dt = datetime(2000, 1, 2, 3, 4, 5)
+        with mock.patch.object(common.tztools, 'now', return_value=now_dt) as now_mocked, \
+            mock.patch.object(uuid, 'uuid4', return_value='UUID-HERE'):
+
+            storage_key = cold_storage.store({'data': 'yeah!'}, job_scope)
+
+        assert now_mocked.called
+
+        prefix = xxhash.xxh64(job_scope.ad_account_id).hexdigest()[:6]
+
+        expected_key = f'fb/' \
+                       f'{prefix}-{job_scope.ad_account_id}/' \
+                       f'{job_scope.report_type}/' \
+                       f'{now_dt.strftime("%Y")}/' \
+                       f'{now_dt.strftime("%m")}/' \
+                       f'{now_dt.strftime("%d")}/' \
+                       f'{now_dt.strftime("%Y-%m-%dT%H:%M:%SZ")}-' \
+                       f'{job_scope.job_id}-' \
+                       f'UUID-HERE' \
+                       f'.json'
+
+        assert storage_key == expected_key
+
+    def test_key_s3_date_snapped(self):
+        """
+        Check that the key is constructed as we expect
+        """
+
+        job_scope = JobScope(
+            ad_account_id=gen_string_id(),
+            report_type=ReportType.day_platform,
+            report_variant=Entity.Ad,
+            range_start=date(2000, 1, 2)
+        )
+
+        dt_should_be = datetime(2000, 1, 2, 0, 0, 0)
+        with mock.patch.object(uuid, 'uuid4', return_value='UUID-HERE'):
+            storage_key = cold_storage.store({'data': 'yeah!'}, job_scope)
+
+        prefix = xxhash.xxh64(job_scope.ad_account_id).hexdigest()[:6]
+        expected_key = f'fb/' \
+                       f'{prefix}-{job_scope.ad_account_id}/' \
+                       f'{job_scope.report_type}/' \
+                       f'{dt_should_be.strftime("%Y")}/' \
+                       f'{dt_should_be.strftime("%m")}/' \
+                       f'{dt_should_be.strftime("%d")}/' \
+                       f'{dt_should_be.strftime("%Y-%m-%dT%H:%M:%SZ")}-' \
+                       f'{job_scope.job_id}-' \
+                       f'UUID-HERE' \
+                       f'.json'
+
+        assert storage_key == expected_key
+
+    def test_key_s3_date_snapped_with_chunk_id(self):
+        """
+        Check that the key is constructed as we expect
+        """
+
+        job_scope = JobScope(
+            ad_account_id=gen_string_id(),
+            report_type=ReportType.day_platform,
+            report_variant=Entity.Ad,
+            range_start=date(2000, 1, 2)
+        )
+
+        chunk_marker = 7
+
+        dt_should_be = datetime(2000, 1, 2, 0, 0, 0)
+        with mock.patch.object(uuid, 'uuid4', return_value='UUID-HERE'):
+            storage_key = cold_storage.store(
+                {'data': 'yeah!'},
+                job_scope,
+                chunk_marker=7
+            )
+
+        prefix = xxhash.xxh64(job_scope.ad_account_id).hexdigest()[:6]
+        expected_key = f'fb/' \
+                       f'{prefix}-{job_scope.ad_account_id}/' \
+                       f'{job_scope.report_type}/' \
+                       f'{dt_should_be.strftime("%Y")}/' \
+                       f'{dt_should_be.strftime("%m")}/' \
+                       f'{dt_should_be.strftime("%d")}/' \
+                       f'{dt_should_be.strftime("%Y-%m-%dT%H:%M:%SZ")}-' \
+                       f'{job_scope.job_id}-' \
+                       f'{chunk_marker}-' \
+                       f'UUID-HERE' \
+                       f'.json'
 
         assert storage_key == expected_key

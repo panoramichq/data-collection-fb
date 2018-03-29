@@ -16,10 +16,11 @@ s3://operam-reports/facebook/2d700d-1629501014003404/fb_insights_campaign_daily/
 
 """
 import boto3
-import hashlib
+import xxhash
 import io
 import logging
 import time
+import uuid
 # ujson is faster for massive amounts of small data units
 # which is actually the pattern we have - yielding small datum per normative
 # task or small batches of small datums.
@@ -31,12 +32,13 @@ import time
 # http://artem.krylysov.com/blog/2015/09/29/benchmark-python-json-libraries/
 import ujson as json
 
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from facebookads.api import FacebookAdsApi
 from common.measurement import Measure
 
 import config.aws
 import config.build
+import common.tztools
 
 from oozer.common.job_scope import JobScope
 
@@ -59,18 +61,28 @@ def _job_scope_to_storage_key(job_scope, chunk_marker=0):
     """
     assert isinstance(job_scope, JobScope)
 
-    prefix = hashlib.md5(job_scope.ad_account_id.encode()).hexdigest()[:6]
-    report_run_time = datetime.utcnow()
+    prefix = xxhash.xxh64(job_scope.ad_account_id).hexdigest()[:6]
+
+    # datetime is a subclass of date, so we must check for date first
+    if isinstance(job_scope.range_start, date):
+        report_datetime = datetime.combine(job_scope.range_start, datetime.min.time())
+    elif isinstance(job_scope.range_start, datetime):
+        report_datetime = job_scope.range_start
+    else:
+        # long import line to allow mocking of call to now() in tests.
+        report_datetime = common.tztools.now()
 
     key = f'{job_scope.namespace}/' \
           f'{prefix}-{job_scope.ad_account_id}/' \
           f'{job_scope.report_type}/' \
-          f'{report_run_time.strftime("%Y")}/' \
-          f'{report_run_time.strftime("%m")}/' \
-          f'{report_run_time.strftime("%d")}/' \
-          f'{report_run_time.strftime("%Y-%m-%dT%H:%M:%SZ")}-' \
-          f'{job_scope.job_id}' \
-          f'{"-"+str(chunk_marker) if chunk_marker else ""}.json'
+          f'{report_datetime.strftime("%Y")}/' \
+          f'{report_datetime.strftime("%m")}/' \
+          f'{report_datetime.strftime("%d")}/' \
+          f'{report_datetime.strftime("%Y-%m-%dT%H:%M:%SZ")}-' \
+          f'{job_scope.job_id}-' \
+          f'{str(chunk_marker)+"-" if chunk_marker else ""}' \
+          f'{uuid.uuid4()}' \
+          f'.json'
 
     return key
 
