@@ -1,3 +1,4 @@
+import bugsnag
 import ujson as json
 import logging
 import random
@@ -146,8 +147,40 @@ class _JobsReader:
 
         job_id_score_pairs = redis.zrevrange(key, start, start+step, withscores=True)
         while job_id_score_pairs:
-            for job_id, score in job_id_score_pairs:
+            for job_id_score_pair in job_id_score_pairs:
+
+                try:
+                    job_id, score = job_id_score_pair
+                except ValueError as ex:
+                    # "Too many values to unpack" errors in production.
+                    # Unable to replicate these in local env and don't have enough data from
+                    # exception to figure out what the deal is.
+                    # Instrumenting this code per:
+                    # https://docs.bugsnag.com/platforms/python/other/#sending-diagnostic-data
+                    # In order to see more context data next time this happens.
+                    if 'too many values to unpack' or 'not enough values to unpack' in str(ex):
+                        try:
+                            job_id_score_pair_len = len(job_id_score_pair)
+                        except:
+                            job_id_score_pair_len = 'cannot be determined'
+
+                        bugsnag.notify(
+                            ex,
+                            meta_data={
+                                # this will become a tab in BugSnag
+                                'call_context_info': {
+                                    'job_id_score_pair_type': type(job_id_score_pair),
+                                    'job_id_score_pair_len': job_id_score_pair_len
+                                }
+                            }
+                        )
+                        # and exit cleanly
+                        return
+                    else:
+                        raise ex
+
                 yield job_id.decode('utf8'), score
+
             start += step
             job_id_score_pairs = redis.zrevrange(key, start, start+step)
 
