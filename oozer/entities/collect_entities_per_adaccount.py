@@ -8,7 +8,7 @@ from common.id_tools import generate_universal_id
 from oozer.common.cold_storage.batch_store import ChunkDumpStore
 from oozer.common.vendor_data import add_vendor_data
 from oozer.common.facebook_api import (
-    FacebookApiContext,
+    PlatformApiContext,
     FacebookApiErrorInspector,
     get_default_fields,
 )
@@ -98,7 +98,7 @@ def iter_collect_entities_per_adaccount(job_scope, job_context):
         raise
 
     try:
-        with FacebookApiContext(token) as fb_ctx:
+        with PlatformApiContext(token) as fb_ctx:
             root_fb_entity = fb_ctx.to_fb_model(
                 job_scope.ad_account_id, Entity.AdAccount
             )

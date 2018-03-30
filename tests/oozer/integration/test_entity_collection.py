@@ -5,7 +5,7 @@ from tests.base.testcase import TestCase, integration
 from common.enums.entity import Entity
 from config.facebook import TOKEN, AD_ACCOUNT
 from oozer.common.job_scope import JobScope
-from oozer.common.facebook_api import FacebookApiContext
+from oozer.common.facebook_api import PlatformApiContext
 from oozer.common.job_context import JobContext
 from oozer.entities.collect_entities_per_adaccount import \
     iter_collect_entities_per_adaccount, iter_native_entities_per_adaccount
@@ -16,7 +16,7 @@ class TestingEntityCollection(TestCase):
 
     def test_fetch_all_campaigns(self):
 
-        with FacebookApiContext(TOKEN) as ctx:
+        with PlatformApiContext(TOKEN) as ctx:
             ad_account = ctx.to_fb_model(AD_ACCOUNT, Entity.AdAccount)
 
             entities = iter_native_entities_per_adaccount(
@@ -32,7 +32,7 @@ class TestingEntityCollection(TestCase):
 
     def test_fetch_all_adsets(self):
 
-        with FacebookApiContext(TOKEN) as ctx:
+        with PlatformApiContext(TOKEN) as ctx:
             ad_account = ctx.to_fb_model(AD_ACCOUNT, Entity.AdAccount)
 
             entities = iter_native_entities_per_adaccount(
@@ -48,7 +48,7 @@ class TestingEntityCollection(TestCase):
 
     def test_fetch_all_ads(self):
 
-        with FacebookApiContext(TOKEN) as ctx:
+        with PlatformApiContext(TOKEN) as ctx:
             ad_account = ctx.to_fb_model(AD_ACCOUNT, Entity.AdAccount)
 
             entities = iter_native_entities_per_adaccount(
