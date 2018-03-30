@@ -4,7 +4,7 @@ from tests.base.testcase import TestCase, mock
 from common.enums.entity import Entity
 from common.enums.reporttype import ReportType
 from common.tokens import PlatformTokenManager
-from common.store.entities import FacebookAdAccountEntity
+from common.store.entities import AdAccountEntity
 from oozer.common.console_api import ConsoleApi
 from oozer.common.job_scope import JobScope
 from oozer.common.enum import JobStatus
@@ -76,7 +76,7 @@ class TestAdAccountImportTask(TestCase):
 
         with mock.patch.object(ConsoleApi, 'get_active_accounts', return_value=accounts) as gaa, \
             mock.patch.dict(scope_api_map, {self.scope_id: ConsoleApi}), \
-            mock.patch.object(FacebookAdAccountEntity, 'upsert') as aa_upsert, \
+            mock.patch.object(AdAccountEntity, 'upsert') as aa_upsert, \
             mock.patch.object(report_job_status_task, 'delay') as status_task:
 
             import_ad_accounts_task(job_scope, None)
