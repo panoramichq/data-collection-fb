@@ -98,6 +98,7 @@ class IntegrationTestingMetricsCollectionPipeline(TestCase):
         job_scope = JobScope(
             ad_account_id=AD_ACCOUNT,
             range_start='2017-12-31',
+            ad_account_timezone_name='Europe/London',
             report_type=ReportType.day_hour,
             report_variant=Entity.Ad,
             sweep_id='sweep',
