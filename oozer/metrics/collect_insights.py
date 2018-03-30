@@ -20,7 +20,7 @@ from oozer.common.facebook_api import FacebookApiContext, FacebookApiErrorInspec
 from oozer.common.facebook_async_report import FacebookAsyncReportStatus
 from oozer.common.job_context import JobContext
 from oozer.common.job_scope import JobScope
-from oozer.common.report_job_status import FacebookJobStatus
+from oozer.common.report_job_status import ExternalPlatformJobStatus
 from oozer.common.report_job_status_task import report_job_status_task
 from oozer.common.vendor_data import add_vendor_data
 
@@ -380,7 +380,7 @@ class Insights:
         :rtype: Generator[Dict]
         """
         # Report start of work
-        report_job_status_task.delay(FacebookJobStatus.Start, job_scope)
+        report_job_status_task.delay(ExternalPlatformJobStatus.Start, job_scope)
 
         try:
             if not job_scope.tokens:
@@ -397,7 +397,7 @@ class Insights:
             # This is a generic failure, which does not help us at all, so, we just
             # report it and bail
             report_job_status_task.delay(
-                FacebookJobStatus.GenericError, job_scope
+                ExternalPlatformJobStatus.GenericError, job_scope
             )
             raise
 
@@ -421,7 +421,7 @@ class Insights:
 
                     if cnt % 100 == 0:
                         report_job_status_task.delay(
-                            FacebookJobStatus.DataFetched, job_scope
+                            ExternalPlatformJobStatus.DataFetched, job_scope
                         )
                         # default paging size for entities per parent
                         # is typically around 25. So, each 100 results
@@ -429,7 +429,7 @@ class Insights:
                         token_manager.report_usage(token, 4)
 
             report_job_status_task.delay(
-                FacebookJobStatus.Done, job_scope
+                ExternalPlatformJobStatus.Done, job_scope
             )
             token_manager.report_usage(token)
 
@@ -439,17 +439,17 @@ class Insights:
 
             # Is this a throttling error?
             if inspector.is_throttling_exception():
-                failure_status = FacebookJobStatus.ThrottlingError
+                failure_status = ExternalPlatformJobStatus.ThrottlingError
                 failure_bucket = FailureBucket.Throttling
 
             # Did we ask for too much data?
             elif inspector.is_too_large_data_exception():
-                failure_status = FacebookJobStatus.TooMuchData
+                failure_status = ExternalPlatformJobStatus.TooMuchData
                 failure_bucket = FailureBucket.TooLarge
 
             # It's something else which we don't understand
             else:
-                failure_status = FacebookJobStatus.GenericFacebookError
+                failure_status = ExternalPlatformJobStatus.GenericPlatformError
                 failure_bucket = FailureBucket.Other
 
             report_job_status_task.delay(failure_status, job_scope)
@@ -460,7 +460,7 @@ class Insights:
             # This is a generic failure, which does not help us at all, so, we just
             # report it and bail
             report_job_status_task.delay(
-                FacebookJobStatus.GenericError, job_scope
+                ExternalPlatformJobStatus.GenericError, job_scope
             )
             token_manager.report_usage_per_failure_bucket(token, FailureBucket.Other)
             raise

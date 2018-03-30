@@ -21,7 +21,7 @@ from oozer.common.enum import (
     FB_ADSET_MODEL,
     FB_AD_MODEL,
     ENUM_VALUE_FB_MODEL_MAP,
-    FacebookJobStatus
+    ExternalPlatformJobStatus
 )
 from oozer.entities.entity_hash import _checksum_entity, _checksum_from_job_context
 from oozer.entities.feedback_entity_task import feedback_entity_task
@@ -67,7 +67,7 @@ def iter_collect_entities_per_adaccount(job_scope, job_context):
     :param JobContext job_context: A job context we use for entity checksums
     :rtype: Generator[Dict]
     """
-    report_job_status_task.delay(FacebookJobStatus.Start, job_scope)
+    report_job_status_task.delay(ExternalPlatformJobStatus.Start, job_scope)
 
     try:
         # This handler specifically expects to do per-parent
@@ -93,7 +93,7 @@ def iter_collect_entities_per_adaccount(job_scope, job_context):
         # This is a generic failure, which does not help us at all, so, we just
         # report it and bail
         report_job_status_task.delay(
-            FacebookJobStatus.GenericError, job_scope
+            ExternalPlatformJobStatus.GenericError, job_scope
         )
         raise
 
@@ -138,7 +138,7 @@ def iter_collect_entities_per_adaccount(job_scope, job_context):
 
                 if cnt % 100 == 0:
                     report_job_status_task.delay(
-                        FacebookJobStatus.DataFetched, job_scope
+                        ExternalPlatformJobStatus.DataFetched, job_scope
                     )
                     # default paging size for entities per parent
                     # is typically around 25. So, each 100 results
@@ -147,7 +147,7 @@ def iter_collect_entities_per_adaccount(job_scope, job_context):
 
         # Report on the effective task status
         report_job_status_task.delay(
-            FacebookJobStatus.Done, job_scope
+            ExternalPlatformJobStatus.Done, job_scope
         )
         token_manager.report_usage(token)
 
@@ -157,17 +157,17 @@ def iter_collect_entities_per_adaccount(job_scope, job_context):
 
         # Is this a throttling error?
         if inspector.is_throttling_exception():
-            failure_status = FacebookJobStatus.ThrottlingError
+            failure_status = ExternalPlatformJobStatus.ThrottlingError
             failure_bucket = FailureBucket.Throttling
 
         # Did we ask for too much data?
         elif inspector.is_too_large_data_exception():
-            failure_status = FacebookJobStatus.TooMuchData
+            failure_status = ExternalPlatformJobStatus.TooMuchData
             failure_bucket = FailureBucket.TooLarge
 
         # It's something else which we don't understand
         else:
-            failure_status = FacebookJobStatus.GenericFacebookError
+            failure_status = ExternalPlatformJobStatus.GenericPlatformError
             failure_bucket = FailureBucket.Other
 
         report_job_status_task.delay(failure_status, job_scope)
@@ -178,7 +178,7 @@ def iter_collect_entities_per_adaccount(job_scope, job_context):
         # This is a generic failure, which does not help us at all, so, we just
         # report it and bail
         report_job_status_task.delay(
-            FacebookJobStatus.GenericError, job_scope
+            ExternalPlatformJobStatus.GenericError, job_scope
         )
         token_manager.report_usage_per_failure_bucket(token, FailureBucket.Other)
         raise
