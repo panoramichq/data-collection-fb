@@ -9,7 +9,7 @@ class AdAccountEntity(BaseModel):
     """
     Represents a single facebook ad account entity
     """
-    Meta = BaseMeta(dynamodb_config.FB_AD_ACCOUNT_ENTITY_TABLE)
+    Meta = BaseMeta(dynamodb_config.AD_ACCOUNT_ENTITY_TABLE)
 
     _additional_fields = {
         'entity_type'
@@ -116,7 +116,7 @@ class CampaignEntity(EntityBaseMixin, BaseModel):
     """
     Represents a single facebook campaign entity
     """
-    Meta = EntityBaseMeta(dynamodb_config.FB_CAMPAIGN_ENTITY_TABLE)
+    Meta = EntityBaseMeta(dynamodb_config.CAMPAIGN_ENTITY_TABLE)
 
     entity_type = Entity.Campaign
 
@@ -125,7 +125,7 @@ class AdsetEntity(EntityBaseMixin, BaseModel):
     """
     Represent a single facebook adset entity
     """
-    Meta = EntityBaseMeta(dynamodb_config.FB_ADSET_ENTITY_TABLE)
+    Meta = EntityBaseMeta(dynamodb_config.ADSET_ENTITY_TABLE)
 
     entity_type = Entity.AdSet
 
@@ -134,7 +134,7 @@ class AdEntity(EntityBaseMixin, BaseModel):
     """
     Represents a single facebook ad entity
     """
-    Meta = EntityBaseMeta(dynamodb_config.FB_AD_ENTITY_TABLE)
+    Meta = EntityBaseMeta(dynamodb_config.AD_ENTITY_TABLE)
 
     entity_type = Entity.Ad
 
