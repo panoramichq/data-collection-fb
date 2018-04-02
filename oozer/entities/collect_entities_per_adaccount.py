@@ -10,7 +10,9 @@ from oozer.common.vendor_data import add_vendor_data
 from oozer.common.facebook_api import (
     FacebookApiContext,
     FacebookApiErrorInspector,
+    get_default_page_size,
     get_default_fields,
+    get_default_status
 )
 from oozer.common.job_context import JobContext
 from oozer.common.job_scope import JobScope
@@ -29,7 +31,7 @@ from oozer.entities.feedback_entity_task import feedback_entity_task
 
 
 
-def iter_native_entities_per_adaccount(ad_account, entity_type, fields=None):
+def iter_native_entities_per_adaccount(ad_account, entity_type, fields=None, status=None, page_size=200):
     # type: (FB_ADACCOUNT_MODEL, str, Optional[list]) -> Generator[Union[FB_CAMPAIGN_MODEL, FB_ADSET_MODEL, FB_AD_MODEL]]
     """
     Generic getter for entities from the AdAccount edge
@@ -55,8 +57,23 @@ def iter_native_entities_per_adaccount(ad_account, entity_type, fields=None):
     }[FBModel]
 
     fields_to_fetch = fields or get_default_fields(FBModel)
+    status = status or get_default_status(FBModel)
+    page_size = page_size or get_default_page_size(FBModel)
 
-    yield from getter_method(fields=fields_to_fetch)
+    params = dict(
+        summary=False
+    )
+
+    if page_size:
+        params['limit'] = page_size
+
+    if status:
+        params['effective_status'] = status
+
+    yield from getter_method(
+        fields=fields_to_fetch,
+        params=params
+    )
 
 
 def iter_collect_entities_per_adaccount(job_scope, job_context):
