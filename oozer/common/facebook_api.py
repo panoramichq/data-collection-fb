@@ -207,8 +207,15 @@ _default_fields_map = {
         # 'configured_status',
         # 'conversion_specs',
         'created_time',
-        # 'creative{id,effective_instagram_story_id,effective_object_story_id}'
-        'creative', # 'id' field is communicated by default
+        # Asking for "name" for backwards-compatibility with old Console code
+        # asking for effective_*_story_id because we can.
+        'creative{'
+            'id,'
+            'effective_instagram_story_id,'
+            'effective_object_story_id,'
+            'name'
+        '}',
+        # 'creative', # 'id' field is communicated by default
         # 'date_format',
         # 'display_sequence',
         'effective_status',
