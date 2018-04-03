@@ -3,8 +3,7 @@ import xxhash
 from collections import namedtuple
 from facebookads.adobjects import ad
 
-
-from oozer.common.enum import FB_CAMPAIGN_MODEL, FB_ADSET_MODEL, FB_AD_MODEL
+from oozer.facebook.entity_model_map import FB_CAMPAIGN_MODEL, FB_ADSET_MODEL, FB_AD_MODEL
 from oozer.common.facebook_api import get_default_fields
 
 

@@ -16,13 +16,10 @@ from oozer.common.job_context import JobContext
 from oozer.common.job_scope import JobScope
 from oozer.common.report_job_status_task import report_job_status_task
 from oozer.common.enum import (
-    FB_ADACCOUNT_MODEL,
-    FB_CAMPAIGN_MODEL,
-    FB_ADSET_MODEL,
-    FB_AD_MODEL,
-    ENUM_VALUE_FB_MODEL_MAP,
     ExternalPlatformJobStatus
 )
+from oozer.facebook.entity_model_map import FB_ADACCOUNT_MODEL, FB_CAMPAIGN_MODEL, FB_ADSET_MODEL, FB_AD_MODEL, \
+    ENUM_VALUE_FB_MODEL_MAP
 from oozer.facebook.entities.feedback_entity_task import feedback_entity_task
 
 

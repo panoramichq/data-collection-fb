@@ -5,7 +5,7 @@ from common.facebook.enums.entity import Entity
 from common.facebook.enums.reporttype import ReportType
 from common.id_tools import generate_universal_id
 
-from oozer.common.enum import FB_AD_MODEL, FB_ADSET_MODEL, FB_CAMPAIGN_MODEL, FB_ADACCOUNT_MODEL
+from oozer.facebook.entity_model_map import FB_ADACCOUNT_MODEL, FB_CAMPAIGN_MODEL, FB_ADSET_MODEL, FB_AD_MODEL
 from oozer.common.cold_storage.batch_store import ChunkDumpStore
 from oozer.common.job_scope import JobScope
 from oozer.facebook.entities.collect_entities_per_adaccount import iter_collect_entities_per_adaccount

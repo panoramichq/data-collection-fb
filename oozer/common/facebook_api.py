@@ -6,7 +6,7 @@ from facebookads.adobjects.adaccount import AdAccount
 from facebookads.adobjects.campaign import Campaign
 from facebookads.adobjects.adset import AdSet
 from facebookads.adobjects.ad import Ad
-from oozer.common.enum import to_fb_model
+from oozer.facebook.entity_model_map import to_fb_model
 
 
 class FacebookApiContext:
