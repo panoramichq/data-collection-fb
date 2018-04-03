@@ -6,7 +6,9 @@ from facebookads.adobjects.adaccount import AdAccount
 from facebookads.adobjects.campaign import Campaign
 from facebookads.adobjects.adset import AdSet
 from facebookads.adobjects.ad import Ad
+
 from oozer.common.enum import to_fb_model
+from oozer.common.facebook_fields import collapse_fields_children
 
 
 class PlatformApiContext:
@@ -117,7 +119,7 @@ class FacebookApiErrorInspector:
 
 _default_fields_map = {
     # AdAccount: ['id'],
-    Campaign: [
+    Campaign: collapse_fields_children([
         'account_id',
         'adlabels',
         # 'boosted_object_id',
@@ -144,8 +146,8 @@ _default_fields_map = {
         'status',
         'stop_time',
         'updated_time'
-    ],
-    AdSet: [
+    ]),
+    AdSet: collapse_fields_children([
         'account_id',
         # 'adlabels',
         # 'adset_schedule',
@@ -191,8 +193,8 @@ _default_fields_map = {
         # 'time_based_ad_rotation_intervals',
         'updated_time',
         # 'use_new_app_click'
-    ],
-    Ad: [
+    ]),
+    Ad: collapse_fields_children([
         'account_id',
         # 'ad_review_feedback', <----- !!!!!!!!!
         # 'adlabels', # <----- !!!!!!!!!
@@ -207,8 +209,18 @@ _default_fields_map = {
         # 'configured_status',
         # 'conversion_specs',
         'created_time',
-        # 'creative{id,effective_instagram_story_id,effective_object_story_id}'
-        'creative', # 'id' field is communicated by default
+        # Asking for "name" for backwards-compatibility with old Console code
+        # asking for effective_*_story_id because we can.
+        (
+            'creative',
+            [
+                'id,'
+                'effective_instagram_story_id,'
+                'effective_object_story_id,'
+                'name'
+            ]
+        ),
+        # 'creative', # 'id' field is communicated by default
         # 'date_format',
         # 'display_sequence',
         'effective_status',
@@ -224,7 +236,7 @@ _default_fields_map = {
         'status',
         'tracking_specs', # <----- !!!!!!!!!
         'updated_time'
-    ]
+    ])
 }
 
 
