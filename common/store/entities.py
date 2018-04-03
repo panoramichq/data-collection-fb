@@ -5,11 +5,11 @@ from config import dynamodb as dynamodb_config
 from .base import BaseMeta, BaseModel, attributes
 
 
-class FacebookAdAccountEntity(BaseModel):
+class AdAccountEntity(BaseModel):
     """
     Represents a single facebook ad account entity
     """
-    Meta = BaseMeta(dynamodb_config.FB_AD_ACCOUNT_ENTITY_TABLE)
+    Meta = BaseMeta(dynamodb_config.AD_ACCOUNT_ENTITY_TABLE)
 
     _additional_fields = {
         'entity_type'
@@ -73,7 +73,7 @@ class FacebookAdAccountEntity(BaseModel):
         return AdAccount(fbid=f'act_{self.ad_account_id}', api=api)
 
 
-class FacebookEntityBaseMixin:
+class EntityBaseMixin:
     """
     Use this mixin for describing Facebook entity existence tables
     """
@@ -112,29 +112,29 @@ class EntityBaseMeta(BaseMeta):
     write_capacity_units = 10
 
 
-class FacebookCampaignEntity(FacebookEntityBaseMixin, BaseModel):
+class CampaignEntity(EntityBaseMixin, BaseModel):
     """
     Represents a single facebook campaign entity
     """
-    Meta = EntityBaseMeta(dynamodb_config.FB_CAMPAIGN_ENTITY_TABLE)
+    Meta = EntityBaseMeta(dynamodb_config.CAMPAIGN_ENTITY_TABLE)
 
     entity_type = Entity.Campaign
 
 
-class FacebookAdsetEntity(FacebookEntityBaseMixin, BaseModel):
+class AdsetEntity(EntityBaseMixin, BaseModel):
     """
     Represent a single facebook adset entity
     """
-    Meta = EntityBaseMeta(dynamodb_config.FB_ADSET_ENTITY_TABLE)
+    Meta = EntityBaseMeta(dynamodb_config.ADSET_ENTITY_TABLE)
 
     entity_type = Entity.AdSet
 
 
-class FacebookAdEntity(FacebookEntityBaseMixin, BaseModel):
+class AdEntity(EntityBaseMixin, BaseModel):
     """
     Represents a single facebook ad entity
     """
-    Meta = EntityBaseMeta(dynamodb_config.FB_AD_ENTITY_TABLE)
+    Meta = EntityBaseMeta(dynamodb_config.AD_ENTITY_TABLE)
 
     entity_type = Entity.Ad
 
@@ -143,10 +143,10 @@ class FacebookAdEntity(FacebookEntityBaseMixin, BaseModel):
 ENTITY_TYPE_MODEL_MAP = {
     model.entity_type: model
     for model in [
-        FacebookAdAccountEntity,
-        FacebookCampaignEntity,
-        FacebookAdsetEntity,
-        FacebookAdEntity
+        AdAccountEntity,
+        CampaignEntity,
+        AdsetEntity,
+        AdEntity
     ]
 }
 
@@ -161,10 +161,10 @@ def sync_schema(brute_force=False):
     from pynamodb.exceptions import TableError, TableDoesNotExist
 
     tables = [
-        FacebookAdAccountEntity,
-        FacebookCampaignEntity,
-        FacebookAdsetEntity,
-        FacebookAdEntity
+        AdAccountEntity,
+        CampaignEntity,
+        AdsetEntity,
+        AdEntity
     ]
 
     for table in tables:

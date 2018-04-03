@@ -9,7 +9,7 @@ from facebookads.adobjects.ad import Ad
 from oozer.common.enum import to_fb_model
 
 
-class FacebookApiContext:
+class PlatformApiContext:
     """
     A simple wrapper for Facebook SDK, using local API sessions as not to
     pollute the the global default API session with initialization

@@ -29,20 +29,20 @@ def iter_scopes():
     # when we get real API that pairs AAs to their tokens,
     # throw all of this away
 
-    # .query() on FacebookAdAccountEntity does not hint well at type
+    # .query() on AdAccountEntity does not hint well at type
     # have do to it manually for IDE to pick it up
     yield from scope.AssetScope.scan()
 
 
 def iter_active_ad_accounts_per_scope(scope):
-    # type: (str) -> Generator[entities.FacebookAdAccountEntity]
+    # type: (str) -> Generator[entities.AdAccountEntity]
     """
-    :param str scope: The FacebookAdAccountScope id
+    :param str scope: The AdAccountScope id
     :return: A generator of AdAccount IDs for AdAccounts marked "active" in our system
-    :rtype: Generator[entities.FacebookAdAccountEntity]
+    :rtype: Generator[entities.AdAccountEntity]
     """
-    aa_record = None  # type: entities.FacebookAdAccountEntity
-    for aa_record in entities.FacebookAdAccountEntity.query(scope):
+    aa_record = None  # type: entities.AdAccountEntity
+    for aa_record in entities.AdAccountEntity.query(scope):
         # note that we can filter by this server-side,
         # but this involves setting up an index on the partition,
         # which may limit the size of the partition.

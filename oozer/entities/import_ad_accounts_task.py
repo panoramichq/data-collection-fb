@@ -5,7 +5,7 @@ from pynamodb.exceptions import PutError
 
 from common.celeryapp import get_celery_app
 from common.enums.entity import Entity
-from common.store.entities import FacebookAdAccountEntity
+from common.store.entities import AdAccountEntity
 from common.store.scope import DEFAULT_SCOPE
 from common.tokens import PlatformTokenManager
 from oozer.common.console_api import ConsoleApi
@@ -74,7 +74,7 @@ def import_ad_accounts_task(job_scope, job_context):
             # TODO: maybe create a normative job scope that says ("extracting ad account")
             try:
                 # TODO: maybe rather get the entity first and update insert accordingly / if it has change
-                FacebookAdAccountEntity.upsert(
+                AdAccountEntity.upsert(
                     job_scope.entity_id,  # scope ID
                     ad_account['ad_account_id'],
                     is_active=True,  # TODO: Implement forgetting of ad accounts
@@ -90,7 +90,7 @@ def import_ad_accounts_task(job_scope, job_context):
                 else:
                     raise
 
-        # TODO: Here iterate over the FacebookAdAccountEntity table
+        # TODO: Here iterate over the AdAccountEntity table
         # per this particular scope ID and for all AdAccount records
         # that don't have updated_by_sweep_id==job_scope.sweep_id mark inactive
 

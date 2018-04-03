@@ -27,7 +27,7 @@ class PlatformToken(BaseModel):
     When these structural parts are put in,
     remove this table and migrate code to rely on other sources of token data
     """
-    Meta = BaseMeta(dynamodb_config.FB_TOKEN_TABLE)
+    Meta = BaseMeta(dynamodb_config.TOKEN_TABLE)
 
     token_id = attributes.UnicodeAttribute(hash_key=True, attr_name='tid')
     token = attributes.UnicodeAttribute(attr_name='t')
@@ -44,7 +44,7 @@ class AssetScope(BaseModel, MemoizeMixin):
     Initially used for tracking / managing the per-sweep sync of Ad Account IDs from
     Console into our internal store for later iteration over that collection.
     """
-    Meta = BaseMeta(dynamodb_config.FB_AD_ACCOUNT_SCOPE_TABLE)
+    Meta = BaseMeta(dynamodb_config.AD_ACCOUNT_SCOPE_TABLE)
 
     # scope is an ephemeral scoping element
     # Imagine "operam business manager system user" being one of the scope's values.

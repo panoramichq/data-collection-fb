@@ -6,7 +6,7 @@ from common.enums.failure_bucket import FailureBucket
 from common.enums.reporttype import ReportType
 from common.store.jobreport import JobReport
 from oozer.common import cold_storage
-from oozer.common.enum import FacebookJobStatus
+from oozer.common.enum import ExternalPlatformJobStatus
 from oozer.common.job_scope import JobScope
 
 
@@ -58,7 +58,7 @@ def report_job_status(stage_id, job_scope):
     # TODO: move this import to top of file then
     from oozer.looper import SweepStatusTracker
 
-    status_bucket = FacebookJobStatus.failure_bucket_map.get(stage_id)  # allowed to be None and 0 (Success)
+    status_bucket = ExternalPlatformJobStatus.failure_bucket_map.get(stage_id)  # allowed to be None and 0 (Success)
 
     # Generic errors default bucket assignment
     if stage_id < 0 and status_bucket is None:
@@ -92,7 +92,7 @@ def report_job_status(stage_id, job_scope):
         is_done = False
         data = None
 
-        if stage_id == FacebookJobStatus.Done:
+        if stage_id == ExternalPlatformJobStatus.Done:
             data = dict(
                 last_success_dt=datetime.utcnow(),
                 last_success_sweep_id=job_scope.sweep_id,
