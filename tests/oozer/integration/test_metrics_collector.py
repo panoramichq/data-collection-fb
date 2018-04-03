@@ -6,7 +6,7 @@ from unittest import mock
 from config.facebook import TOKEN, AD_ACCOUNT
 
 from common.facebook.enums.entity import Entity
-from oozer.common.facebook_api import FacebookApiContext
+from oozer.common.facebook_api import PlatformApiContext
 from oozer.common.job_scope import JobScope
 from common.facebook.enums.reporttype import ReportType
 from oozer.common import cold_storage
@@ -18,7 +18,7 @@ from oozer.facebook.metrics.collect_insights import Insights
 class IntegrationTestingMetricsCollection(TestCase):
 
     def test_fetch_insights_adaccount_campaigns_lifetime(self):
-        with FacebookApiContext(TOKEN) as context:
+        with PlatformApiContext(TOKEN) as context:
 
             entity = context.to_fb_model(AD_ACCOUNT, Entity.AdAccount)
 
@@ -34,7 +34,7 @@ class IntegrationTestingMetricsCollection(TestCase):
             assert datum
 
     def test_fetch_insights_adaccount_adsets_lifetime(self):
-        with FacebookApiContext(TOKEN) as context:
+        with PlatformApiContext(TOKEN) as context:
             entity = context.to_fb_model(AD_ACCOUNT, Entity.AdAccount)
 
             metrics = Insights.iter_insights(
@@ -48,7 +48,7 @@ class IntegrationTestingMetricsCollection(TestCase):
             assert datum
 
     def test_fetch_insights_adaccount_ad_lifetime(self):
-        with FacebookApiContext(TOKEN) as context:
+        with PlatformApiContext(TOKEN) as context:
             entity = context.to_fb_model(AD_ACCOUNT, Entity.AdAccount)
 
             metrics = Insights.iter_insights(
@@ -97,6 +97,7 @@ class IntegrationTestingMetricsCollectionPipeline(TestCase):
         job_scope = JobScope(
             ad_account_id=AD_ACCOUNT,
             range_start='2017-12-31',
+            ad_account_timezone_name='Europe/London',
             report_type=ReportType.day_hour,
             report_variant=Entity.Ad,
             sweep_id='sweep',

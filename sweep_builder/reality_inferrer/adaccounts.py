@@ -37,7 +37,7 @@ def iter_scopes():
 def iter_active_ad_accounts_per_scope(scope):
     # type: (str) -> Generator[entities.AdAccountEntity]
     """
-    :param str scope: The FacebookAdAccountScope id
+    :param str scope: The AdAccountScope id
     :return: A generator of AdAccount IDs for AdAccounts marked "active" in our system
     :rtype: Generator[entities.AdAccountEntity]
     """

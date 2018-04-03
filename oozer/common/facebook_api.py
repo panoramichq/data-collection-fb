@@ -9,7 +9,7 @@ from facebookads.adobjects.ad import Ad
 from oozer.facebook.entity_model_map import to_fb_model
 
 
-class FacebookApiContext:
+class PlatformApiContext:
     """
     A simple wrapper for Facebook SDK, using local API sessions as not to
     pollute the the global default API session with initialization
@@ -153,7 +153,7 @@ _default_fields_map = {
         'bid_amount',
         'bid_info',
         'billing_event',
-        # 'budget_remaining',  # per chat with Product, DS, DO NOT FETCH OR RELY ON THIS
+        'budget_remaining',  #TODO: Temp enable. Migrate Console away from use.
         # 'campaign',
         'campaign_id',
         # 'campaign_spec',
@@ -247,3 +247,100 @@ def get_default_fields(Model):
         for field_name in dir(Model.Field)
         if not field_name.startswith('__')
     ]
+
+
+# defaults for most of these are some 20-25
+# at that level paging throigh tens of thousands of results is super painful (and long, obviously)
+# Hence bumping the page size for each, but the larger the size, the more change
+# is there for too much data on the page killing the request.
+# So, if you start seeing chronic failures in fetches of particular type of object across
+# all AdAccounts, push the number lower.
+# If you see problems with particular AdAccount (that likes to use lots of DMA, Zipcodes for targeting, for example)
+# that would be the time for tuning page sizes per AdAccount or speculatively adapt page size
+# in evidence of errors in prior attempts.
+# There is also a nice side-effect to shifting this to FB - each request outstanding
+# runs longer and allows greater concurrency locally.
+_default_page_size = {
+    Campaign: 400,
+    AdSet: 200,  # this is super heavy object mostly because of Targeting spec. Keep it smallish
+    Ad: 400
+}
+
+def get_default_page_size(Model):
+    # type: (Model) -> List[str]
+    """
+    Default paging size on FB API is too small for large collections
+    It's usually some 25 items. We page through a lot of stuff, hence this fn.
+
+    :param Model:
+    :rtype: List[str] of fields
+    """
+    assert issubclass(Model, abstractcrudobject.AbstractCrudObject)
+
+    return _default_page_size.get(Model)
+
+
+# By default ARCHIVED is filtered out
+# Here we repeat all possible status values we get by default
+# and include ARCHIVED into the set.
+# It's unfortunate that facebook does not yet allow to filter by configured status.
+_default_fetch_statuses = {
+    # Note that at Campaign level asking for "Pending*" or **approve*
+    # statuses is not allowed - results in argument validation error
+    # this is largely related to fact that Campaigns don't need to be approved,
+    # and billing is done mostly at AdSet level
+    # So, in a way it makes sense.
+    Campaign: [
+        'ACTIVE',
+        # 'ADSET_PAUSED',
+        'ARCHIVED',
+        # 'CAMPAIGN_PAUSED',
+        # 'DELETED',
+        # 'DISAPPROVED',
+        'PAUSED',
+        # 'PENDING_BILLING_INFO',
+        # 'PENDING_REVIEW',
+        # 'PREAPPROVED',
+    ],
+    AdSet: [
+        'ACTIVE',
+        # 'ADSET_PAUSED',
+        'ARCHIVED',
+        'CAMPAIGN_PAUSED',
+        # 'DELETED',
+        'DISAPPROVED',
+        'PAUSED',
+        'PENDING_BILLING_INFO',
+        'PENDING_REVIEW',
+        'PREAPPROVED',
+    ],
+    Ad: [
+        'ACTIVE',
+        'ADSET_PAUSED',
+        'ARCHIVED',
+        'CAMPAIGN_PAUSED',
+        # 'DELETED',
+        'DISAPPROVED',
+        'PAUSED',
+        'PENDING_BILLING_INFO',
+        'PENDING_REVIEW',
+        'PREAPPROVED',
+    ]
+}
+
+
+def get_default_status(Model):
+    # type: (Model) -> List[str]
+    """
+    Each Entity Level has its own set of possible valid status values
+    acceptable as filtering parameters for "get all per parent AA" calls.
+
+    What we are trying to solve here is remove the default filter for Archived
+    from all calls by repeating all possible fetch-able effective status values
+    per that FB Entity Level, including Archived
+
+    :param Model:
+    :rtype: List[str] of fields
+    """
+    assert issubclass(Model, abstractcrudobject.AbstractCrudObject)
+    return _default_fetch_statuses.get(Model)

@@ -4,12 +4,12 @@
 # region settings
 HOST = None
 
-AD_ACCOUNT_ENTITY_TABLE = 'FacebookAdAccountEntity'
-AD_ACCOUNT_SCOPE_TABLE = 'FacebookAdAccountScope'
-AD_ENTITY_TABLE = 'FacebookAdEntity'
-ADSET_ENTITY_TABLE = 'FacebookAdsetEntity'
-CAMPAIGN_ENTITY_TABLE = 'FacebookCampaignEntity'
-FB_TOKEN_TABLE = 'FacebookPlatformToken'
+AD_ACCOUNT_ENTITY_TABLE = 'AdAccountEntity'
+AD_ACCOUNT_SCOPE_TABLE = 'AdAccountScope'
+AD_ENTITY_TABLE = 'AdEntity'
+ADSET_ENTITY_TABLE = 'AdsetEntity'
+CAMPAIGN_ENTITY_TABLE = 'CampaignEntity'
+TOKEN_TABLE = 'PlatformToken'
 JOB_REPORT_TABLE = 'JobReport'
 
 from common.updatefromenv import update_from_env

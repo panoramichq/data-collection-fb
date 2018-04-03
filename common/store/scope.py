@@ -26,7 +26,7 @@ class PlatformToken(BaseModel):
     When these structural parts are put in,
     remove this table and migrate code to rely on other sources of token data
     """
-    Meta = BaseMeta(dynamodb_config.FB_TOKEN_TABLE)
+    Meta = BaseMeta(dynamodb_config.TOKEN_TABLE)
 
     token_id = attributes.UnicodeAttribute(hash_key=True, attr_name='tid')
     token = attributes.UnicodeAttribute(attr_name='t')

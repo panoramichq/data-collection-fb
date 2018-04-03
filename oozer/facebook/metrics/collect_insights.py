@@ -16,7 +16,7 @@ from common.facebook.enums.entity import Entity
 from common.facebook.enums.reporttype import ReportType
 from common.tokens import PlatformTokenManager
 from oozer.common.cold_storage import batch_store
-from oozer.common.facebook_api import FacebookApiContext, FacebookApiErrorInspector
+from oozer.common.facebook_api import PlatformApiContext, FacebookApiErrorInspector
 from oozer.common.facebook_async_report import FacebookAsyncReportStatus
 from oozer.common.job_context import JobContext
 from oozer.common.job_scope import JobScope
@@ -287,7 +287,7 @@ class JobScopeParsed:
         else:
             self.datum_handler = batch_store.ChunkDumpStore(job_scope, chunk_size=200)
 
-        with FacebookApiContext(job_scope.token) as fb_ctx:
+        with PlatformApiContext(job_scope.token) as fb_ctx:
             self.report_root_fb_entity = fb_ctx.to_fb_model(
                 entity_id, entity_type
             )
