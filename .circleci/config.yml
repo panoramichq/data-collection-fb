@@ -126,6 +126,7 @@ jobs:
           export IMAGE_NAME_FULL=`cat /tmp/workspace/image_url`
           bash .circleci/deploy.sh --cluster 1c5595_data_collection --service celery --task 1c5595_datacol_celery ${IMAGE_NAME_FULL}
           bash .circleci/deploy.sh --cluster 1c5595_data_collection --service celery-long --task 1c5595_datacol_celery_long ${IMAGE_NAME_FULL}
+          bash .circleci/run_task.sh --cluster 1c5595_data_collection --service celery --task 1c5595_datacol_celery '["python","app.py","start","sweep"]'
 
 workflows:
   version: 2
