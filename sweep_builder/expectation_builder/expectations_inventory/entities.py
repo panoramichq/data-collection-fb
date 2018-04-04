@@ -45,7 +45,7 @@ def entities_per_ad_account(entity_type, reality_claim):
             JobSignature.bind(
                 generate_id(
                     ad_account_id=reality_claim.ad_account_id,
-                    report_type=ReportType.entities,
+                    report_type=ReportType.entity,
                     report_variant=entity_type
                 )
             )

@@ -71,7 +71,7 @@ class TestUploadToS3(TestCase):
             ad_account_id=self.ad_account_id,
             entity_id=self.campaign_id,
             entity_type=Entity.Campaign,
-            report_type=ReportType.entities,
+            report_type=ReportType.entity,
             range_start='2017-12-31',
         )
 
@@ -96,7 +96,7 @@ class TestUploadToS3(TestCase):
         test_data = self._fake_data_factory()
         ctx = JobScope(
             ad_account_id=test_data[Campaign.Field.account_id],
-            report_type=ReportType.entities,
+            report_type=ReportType.entity,
         )
 
         run_start = datetime.utcnow()
@@ -127,7 +127,7 @@ class TestUploadToS3(TestCase):
             'job_id': ctx.job_id,
             'platform': 'fb',
             'ad_account_id': ctx.ad_account_id,
-            'report_type': ReportType.entities,
+            'report_type': ReportType.entity,
             'platform_api_version': 'v2.11'
         }
 
@@ -142,7 +142,7 @@ class TestingS3KeyGeneration(TestCase):
 
         job_scope = JobScope(
             ad_account_id=gen_string_id(),
-            report_type=ReportType.entities,
+            report_type=ReportType.entity,
             report_variant=Entity.Campaign
         )
 

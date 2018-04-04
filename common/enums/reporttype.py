@@ -50,7 +50,7 @@ class ReportType:
         sync_status
     }
 
-    entities = 'entities'
+    entity = 'entity'
 
     lifetime = 'lifetime'
     # day_hour is a bastardisation of

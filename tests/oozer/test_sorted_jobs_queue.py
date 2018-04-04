@@ -22,7 +22,7 @@ class JobsWriterTests(TestCase):
             (
                 generate_id(
                     ad_account_id='AAID',
-                    report_type=ReportType.entities,
+                    report_type=ReportType.entity,
                     report_variant=Entity.Campaign
                 ),
                 20
@@ -30,7 +30,7 @@ class JobsWriterTests(TestCase):
             (
                 generate_id(
                     ad_account_id='AAID',
-                    report_type=ReportType.entities,
+                    report_type=ReportType.entity,
                     report_variant=Entity.AdSet
                 ),
                 30
@@ -38,7 +38,7 @@ class JobsWriterTests(TestCase):
             (
                 generate_id(
                     ad_account_id='AAID',
-                    report_type=ReportType.entities,
+                    report_type=ReportType.entity,
                     report_variant=Entity.Ad
                 ),
                 10
@@ -66,7 +66,7 @@ class JobsWriterTests(TestCase):
             (
                 generate_id(
                     ad_account_id='AAID',
-                    report_type=ReportType.entities,
+                    report_type=ReportType.entity,
                     report_variant=Entity.AdSet
                 ),
                 {
@@ -77,7 +77,7 @@ class JobsWriterTests(TestCase):
             (
                 generate_id(
                     ad_account_id='AAID',
-                    report_type=ReportType.entities,
+                    report_type=ReportType.entity,
                     report_variant=Entity.Campaign
                 ),
                 {
@@ -88,7 +88,7 @@ class JobsWriterTests(TestCase):
             (
                 generate_id(
                     ad_account_id='AAID',
-                    report_type=ReportType.entities,
+                    report_type=ReportType.entity,
                     report_variant=Entity.Ad
                 ),
                 {

@@ -23,7 +23,7 @@ class TestBatchStore(TestCase):
             ad_account_id=gen_string_id(),
             entity_id=gen_string_id(),
             entity_type=Entity.Campaign,
-            report_type=ReportType.entities,
+            report_type=ReportType.entity,
         )
 
     @skip

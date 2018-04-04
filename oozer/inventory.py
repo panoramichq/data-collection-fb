@@ -14,7 +14,7 @@ entity_report_handler_map = {
     ReportType.import_accounts: {
         Entity.Scope: import_ad_accounts_task,
     },
-    ReportType.entities: {
+    ReportType.entity: {
         Entity.AdAccount: None, # FIXME: Fetch ad accounts from facebook - regular pipeline
         Entity.Campaign: collect_entities_per_adaccount_task,
         Entity.AdSet: collect_entities_per_adaccount_task,

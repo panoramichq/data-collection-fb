@@ -43,14 +43,14 @@ class TestCollectEntitiesPerAdAccount(TestCase):
             job_scope = JobScope(
                 sweep_id=self.sweep_id,
                 ad_account_id=self.ad_account_id,
-                report_type=ReportType.entities,
+                report_type=ReportType.entity,
                 report_variant=entity_type,
                 tokens=['blah']
             )
 
             universal_id_should_be = generate_universal_id(
                 ad_account_id=self.ad_account_id,
-                report_type=ReportType.entities,
+                report_type=ReportType.entity,
                 entity_id=fbid,
                 entity_type=entity_type
             )
