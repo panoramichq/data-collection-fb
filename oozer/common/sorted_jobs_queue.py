@@ -164,13 +164,16 @@ class _JobsReader:
                         except:
                             job_id_score_pair_len = 'cannot be determined'
 
+                        import pickle
+                        import base64
                         bugsnag.notify(
                             ex,
                             meta_data={
                                 # this will become a tab in BugSnag
                                 'call_context_info': {
                                     'job_id_score_pair_type': type(job_id_score_pair),
-                                    'job_id_score_pair_len': job_id_score_pair_len
+                                    'job_id_score_pair_len': job_id_score_pair_len,
+                                    'job_id_score_pair_data': base64.b64encode(pickle.dumps(job_id_score_pair)).decode('ascii')
                                 }
                             }
                         )
