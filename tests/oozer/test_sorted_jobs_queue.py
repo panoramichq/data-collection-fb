@@ -134,7 +134,8 @@ class TempTestingIterableUnpackingErrorCommunication(TestCase):
             'meta_data': {
                 'call_context_info': {
                     'job_id_score_pair_type': list,
-                    'job_id_score_pair_len': 3
+                    'job_id_score_pair_len': 3,
+                    'job_id_score_pair_data': 'gANdcQAoSwFLAksDZS4='
                 }
             }
         }
