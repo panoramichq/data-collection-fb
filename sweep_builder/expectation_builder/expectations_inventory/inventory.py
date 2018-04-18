@@ -10,6 +10,8 @@ from common.enums.entity import Entity
 from sweep_builder.reality_inferrer.reality_claim import RealityClaim
 from sweep_builder.expectation_builder.expectation_claim import ExpectationClaim
 
+from config import jobs as jobs_config
+
 # map of source / trigger entity type to
 # a list of generator functions each of which, given RealityClaim instance
 # generate one or more ExpectationClaim objects
@@ -36,37 +38,37 @@ from .entities import (
 # not an "effective" task under entity.
 # At some point it may be meaningful to have a normative "entity" job on each
 # entity level too / instead (where these jobs become "effective" alternatives there)
-entity_expectation_generator_map[Entity.AdAccount] = [
-    campaign_entities_per_ad_account,
-    adset_entities_per_ad_account,
-    ad_entities_per_ad_account,
+entity_expectation_generator_map[Entity.AdAccount] = list(filter(None, [
+    None if jobs_config.ENTITY_C_DISABLED else campaign_entities_per_ad_account,
+    None if jobs_config.ENTITY_AS_DISABLED else adset_entities_per_ad_account,
+    None if jobs_config.ENTITY_A_DISABLED else ad_entities_per_ad_account,
     sync_expectations_per_ad_account
-]
+]))
 
 
 from .metrics import lifetime, breakdowns
 
 
-entity_expectation_generator_map[Entity.Campaign] = [
-    lifetime.lifetime_metrics_per_campaign,
+entity_expectation_generator_map[Entity.Campaign] = list(filter(None, [
+    None if jobs_config.INSIGHTS_LIFETIME_C_DISABLED else lifetime.lifetime_metrics_per_campaign,
     # breakdowns.day_age_gender_metrics_per_campaign,
     # breakdowns.day_dma_metrics_per_campaign,
     # breakdowns.day_hour_metrics_per_campaign  # not required per our spec
-]
+]))
 
 
-entity_expectation_generator_map[Entity.AdSet] = [
-    lifetime.lifetime_metrics_per_adset,
+entity_expectation_generator_map[Entity.AdSet] = list(filter(None, [
+    None if jobs_config.INSIGHTS_LIFETIME_AS_DISABLED else lifetime.lifetime_metrics_per_adset,
     # breakdowns.day_age_gender_metrics_per_adset,
     # breakdowns.day_dma_metrics_per_adset,
     # breakdowns.day_hour_metrics_per_adset  # not required per our spec
-]
+]))
 
 
-entity_expectation_generator_map[Entity.Ad] = [
-    lifetime.lifetime_metrics_per_ad,
-    breakdowns.day_age_gender_metrics_per_ad,
-    breakdowns.day_dma_metrics_per_ad,
-    breakdowns.day_hour_metrics_per_ad,
-    breakdowns.day_platform_metrics_per_ad
-]
+entity_expectation_generator_map[Entity.Ad] = list(filter(None, [
+    None if jobs_config.INSIGHTS_LIFETIME_A_DISABLED else lifetime.lifetime_metrics_per_ad,
+    None if jobs_config.INSIGHTS_AGE_GENDER_A_DISABLED else breakdowns.day_age_gender_metrics_per_ad,
+    None if jobs_config.INSIGHTS_DMA_A_DISABLED else breakdowns.day_dma_metrics_per_ad,
+    None if jobs_config.INSIGHTS_HOUR_A_DISABLED else breakdowns.day_hour_metrics_per_ad,
+    None if jobs_config.INSIGHTS_PLATFORM_A_DISABLED else breakdowns.day_platform_metrics_per_ad
+]))
