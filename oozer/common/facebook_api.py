@@ -201,9 +201,9 @@ _default_fields_map = {
         # 'adset', <----- !!!!!!!!!
         'adset_id',
         # 'adset_spec', <----- !!!!!!!!!
-        # 'bid_amount',
+        'bid_amount',
         # 'bid_info',
-        # 'bid_type',
+        'bid_type',
         # 'campaign', <----- !!!!!!!!!
         'campaign_id',
         # 'configured_status',
