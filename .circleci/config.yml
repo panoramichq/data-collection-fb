@@ -128,6 +128,31 @@ jobs:
           bash .circleci/deploy.sh --cluster 1c5595_data_collection --service celery-long --task 1c5595_datacol_celery_long ${IMAGE_NAME_FULL}
           bash .circleci/run_task.sh --cluster 1c5595_data_collection --service celery --task 1c5595_datacol_celery '["python","app.py","start","sweep"]'
 
+  deploy_production:
+    docker:
+      - image: circleci/python:3.6-jessie-node
+
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+
+      - checkout
+
+      # Install AWS CLI
+      - run: sudo pip install awscli --upgrade
+
+      # Assume role in prod account then deploy
+      - run : |
+          export AWS_REGION=us-east-1
+          export IMAGE_NAME_FULL=`cat /tmp/workspace/image_url | sed 's/897117390337/583912811210/'`
+          aws --output json sts assume-role --role-arn arn:aws:iam::583912811210:role/circleci --role-session-name "CirleCI" > /tmp/awsauth
+          export AWS_ACCESS_KEY_ID=`cat /tmp/awsauth | jq -r -e .Credentials.AccessKeyId`
+          export AWS_SECRET_ACCESS_KEY=`cat /tmp/awsauth | jq -r -e .Credentials.SecretAccessKey`
+          export AWS_SESSION_TOKEN=`cat /tmp/awsauth | jq -r -e .Credentials.SessionToken`
+          bash .circleci/deploy.sh --cluster b3fb5e_data_collection --service celery --task b3fb5e_datacol_celery ${IMAGE_NAME_FULL}
+          bash .circleci/deploy.sh --cluster b3fb5e_data_collection --service celery-long --task b3fb5e_datacol_celery_long ${IMAGE_NAME_FULL}
+          bash .circleci/run_task.sh --cluster b3fb5e_data_collection --service celery --task b3fb5e_datacol_celery '["python","app.py","start","sweep"]'
+
 workflows:
   version: 2
   build:
@@ -154,3 +179,16 @@ workflows:
       - deploy_staging:
           requires:
             - hold_for_deploy_staging
+
+      - hold_for_deploy_production:
+          type: approval
+          requires:
+            - run_tests
+          filters:
+            branches:
+              only:
+                - production
+
+      - deploy_production:
+          requires:
+            - hold_for_deploy_production
