@@ -9,7 +9,7 @@ from oozer.common.job_scope import JobScope
 from oozer.common.sorted_jobs_queue import SortedJobsQueue
 from oozer.looper import iter_tasks
 from sweep_builder import persister
-from sweep_builder.prioritizer.prioritized import PrioritizationClaim
+from sweep_builder.data_containers.prioritization_claim import PrioritizationClaim
 from tests.base import random
 
 

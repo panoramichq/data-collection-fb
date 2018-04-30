@@ -1,8 +1,8 @@
-from typing import Generator, Callable
+from typing import Generator
 
-from sweep_builder.expectation_builder.expectations import iter_expectations, ExpectationClaim
+from sweep_builder.data_containers.expectation_claim import ExpectationClaim
+from sweep_builder.data_containers.prioritization_claim import PrioritizationClaim
 
-from .prioritization_claim import PrioritizationClaim
 from .assign_score import ScoreCalculator
 
 

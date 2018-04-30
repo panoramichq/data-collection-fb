@@ -1,8 +1,8 @@
 from typing import Generator, Callable
 
-from sweep_builder.reality_inferrer.reality import iter_reality, RealityClaim
+from sweep_builder.data_containers.expectation_claim import ExpectationClaim
+from sweep_builder.data_containers.reality_claim import RealityClaim
 
-from .expectation_claim import ExpectationClaim
 from .expectations_inventory import entity_expectation_generator_map
 
 

@@ -10,7 +10,7 @@ from common.store import jobreport
 from oozer.common.expecations_store import JobExpectationsWriter
 from oozer.common.sorted_jobs_queue import SortedJobsQueue
 
-from .prioritizer.prioritized import iter_prioritized, PrioritizationClaim
+from .data_containers.prioritization_claim import PrioritizationClaim
 
 
 logger = logging.getLogger(__name__)

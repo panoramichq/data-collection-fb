@@ -7,7 +7,7 @@ from common.enums.entity import Entity
 from common.enums.reporttype import ReportType
 from common.id_tools import generate_id
 from sweep_builder.expectation_builder.expectations import iter_expectations
-from sweep_builder.reality_inferrer.reality import RealityClaim
+from sweep_builder.data_containers.reality_claim import RealityClaim
 from tests.base.random import gen_string_id
 
 

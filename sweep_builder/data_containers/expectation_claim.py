@@ -1,7 +1,8 @@
 from typing import List
 
-from sweep_builder.reality_inferrer.reality_claim import RealityClaim
 from common.job_signature import JobSignature
+
+from .reality_claim import RealityClaim
 
 
 class ExpectationClaim(RealityClaim):

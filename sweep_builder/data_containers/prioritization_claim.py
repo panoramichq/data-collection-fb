@@ -1,8 +1,7 @@
 from typing import List
 from itertools import zip_longest
 
-
-from sweep_builder.expectation_builder.expectation_claim import ExpectationClaim
+from .expectation_claim import ExpectationClaim
 
 
 class PrioritizationClaim(ExpectationClaim):
