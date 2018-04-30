@@ -21,13 +21,7 @@ class ScopeJobsExpectationsTests(TestCase):
             tokens=[]
         )
 
-        reality_iter = mock.Mock(return_value=[
-            reality_claim
-        ])
-
-        results = list(
-            iter_expectations(reality_iter)
-        )
+        results = list(iter_expectations([reality_claim]))
 
         assert not results
 
@@ -41,13 +35,7 @@ class ScopeJobsExpectationsTests(TestCase):
             tokens=['blah']
         )
 
-        iter_reality = mock.Mock(return_value=[
-            reality_claim
-        ])
-
-        results = list(
-            iter_expectations(iter_reality)
-        )
+        results = list(iter_expectations([reality_claim]))
 
         assert results
         assert len(results) == 1

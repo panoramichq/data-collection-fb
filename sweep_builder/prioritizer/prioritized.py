@@ -9,19 +9,19 @@ from .assign_score import ScoreCalculator
 LAST = -1
 
 
-def iter_prioritized(iter_expectations=iter_expectations):
-    # type: (Callable[..., Generator[ExpectationClaim]]) -> Generator[PrioritizationClaim]
+def iter_prioritized(expectations_iter):
+    # type: (Generator[ExpectationClaim]) -> Generator[PrioritizationClaim]
     """
 
-    :param iter_expectations: Callable that returns generator yielding ExpectationClaim objects
-    :type iter_expectations: () -> Generator[ExpectationClaim]
+    :param expectations_iter: generator yielding ExpectationClaim objects
+    :type expectations_iter: Generator[ExpectationClaim]
     :return: Generator yielding PrioritizationClaim objects
     :rtype: Generator[PrioritizationClaim]
     """
 
     score_calculator = ScoreCalculator()
 
-    for expectation_claim in iter_expectations():
+    for expectation_claim in expectations_iter:
 
         # Original logic
         # Temporarily ignored because of the focus in Persister component on last job in the list only

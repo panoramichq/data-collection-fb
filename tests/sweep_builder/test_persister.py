@@ -29,7 +29,7 @@ class PersisterSavesJobScopeData(TestCase):
             report_variant=Entity.Campaign,
         )
 
-        iter_prioritized = lambda: [
+        prioritized_iter = [
             PrioritizationClaim(
                 entity_id=entity_id,
                 entity_type=Entity.Campaign,
@@ -59,7 +59,7 @@ class PersisterSavesJobScopeData(TestCase):
 
         persisted = persister.iter_persist_prioritized(
             sweep_id,
-            iter_prioritized=iter_prioritized
+            prioritized_iter
         )
         cnt = 0
         for item in persisted:
