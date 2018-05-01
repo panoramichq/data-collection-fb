@@ -1,14 +1,14 @@
 import functools
 
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 from typing import Generator
 
 from common.enums.entity import Entity
 from common.enums.reporttype import ReportType
 from common.id_tools import generate_id
 from common.job_signature import JobSignature
-from sweep_builder.expectation_builder.expectation_claim import ExpectationClaim
-from sweep_builder.reality_inferrer.reality_claim import RealityClaim
+from sweep_builder.data_containers.expectation_claim import ExpectationClaim
+from sweep_builder.data_containers.reality_claim import RealityClaim
 from common.tztools import now_in_tz, date_range
 
 

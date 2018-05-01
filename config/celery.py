@@ -4,11 +4,12 @@
 
 broker_url = 'redis://redis'
 
-# ny default, result storage backend is disabled
-# must set the value to something to enable it.
-# for now, the same store (and url) as the broker will do
-#result_backend = broker_url
-# However, we intentionally decided not to use Celery results store
+# Enabling the use of results store (see result_backend = broker_url further below)
+result_backend = None
+# But, intentionally disabling Celery results store per task
+# by default. Enable it on a per-task basis as needed
+# by adding `ignore_result=False` to the signature of the Celery task definition.
+# (typically it's needed when you are using Celery callbacks / chords)
 task_ignore_result = True
 
 # these are overridden in test set up
@@ -40,3 +41,13 @@ worker_hijack_root_logger = False
 
 from common.updatefromenv import update_from_env
 update_from_env(__name__)
+
+# for the time being, setting up result store to be same
+# thing as message queue - Redis. Note that
+# Redis easily chokes if you start throwing large
+# amounts of large results through it. If you
+# find yourself wanting to use massive Celery chords
+# with heavy payloads passing through, switch
+# to some real backend. Until then, try to stick to
+# some light, payload-less chord orchestration.
+result_backend = result_backend or broker_url

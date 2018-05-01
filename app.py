@@ -70,7 +70,17 @@ def process_celery_worker_command(command_line_values):
         '--without-heartbeat',
         '--without-mingle',
         '--without-gossip',
-        '--queues', pad_with_build_id(command_line_values.worker_type)
+        # Temporarily ignoring prescribed worker_type values
+        # and assigning all possible routing keys to all workers.
+        # Notice that we are purposefully still keep two separate queues,
+        # even though they are processed by same workers.
+        # one of these is effectively "high priority" line.
+        # Even if it's same workers working on both,
+        # items added to the "high priority" line get to
+        # worker sooner because there are very few competitors in that line.
+        # The other line may have thousands more tasks.
+        '--queues', ','.join([pad_with_build_id(routing_key) for routing_key in RoutingKey.ALL])
+        # '--queues', pad_with_build_id(command_line_values.worker_type)
     ]
     celery_app.worker_main(celery_worker_args)
 

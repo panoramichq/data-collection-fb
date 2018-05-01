@@ -1,20 +1,17 @@
 from typing import Generator
 
 from common.enums.entity import Entity
-from common.store import entities
+from sweep_builder.data_containers.reality_claim import RealityClaim
 
 from .adaccounts import iter_scopes, iter_active_ad_accounts_per_scope
 from .entities import iter_entities_per_ad_account_id
-from .reality_claim import RealityClaim
-
-from config.operam_console_api import TOKEN as CONSOLE_API_TOKEN
 
 
-def iter_reality():
+def iter_reality_base():
     # type: () -> Generator[RealityClaim]
     """
     A generator yielding instances of RealityClaim object, filled
-    with data about some entity (one of AdAccount, Campaign, AdSet, Ad)
+    with data about some entity (one of Scope, AdAccount)
 
     These claims represent our knowledge about the what exists.
 
@@ -65,11 +62,28 @@ def iter_reality():
                 tokens=scope_record.platform_tokens
             )
 
-            # Naturally, we may know about some of the AdAccount's children
-            # existing already and might need their supporting data refreshed too.
-            for entity_data in iter_entities_per_ad_account_id(ad_account.ad_account_id):
-                yield RealityClaim(
-                    entity_data,
-                    timezone=ad_account.timezone,
-                    tokens=scope_record.platform_tokens
-                )
+
+def iter_reality_per_ad_account_claim(ad_account_claim):
+    # type: (RealityClaim) -> Generator[RealityClaim]
+    """
+    A generator yielding instances of RealityClaim object, filled
+    with data about some entity (one of Campaign, AdSet, Ad)
+
+    These claims represent our knowledge about the what exists.
+
+    Some consuming code will match these claims of existence to tasks
+    we are expected to perform for these objects.
+
+    :param RealityClaim ad_account_claim: A RealityClaim instance representing existence of AdAccount
+    :return: Generator yielding RealityClaim objects pertaining to various levels of entities
+    :rtype: Generator[RealityClaim]
+    """
+
+    # Naturally, we may know about some of the AdAccount's children
+    # existing already and might need their supporting data refreshed too.
+    for entity_data in iter_entities_per_ad_account_id(ad_account_claim.ad_account_id):
+        yield RealityClaim(
+            entity_data,
+            timezone=ad_account_claim.timezone,
+            tokens=ad_account_claim.tokens
+        )

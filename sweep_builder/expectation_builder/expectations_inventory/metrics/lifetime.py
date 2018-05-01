@@ -2,8 +2,8 @@ import functools
 
 from typing import Generator
 
-from sweep_builder.reality_inferrer.reality_claim import RealityClaim
-from sweep_builder.expectation_builder.expectation_claim import ExpectationClaim
+from sweep_builder.data_containers.reality_claim import RealityClaim
+from sweep_builder.data_containers.expectation_claim import ExpectationClaim
 from common.id_tools import generate_id
 from common.job_signature import JobSignature
 from common.enums.reporttype import ReportType

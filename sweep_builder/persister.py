@@ -1,16 +1,12 @@
 import logging
 
-from collections import defaultdict
-from datetime import datetime
 from typing import Generator, Callable
 
 from common.enums.entity import Entity
-from common.connect.redis import get_redis
-from common.store import jobreport
 from oozer.common.expecations_store import JobExpectationsWriter
 from oozer.common.sorted_jobs_queue import SortedJobsQueue
 
-from .prioritizer.prioritized import iter_prioritized, PrioritizationClaim
+from .data_containers.prioritization_claim import PrioritizationClaim
 
 
 logger = logging.getLogger(__name__)
@@ -28,21 +24,21 @@ subject_to_expectation_publication = {
 }
 
 
-def iter_persist_prioritized(sweep_id, iter_prioritized=iter_prioritized):
-    # type: (str, Callable[..., Generator[PrioritizationClaim]]) -> Generator[PrioritizationClaim]
+def iter_persist_prioritized(sweep_id, prioritized_iter):
+    # type: (str, Generator[PrioritizationClaim]) -> Generator[PrioritizationClaim]
     """
     Persist prioritized jobs and pass-through context objects for inspection
 
     :param str sweep_id:
-    :param iter_prioritized:
-    :type iter_prioritized: () -> Generator[PrioritizationClaim]
+    :param prioritized_iter:
+    :type prioritized_iter: Generator[PrioritizationClaim]
     :rtype: Generator[PrioritizationClaim]
     """
 
     with SortedJobsQueue(sweep_id).JobsWriter() as add_to_queue, \
         JobExpectationsWriter(sweep_id) as expectation_add:
 
-        for prioritization_claim in iter_prioritized():
+        for prioritization_claim in prioritized_iter:
 
             # Approaches to Job queueing:
 

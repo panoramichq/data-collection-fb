@@ -9,7 +9,7 @@ from oozer.common.job_scope import JobScope
 from oozer.common.sorted_jobs_queue import SortedJobsQueue
 from oozer.looper import iter_tasks
 from sweep_builder import persister
-from sweep_builder.prioritizer.prioritized import PrioritizationClaim
+from sweep_builder.data_containers.prioritization_claim import PrioritizationClaim
 from tests.base import random
 
 
@@ -29,7 +29,7 @@ class PersisterSavesJobScopeData(TestCase):
             report_variant=Entity.Campaign,
         )
 
-        iter_prioritized = lambda: [
+        prioritized_iter = [
             PrioritizationClaim(
                 entity_id=entity_id,
                 entity_type=Entity.Campaign,
@@ -59,7 +59,7 @@ class PersisterSavesJobScopeData(TestCase):
 
         persisted = persister.iter_persist_prioritized(
             sweep_id,
-            iter_prioritized=iter_prioritized
+            prioritized_iter
         )
         cnt = 0
         for item in persisted:
