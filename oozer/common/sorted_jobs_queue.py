@@ -1,11 +1,11 @@
-import bugsnag
-import ujson as json
 import logging
 import random
+import ujson as json
 
 from collections import namedtuple, OrderedDict
 from typing import Generator, Tuple, List
 
+from common.bugsnag import BugSnagContextData
 from common.connect.redis import get_redis
 from common.id_tools import parse_id_parts
 
@@ -85,7 +85,8 @@ class _JobsWriter:
         job_id_parts = parse_id_parts(job_id)
 
         if job_scope_data:
-            self.write_job_scope_data(job_scope_data, job_id_parts)
+            with BugSnagContextData(job_id=job_id, job_scope_data=job_scope_data):
+                self.write_job_scope_data(job_scope_data, job_id_parts)
 
         if job_id_parts.entity_id:
             # if entity ID is present, there is no way
@@ -149,8 +150,14 @@ class _JobsReader:
         while job_id_score_pairs:
             for job_id_score_pair in job_id_score_pairs:
 
+                context_data = {
+                    'job_id_score_pair_type': str(type(job_id_score_pair)),
+                    'job_id_score_pair_len': len(job_id_score_pair),
+                    'job_id_score_pair_data': job_id_score_pair
+                }
                 try:
-                    job_id, score = job_id_score_pair
+                    with BugSnagContextData(**context_data):
+                        job_id, score = job_id_score_pair
                 except ValueError as ex:
                     # "Too many values to unpack" errors in production.
                     # Unable to replicate these in local env and don't have enough data from
@@ -159,28 +166,9 @@ class _JobsReader:
                     # https://docs.bugsnag.com/platforms/python/other/#sending-diagnostic-data
                     # In order to see more context data next time this happens.
                     if 'too many values to unpack' or 'not enough values to unpack' in str(ex):
-                        try:
-                            job_id_score_pair_len = len(job_id_score_pair)
-                        except:
-                            job_id_score_pair_len = 'cannot be determined'
-
-                        import pickle
-                        import base64
-                        bugsnag.notify(
-                            ex,
-                            meta_data={
-                                # this will become a tab in BugSnag
-                                'call_context_info': {
-                                    'job_id_score_pair_type': type(job_id_score_pair),
-                                    'job_id_score_pair_len': job_id_score_pair_len,
-                                    'job_id_score_pair_data': base64.b64encode(pickle.dumps(job_id_score_pair)).decode('ascii')
-                                }
-                            }
-                        )
-                        # and exit cleanly
                         return
                     else:
-                        raise ex
+                        raise
 
                 yield job_id.decode('utf8'), score
 
