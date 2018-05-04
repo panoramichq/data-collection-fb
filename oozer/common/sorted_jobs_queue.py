@@ -312,7 +312,7 @@ class SortedJobsQueue:
         :param ad_account_id:
         :return:
         """
-        return self._payload_key_base + ad_account_id
+        return self._payload_key_base + (ad_account_id or 'global')
 
     def get_queue_key(self, value=None, shard_id=None):
         if shard_id is not None:

@@ -39,6 +39,7 @@ services:
       - redis-cluster
     environment:
       APP_LOGGING_LEVEL: 'INFO'
+#      APP_OPERAM_CONSOLE_API_TOKEN: 'asdfasdf'
 #      APP_LOOPER_ALLOW_RECURSION: "true"
 #      APP_MEASUREMENT_STATSD_SERVER: 'dd-agent'
 #    depends_on:
