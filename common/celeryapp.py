@@ -96,6 +96,7 @@ def get_celery_app(celery_config=celery_config):
         special_task_routes = {
             # routing_key: queue name
             RoutingKey.longrunning: pad_with_build_id(RoutingKey.longrunning),
+            RoutingKey.default: pad_with_build_id(RoutingKey.default),
         }
 
         # This is manual router implementation for Celery, per spec detailed here:
