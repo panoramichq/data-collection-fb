@@ -72,7 +72,7 @@ class JobsWriterTests(TestCase):
                 {
                     'timezone': 'Europe/London'
                 },
-                30  # <-----
+                30.0  # <-----
             ),
             (
                 generate_id(
@@ -83,7 +83,7 @@ class JobsWriterTests(TestCase):
                 {
                     'timezone': 'Europe/London'
                 },
-                20  # <-----
+                20.0  # <-----
             ),
             (
                 generate_id(
@@ -94,7 +94,7 @@ class JobsWriterTests(TestCase):
                 {
                     'timezone': 'Europe/London'
                 },
-                10  # <-----
+                10.0  # <-----
             ),
         ]
 
@@ -132,10 +132,10 @@ class TempTestingIterableUnpackingErrorCommunication(TestCase):
 
         assert kk == {
             'meta_data': {
-                'call_context_info': {
-                    'job_id_score_pair_type': list,
+                'extra_data': {
+                    'job_id_score_pair_type': str(list),
                     'job_id_score_pair_len': 3,
-                    'job_id_score_pair_data': 'gANdcQAoSwFLAksDZS4='
+                    'job_id_score_pair_data': [1,2,3]
                 }
             }
         }

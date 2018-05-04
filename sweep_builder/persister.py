@@ -123,27 +123,31 @@ def iter_persist_prioritized(sweep_id, prioritized_iter):
             _, job_id_effective = score_job_id_pairs[LAST]
             score = max(score for score, _ in score_job_id_pairs)
 
+            # Following are JobScope attributes we don't store on JobID
+            # so we need to store them separately.
+            # See JobScope object for exact attr names.
+            # At this point persister forms the
+            # auxiliary data blob for saving on Data Flower.
+            # We don't have to do that here.
+            # It can be pre-computed and placed on the JobSignature
+            # TODO: contemplate moving auxiliary data formation to
+            #       place where JobSignatures are generated and use that
+            #       data for Data Flower (as it was originally intended
+            #       but not implemented because saving each job's data
+            #       individually to Data Flower was too slow)
+            # So, here you would unpack
+            # **job_kwargs
+            # that you get from prioritization_claim.score_job_pairs
+            # ... Until then:
+            extra_data = {}
+            if prioritization_claim.timezone:
+                extra_data['ad_account_timezone_name'] = prioritization_claim.timezone
+
             # we are adding only per-parent job to the queue
             add_to_queue(
                 job_id_effective,
                 score,
-                # Following are JobScope attributes we don't store on JobID
-                # so we need to store them separately.
-                # See JobScope object for exact attr names.
-                # At this point persister forms the
-                # auxiliary data blob for saving on Data Flower.
-                # We don't have to do that here.
-                # It can be pre-computed and placed on the JobSignature
-                # TODO: contemplate moving auxiliary data formation to
-                #       place where JobSignatures are generated and use that
-                #       data for Data Flower (as it was originally intended
-                #       but not implemented because saving each job's data
-                #       individually to Data Flower was too slow)
-                # So, here you would unpack
-                # **job_kwargs
-                # that you get from prioritization_claim.score_job_pairs
-                # ... Until then:
-                ad_account_timezone_name=prioritization_claim.timezone
+                **extra_data
             )
 
             # This is our cheap way of ensuring that we are dealing
