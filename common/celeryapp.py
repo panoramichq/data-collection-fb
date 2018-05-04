@@ -107,7 +107,7 @@ def get_celery_app(celery_config=celery_config):
         # use of routing_key enum so very explicit.
 
         def route_task(name, args, kwargs, options, task=None, **kw):
-            routing_key = options.get('routing_key', RoutingKey.default)
+            routing_key = options.get('routing_key', pad_with_build_id(RoutingKey.default))
             if routing_key in special_task_routes:
                 return {
                     'queue': special_task_routes[routing_key]
@@ -117,7 +117,7 @@ def get_celery_app(celery_config=celery_config):
                 return {}
 
         _celery_app.conf.task_default_queue = pad_with_build_id(RoutingKey.default)
-        _celery_app.conf.task_default_routing_key = RoutingKey.default
+        _celery_app.conf.task_default_routing_key = pad_with_build_id(RoutingKey.default)
         _celery_app.conf.task_routes = (route_task,)
 
         # Enable Bugsnag exception tracking
