@@ -36,6 +36,9 @@ worker_enable_remote_control = True
 # we set up our own manually
 worker_hijack_root_logger = False
 
+# Disable connection pool
+broker_pool_limit = None
+
 # http://docs.celeryproject.org/en/latest/userguide/configuration.html#task-soft-time-limit
 #task_soft_time_limit = 60 * 60  # an hour
 
