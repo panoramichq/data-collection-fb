@@ -4,6 +4,7 @@ from datetime import datetime, date
 
 from common.celeryapp import get_celery_app
 from common.id_tools import parse_id_parts
+from common.bugsnag import BugSnagContextData
 from common.measurement import Measure
 from common.enums.reporttype import ReportType
 from common.enums.entity import Entity
@@ -87,7 +88,9 @@ def sync_expectations_task(job_scope, job_context):
 
     try:
         sync_expectations(job_scope)
-    except Exception:
+    except Exception as ex:
+        BugSnagContextData.notify(ex, job_scope=job_scope)
+
         # This is a generic failure, which does not help us at all, so, we just
         # report it and bail
         report_job_status_task.delay(

@@ -15,6 +15,7 @@ from common.enums.entity import Entity
 from common.enums.failure_bucket import FailureBucket
 from common.enums.reporttype import ReportType
 from common.tokens import PlatformTokenManager
+from common.bugsnag import BugSnagContextData
 from oozer.common.cold_storage import batch_store
 from oozer.common.facebook_api import PlatformApiContext, FacebookApiErrorInspector
 from oozer.common.facebook_async_report import FacebookAsyncReportStatus
@@ -393,7 +394,9 @@ class Insights:
             # However, we use it to report usages of the token we got.
             token_manager = PlatformTokenManager.from_job_scope(job_scope)
 
-        except Exception:
+        except Exception as ex:
+            BugSnagContextData.notify(ex, job_scope=job_scope)
+
             # This is a generic failure, which does not help us at all, so, we just
             # report it and bail
             report_job_status_task.delay(
@@ -456,7 +459,9 @@ class Insights:
             token_manager.report_usage_per_failure_bucket(token, failure_bucket)
             raise
 
-        except Exception:
+        except Exception as ex:
+            BugSnagContextData.notify(ex, job_scope=job_scope)
+
             # This is a generic failure, which does not help us at all, so, we just
             # report it and bail
             report_job_status_task.delay(
