@@ -5,6 +5,7 @@ from common.enums.entity import Entity
 from common.enums.failure_bucket import FailureBucket
 from common.tokens import PlatformTokenManager
 from common.id_tools import generate_universal_id
+from common.bugsnag import BugSnagContextData
 from oozer.common.cold_storage.batch_store import ChunkDumpStore
 from oozer.common.vendor_data import add_vendor_data
 from oozer.common.facebook_api import (
@@ -106,7 +107,9 @@ def iter_collect_entities_per_adaccount(job_scope, job_context):
         # However, we use it to report usages of the token we got.
         token_manager = PlatformTokenManager.from_job_scope(job_scope)
 
-    except Exception:
+    except Exception as ex:
+        BugSnagContextData.notify(ex, job_scope=job_scope)
+
         # This is a generic failure, which does not help us at all, so, we just
         # report it and bail
         report_job_status_task.delay(
@@ -191,7 +194,9 @@ def iter_collect_entities_per_adaccount(job_scope, job_context):
         token_manager.report_usage_per_failure_bucket(token, failure_bucket)
         raise
 
-    except Exception:
+    except Exception as ex:
+        BugSnagContextData.notify(ex, job_scope=job_scope)
+
         # This is a generic failure, which does not help us at all, so, we just
         # report it and bail
         report_job_status_task.delay(

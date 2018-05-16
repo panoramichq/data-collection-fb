@@ -79,27 +79,33 @@ class BugSnagContextData(AbstractContextManager):
         # allow user to mess around a little more with data collection if they want
         return self.context_data
 
+    @staticmethod
+    def notify(exc, **context_data):
+        # Serialize errors and send to Bugsnag
+
+        # When we have a top-level exception trapper as well
+        # this will effectively cause the exception to be reported twice,
+        # once here, with arguments, and again at top level, without
+        # the context but with context scraped automatically at the top level
+        # For celery tasks this means that same error is reported here,
+        # as well as again, just with Celery task arguments.
+
+        # There is a better way...
+
+        # Populate BugSnag's thread-local "session" and add middleware to
+        # top-level bugsnag to read that session data and add it to
+        # error reporting it does. One error report with all context data
+
+        bugsnag.notify(
+            exc,
+            meta_data={
+                # extra_data will become an "EXTRA DATA" tab in BugSnag
+                # json decoder / encoder are (ab)used to do deep
+                # but safe serialization of whatever is passed to us as context data.
+                'extra_data': _make_data_safe_for_serialization(context_data)
+            }
+        )
+
     def __exit__(self, exc_type, exc, exc_tb):
         if exc:
-            # When we have a top-level exception trapper as well
-            # this will effectively cause the exception to be reported twice,
-            # once here, with arguments, and again at top level, without
-            # the context but with context scraped automatically at the top level
-            # For celery tasks this means that same error is reported here,
-            # as well as again, just with Celery task arguments.
-
-            # There is a better way...
-
-            # Populate BugSnag's thread-local "session" and add middleware to
-            # top-level bugsnag to read that session data and add it to
-            # error reporting it does. One error report with all context data
-            # TODO: ^
-            bugsnag.notify(
-                (exc_type, exc, exc_tb),
-                meta_data={
-                    # extra_data will become an "EXTRA DATA" tab in BugSnag
-                    # json decoder / encoder are (ab)used to do deep
-                    # but safe serialization of whatever is passed to us as context data.
-                    'extra_data': _make_data_safe_for_serialization(self.context_data)
-                }
-            )
+            self.notify((exc_type, exc, exc_tb), **self.context_data)
