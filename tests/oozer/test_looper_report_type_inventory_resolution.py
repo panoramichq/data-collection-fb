@@ -43,7 +43,7 @@ class TestEntityFeedback(TestCase):
 
     def test_entity_report_types_entities_per_aa(self):
 
-        entity_types = [Entity.Campaign, Entity.AdSet, Entity.Ad]
+        entity_types = [Entity.Campaign, Entity.AdSet, Entity.Ad, Entity.AdCreative]
         report_type = ReportType.entity
 
         for entity_type in entity_types:
