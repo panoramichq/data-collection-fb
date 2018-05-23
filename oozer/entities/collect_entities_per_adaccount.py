@@ -23,6 +23,7 @@ from oozer.common.enum import (
     FB_CAMPAIGN_MODEL,
     FB_ADSET_MODEL,
     FB_AD_MODEL,
+    FB_AD_CREATIVE_MODEL,
     ENUM_VALUE_FB_MODEL_MAP,
     ExternalPlatformJobStatus
 )
@@ -54,7 +55,8 @@ def iter_native_entities_per_adaccount(ad_account, entity_type, fields=None, sta
     getter_method = {
         FB_CAMPAIGN_MODEL: ad_account.get_campaigns,
         FB_ADSET_MODEL: ad_account.get_ad_sets,
-        FB_AD_MODEL: ad_account.get_ads
+        FB_AD_MODEL: ad_account.get_ads,
+        FB_AD_CREATIVE_MODEL: ad_account.get_ad_creatives
     }[FBModel]
 
     fields_to_fetch = fields or get_default_fields(FBModel)

@@ -62,9 +62,23 @@ class TestingEntityCollection(TestCase):
 
             assert cnt
 
+    def test_fetch_all_ad_creatives(self):
+        with PlatformApiContext(TOKEN) as ctx:
+            ad_account = ctx.to_fb_model(AD_ACCOUNT, Entity.AdAccount)
+
+            entities = iter_native_entities_per_adaccount(
+                ad_account,
+                Entity.AdCreative
+            )
+            cnt = 0
+            for entity in entities:
+                cnt += 1
+                break
+
+            assert cnt
+
 
 class TestingEntityCollectionPipeline(TestCase):
-
     @integration('facebook')
     def test_pipeline(self):
 
