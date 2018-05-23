@@ -138,6 +138,14 @@ class AdEntity(EntityBaseMixin, BaseModel):
 
     entity_type = Entity.Ad
 
+class AdCreativeEntity(EntityBaseMixin, BaseModel):
+    """
+    Represents a single facebook ad creative entity
+    """
+
+    Meta = EntityBaseMeta(dynamodb_config.AD_CREATIVE_ENTITY_TABLE)
+
+    entity_type = Entity.AdCreative
 
 # Used to map from entity_type str to Model for persistence-style tasks
 ENTITY_TYPE_MODEL_MAP = {
@@ -146,7 +154,8 @@ ENTITY_TYPE_MODEL_MAP = {
         AdAccountEntity,
         CampaignEntity,
         AdsetEntity,
-        AdEntity
+        AdEntity,
+        AdCreativeEntity
     ]
 }
 
@@ -164,7 +173,8 @@ def sync_schema(brute_force=False):
         AdAccountEntity,
         CampaignEntity,
         AdsetEntity,
-        AdEntity
+        AdEntity,
+        AdCreativeEntity,
     ]
 
     for table in tables:

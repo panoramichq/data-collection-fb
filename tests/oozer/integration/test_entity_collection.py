@@ -80,7 +80,7 @@ class TestingEntityCollection(TestCase):
 
 class TestingEntityCollectionPipeline(TestCase):
     @integration('facebook')
-    def test_pipeline(self):
+    def test_pipeline_campaigns(self):
 
         job_scope = JobScope(
             ad_account_id=AD_ACCOUNT,
@@ -88,6 +88,30 @@ class TestingEntityCollectionPipeline(TestCase):
             report_time=datetime.utcnow(),
             report_type='entities',
             report_variant=Entity.Campaign,
+            sweep_id='1'
+        )
+
+        data_iter = iter_collect_entities_per_adaccount(
+            job_scope, JobContext()
+        )
+
+        cnt = 0
+        for datum in data_iter:
+            cnt += 1
+            if cnt == 4:
+                break
+
+        assert cnt == 4
+
+    @integration('facebook')
+    def test_pipeline_creatives(self):
+
+        job_scope = JobScope(
+            ad_account_id=AD_ACCOUNT,
+            tokens=[TOKEN],
+            report_time=datetime.utcnow(),
+            report_type='entities',
+            report_variant=Entity.AdCreative,
             sweep_id='1'
         )
 
