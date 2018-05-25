@@ -1,4 +1,4 @@
-from typing import Generator, List
+from typing import List
 
 from facebookads.api import FacebookAdsApi, FacebookSession
 from facebookads.adobjects import abstractcrudobject
@@ -6,6 +6,7 @@ from facebookads.adobjects.adaccount import AdAccount
 from facebookads.adobjects.campaign import Campaign
 from facebookads.adobjects.adset import AdSet
 from facebookads.adobjects.ad import Ad
+from facebookads.adobjects.adcreative import AdCreative
 
 from oozer.common.enum import to_fb_model
 from oozer.common.facebook_fields import collapse_fields_children
@@ -236,6 +237,43 @@ _default_fields_map = {
         'status',
         'tracking_specs', # <----- !!!!!!!!!
         'updated_time'
+    ]),
+    AdCreative: collapse_fields_children([
+        'id',
+        'account_id',
+        'actor_id',
+        'adlabels',      # <----- !!!!!!!!!
+        'applink_treatment',
+        'asset_feed_spec',
+        'body',
+        'branded_content_sponsor_page_id',
+        'call_to_action',
+        'call_to_action_type',
+        'effective_instagram_story_id',
+        'effective_object_story_id',
+        'image_crops',
+        'image_hash',
+        'image_url',
+        'instagram_actor_id',
+        'instagram_permalink_url',
+        'instagram_story_id',
+        'link_og_id',
+        'link_url',
+        'name',
+        'object_id',
+        'object_story_id',
+        'object_story_spec',
+        'object_type',
+        'object_url',
+        'platform_customizations',
+        'product_set_id',
+        'status',
+        'template_url',
+        'template_url_spec',
+        'thumbnail_url',
+        'title',
+        'url_tags',
+        'video_id',
     ])
 }
 
