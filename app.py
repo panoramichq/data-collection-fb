@@ -90,11 +90,8 @@ def process_start_command(command_line_values):
     :param _CommandLineValues command_line_values:
     """
     if command_line_values.worker_type == StarterWorkerType.sweep:
-        from sweep_builder.tasks import sweep_builder_task
-        sweep_builder_task.delay(
-            sweep_id=None,
-            start_looper=True
-        )
+        from oozer.full_loop import run_sweeps_forever
+        run_sweeps_forever()
         return
 
     # we never get values that are not on the list of valid ones
