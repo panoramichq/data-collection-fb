@@ -125,7 +125,7 @@ jobs:
           export AWS_REGION=us-east-1
           export IMAGE_NAME_FULL=`cat /tmp/workspace/image_url`
           bash .circleci/deploy.sh --cluster 1c5595_data_collection --service celery --task 1c5595_datacol_celery ${IMAGE_NAME_FULL}
-          bash .circleci/run_task.sh --cluster 1c5595_data_collection --service celery --task 1c5595_datacol_celery '["python","app.py","start","sweep"]'
+          bash .circleci/deploy.sh --cluster 1c5595_data_collection --service celery-long --task 1c5595_datacol_celery_long ${IMAGE_NAME_FULL}
 
   deploy_production:
     docker:
@@ -149,7 +149,7 @@ jobs:
           export AWS_SECRET_ACCESS_KEY=`cat /tmp/awsauth | jq -r -e .Credentials.SecretAccessKey`
           export AWS_SESSION_TOKEN=`cat /tmp/awsauth | jq -r -e .Credentials.SessionToken`
           bash .circleci/deploy.sh --cluster b3fb5e_data_collection --service celery --task b3fb5e_datacol_celery ${IMAGE_NAME_FULL}
-          bash .circleci/run_task.sh --cluster b3fb5e_data_collection --service celery --task b3fb5e_datacol_celery '["python","app.py","start","sweep"]'
+          bash .circleci/deploy.sh --cluster b3fb5e_data_collection --service celery-long --task b3fb5e_datacol_celery_long ${IMAGE_NAME_FULL}
 
 workflows:
   version: 2
