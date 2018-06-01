@@ -216,9 +216,6 @@ _default_fields_map = {
             'creative',
             [
                 'id,'
-                'effective_instagram_story_id,'
-                'effective_object_story_id,'
-                'name'
             ]
         ),
         # 'creative', # 'id' field is communicated by default
