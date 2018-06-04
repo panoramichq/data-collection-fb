@@ -239,7 +239,7 @@ _default_fields_map = {
         'id',
         'account_id',
         'actor_id',
-        'adlabels',      # <----- !!!!!!!!!
+        'adlabels',
         'applink_treatment',
         'asset_feed_spec',
         'body',
