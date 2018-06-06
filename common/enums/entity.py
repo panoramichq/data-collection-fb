@@ -10,10 +10,13 @@ class Entity:
     AdSet = 'AS'
     Ad = 'A'
 
+    AdCreative = 'AC'
+
     ALL = {
         AdAccount,
         Campaign,
         AdSet,
         Ad,
+        AdCreative,
         Scope
     }

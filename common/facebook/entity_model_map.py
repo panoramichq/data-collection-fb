@@ -3,6 +3,7 @@ from facebookads.adobjects.ad import Ad
 from facebookads.adobjects.adaccount import AdAccount
 from facebookads.adobjects.adset import AdSet
 from facebookads.adobjects.campaign import Campaign
+from facebookads.adobjects.adcreative import AdCreative
 
 
 ENTITY_TYPE_MODEL_MAP = {
@@ -10,6 +11,7 @@ ENTITY_TYPE_MODEL_MAP = {
     Entity.AdAccount: AdAccount,
     Entity.AdSet: AdSet,
     Entity.Campaign: Campaign,
+    Entity.AdCreative: AdCreative
 }
 
 
