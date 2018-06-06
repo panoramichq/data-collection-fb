@@ -7,6 +7,7 @@ HOST = None
 AD_ACCOUNT_ENTITY_TABLE = 'AdAccountEntity'
 AD_ACCOUNT_SCOPE_TABLE = 'AdAccountScope'
 AD_ENTITY_TABLE = 'AdEntity'
+AD_CREATIVE_ENTITY_TABLE = 'AdCreativeEntity'
 ADSET_ENTITY_TABLE = 'AdsetEntity'
 CAMPAIGN_ENTITY_TABLE = 'CampaignEntity'
 TOKEN_TABLE = 'PlatformToken'

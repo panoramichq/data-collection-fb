@@ -21,6 +21,7 @@ In this case, group level DISABLED clearly takes precedence.
 ENTITY_C_DISABLED = False
 ENTITY_AS_DISABLED = False
 ENTITY_A_DISABLED = False
+ENTITY_AC_DISABLED = False
 
 # group flag for entities
 ENTITY_ALL_DISABLED = False
@@ -45,7 +46,7 @@ update_from_env(__name__)
 
 # and here we post-process the values, by applying group
 if ENTITY_ALL_DISABLED:
-    ENTITY_C_DISABLED = ENTITY_AS_DISABLED = ENTITY_A_DISABLED = True
+    ENTITY_C_DISABLED = ENTITY_AS_DISABLED = ENTITY_A_DISABLED = ENTITY_AC_DISABLED = True
 
 if INSIGHTS_ALL_DISABLED:
     INSIGHTS_ALL_LIFETIME_DISABLED = INSIGHTS_ALL_SEGMENTED_DISABLED = True
