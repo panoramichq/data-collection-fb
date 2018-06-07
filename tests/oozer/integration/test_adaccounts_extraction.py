@@ -12,7 +12,7 @@ class TestingConsoleApiClient(TestCase):
     def test_get_active_adaccounts_with_valid_token(self):
         console_api = ConsoleApi(TOKEN)
 
-        accounts = console_api.get_active_accounts()
+        accounts = console_api.get_accounts(active=True)
 
         assert accounts
 
@@ -20,6 +20,6 @@ class TestingConsoleApiClient(TestCase):
         console_api = ConsoleApi('DUMMY_TOKEN')
 
         with self.assertRaises(HTTPError) as ex:
-            console_api.get_active_accounts()
+            console_api.get_accounts(active=True)
 
         assert '404' in str(ex.exception)

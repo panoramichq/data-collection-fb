@@ -55,14 +55,21 @@ class TestAdAccountImportTask(TestCase):
 
     def test_aa_import(self):
 
-        ad_account_id = random.gen_string_id()
+        active_ad_account_id = random.gen_string_id()
+        inactive_ad_account_id = random.gen_string_id()
         tz = 'SovietAmerica/Cheburashka_grad'
 
         accounts = [
             dict(
-                ad_account_id = ad_account_id,
-                timezone = tz
-            )
+                ad_account_id=active_ad_account_id,
+                timezone=tz,
+                active=True,
+            ),
+            dict(
+                ad_account_id=inactive_ad_account_id,
+                timezone=tz,
+                active=False,
+            ),
         ]
 
         job_scope = JobScope(
@@ -74,7 +81,7 @@ class TestAdAccountImportTask(TestCase):
             tokens=['token']
         )
 
-        with mock.patch.object(ConsoleApi, 'get_active_accounts', return_value=accounts) as gaa, \
+        with mock.patch.object(ConsoleApi, 'get_accounts', return_value=accounts) as gaa, \
             mock.patch.dict(scope_api_map, {self.scope_id: ConsoleApi}), \
             mock.patch.object(AdAccountEntity, 'upsert') as aa_upsert, \
             mock.patch.object(report_job_status_task, 'delay') as status_task:
@@ -89,14 +96,28 @@ class TestAdAccountImportTask(TestCase):
         assert not kk
         assert aa == (JobStatus.Done, job_scope)
 
-        assert aa_upsert.called
-        aa, kk = aa_upsert.call_args
-        assert aa == (
-            self.scope_id,
-            ad_account_id
+        assert aa_upsert.call_count == 2
+
+
+        active_account_upsert_args = (
+            (self.scope_id, active_ad_account_id),
+            {
+                'is_active': True,
+                'timezone': tz,
+                'updated_by_sweep_id': self.sweep_id
+            }
         )
-        assert kk == {
-            'is_active': True,
-            'timezone': tz,
-            'updated_by_sweep_id': self.sweep_id
-        }
+
+        inactive_account_upsert_args = (
+            (self.scope_id, inactive_ad_account_id),
+            {
+                'is_active': False,
+                'timezone': tz,
+                'updated_by_sweep_id': self.sweep_id
+            }
+        )
+
+        args1, args2 = aa_upsert.call_args_list
+
+        assert args1 == active_account_upsert_args
+        assert args2 == inactive_account_upsert_args
