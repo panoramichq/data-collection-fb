@@ -69,7 +69,7 @@ def import_ad_accounts_task(job_scope, job_context):
     report_job_status_task.delay(JobStatus.Start, job_scope)
 
     try:
-        accounts = api.get_active_accounts()
+        accounts = api.get_accounts()
         for ad_account in accounts:
             # TODO: maybe create a normative job scope that says ("extracting ad account")
             try:
@@ -77,7 +77,7 @@ def import_ad_accounts_task(job_scope, job_context):
                 AdAccountEntity.upsert(
                     job_scope.entity_id,  # scope ID
                     ad_account['ad_account_id'],
-                    is_active=True,  # TODO: Implement forgetting of ad accounts
+                    is_active=ad_account.get('active', True),
                     timezone=ad_account['timezone'],
                     updated_by_sweep_id=job_scope.sweep_id
                 )

@@ -9,11 +9,11 @@ class ConsoleApi:
 
         self.token = token
 
-    def get_active_accounts(self):
+    def get_accounts(self, **params):
         response = requests.get(
             f'{URL}/api/projects/platform-accounts',
             headers={'x-auth-token': self.token},
-            params= {'platform': 'facebook'}
+            params= {'platform': 'facebook', **params}
         )
 
         # Raise for 4xx and 5xx codes for now
