@@ -77,7 +77,7 @@ def import_ad_accounts_task(job_scope, job_context):
                 AdAccountEntity.upsert(
                     job_scope.entity_id,  # scope ID
                     ad_account['ad_account_id'],
-                    is_active=ad_account['active'],
+                    is_active=ad_account.get('active', True),
                     timezone=ad_account['timezone'],
                     updated_by_sweep_id=job_scope.sweep_id
                 )
