@@ -23,5 +23,6 @@ class Entity:
         Ad,
         AdCreative,
         AdVideo,
+        AdVideo,
         Scope
     }
