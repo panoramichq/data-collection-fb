@@ -77,6 +77,22 @@ class TestingEntityCollection(TestCase):
 
             assert cnt
 
+    def test_fetch_all_ad_videos(self):
+        with PlatformApiContext(TOKEN) as ctx:
+            ad_account = ctx.to_fb_model(AD_ACCOUNT, Entity.AdAccount)
+
+            entities = iter_native_entities_per_adaccount(
+                ad_account,
+                Entity.AdVideo
+            )
+            cnt = 0
+            for entity in entities:
+                assert entity['account_id'] == AD_ACCOUNT  # This tests if we're augmenting correctly
+                cnt += 1
+                break
+
+            assert cnt
+
 
 class TestingEntityCollectionPipeline(TestCase):
     @integration('facebook')
