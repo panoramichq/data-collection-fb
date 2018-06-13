@@ -154,7 +154,7 @@ class AdVideoEntity(EntityBaseMixin, BaseModel):
     Represents a single facebook ad creative entity
     """
 
-    Meta = EntityBaseMeta(dynamodb_config.AD_CREATIVE_ENTITY_TABLE)
+    Meta = EntityBaseMeta(dynamodb_config.AD_VIDEO_ENTITY_TABLE)
 
     entity_type = Entity.AdVideo
 
