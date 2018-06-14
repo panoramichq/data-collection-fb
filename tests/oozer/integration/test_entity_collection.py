@@ -142,3 +142,26 @@ class TestingEntityCollectionPipeline(TestCase):
                 break
 
         assert cnt == 4
+
+    @integration('facebook')
+    def test_pipeline_ad_videos(self):
+
+        job_scope = JobScope(
+            ad_account_id=AD_ACCOUNT,
+            tokens=[TOKEN],
+            report_time=datetime.utcnow(),
+            report_type='entities',
+            report_variant=Entity.AdVideo,
+            sweep_id='1'
+        )
+
+        data_iter = iter_collect_entities_per_adaccount(
+            job_scope, JobContext()
+        )
+
+        cnt = 0
+        for datum in data_iter:
+            cnt += 1
+            break
+
+        assert cnt

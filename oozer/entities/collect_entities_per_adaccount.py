@@ -35,7 +35,7 @@ from oozer.entities.feedback_entity_task import feedback_entity_task
 
 
 def iter_native_entities_per_adaccount(ad_account, entity_type, fields=None, status=None, page_size=200):
-    # type: (FB_ADACCOUNT_MODEL, str, Optional[list]) -> Generator[Union[FB_CAMPAIGN_MODEL, FB_ADSET_MODEL, FB_AD_MODEL]]
+    # type: (FB_ADACCOUNT_MODEL, str, Optional[list]) -> Generator[Union[FB_CAMPAIGN_MODEL, FB_ADSET_MODEL, FB_AD_MODEL, FB_AD_CREATIVE_MODEL, FB_AD_VIDEO_MODEL]]
     """
     Generic getter for entities from the AdAccount edge
 
@@ -150,7 +150,9 @@ def iter_collect_entities_per_adaccount(job_scope, job_context):
                 entity_data = add_vendor_data(
                     entity_data,
                     id=generate_universal_id(
-                        entity_id=entity_data.get(entity.Field.id),
+                        # FIXME: add a bug to facebook ads (get_ad_videos doesnt return ad videos but AbstractCrudObject)
+                        # FIXME so it is unable to access entity.Field.id then (only a problem for ad videos)
+                        entity_id=entity_data.get('id'),
                         **record_id_base_data
                     )
                 )
