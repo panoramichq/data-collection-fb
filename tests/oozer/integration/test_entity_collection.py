@@ -102,7 +102,7 @@ class TestingEntityCollectionPipeline(TestCase):
             ad_account_id=AD_ACCOUNT,
             tokens=[TOKEN],
             report_time=datetime.utcnow(),
-            report_type='entities',
+            report_type='entity',
             report_variant=Entity.Campaign,
             sweep_id='1'
         )
@@ -126,7 +126,7 @@ class TestingEntityCollectionPipeline(TestCase):
             ad_account_id=AD_ACCOUNT,
             tokens=[TOKEN],
             report_time=datetime.utcnow(),
-            report_type='entities',
+            report_type='entity',
             report_variant=Entity.AdCreative,
             sweep_id='1'
         )
@@ -150,7 +150,7 @@ class TestingEntityCollectionPipeline(TestCase):
             ad_account_id=AD_ACCOUNT,
             tokens=[TOKEN],
             report_time=datetime.utcnow(),
-            report_type='entities',
+            report_type='entity',
             report_variant=Entity.AdVideo,
             sweep_id='1'
         )
