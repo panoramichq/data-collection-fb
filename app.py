@@ -67,9 +67,9 @@ def process_celery_worker_command(command_line_values):
         # amount of network IO when these were on
         # and many workers are present.
         # Contemplate going "without" on these
-        '--without-heartbeat',
-        '--without-mingle',
-        '--without-gossip',
+        # '--without-heartbeat',
+        # '--without-mingle',
+        # '--without-gossip',
         # Temporarily ignoring prescribed worker_type values
         # and assigning all possible routing keys to all workers.
         # Notice that we are purposefully still keep two separate queues,
