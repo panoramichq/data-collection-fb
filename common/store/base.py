@@ -28,10 +28,7 @@ class BaseMeta:
 
 
 def _convert_to_pynamodb_expression(cls, value, attr_name):
-    if isinstance(value, PynamoDBAction):
-        # it's already provided to us as compiled Operand
-        # https://pynamodb.readthedocs.io/en/latest/updates.html#update-expressions
-        return value
+    # https://pynamodb.readthedocs.io/en/latest/updates.html#update-expressions
 
     if value is None:
         # instead of writing Null to DB, removing the value

@@ -28,6 +28,9 @@ def _parse_fb_datetime(value):
     )
 
 
+_eol_status = {'ARCHIVED', 'DELETED'}
+
+
 def feedback_entity(entity_data, entity_type, entity_hash_pair):
     """
     This task is to feedback information about entity collected by updating
@@ -56,59 +59,32 @@ def feedback_entity(entity_data, entity_type, entity_hash_pair):
     # turns from whatever, to "irreversible death" - Archived or Deleted.
     # We guess that last update is a safe bet to treat as "it was turned off then" datetime
     # Thus speculatively deriving EOL from the last update if "irreversible death" is detected
-    eol = _parse_fb_datetime(entity_data.get('updated_time')) \
-        if (entity_data.get('configured_status') or entity_data.get('effective_status')) or entity_data.get('status') in ['ARCHIVED', 'DELETED'] \
-        else None
+    _is_eol = (
+        entity_data.get('configured_status') or
+        entity_data.get('effective_status') or
+        entity_data.get('status')
+    ) in _eol_status
 
-    # Note on Model.attr | value use:
-    # This is a way to express "set if does not exist" logic
-    # https://pynamodb.readthedocs.io/en/latest/updates.html#update-expressions
+    eol = _parse_fb_datetime(entity_data.get('updated_time')) \
+        if _is_eol \
+        else None
 
     upsert_data = dict(
         hash=entity_hash_pair[0],
         hash_fields=entity_hash_pair[1],
     )
 
-    # if bol:
-    #     upsert_data['bol'] = Model.bol | bol  # here we allow computed / manual value to stand against "created_time"
-    # if eol:
-    #     upsert_data['eol'] = Model.eol | eol  # allow previously computed value to stand against new value
-    # Model.upsert(
-    #     ad_account_id,
-    #     entity_id,
-    #     **upsert_data
-    # )
+    # Note on Model.attr | value use:
+    # This is a way to express "set if does not exist" logic
+    # https://pynamodb.readthedocs.io/en/latest/updates.html#update-expressions
 
-    # Cannot use Model.attr | value format above ^ because PynamoDB does not support full list of Operands
-    # on Model.update(**d) call. Only Set, Add, Delete, Remove actions are allowed.
-    # TODO: connect with developer, see if this is a real limitation (no support on DynamoDB side) or an accidental omission
-    #       Possibly help them roll that feature in.
+    if bol:
+        upsert_data['bol'] = Model.bol | bol  # here we allow computed / manual value to stand against "created_time"
+    if eol:
+        upsert_data['eol'] = Model.eol | eol  # allow previously computed value to stand against new value
 
-    # Until then, have to read the record in before updating it.
-    try:
-        record = Model.get(ad_account_id, entity_id)
-    except Model.DoesNotExist:
-        record = None
-
-    if record:
-        # We must take care NOT to override the values already set for these attrs
-        if not record.bol and bol:
-            upsert_data['bol'] = bol
-        if not record.eol and eol:
-            upsert_data['eol'] = eol
-
-        for attr_name, value in upsert_data.items():
-            setattr(record, attr_name, value)
-        record.save()
-
-    else:
-        if bol:
-            upsert_data['bol'] = bol
-        if eol:
-            upsert_data['eol'] = eol
-
-        Model.upsert(
-            ad_account_id,
-            entity_id,
-            **upsert_data
-        )
+    Model.upsert(
+        ad_account_id,
+        entity_id,
+        **upsert_data
+    )

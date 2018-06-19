@@ -88,6 +88,48 @@ class BaseModelTests(TestCase):
             more_data='more data'
         )
 
+    def test_base_model_upsert_is_not_exists(self):
+
+        pid = random.gen_string_id()
+        sid = random.gen_string_id()
+
+        # no record should exist, but upsert should succeed
+
+        with self.assertRaises(self.Model.DoesNotExist):
+            self.Model.get(pid, sid)
+
+        # record does not exist
+
+        self.Model.upsert(
+            pid,
+            sid,
+            data=self.Model.data | 'primary data' # if_not_exists change expression
+        )
+        m = self.Model.get(pid, sid)
+        assert m.to_dict() == dict(
+            primary_id=pid,
+            secondary_id=sid,
+            data='primary data',
+            more_data=None
+        )
+
+        # Now record exists and one attr is set,
+        # so attempt to overwrite it will be discarded
+
+        self.Model.upsert(
+            pid,
+            sid,
+            data=self.Model.data | 'primary data overwrite NOT', # if_not_exists change expression
+            more_data=self.Model.more_data | 'more data'
+        )
+        m = self.Model.get(pid, sid)
+        assert m.to_dict() == dict(
+            primary_id=pid,
+            secondary_id=sid,
+            data='primary data', # <-- still original
+            more_data='more data'
+        )
+
 
 class BaseModelToDictFieldsTests(TestCase):
 
