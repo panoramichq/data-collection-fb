@@ -54,8 +54,9 @@ def iter_native_entities_per_adaccount(ad_account, entity_type, fields=None, sta
     FBModel = ENUM_VALUE_FB_MODEL_MAP[entity_type]
 
     def get_augmented_account_ad_videos(fields, params):
+        parsed_account_id = ad_account['id'].split('_')[1]  # Parse act_12345678
         for ad_video in ad_account.get_ad_videos(fields=fields,params=params):
-            ad_video['account_id'] = ad_account['id'].split('_')[1]  # Parse act_12345678
+            ad_video['account_id'] = parsed_account_id
             yield ad_video
 
     getter_method = {
