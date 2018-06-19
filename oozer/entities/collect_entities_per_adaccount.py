@@ -158,8 +158,8 @@ def iter_collect_entities_per_adaccount(job_scope, job_context):
                 yield entity_data
                 cnt += 1
 
-                if cnt % 100 == 0:
-                    report_job_status_task.delay(
+                if cnt % 1000 == 0:
+                    report_job_status_task(
                         ExternalPlatformJobStatus.DataFetched, job_scope
                     )
                     # default paging size for entities per parent
@@ -168,7 +168,7 @@ def iter_collect_entities_per_adaccount(job_scope, job_context):
                     token_manager.report_usage(token, 4)
 
         # Report on the effective task status
-        report_job_status_task.delay(
+        report_job_status_task(
             ExternalPlatformJobStatus.Done, job_scope
         )
         token_manager.report_usage(token)
