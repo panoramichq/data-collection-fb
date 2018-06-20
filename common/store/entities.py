@@ -159,6 +159,16 @@ class AdVideoEntity(EntityBaseMixin, BaseModel):
     entity_type = Entity.AdVideo
 
 
+class CustomAudienceEntity(EntityBaseMixin, BaseModel):
+    """
+    Represents a single facebook ad creative entity
+    """
+
+    Meta = EntityBaseMeta(dynamodb_config.CUSTOM_AUDIENCE_ENTITY_TABLE)
+
+    entity_type = Entity.AdVideo
+
+
 # Used to map from entity_type str to Model for persistence-style tasks
 ENTITY_TYPE_MODEL_MAP = {
     model.entity_type: model
@@ -169,6 +179,7 @@ ENTITY_TYPE_MODEL_MAP = {
         AdEntity,
         AdCreativeEntity,
         AdVideoEntity,
+        CustomAudienceEntity,
     ]
 }
 
@@ -189,6 +200,7 @@ def sync_schema(brute_force=False):
         AdEntity,
         AdCreativeEntity,
         AdVideoEntity,
+        CustomAudienceEntity,
     ]
 
     for table in tables:
