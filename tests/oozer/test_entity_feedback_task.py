@@ -5,7 +5,7 @@ from datetime import datetime, timezone, timedelta
 
 from common.facebook.entity_model_map import MODEL_ENTITY_TYPE_MAP as FB_MODEL_ENTITY_TYPE_MAP
 from common.store.entities import ENTITY_TYPE_MODEL_MAP as ENTITY_TYPE_DB_MODEL_MAP
-from facebookads.adobjects import campaign, adset, ad
+from facebookads.adobjects import campaign, adset, ad, adcreative, advideo
 from oozer.entities.tasks import feedback_entity_task
 from tests.base.random import gen_string_id
 
@@ -33,7 +33,11 @@ class TestEntityFeedback(TestCase):
         entity_id = entity_id or gen_string_id()
 
         entity = entity_klazz(entity_id)
-        entity[entity.Field.account_id] = ad_account_id
+
+        if entity_klazz == advideo.AdVideo:
+            entity['account_id'] = ad_account_id
+        else:
+            entity[entity.Field.account_id] = ad_account_id
 
         entity_fields = filter(
             lambda v: not v.startswith('__'), dir(entity_klazz.Field)
@@ -127,7 +131,7 @@ class TestEntityFeedback(TestCase):
         """
         Check that all entity types get inserted as expected
         """
-        for FBModel in [ad.Ad, adset.AdSet, campaign.Campaign]:
+        for FBModel in [advideo.AdVideo, adcreative.AdCreative, ad.Ad, adset.AdSet, campaign.Campaign]:
 
             entity_type = FB_MODEL_ENTITY_TYPE_MAP[FBModel]
             DBModel = ENTITY_TYPE_DB_MODEL_MAP[entity_type]

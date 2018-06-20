@@ -75,3 +75,8 @@ ad_creative_entities_per_ad_account = functools.partial(
     Entity.AdCreative
 )  # type: (RealityClaim) -> Generator[ExpectationClaim]
 
+ad_video_entities_per_ad_account = functools.partial(
+    entities_per_ad_account,
+    Entity.AdVideo
+)  # type: (RealityClaim) -> Generator[ExpectationClaim]
+
