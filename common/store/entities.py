@@ -166,7 +166,7 @@ class CustomAudienceEntity(EntityBaseMixin, BaseModel):
 
     Meta = EntityBaseMeta(dynamodb_config.CUSTOM_AUDIENCE_ENTITY_TABLE)
 
-    entity_type = Entity.AdVideo
+    entity_type = Entity.CustomAudience
 
 
 # Used to map from entity_type str to Model for persistence-style tasks
