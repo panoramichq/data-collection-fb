@@ -247,7 +247,6 @@ _default_fields_map = {
         'asset_feed_spec',
         'body',
         'branded_content_sponsor_page_id',
-        'call_to_action',
         'call_to_action_type',
         'effective_instagram_story_id',
         'effective_object_story_id',
