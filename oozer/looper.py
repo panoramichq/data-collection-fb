@@ -16,6 +16,7 @@ from config import looper as looper_config
 from oozer.common.job_context import JobContext
 from oozer.common.job_scope import JobScope
 from oozer.common.sorted_jobs_queue import SortedJobsQueue
+from oozer.common.sweep_running_flag import SweepRunningFlag
 from oozer.inventory import resolve_job_scope_to_celery_task
 
 
@@ -613,7 +614,8 @@ def run_sweep_looper_suggest_restart_time(sweep_id):
     sweep_start = time.time()
 
     logger.info(f"#{sweep_id}: Starting sweep loop")
-    cnt, pulse = run_tasks(sweep_id)  # type: Tuple[int, Pulse]
+    with SweepRunningFlag(sweep_id):
+        cnt, pulse = run_tasks(sweep_id)  # type: Tuple[int, Pulse]
     logger.info(f"#{sweep_id}: Ran {cnt} total jobs with following outcomes: {pulse}")
 
     min_sweep_seconds = looper_config.FB_THROTTLING_WINDOW

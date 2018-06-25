@@ -6,6 +6,7 @@ from common.measurement import Measure
 from common.tokens import PlatformTokenManager
 from oozer.common.job_context import JobContext
 from oozer.common.job_scope import JobScope
+from oozer.common.sweep_running_flag import SweepRunningFlag
 
 from .collect_entities_per_adaccount import iter_collect_entities_per_adaccount
 
@@ -24,6 +25,12 @@ def collect_entities_per_adaccount_task(job_scope, job_context):
     :param JobScope job_scope: The dict representation of JobScope
     :param JobContext job_context:
     """
+
+    if not SweepRunningFlag.is_set(job_scope.sweep_id):
+        logger.info(
+            f'{job_scope} skipped because sweep {job_scope.sweep_id} is done'
+        )
+        return
 
     logger.info(
         f'{job_scope} started'
