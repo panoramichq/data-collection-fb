@@ -41,6 +41,7 @@ class _CommandLineValues(argparse.Namespace):
     """
     command = 'str'
     worker_type = 'str'
+    port = '5555'
 
 
 class StarterWorkerType:
@@ -85,6 +86,20 @@ def process_celery_worker_command(command_line_values):
     celery_app.worker_main(celery_worker_args)
 
 
+def process_celery_flower_command(command_line_values):
+    """
+    :param _CommandLineValues command_line_values:
+    """
+    celery_app = get_celery_app()
+
+    command_args = [
+        'celery',
+        'flower',
+        f'--port={command_line_values.port}',
+    ]
+    celery_app.start(command_args)
+
+
 def process_start_command(command_line_values):
     """
     :param _CommandLineValues command_line_values:
@@ -99,8 +114,9 @@ def process_start_command(command_line_values):
     # we declare in opt parser config as supported options.
 
 commands = {
+    'flower': process_celery_flower_command,
+    'start': process_start_command,
     'worker': process_celery_worker_command,
-    'start': process_start_command
 }
 
 
@@ -119,8 +135,9 @@ def parse_args(argv):
     )
 
     subparsers = parser.add_subparsers(
+        # choices=commands.keys(),
         dest='command',
-        title='Possible Commands'
+        title='Possible Commands',
     )
 
     worker_subparser = subparsers.add_parser('worker')
@@ -135,6 +152,12 @@ def parse_args(argv):
         'worker_type',
         choices=StarterWorkerType.ALL,
         help='Command that makes it ever slightly easier to start certain worker types.',
+    )
+
+    starter_subparser = subparsers.add_parser('flower')
+    starter_subparser.add_argument(
+        'port',
+        help='Port on which Celery Flower will serve the UI.',
     )
 
     return parser.parse_args(argv)
