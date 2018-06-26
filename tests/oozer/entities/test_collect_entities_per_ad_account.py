@@ -7,7 +7,8 @@ from common.id_tools import generate_universal_id
 from oozer.common.cold_storage.batch_store import ChunkDumpStore
 from oozer.common.job_scope import JobScope
 from oozer.entities.collect_entities_per_adaccount import iter_collect_entities_per_adaccount
-from oozer.entities.collect_entities_per_adaccount import FB_AD_CREATIVE_MODEL, FB_AD_MODEL, FB_ADSET_MODEL, FB_CAMPAIGN_MODEL, FB_ADACCOUNT_MODEL
+from oozer.entities.collect_entities_per_adaccount import \
+    FB_AD_VIDEO_MODEL, FB_AD_CREATIVE_MODEL, FB_AD_MODEL, FB_ADSET_MODEL, FB_CAMPAIGN_MODEL, FB_ADACCOUNT_MODEL
 
 from tests.base import random
 
@@ -22,18 +23,20 @@ class TestCollectEntitiesPerAdAccount(TestCase):
 
     def test_correct_vendor_data_inserted_into_cold_store_payload_campaigns(self):
 
-        entity_types = [Entity.Campaign, Entity.AdSet, Entity.Ad, Entity.AdCreative]
+        entity_types = [Entity.Campaign, Entity.AdSet, Entity.Ad, Entity.AdCreative, Entity.AdVideo]
         fb_model_map = {
             Entity.Campaign: FB_CAMPAIGN_MODEL,
             Entity.AdSet: FB_ADSET_MODEL,
             Entity.Ad: FB_AD_MODEL,
             Entity.AdCreative: FB_AD_CREATIVE_MODEL,
+            Entity.AdVideo: FB_AD_VIDEO_MODEL,
         }
         get_all_method_map = {
             Entity.Campaign: 'get_campaigns',
             Entity.AdSet: 'get_ad_sets',
             Entity.Ad: 'get_ads',
             Entity.AdCreative: 'get_ad_creatives',
+            Entity.AdVideo: 'get_ad_videos',
         }
 
         for entity_type in entity_types:
@@ -58,9 +61,15 @@ class TestCollectEntitiesPerAdAccount(TestCase):
             )
 
             fb_data = FB_MODEL(fbid=fbid)
-            fb_data[FB_MODEL.Field.account_id] = self.ad_account_id
-            entities_data = [fb_data]
 
+            if entity_type == Entity.AdVideo:
+                # Ad videos normally don't have account_id
+                # but we augment it with it
+                fb_data['account_id'] = self.ad_account_id
+            else:
+                fb_data[FB_MODEL.Field.account_id] = self.ad_account_id
+
+            entities_data = [fb_data]
             with mock.patch.object(FB_ADACCOUNT_MODEL, get_method_name, return_value=entities_data), \
                  mock.patch.object(ChunkDumpStore, 'store') as store:
 

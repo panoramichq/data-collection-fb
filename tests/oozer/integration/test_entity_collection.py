@@ -77,6 +77,22 @@ class TestingEntityCollection(TestCase):
 
             assert cnt
 
+    def test_fetch_all_ad_videos(self):
+        with PlatformApiContext(TOKEN) as ctx:
+            ad_account = ctx.to_fb_model(AD_ACCOUNT, Entity.AdAccount)
+
+            entities = iter_native_entities_per_adaccount(
+                ad_account,
+                Entity.AdVideo
+            )
+            cnt = 0
+            for entity in entities:
+                assert entity['account_id'] == AD_ACCOUNT  # This tests if we're augmenting correctly
+                cnt += 1
+                break
+
+            assert cnt
+
 
 class TestingEntityCollectionPipeline(TestCase):
     @integration('facebook')
@@ -86,7 +102,7 @@ class TestingEntityCollectionPipeline(TestCase):
             ad_account_id=AD_ACCOUNT,
             tokens=[TOKEN],
             report_time=datetime.utcnow(),
-            report_type='entities',
+            report_type='entity',
             report_variant=Entity.Campaign,
             sweep_id='1'
         )
@@ -110,7 +126,7 @@ class TestingEntityCollectionPipeline(TestCase):
             ad_account_id=AD_ACCOUNT,
             tokens=[TOKEN],
             report_time=datetime.utcnow(),
-            report_type='entities',
+            report_type='entity',
             report_variant=Entity.AdCreative,
             sweep_id='1'
         )
@@ -126,3 +142,26 @@ class TestingEntityCollectionPipeline(TestCase):
                 break
 
         assert cnt == 4
+
+    @integration('facebook')
+    def test_pipeline_ad_videos(self):
+
+        job_scope = JobScope(
+            ad_account_id=AD_ACCOUNT,
+            tokens=[TOKEN],
+            report_time=datetime.utcnow(),
+            report_type='entity',
+            report_variant=Entity.AdVideo,
+            sweep_id='1'
+        )
+
+        data_iter = iter_collect_entities_per_adaccount(
+            job_scope, JobContext()
+        )
+
+        cnt = 0
+        for datum in data_iter:
+            cnt += 1
+            break
+
+        assert cnt
