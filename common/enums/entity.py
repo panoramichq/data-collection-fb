@@ -11,6 +11,10 @@ class Entity:
     Ad = 'A'
 
     AdCreative = 'AC'
+    AdVideo = 'AV'
+
+    # FIXME: split entities into general (C,AS,A) - insights enabled
+    # FIXME: and into "entity only" - other (no insights fetched)
 
     ALL = {
         AdAccount,
@@ -18,5 +22,6 @@ class Entity:
         AdSet,
         Ad,
         AdCreative,
+        AdVideo,
         Scope
     }

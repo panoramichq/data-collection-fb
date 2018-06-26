@@ -30,7 +30,8 @@ from .entities import (
     campaign_entities_per_ad_account,
     adset_entities_per_ad_account,
     ad_entities_per_ad_account,
-    ad_creative_entities_per_ad_account)
+    ad_creative_entities_per_ad_account,
+    ad_video_entities_per_ad_account)
 
 
 # mental note:
@@ -43,6 +44,7 @@ entity_expectation_generator_map[Entity.AdAccount] = list(filter(None, [
     None if jobs_config.ENTITY_AS_DISABLED else adset_entities_per_ad_account,
     None if jobs_config.ENTITY_A_DISABLED else ad_entities_per_ad_account,
     None if jobs_config.ENTITY_AC_DISABLED else ad_creative_entities_per_ad_account,
+    None if jobs_config.ENTITY_AV_DISABLED else ad_video_entities_per_ad_account,
     sync_expectations_per_ad_account
 ]))
 

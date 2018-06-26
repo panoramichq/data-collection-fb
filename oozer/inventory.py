@@ -20,6 +20,7 @@ entity_report_handler_map = {
         Entity.AdSet: collect_entities_per_adaccount_task,
         Entity.Ad: collect_entities_per_adaccount_task,
         Entity.AdCreative: collect_entities_per_adaccount_task,
+        Entity.AdVideo: collect_entities_per_adaccount_task,
     },
     ReportType.lifetime: {
         Entity.Campaign: collect_insights_task,

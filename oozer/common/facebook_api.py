@@ -2,11 +2,11 @@ from typing import List
 
 from facebookads.api import FacebookAdsApi, FacebookSession
 from facebookads.adobjects import abstractcrudobject
-from facebookads.adobjects.adaccount import AdAccount
 from facebookads.adobjects.campaign import Campaign
 from facebookads.adobjects.adset import AdSet
 from facebookads.adobjects.ad import Ad
 from facebookads.adobjects.adcreative import AdCreative
+from facebookads.adobjects.advideo import AdVideo
 
 from oozer.common.enum import to_fb_model
 from oozer.common.facebook_fields import collapse_fields_children
@@ -247,7 +247,6 @@ _default_fields_map = {
         'asset_feed_spec',
         'body',
         'branded_content_sponsor_page_id',
-        'call_to_action',
         'call_to_action_type',
         'effective_instagram_story_id',
         'effective_object_story_id',
@@ -274,6 +273,39 @@ _default_fields_map = {
         'title',
         'url_tags',
         'video_id',
+    ]),
+    AdVideo: ([
+        'id',
+        'ad_breaks',
+        'backdated_time',
+        'backdated_time_granularity',
+        'content_tags',
+        'created_time',
+        'content_category',
+        'custom_labels',
+        'description',
+        'embed_html',
+        'embeddable',
+        'event',
+        'format',
+        'from',
+        'icon',
+        'is_crosspost_video',
+        'is_crossposting_eligible',
+        'is_instagram_eligible',
+        'length',
+        'live_status',
+        'permalink_url',
+        'picture',
+        'place',
+        'privacy',
+        'published',
+        'scheduled_publish_time',
+        'source',
+        'status',
+        'title',
+        'universal_video_id',
+        'updated_time',
     ])
 }
 
