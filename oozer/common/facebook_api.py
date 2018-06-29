@@ -7,6 +7,7 @@ from facebookads.adobjects.adset import AdSet
 from facebookads.adobjects.ad import Ad
 from facebookads.adobjects.adcreative import AdCreative
 from facebookads.adobjects.advideo import AdVideo
+from facebookads.adobjects.customaudience import CustomAudience
 
 from oozer.common.enum import to_fb_model
 from oozer.common.facebook_fields import collapse_fields_children
@@ -306,6 +307,43 @@ _default_fields_map = {
         'title',
         'universal_video_id',
         'updated_time',
+    ]),
+    CustomAudience: ([
+        'id',
+        'account_id',
+        'name',
+        'approximate_count',
+        'data_source',
+        'delivery_status',
+        'description',
+        'rule',
+        'rule_aggregation'
+        'subtype',
+        'external_event_source',
+        'is_value_based',
+        'lookalike_audience_ids',
+        'lookalike_spec',
+        'operation_status',
+        'opt_out_link',
+        'permission_for_actions',
+        'pixel_id',
+        'retention_days',
+        'time_content_updated',
+        'time_created',
+        'time_updated',
+        'allowed_domains',
+        'claim_objective',
+        'content_type',
+        'dataset_id',
+        'event_source_group',
+        'origin_audience_id',
+        'prefill',
+        'product_set_id',
+        'associated_audience_id',
+        'exclusions',
+        'inclusions',
+        'parent_audience_id',
+        'tags'
     ])
 }
 
