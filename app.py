@@ -71,6 +71,16 @@ def process_celery_worker_command(command_line_values):
         # '--without-heartbeat',
         # '--without-mingle',
         # '--without-gossip',
+        # However,
+        # - Flower does not work without this
+        # - While doing research found a number of bugs filed for obscure "result management"
+        #   failures when these are disabled. Because these are not commonly used switches,
+        #   majority of the world runs systems with them on, and, as result, majority of the
+        #   result store kinks are caught with this stuff enabled. After trying to chase an
+        #   explanation for why in random scenarios task.delay().join() never resolves (result
+        #   is never returned), not leaving any weirdness on the table. Commenting these switches
+        #   out is removing weirdness. (Yeah, I am going superstitious on you there :) )
+
         # Temporarily ignoring prescribed worker_type values
         # and assigning all possible routing keys to all workers.
         # Notice that we are purposefully still keep two separate queues,
