@@ -23,6 +23,13 @@ def collect_insights_task(job_scope, job_context):
     :param JobScope job_scope:
     :param JobContext job_context:
     """
+
+    # we do early exit of this kind only before we start pulling results
+    # Once a task starts to pull results, we just let it burn out by itself.
+    # It may be pulling data for very large stream. Limiting its work to lifecycle
+    # of sweep is unfair as it may result in chronic failure to fetch that data.
+    # ( Besides, adding code to collection worker means infecting it with scope
+    #   of code that is external to the function of the code. Feels icky. )
     if not SweepRunningFlag.is_set(job_scope.sweep_id):
         logger.info(
             f'{job_scope} skipped because sweep {job_scope.sweep_id} is done'
