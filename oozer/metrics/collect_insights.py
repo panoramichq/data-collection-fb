@@ -422,8 +422,8 @@ class Insights:
                     yield datum
                     cnt += 1
 
-                    if cnt % 100 == 0:
-                        report_job_status_task.delay(
+                    if cnt % 1000 == 0:
+                        report_job_status_task(
                             ExternalPlatformJobStatus.DataFetched, job_scope
                         )
                         # default paging size for entities per parent
@@ -431,7 +431,7 @@ class Insights:
                         # means about 4 hits to FB
                         token_manager.report_usage(token, 4)
 
-            report_job_status_task.delay(
+            report_job_status_task(
                 ExternalPlatformJobStatus.Done, job_scope
             )
             token_manager.report_usage(token)

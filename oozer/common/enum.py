@@ -4,7 +4,8 @@ from facebookads.adobjects import (
     adset,
     campaign,
     adcreative,
-    advideo
+    advideo,
+    customaudience,
 )
 
 from common.enums.entity import Entity
@@ -17,6 +18,7 @@ FB_ADSET_MODEL = adset.AdSet
 FB_AD_MODEL = ad.Ad
 FB_AD_CREATIVE_MODEL = adcreative.AdCreative
 FB_AD_VIDEO_MODEL = advideo.AdVideo
+FB_CUSTOM_AUDIENCE_MODEL = customaudience.CustomAudience
 
 FB_MODEL_ENUM_VALUE_MAP = {
     FB_ADACCOUNT_MODEL: Entity.AdAccount,
@@ -25,6 +27,7 @@ FB_MODEL_ENUM_VALUE_MAP = {
     FB_AD_MODEL: Entity.Ad,
     FB_AD_CREATIVE_MODEL: Entity.AdCreative,
     FB_AD_VIDEO_MODEL: Entity.AdVideo,
+    FB_CUSTOM_AUDIENCE_MODEL: Entity.CustomAudience,
 }
 
 ENUM_VALUE_FB_MODEL_MAP = {

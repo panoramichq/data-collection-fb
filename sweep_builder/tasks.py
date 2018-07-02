@@ -99,4 +99,4 @@ def build_sweep(sweep_id):
 
     # here we fan out actual work to celery workers
     # and wait for all tasks to finish before returning
-    group(delayed_tasks).delay().join()
+    group(delayed_tasks).delay().join_native()

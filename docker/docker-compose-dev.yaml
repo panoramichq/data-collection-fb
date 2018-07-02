@@ -38,9 +38,13 @@ services:
       - dynamo
 #    depends_on:
 #      - dd-agent
+    ports:
+      - 5555:5555
     environment:
 #      APP_MEASUREMENT_STATSD_SERVER: 'dd-agent'
       APP_LOGGING_LEVEL: 'INFO'
       APP_CELERY_task_eager_propagates: "true"
       APP_CELERY_task_always_eager: "true"
     command: bash
+
+#    command: python app.py flower 5555

@@ -5,6 +5,7 @@ from facebookads.adobjects.adset import AdSet
 from facebookads.adobjects.campaign import Campaign
 from facebookads.adobjects.adcreative import AdCreative
 from facebookads.adobjects.advideo import AdVideo
+from facebookads.adobjects.customaudience import CustomAudience
 
 
 ENTITY_TYPE_MODEL_MAP = {
@@ -14,6 +15,8 @@ ENTITY_TYPE_MODEL_MAP = {
     Entity.Campaign: Campaign,
     Entity.AdCreative: AdCreative,
     Entity.AdVideo: AdVideo,
+    Entity.AdCreative: AdCreative,
+    Entity.CustomAudience: CustomAudience,
 }
 
 

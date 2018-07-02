@@ -41,6 +41,7 @@ class _CommandLineValues(argparse.Namespace):
     """
     command = 'str'
     worker_type = 'str'
+    port = '5555'
 
 
 class StarterWorkerType:
@@ -67,9 +68,19 @@ def process_celery_worker_command(command_line_values):
         # amount of network IO when these were on
         # and many workers are present.
         # Contemplate going "without" on these
-        '--without-heartbeat',
-        '--without-mingle',
-        '--without-gossip',
+        # '--without-heartbeat',
+        # '--without-mingle',
+        # '--without-gossip',
+        # However,
+        # - Flower does not work without this
+        # - While doing research found a number of bugs filed for obscure "result management"
+        #   failures when these are disabled. Because these are not commonly used switches,
+        #   majority of the world runs systems with them on, and, as result, majority of the
+        #   result store kinks are caught with this stuff enabled. After trying to chase an
+        #   explanation for why in random scenarios task.delay().join() never resolves (result
+        #   is never returned), not leaving any weirdness on the table. Commenting these switches
+        #   out is removing weirdness. (Yeah, I am going superstitious on you there :) )
+
         # Temporarily ignoring prescribed worker_type values
         # and assigning all possible routing keys to all workers.
         # Notice that we are purposefully still keep two separate queues,
@@ -83,6 +94,20 @@ def process_celery_worker_command(command_line_values):
         # '--queues', pad_with_build_id(command_line_values.worker_type)
     ]
     celery_app.worker_main(celery_worker_args)
+
+
+def process_celery_flower_command(command_line_values):
+    """
+    :param _CommandLineValues command_line_values:
+    """
+    celery_app = get_celery_app()
+
+    command_args = [
+        'celery',
+        'flower',
+        f'--port={command_line_values.port}',
+    ]
+    celery_app.start(command_args)
 
 
 def process_start_command(command_line_values):
@@ -99,8 +124,9 @@ def process_start_command(command_line_values):
     # we declare in opt parser config as supported options.
 
 commands = {
+    'flower': process_celery_flower_command,
+    'start': process_start_command,
     'worker': process_celery_worker_command,
-    'start': process_start_command
 }
 
 
@@ -119,8 +145,9 @@ def parse_args(argv):
     )
 
     subparsers = parser.add_subparsers(
+        # choices=commands.keys(),
         dest='command',
-        title='Possible Commands'
+        title='Possible Commands',
     )
 
     worker_subparser = subparsers.add_parser('worker')
@@ -135,6 +162,12 @@ def parse_args(argv):
         'worker_type',
         choices=StarterWorkerType.ALL,
         help='Command that makes it ever slightly easier to start certain worker types.',
+    )
+
+    starter_subparser = subparsers.add_parser('flower')
+    starter_subparser.add_argument(
+        'port',
+        help='Port on which Celery Flower will serve the UI.',
     )
 
     return parser.parse_args(argv)

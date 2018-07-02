@@ -25,6 +25,7 @@ from oozer.common.enum import (
     FB_AD_MODEL,
     FB_AD_CREATIVE_MODEL,
     FB_AD_VIDEO_MODEL,
+    FB_CUSTOM_AUDIENCE_MODEL,
     ENUM_VALUE_FB_MODEL_MAP,
     ExternalPlatformJobStatus
 )
@@ -35,7 +36,7 @@ from oozer.entities.feedback_entity_task import feedback_entity_task
 
 
 def iter_native_entities_per_adaccount(ad_account, entity_type, fields=None, status=None, page_size=200):
-    # type: (FB_ADACCOUNT_MODEL, str, Optional[list]) -> Generator[Union[FB_CAMPAIGN_MODEL, FB_ADSET_MODEL, FB_AD_MODEL, FB_AD_CREATIVE_MODEL, FB_AD_VIDEO_MODEL]]
+    # type: (FB_ADACCOUNT_MODEL, str, Optional[list]) -> Generator[Union[FB_CAMPAIGN_MODEL, FB_ADSET_MODEL, FB_AD_MODEL, FB_AD_CREATIVE_MODEL, FB_AD_VIDEO_MODEL, FB_CUSTOM_AUDIENCE_MODEL]]
     """
     Generic getter for entities from the AdAccount edge
 
@@ -65,6 +66,7 @@ def iter_native_entities_per_adaccount(ad_account, entity_type, fields=None, sta
         FB_AD_MODEL: ad_account.get_ads,
         FB_AD_CREATIVE_MODEL: ad_account.get_ad_creatives,
         FB_AD_VIDEO_MODEL: get_augmented_account_ad_videos,
+        FB_CUSTOM_AUDIENCE_MODEL: ad_account.get_custom_audiences,
     }[FBModel]
 
     fields_to_fetch = fields or get_default_fields(FBModel)
@@ -168,8 +170,8 @@ def iter_collect_entities_per_adaccount(job_scope, job_context):
                 yield entity_data
                 cnt += 1
 
-                if cnt % 100 == 0:
-                    report_job_status_task.delay(
+                if cnt % 1000 == 0:
+                    report_job_status_task(
                         ExternalPlatformJobStatus.DataFetched, job_scope
                     )
                     # default paging size for entities per parent
@@ -178,7 +180,7 @@ def iter_collect_entities_per_adaccount(job_scope, job_context):
                     token_manager.report_usage(token, 4)
 
         # Report on the effective task status
-        report_job_status_task.delay(
+        report_job_status_task(
             ExternalPlatformJobStatus.Done, job_scope
         )
         token_manager.report_usage(token)
