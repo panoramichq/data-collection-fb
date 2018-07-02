@@ -8,7 +8,7 @@ from oozer.common.cold_storage.batch_store import ChunkDumpStore
 from oozer.common.job_scope import JobScope
 from oozer.entities.collect_entities_per_adaccount import iter_collect_entities_per_adaccount
 from oozer.entities.collect_entities_per_adaccount import \
-    FB_AD_VIDEO_MODEL, FB_AD_CREATIVE_MODEL, FB_AD_MODEL, FB_ADSET_MODEL, FB_CAMPAIGN_MODEL, FB_ADACCOUNT_MODEL
+    FB_AD_VIDEO_MODEL, FB_AD_CREATIVE_MODEL, FB_AD_MODEL, FB_ADSET_MODEL, FB_CAMPAIGN_MODEL, FB_ADACCOUNT_MODEL, FB_CUSTOM_AUDIENCE_MODEL
 
 from tests.base import random
 
@@ -23,13 +23,14 @@ class TestCollectEntitiesPerAdAccount(TestCase):
 
     def test_correct_vendor_data_inserted_into_cold_store_payload_campaigns(self):
 
-        entity_types = [Entity.Campaign, Entity.AdSet, Entity.Ad, Entity.AdCreative, Entity.AdVideo]
+        entity_types = [Entity.Campaign, Entity.AdSet, Entity.Ad, Entity.AdCreative, Entity.AdVideo, Entity.CustomAudience]
         fb_model_map = {
             Entity.Campaign: FB_CAMPAIGN_MODEL,
             Entity.AdSet: FB_ADSET_MODEL,
             Entity.Ad: FB_AD_MODEL,
             Entity.AdCreative: FB_AD_CREATIVE_MODEL,
             Entity.AdVideo: FB_AD_VIDEO_MODEL,
+            Entity.CustomAudience: FB_CUSTOM_AUDIENCE_MODEL,
         }
         get_all_method_map = {
             Entity.Campaign: 'get_campaigns',
@@ -37,6 +38,7 @@ class TestCollectEntitiesPerAdAccount(TestCase):
             Entity.Ad: 'get_ads',
             Entity.AdCreative: 'get_ad_creatives',
             Entity.AdVideo: 'get_ad_videos',
+            Entity.CustomAudience: 'get_custom_audiences',
         }
 
         for entity_type in entity_types:

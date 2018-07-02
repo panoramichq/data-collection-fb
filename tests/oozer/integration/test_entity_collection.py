@@ -93,6 +93,21 @@ class TestingEntityCollection(TestCase):
 
             assert cnt
 
+    def test_fetch_all_custom_audiences(self):
+        with PlatformApiContext(TOKEN) as ctx:
+            ad_account = ctx.to_fb_model(AD_ACCOUNT, Entity.AdAccount)
+            entities = iter_native_entities_per_adaccount(
+                ad_account,
+                Entity.CustomAudience
+            )
+            cnt = 0
+
+            for entity in entities:
+                cnt += 1
+                break
+
+            assert cnt
+
 
 class TestingEntityCollectionPipeline(TestCase):
     @integration('facebook')
@@ -152,6 +167,29 @@ class TestingEntityCollectionPipeline(TestCase):
             report_time=datetime.utcnow(),
             report_type='entity',
             report_variant=Entity.AdVideo,
+            sweep_id='1'
+        )
+
+        data_iter = iter_collect_entities_per_adaccount(
+            job_scope, JobContext()
+        )
+
+        cnt = 0
+        for datum in data_iter:
+            cnt += 1
+            break
+
+        assert cnt
+
+    @integration('facebook')
+    def test_pipeline_custom_audiences(self):
+
+        job_scope = JobScope(
+            ad_account_id=AD_ACCOUNT,
+            tokens=[TOKEN],
+            report_time=datetime.utcnow(),
+            report_type='entity',
+            report_variant=Entity.CustomAudience,
             sweep_id='1'
         )
 
