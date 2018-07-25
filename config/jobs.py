@@ -17,6 +17,9 @@ is more meaningful in context of some particular job DISABLED=False
 In this case, group level DISABLED clearly takes precedence.
 """
 
+# Ad account sourcing
+AD_ACCOUNT_IMPORT_DISABLED = False
+
 # actual entity jobs:
 ENTITY_C_DISABLED = False
 ENTITY_AS_DISABLED = False
@@ -48,8 +51,7 @@ update_from_env(__name__)
 
 # and here we post-process the values, by applying group
 if ENTITY_ALL_DISABLED:
-    ENTITY_C_DISABLED = ENTITY_AS_DISABLED = ENTITY_A_DISABLED = ENTITY_AC_DISABLED = ENTITY_AV_DISABLED = True
-    # FIXME: ENTITY_CA_DISABLED
+    ENTITY_C_DISABLED = ENTITY_AS_DISABLED = ENTITY_A_DISABLED = ENTITY_AC_DISABLED = ENTITY_AV_DISABLED = ENTITY_CA_DISABLED = True
 
 if INSIGHTS_ALL_DISABLED:
     INSIGHTS_ALL_LIFETIME_DISABLED = INSIGHTS_ALL_SEGMENTED_DISABLED = True
