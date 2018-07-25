@@ -3,6 +3,7 @@ import logging
 from collections import defaultdict
 from pynamodb.exceptions import PutError
 
+from common.bugsnag import BugSnagContextData
 from common.celeryapp import get_celery_app
 from common.enums.entity import Entity
 from common.store.entities import AdAccountEntity
@@ -96,5 +97,6 @@ def import_ad_accounts_task(job_scope, job_context):
 
         report_job_status_task.delay(JobStatus.Done, job_scope)
     except Exception as ex:
+        BugSnagContextData.notify(ex, job_scope=job_scope)
         logger.error(str(ex))
         report_job_status_task.delay(JobStatus.GenericError, job_scope)
