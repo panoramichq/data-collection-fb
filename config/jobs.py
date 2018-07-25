@@ -17,6 +17,9 @@ is more meaningful in context of some particular job DISABLED=False
 In this case, group level DISABLED clearly takes precedence.
 """
 
+# Ad account sourcing
+AD_ACCOUNT_IMPORT_DISABLED = False
+
 # actual entity jobs:
 ENTITY_C_DISABLED = False
 ENTITY_AS_DISABLED = False

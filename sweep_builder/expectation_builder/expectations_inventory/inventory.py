@@ -22,7 +22,7 @@ from .adaccount import ad_accounts_per_scope, sync_expectations_per_ad_account
 
 
 entity_expectation_generator_map[Entity.Scope] = [
-    ad_accounts_per_scope,
+    None if jobs_config.AD_ACCOUNT_IMPORT_DISABLED else ad_accounts_per_scope,
 ]
 
 
