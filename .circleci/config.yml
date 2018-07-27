@@ -165,28 +165,28 @@ workflows:
           requires:
             - build_image
 
-      - hold_for_deploy_staging:
-          type: approval
-          requires:
-            - run_tests
-          filters:
-            branches:
-              only:
-                - staging
+      # - hold_for_deploy_staging:
+      #     type: approval
+      #     requires:
+      #       - run_tests
+      #     filters:
+      #       branches:
+      #         only:
+      #           - staging
 
-      - deploy_staging:
-          requires:
-            - hold_for_deploy_staging
+      # - deploy_staging:
+      #     requires:
+      #       - hold_for_deploy_staging
 
-      - hold_for_deploy_production:
-          type: approval
-          requires:
-            - run_tests
-          filters:
-            branches:
-              only:
-                - production
+      # - hold_for_deploy_production:
+      #     type: approval
+      #     requires:
+      #       - run_tests
+      #     filters:
+      #       branches:
+      #         only:
+      #           - production
 
-      - deploy_production:
-          requires:
-            - hold_for_deploy_production
+      # - deploy_production:
+      #     requires:
+      #       - hold_for_deploy_production
