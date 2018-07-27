@@ -1,7 +1,7 @@
 -r requirements.base.txt
 boto3==1.5.27
 facebookads==2.11.3
-pynamodb==3.2.1
+pynamodb==3.3.0
 ujson==1.35
 xxhash==1.0.1
 datadog==0.19.0
