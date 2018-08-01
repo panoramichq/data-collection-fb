@@ -2,7 +2,7 @@ from datetime import datetime
 from dateutil.parser import parse as parse_iso_datetime_string
 
 from common.store.entities import ENTITY_TYPE_MODEL_MAP
-from common.tztools import dt_to_other_timezone
+from common.tztools import dt_to_other_timezone, now
 from common.enums.entity import Entity
 
 
@@ -61,7 +61,7 @@ def feedback_entity(entity_data, entity_type, entity_hash_pair):
 
     # Handle default BOL if the value doesn't exist in the data
     if Model._default_bol and not entity_data.get('created_time'):
-        entity_data['created_time'] = datetime.now()
+        entity_data['created_time'] = now()
 
     bol = _parse_fb_datetime(entity_data.get('created_time'))
 
