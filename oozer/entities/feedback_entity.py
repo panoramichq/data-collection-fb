@@ -53,6 +53,16 @@ def feedback_entity(entity_data, entity_type, entity_hash_pair):
     entity_id = entity_data['id']
     ad_account_id = entity_data['account_id']
 
+    # Custom audiences specify create & update time as unix timestamps
+    if entity_data.get('time_created'):
+        entity_data['created_time'] = datetime.fromtimestamp(entity_data['time_created'])
+    if entity_data.get('time_updated'):
+        entity_data['updated_time'] = datetime.fromtimestamp(entity_data['time_updated'])
+
+    # Handle default BOL if the value doesn't exist in the data
+    if Model._default_bol and not entity_data.get('created_time'):
+        entity_data['created_time'] = datetime.now()
+
     bol = _parse_fb_datetime(entity_data.get('created_time'))
 
     # End of Life (for metrics purposes) occurs when Entity status

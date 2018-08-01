@@ -99,6 +99,11 @@ class EntityBaseMixin:
     hash = attributes.UnicodeAttribute(null=True, attr_name='h')  # Could be binary
     hash_fields = attributes.UnicodeAttribute(null=True, attr_name='hf')  # Could be binary
 
+    # Since we use UpdateItem for inserting records, we must have at least
+    # one attribute specified on each model. Normally that would be created_time
+    # but FB doesn't have that on all models, so we setup a default
+    _default_bol = False
+
     entity_type = None  # will be overridden in subclass
     _additional_fields = {
         'entity_type'
@@ -147,6 +152,7 @@ class AdCreativeEntity(EntityBaseMixin, BaseModel):
     Meta = EntityBaseMeta(dynamodb_config.AD_CREATIVE_ENTITY_TABLE)
 
     entity_type = Entity.AdCreative
+    _default_bol = True
 
 
 class AdVideoEntity(EntityBaseMixin, BaseModel):
@@ -157,6 +163,7 @@ class AdVideoEntity(EntityBaseMixin, BaseModel):
     Meta = EntityBaseMeta(dynamodb_config.AD_VIDEO_ENTITY_TABLE)
 
     entity_type = Entity.AdVideo
+    _default_bol = True
 
 
 class CustomAudienceEntity(EntityBaseMixin, BaseModel):
