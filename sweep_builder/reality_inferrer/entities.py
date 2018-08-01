@@ -31,6 +31,8 @@ def iter_entities_per_ad_account_id(ad_account_id, fields=None):
         entities.AdsetEntity,
         entities.AdEntity,
         entities.AdCreativeEntity,
+        entities.AdVideoEntity,
+        entities.CustomAudienceEntity,
     ]
 
     for EntityModel in entity_models:
