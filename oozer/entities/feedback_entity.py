@@ -69,6 +69,7 @@ def feedback_entity(entity_data, entity_type, entity_hash_pair):
     # turns from whatever, to "irreversible death" - Archived or Deleted.
     # We guess that last update is a safe bet to treat as "it was turned off then" datetime
     # Thus speculatively deriving EOL from the last update if "irreversible death" is detected
+    # We cast this to a string to avoid any issues with entity types using "status" as a dict
     _is_eol = str(
         entity_data.get('configured_status') or
         entity_data.get('effective_status') or
