@@ -7,3 +7,4 @@ ipdb
 ipython
 pip-tools
 pytest
+freezegun

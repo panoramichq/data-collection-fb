@@ -1,11 +1,12 @@
 # must be first, as it does event loop patching and other "first" things
 from tests.base.testcase import TestCase
+from freezegun import freeze_time
 
 from datetime import datetime, timezone, timedelta
 
 from common.facebook.entity_model_map import MODEL_ENTITY_TYPE_MAP as FB_MODEL_ENTITY_TYPE_MAP
 from common.store.entities import ENTITY_TYPE_MODEL_MAP as ENTITY_TYPE_DB_MODEL_MAP
-from facebookads.adobjects import campaign, adset, ad, adcreative, advideo
+from facebookads.adobjects import campaign, adset, ad, adcreative, advideo, customaudience
 from oozer.entities.tasks import feedback_entity_task
 from tests.base.random import gen_string_id
 
@@ -127,6 +128,87 @@ class TestEntityFeedback(TestCase):
             'hash_fields': 'f_hash'
         }
 
+    def test_bol_translation(self):
+        """
+        Check that the default BOL values are populated on entities without creation date
+        """
+
+        FBModel = customaudience.CustomAudience
+        entity_type = FB_MODEL_ENTITY_TYPE_MAP[FBModel]
+        DBModel = ENTITY_TYPE_DB_MODEL_MAP[entity_type]
+
+        aaid = gen_string_id()
+        eid = gen_string_id()
+
+        entity_data = dict(
+            # returned value here is FB SDK model, hence the dict( above.
+            self._entity_factory(
+                FBModel,
+                account_id=aaid,
+                id=eid,
+                time_created=1523049070,
+                time_updated=1533162823
+            )
+        )
+
+        feedback_entity_task(
+            entity_data,
+            entity_type,
+            ('e_hash', 'f_hash')
+        )
+
+        record = DBModel.get(aaid, eid)
+
+        assert record.to_dict() == {
+            'ad_account_id': aaid,
+            'entity_id': eid,
+            'entity_type': entity_type,
+            'bol': datetime(2018, 4, 6, 21, 11, 10, tzinfo=timezone.utc),
+            'eol': None,
+            'hash': 'e_hash',
+            'hash_fields': 'f_hash'
+        }
+
+    @freeze_time()
+    def test_default_bol(self):
+        """
+        Check that the default BOL values are populated on entities without creation date
+        """
+
+        FBModel = adcreative.AdCreative
+        entity_type = FB_MODEL_ENTITY_TYPE_MAP[FBModel]
+        DBModel = ENTITY_TYPE_DB_MODEL_MAP[entity_type]
+
+        aaid = gen_string_id()
+        eid = gen_string_id()
+
+        entity_data = dict(
+            # returned value here is FB SDK model, hence the dict( above.
+            self._entity_factory(
+                FBModel,
+                ad_account_id=aaid,
+                id=eid
+            )
+        )
+
+        feedback_entity_task(
+            entity_data,
+            entity_type,
+            ('e_hash', 'f_hash')
+        )
+
+        record = DBModel.get(aaid, eid)
+
+        assert record.to_dict() == {
+            'ad_account_id': aaid,
+            'entity_id': eid,
+            'entity_type': entity_type,
+            'bol': datetime.now(timezone.utc),
+            'eol': None,
+            'hash': 'e_hash',
+            'hash_fields': 'f_hash'
+        }
+
     def test_all_upserted(self):
         """
         Check that all entity types get inserted as expected
@@ -160,12 +242,23 @@ class TestEntityFeedback(TestCase):
             )
 
             record = DBModel.get(aaid, eid)
-            assert record.to_dict() == {
-                'ad_account_id': aaid,
-                'entity_id': eid,
-                'entity_type': entity_type,
-                'bol': None,
-                'eol': None,
-                'hash': 'e_hash',
-                'hash_fields': 'f_hash'
-            }
+            if DBModel._default_bol:
+                assert record.to_dict() == {
+                    'ad_account_id': aaid,
+                    'entity_id': eid,
+                    'entity_type': entity_type,
+                    'bol': record.bol,
+                    'eol': None,
+                    'hash': 'e_hash',
+                    'hash_fields': 'f_hash'
+                }
+            else:
+                assert record.to_dict() == {
+                    'ad_account_id': aaid,
+                    'entity_id': eid,
+                    'entity_type': entity_type,
+                    'bol': None,
+                    'eol': None,
+                    'hash': 'e_hash',
+                    'hash_fields': 'f_hash'
+                }
