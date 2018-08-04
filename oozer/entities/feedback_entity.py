@@ -2,7 +2,7 @@ from datetime import datetime
 from dateutil.parser import parse as parse_iso_datetime_string
 
 from common.store.entities import ENTITY_TYPE_MODEL_MAP
-from common.tztools import dt_to_other_timezone
+from common.tztools import dt_to_other_timezone, now
 from common.enums.entity import Entity
 
 
@@ -53,13 +53,24 @@ def feedback_entity(entity_data, entity_type, entity_hash_pair):
     entity_id = entity_data['id']
     ad_account_id = entity_data['account_id']
 
+    # Custom audiences specify create & update time as unix timestamps
+    if entity_data.get('time_created'):
+        entity_data['created_time'] = datetime.fromtimestamp(entity_data['time_created'])
+    if entity_data.get('time_updated'):
+        entity_data['updated_time'] = datetime.fromtimestamp(entity_data['time_updated'])
+
+    # Handle default BOL if the value doesn't exist in the data
+    if Model._default_bol and not entity_data.get('created_time'):
+        entity_data['created_time'] = now()
+
     bol = _parse_fb_datetime(entity_data.get('created_time'))
 
     # End of Life (for metrics purposes) occurs when Entity status
     # turns from whatever, to "irreversible death" - Archived or Deleted.
     # We guess that last update is a safe bet to treat as "it was turned off then" datetime
     # Thus speculatively deriving EOL from the last update if "irreversible death" is detected
-    _is_eol = (
+    # We cast this to a string to avoid any issues with entity types using "status" as a dict
+    _is_eol = str(
         entity_data.get('configured_status') or
         entity_data.get('effective_status') or
         entity_data.get('status')
