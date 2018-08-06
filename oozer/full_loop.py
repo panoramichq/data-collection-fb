@@ -33,9 +33,22 @@ def run_sweep(sweep_id=None):
     delay_next_sweep_start_by = run_sweep_looper_suggest_restart_time(sweep_id)
     return delay_next_sweep_start_by
 
+def run_sweep_and_sleep(sweep_id=None):
+    """
+    Like run_sweep but actually sleeps for suggested amount of time before quitting.
+
+    This is used to internalize the management of period between consecutive sweep runs.
+    This is a crude way to spacing out the sweep runs. Alternative would be to
+    turn runner back into a Celery task and use Celery timed delay API for recursive
+    self-scheduling.
+
+    :param sweep_id:
+    :return:
+    """
+    delay_next_sweep_start_by = run_sweep(sweep_id=sweep_id)
+    logger.info(f"Done with main sweep run. Waiting for {delay_next_sweep_start_by} seconds before quitting")
+    time.sleep(delay_next_sweep_start_by)
 
 def run_sweeps_forever():
     while True:
-        delay_next_sweep_start_by = run_sweep()
-        logger.info(f"Starting next sweep in {delay_next_sweep_start_by} seconds")
-        time.sleep(delay_next_sweep_start_by)
+        run_sweep_and_sleep()
