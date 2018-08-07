@@ -6,6 +6,7 @@ from celery import chord, group
 from common.celeryapp import get_celery_app, RoutingKey
 from common.enums.entity import Entity
 from common.measurement import Measure
+from oozer.common.task_group import TaskGroup
 from sweep_builder.data_containers.reality_claim import RealityClaim
 
 app = get_celery_app()
@@ -22,29 +23,35 @@ def echo(message='This is Long-Running queue'):
 @app.task(routing_key=RoutingKey.longrunning, ignore_result=False)
 @Measure.timer(__name__, function_name_as_metric=True)
 @Measure.counter(__name__, function_name_as_metric=True, count_once=True)
-def build_sweep_slice_per_ad_account_task(sweep_id, ad_account_reality_claim):
+def build_sweep_slice_per_ad_account_task(sweep_id, ad_account_reality_claim, task_id):
     """
 
     :param sweep_id:
     :param RealityClaim ad_account_reality_claim:
+    :param task_id: When "task done" control is done manually,
+        we need to know our ID to report being done.
+        When this is set, we'll use TaskGroup API to report progress / done-ness
     :return:
     """
     from .pipeline import iter_pipeline
     from .reality_inferrer.reality import iter_reality_per_ad_account_claim
 
-    reality_claims_iter = itertools.chain(
-        [ad_account_reality_claim],
-        iter_reality_per_ad_account_claim(ad_account_reality_claim)
-    )
-    cnt = 0
-    for claim in iter_pipeline(sweep_id, reality_claims_iter):
-        cnt += 1
-        if cnt % 1000 == 0:
-            logger.info(f'#{sweep_id}-#{ad_account_reality_claim.ad_account_id}: Queueing up #{cnt}')
+    with TaskGroup.task_context(task_id) as task_context:
 
-    logger.info(f"#{sweep_id}-#{ad_account_reality_claim.ad_account_id}: Queued up a total of {cnt} tasks")
+        reality_claims_iter = itertools.chain(
+            [ad_account_reality_claim],
+            iter_reality_per_ad_account_claim(ad_account_reality_claim)
+        )
+        cnt = 0
+        for claim in iter_pipeline(sweep_id, reality_claims_iter):
+            cnt += 1
+            if cnt % 1000 == 0:
+                logger.info(f'#{sweep_id}-#{ad_account_reality_claim.ad_account_id}: Queueing up #{cnt}')
+                task_context.report_active()
 
-    return cnt
+        logger.info(f"#{sweep_id}-#{ad_account_reality_claim.ad_account_id}: Queued up a total of {cnt} tasks")
+
+        return cnt
 
 
 @Measure.timer(__name__, function_name_as_metric=True)
@@ -65,6 +72,7 @@ def build_sweep(sweep_id):
 
     logger.info(f"#{sweep_id} Starting sweep building")
 
+    task_group = TaskGroup()
     delayed_tasks = []
 
     for reality_claim in iter_reality_base():
@@ -75,6 +83,10 @@ def build_sweep(sweep_id):
         # need to rate and store the jobs before chipping off
         # a separate task for each of AdAccounts.
         if reality_claim.entity_type == Entity.AdAccount:
+
+            child_task_id = task_group.generate_task_id()
+            task_group.report_task_active(child_task_id)
+
             delayed_tasks.append(
                 # we are using Celery chord to process AdAccounts in parallel
                 # for very very large (hundreds of thousands) numbers of AdAccounts,
@@ -85,7 +97,8 @@ def build_sweep(sweep_id):
                 # a callback per handler + mutex/counter somewhere
                 build_sweep_slice_per_ad_account_task.si(
                     sweep_id,
-                    reality_claim
+                    reality_claim,
+                    task_id=child_task_id
                 )
             )
         else:
@@ -97,6 +110,11 @@ def build_sweep(sweep_id):
 
     logger.info(f"#{sweep_id}-root: Queued up a total of {cnt} tasks")
 
-    # here we fan out actual work to celery workers
-    # and wait for all tasks to finish before returning
-    group(delayed_tasks).delay().join_native()
+    # # here we fan out actual work to celery workers
+    # # and wait for all tasks to finish before returning
+    group_result = group(delayed_tasks).delay()
+    # group_result.join_native()
+
+    # alternative to Celery's native group_result.join()
+    # our manual task tracking code + join()
+    task_group.join()
