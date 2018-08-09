@@ -40,7 +40,7 @@ class TaskContext(AbstractContextManager):
 
     def __enter__(self):
         self.report_active()
-        return super()
+        return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.report_done()
@@ -143,3 +143,7 @@ class TaskGroup:
     @staticmethod
     def task_context(task_id: Optional[TaskID]):
         return TaskContext(task_id)
+
+    @staticmethod
+    def get_task_data(task_id: TaskID):
+        return get_redis().hget(*task_id)

@@ -76,3 +76,32 @@ class JobsQueueTests(TestCase):
         task_group.report_task_done(task1_id)
 
         task_group.join(join_timeout)
+
+    def test_task_context(self):
+
+        task_group = TaskGroup(number_of_shards=3)
+        task_id = task_group.generate_task_id()
+        join_timeout = 0.1
+
+        assert task_group.get_remaining_tasks_count() == 0
+
+        with TaskGroup.task_context(task_id) as task_context:
+
+            assert task_group.get_remaining_tasks_count() == 1
+            last_marker_1 = task_group.get_task_data(task_id)
+            assert last_marker_1 is not None
+
+            # also make sure manual kicking of task's "still working on it" marker works
+            task_context.report_active()
+            assert task_group.get_remaining_tasks_count() == 1
+            last_marker_2 = task_group.get_task_data(task_id)
+
+            # Not normative test really, just sanity test for us to ensure
+            # that `task_context.report_active()` did something
+            # Now we are just abusing knowledge of .report_active() just bumping
+            # the value by new Unix timestamp, so all newer markers will be bigger
+            assert last_marker_1 < last_marker_2
+
+        # after exit from context manager, task is automatically
+        # marked as done, so join just exit
+        assert task_group.get_remaining_tasks_count() == 0
