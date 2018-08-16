@@ -54,19 +54,12 @@ def build_sweep_slice_per_ad_account_task(sweep_id, ad_account_reality_claim, ta
         with Measure.counter(_measurement_name_base + 'ad_account_loop', tags=_measurement_tags) as cntr:
 
             _step = 1000
-            _step_large = _step * 100
             for claim in iter_pipeline(sweep_id, reality_claims_iter):
                 cnt += 1
 
                 if cnt % _step == 0:
                     cntr += _step
                     logger.info(f'#{sweep_id}-#{ad_account_reality_claim.ad_account_id}: Queueing up #{cnt}')
-
-                if cnt % _step_large == 0:
-                    # we are hitting redis here and doing it every 1000 objects
-                    # in population of hundreds of millions starts to add up.
-                    # hence the _large step
-                    task_context.report_active()
 
             # because above counter communicates only increments of _step,
             # we need to report remainder --- amount under _step
