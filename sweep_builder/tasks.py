@@ -23,7 +23,7 @@ def echo(message='This is Long-Running queue'):
 @app.task(routing_key=RoutingKey.longrunning, ignore_result=False)
 @Measure.timer(__name__, function_name_as_metric=True)
 @Measure.counter(__name__, function_name_as_metric=True, count_once=True)
-def build_sweep_slice_per_ad_account_task(sweep_id, ad_account_reality_claim, task_id):
+def build_sweep_slice_per_ad_account_task(sweep_id, ad_account_reality_claim, task_id=None):
     """
 
     :param sweep_id:
@@ -38,16 +38,39 @@ def build_sweep_slice_per_ad_account_task(sweep_id, ad_account_reality_claim, ta
 
     with TaskGroup.task_context(task_id) as task_context:
 
+        _measurement_name_base = __name__ + '.build_sweep_slice_per_ad_account_task.'  # <- function name. adjust if changed
+        _measurement_tags = dict(
+            sweep_id=sweep_id,
+            ad_account_id=ad_account_reality_claim.ad_account_id
+        )
+
+
         reality_claims_iter = itertools.chain(
             [ad_account_reality_claim],
             iter_reality_per_ad_account_claim(ad_account_reality_claim)
         )
         cnt = 0
-        for claim in iter_pipeline(sweep_id, reality_claims_iter):
-            cnt += 1
-            if cnt % 1000 == 0:
-                logger.info(f'#{sweep_id}-#{ad_account_reality_claim.ad_account_id}: Queueing up #{cnt}')
-                task_context.report_active()
+
+        with Measure.counter(_measurement_name_base + 'ad_account_loop', tags=_measurement_tags) as cntr:
+
+            _step = 1000
+            _step_large = _step * 100
+            for claim in iter_pipeline(sweep_id, reality_claims_iter):
+                cnt += 1
+
+                if cnt % _step == 0:
+                    cntr += _step
+                    logger.info(f'#{sweep_id}-#{ad_account_reality_claim.ad_account_id}: Queueing up #{cnt}')
+
+                if cnt % _step_large == 0:
+                    # we are hitting redis here and doing it every 1000 objects
+                    # in population of hundreds of millions starts to add up.
+                    # hence the _large step
+                    task_context.report_active()
+
+            # because above counter communicates only increments of _step,
+            # we need to report remainder --- amount under _step
+            cntr += cnt % _step
 
         logger.info(f"#{sweep_id}-#{ad_account_reality_claim.ad_account_id}: Queued up a total of {cnt} tasks")
 
@@ -62,6 +85,11 @@ def build_sweep(sweep_id):
     from .pipeline import iter_pipeline
     from .reality_inferrer.reality import iter_reality_base
 
+    _measurement_name_base = __name__ + '.build_sweep.'  # <- function name. adjust if changed
+    _measurement_tags = dict(
+        sweep_id=sweep_id
+    )
+
     # In the jobs persister we purposefully avoid persisting
     # anything besides the Job ID. This means that things like tokens
     # and other data on *Claim is lost.
@@ -75,38 +103,47 @@ def build_sweep(sweep_id):
     task_group = TaskGroup()
     delayed_tasks = []
 
-    for reality_claim in iter_reality_base():
-        # what we get here are Scope and AdAccount objects.
-        # Children of AdAccount reality claims are to be processed
-        # in separate Celery tasks. But we still have jobs
-        # associated with Scopes objects, so
-        # need to rate and store the jobs before chipping off
-        # a separate task for each of AdAccounts.
-        if reality_claim.entity_type == Entity.AdAccount:
+    with Measure.counter(_measurement_name_base + 'outer_loop', tags=_measurement_tags) as cntr:
 
-            child_task_id = task_group.generate_task_id()
-            task_group.report_task_active(child_task_id)
+        for reality_claim in iter_reality_base():
+            # what we get here are Scope and AdAccount objects.
+            # Children of AdAccount reality claims are to be processed
+            # in separate Celery tasks. But we still have jobs
+            # associated with Scopes objects, so
+            # need to rate and store the jobs before chipping off
+            # a separate task for each of AdAccounts.
+            if reality_claim.entity_type == Entity.AdAccount:
 
-            delayed_tasks.append(
-                # we are using Celery chord to process AdAccounts in parallel
-                # for very very large (hundreds of thousands) numbers of AdAccounts,
-                # chord management will be super memory expensive,
-                # as chord timer/controller will be looking at entire list on
-                # each tick.
-                # In that case, probably better to switch to
-                # a callback per handler + mutex/counter somewhere
-                build_sweep_slice_per_ad_account_task.si(
-                    sweep_id,
-                    reality_claim,
-                    task_id=child_task_id
+                child_task_id = task_group.generate_task_id()
+                task_group.report_task_active(child_task_id)
+
+                delayed_tasks.append(
+                    # we are using Celery chord to process AdAccounts in parallel
+                    # for very very large (hundreds of thousands) numbers of AdAccounts,
+                    # chord management will be super memory expensive,
+                    # as chord timer/controller will be looking at entire list on
+                    # each tick.
+                    # In that case, probably better to switch to
+                    # a callback per handler + mutex/counter somewhere
+                    build_sweep_slice_per_ad_account_task.si(
+                        sweep_id,
+                        reality_claim,
+                        task_id=child_task_id
+                    )
                 )
-            )
-        else:
-            cnt = 1
-            for claim in iter_pipeline(sweep_id, [reality_claim]):
-                cnt += 1
-                if cnt % 1000 == 0:
-                    logger.info(f'#{sweep_id}-root: Queueing up #{cnt}')
+            else:
+                cnt = 1
+                _step = 1000
+                for claim in iter_pipeline(sweep_id, [reality_claim]):
+                    cnt += 1
+                    if cnt % _step == 0:
+                        cntr += _step
+                        logger.info(f'#{sweep_id}-root: Queueing up #{cnt}')
+
+                # because above counter communicates only increments of _step,
+                # we need to report remainder --- amount under _step
+                cntr += cnt % _step
+
 
     logger.info(f"#{sweep_id}-root: Queued up a total of {cnt} tasks")
 
