@@ -291,14 +291,14 @@ class CounterMeasuringPrimitive(MeasuringPrimitive):
     def total_value(self):
         return self._total_value
 
-    def increment(self, by_how_much):
+    def increment(self, by_how_much=1):
         """
         Just send along the value
         """
         self._total_value += by_how_much
         self._measure(by_how_much)
 
-    def decrement(self, by_how_much):
+    def decrement(self, by_how_much=1):
         """
         Inverts the value to negative
         """
