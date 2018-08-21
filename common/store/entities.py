@@ -57,11 +57,11 @@ class AdAccountEntity(BaseModel):
         Returns an instance of Facebook Ads SDK AdAccount model
         with ID matching this DB model's ID
 
-        :param facebookads.api.FacebookAdsApi api: FB Ads SDK Api instance with token baked in.
-        :rtype: facebookads.adobjects.adaccount.AdAccount
+        :param facebook_business.api.FacebookAdsApi api: FB Ads SDK Api instance with token baked in.
+        :rtype: facebook_business.adobjects.adaccount.AdAccount
         """
-        from facebookads.api import FacebookAdsApi, FacebookSession
-        from facebookads.adobjects.adaccount import AdAccount
+        from facebook_business.api import FacebookAdsApi, FacebookSession
+        from facebook_business.adobjects.adaccount import AdAccount
 
         if not api:
             # This is very expensive call. Takes 2 DB hits to get token value

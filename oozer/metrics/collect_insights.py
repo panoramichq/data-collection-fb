@@ -2,10 +2,10 @@ import functools
 import gevent
 
 from datetime import datetime, date
-from facebookads.adobjects.abstractcrudobject import AbstractCrudObject
-from facebookads.adobjects.adreportrun import AdReportRun
-from facebookads.adobjects.adsinsights import AdsInsights
-from facebookads.exceptions import FacebookError
+from facebook_business.adobjects.abstractcrudobject import AbstractCrudObject
+from facebook_business.adobjects.adreportrun import AdReportRun
+from facebook_business.adobjects.adsinsights import AdsInsights
+from facebook_business.exceptions import FacebookError
 from typing import Callable, Dict
 
 from config.facebook import INSIGHTS_POLLING_INTERVAL, \
