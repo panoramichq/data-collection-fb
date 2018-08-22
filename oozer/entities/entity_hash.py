@@ -1,7 +1,7 @@
 import xxhash
 
 from collections import namedtuple
-from facebookads.adobjects import ad
+from facebook_business.adobjects import ad
 
 
 from oozer.common.enum import FB_CAMPAIGN_MODEL, FB_ADSET_MODEL, FB_AD_MODEL

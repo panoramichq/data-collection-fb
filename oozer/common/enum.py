@@ -1,4 +1,4 @@
-from facebookads.adobjects import (
+from facebook_business.adobjects import (
     ad,
     adaccount,
     adset,

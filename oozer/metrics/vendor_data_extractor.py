@@ -1,5 +1,5 @@
 from datetime import datetime, date
-from facebookads.adobjects.adsinsights import AdsInsights
+from facebook_business.adobjects.adsinsights import AdsInsights
 
 from common.enums.entity import Entity
 from common.enums.reporttype import ReportType
