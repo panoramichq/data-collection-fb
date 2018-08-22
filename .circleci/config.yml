@@ -101,6 +101,8 @@ jobs:
           export AWS_REGION=us-east-1
           export IMAGE_NAME=`cat /tmp/workspace/image_name`
           export IMAGE_BRANCH_NAME=`cat /tmp/workspace/branch_name`
+          export AWS_ACCESS_KEY_ID=AKIAJPZZ2ETNR3ONOWGQ
+          export AWS_SECRET_ACCESS_KEY=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
           aws configure set default.region $AWS_REGION
           aws ssm put-parameter --overwrite --name "data-collection-fb-${IMAGE_BRANCH_NAME}" --type "String" --value ${IMAGE_NAME}
 
