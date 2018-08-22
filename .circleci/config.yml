@@ -84,6 +84,25 @@ jobs:
           docker push ${PUSH_IMAGE_NAME_PREFIX2}:${IMAGE_NAME}
           docker push ${PUSH_IMAGE_NAME_PREFIX2}:${IMAGE_BRANCH_NAME}
 
+  publish_image_id_to_ssm:
+    docker:
+      - image: circleci/python:3.6-jessie-node
+
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+
+      - checkout
+
+      # Install AWS CLI
+      - run: sudo pip install awscli --upgrade
+
+      - run : |
+          export AWS_REGION=us-east-1
+          export IMAGE_NAME=`cat /tmp/workspace/image_name`
+          export IMAGE_BRANCH_NAME=`cat /tmp/workspace/branch_name`
+          aws ssm put-parameter --overwrite --name "data-collection-fb-${IMAGE_BRANCH_NAME}" --type "String" --value ${IMAGE_NAME}
+
   run_tests:
     machine:
       image: circleci/classic:latest
@@ -164,6 +183,15 @@ workflows:
       - publish_to_docker_hub_and_prod:
           requires:
             - build_image
+
+      - publish_image_id_to_ssm:
+          requires:
+            - build_image
+          filters:
+            branches:
+              only:
+                - staging
+                - production
 
       # - hold_for_deploy_staging:
       #     type: approval
