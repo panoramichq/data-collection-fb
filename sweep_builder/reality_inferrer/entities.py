@@ -41,13 +41,14 @@ def iter_entities_per_ad_account_id(ad_account_id, fields=None):
     for EntityModel in entity_models:
         cnt = 0
 
-        _measurement_name_base = __name__ + '.entities_per_ad_account_id.'  # <- function name. adjust if changed
-        _measurement_tags = dict(
-            ad_account_id=ad_account_id,
-            entity_type=EntityModel.entity_type
-        )
+        with Measure.counter(
+            __name__ + '.entities_per_ad_account_id',
+            tags=dict(
+                ad_account_id=ad_account_id,
+                entity_type=EntityModel.entity_type
+            )
+        ) as cntr:
 
-        with Measure.counter(_measurement_name_base + 'read', tags=_measurement_tags) as cntr:
             for record in EntityModel.query(ad_account_id):
                 cnt += 1
                 yield record.to_dict(fields=fields, skip_null=True)

@@ -21,6 +21,7 @@ def iter_expectations(reality_claims_iter) :
     :rtype: Generator[ExpectationClaim]
     """
     _measurement_name_base = __name__ + '.iter_expectations.'  # <- function name. adjust if changed
+    _measurement_sample_rate = 1
 
     for reality_claim in reality_claims_iter:
         jobs_generators = entity_expectation_generator_map.get(reality_claim.entity_type, [])
@@ -30,13 +31,15 @@ def iter_expectations(reality_claims_iter) :
         # fans out into expectations.
         cnt = 0
         for jobs_generator in jobs_generators:
-            yield from jobs_generator(reality_claim)
-            cnt += 1
+            for expectation_claim in jobs_generator(reality_claim):
+                yield expectation_claim
+                cnt += 1
 
         Measure.histogram(
             _measurement_name_base + 'expectations_per_reality_claim',
             tags=dict(
                 ad_account_id=reality_claim.ad_account_id,
                 entity_type=reality_claim.entity_type
-            )
+            ),
+            sample_rate=_measurement_sample_rate
         )(cnt)

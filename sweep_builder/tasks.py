@@ -40,7 +40,7 @@ def build_sweep_slice_per_ad_account_task(sweep_id, ad_account_reality_claim, ta
 
     with TaskGroup.task_context(task_id) as task_context:
 
-        _measurement_name_base = __name__ + '.build_sweep_slice_per_ad_account_task.'  # <- function name. adjust if changed
+        _measurement_name_base = __name__ + '.build_sweep_per_ad_account.'  # <- function name. adjust if changed
         _measurement_tags = dict(
             sweep_id=sweep_id,
             ad_account_id=ad_account_reality_claim.ad_account_id
@@ -52,29 +52,23 @@ def build_sweep_slice_per_ad_account_task(sweep_id, ad_account_reality_claim, ta
         )
         cnt = 0
 
-        with Measure.counter(_measurement_name_base + 'ad_account_loop', tags=_measurement_tags) as cntr:
+        _step = 1000
+        _before_fetch = time.time()
+        for claim in iter_pipeline(sweep_id, reality_claims_iter):
+            Measure.timing(
+                _measurement_name_base + 'next_persisted',
+                tags=dict(
+                    entity_type=claim.entity_type,
+                    **_measurement_tags
+                ),
+                sample_rate=0.01
+            )((time.time() - _before_fetch)*1000)
+            cnt += 1
 
-            _step = 1000
+            if cnt % _step == 0:
+                logger.info(f'#{sweep_id}-#{ad_account_reality_claim.ad_account_id}: Queueing up #{cnt}')
+
             _before_fetch = time.time()
-            for claim in iter_pipeline(sweep_id, reality_claims_iter):
-                Measure.timing(
-                    _measurement_name_base + 'fetch_next',
-                    tags=dict(
-                        entity_type=claim.entity_type,
-                        **_measurement_tags
-                    ),
-                    # sample_rate=0.01
-                )((time.time() - _before_fetch)*1000)
-                cnt += 1
-
-                if cnt % _step == 0:
-                    cntr += _step
-                    logger.info(f'#{sweep_id}-#{ad_account_reality_claim.ad_account_id}: Queueing up #{cnt}')
-
-                _before_fetch = time.time()
-            # because above counter communicates only increments of _step,
-            # we need to report remainder --- amount under _step
-            cntr += cnt % _step
 
         logger.info(f"#{sweep_id}-#{ad_account_reality_claim.ad_account_id}: Queued up a total of {cnt} tasks")
 
