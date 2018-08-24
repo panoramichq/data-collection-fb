@@ -104,7 +104,7 @@ def build_sweep(sweep_id):
 
     logger.info(f"#{sweep_id} Starting sweep building")
 
-    task_group = TaskGroup()
+    # task_group = TaskGroup()
     delayed_tasks = []
 
     with Measure.counter(_measurement_name_base + 'outer_loop', tags=_measurement_tags) as cntr:
@@ -118,8 +118,8 @@ def build_sweep(sweep_id):
             # a separate task for each of AdAccounts.
             if reality_claim.entity_type == Entity.AdAccount:
 
-                child_task_id = task_group.generate_task_id()
-                task_group.report_task_active(child_task_id)
+                # child_task_id = task_group.generate_task_id()
+                # task_group.report_task_active(child_task_id)
 
                 delayed_tasks.append(
                     # we are using Celery chord to process AdAccounts in parallel
@@ -132,7 +132,7 @@ def build_sweep(sweep_id):
                     build_sweep_slice_per_ad_account_task.si(
                         sweep_id,
                         reality_claim,
-                        task_id=child_task_id
+                        # task_id=child_task_id
                     )
                 )
             else:
@@ -154,8 +154,8 @@ def build_sweep(sweep_id):
     # # here we fan out actual work to celery workers
     # # and wait for all tasks to finish before returning
     group_result = group(delayed_tasks).delay()
-    # group_result.join_native()
+    group_result.join_native()
 
-    # alternative to Celery's native group_result.join()
-    # our manual task tracking code + join()
-    task_group.join()
+    # # alternative to Celery's native group_result.join()
+    # # our manual task tracking code + join()
+    # task_group.join()
