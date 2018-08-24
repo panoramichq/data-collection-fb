@@ -404,11 +404,12 @@ class MeasureWrapper:
     _statsd = None
 
     # Statsd primitives
-    increment = None   # type: MeasuringPrimitive
-    decrement = None   # type: MeasuringPrimitive
-    gauge = None       # type: MeasuringPrimitive
-    timing = None      # type: MeasuringPrimitive
-    set = None         # type: MeasuringPrimitive
+    decrement = None  # type: MeasuringPrimitive
+    gauge = None  # type: MeasuringPrimitive
+    histogram = None  # type: MeasuringPrimitive
+    increment = None  # type: MeasuringPrimitive
+    set = None  # type: MeasuringPrimitive
+    timing = None  # type: MeasuringPrimitive
 
     # Datadogs primitives
     # TODO: include them too? Will be easy
@@ -453,6 +454,11 @@ class MeasureWrapper:
         self.gauge = self._wrap_measurement_method(
             self._statsd.gauge,
             prefix=self._join_with_prefix(config.measurement.PREFIX_GAUGE, prefix)
+        )
+
+        self.histogram = self._wrap_measurement_method(
+            self._statsd.histogram,
+            prefix=self._join_with_prefix(config.measurement.PREFIX_HISTOGRAM, prefix)
         )
 
         self.timing = self._wrap_measurement_method(

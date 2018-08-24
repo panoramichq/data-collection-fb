@@ -92,6 +92,21 @@ class TestDecrMeasurements(BaseMeasureTestCase):
         measure = self._test_decorator_simple('decrement')
 
 
+class TestHistogramMeasurements(BaseMeasureTestCase):
+    """
+    No tests really, just verifying this thing works as expected
+    """
+
+    def test_direct_measuring(self):
+        measure = self._test_direct_simple('histogram')
+
+    def test_as_ctx_manager(self):
+        measure = self._test_context_manager_simple('histogram')
+
+    def test_as_decorator(self):
+        measure = self._test_decorator_simple('histogram')
+
+
 class TestGaugeMeasurements(BaseMeasureTestCase):
     """
     No tests really, just verifying this thing works as expected
