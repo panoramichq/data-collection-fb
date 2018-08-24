@@ -359,6 +359,8 @@ class SweepStatusTracker():
         return pulse
 
 
+@Measure.timer(__name__, function_name_as_metric=True)
+@Measure.counter(__name__, function_name_as_metric=True, count_once=True)
 def run_tasks(sweep_id, limit=None, time_slices=looper_config.FB_THROTTLING_WINDOW, time_slice_length=1):
     """
     Oozes tasks gradually into Celery workers queue, accounting for total number of tasks
