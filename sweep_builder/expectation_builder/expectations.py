@@ -25,18 +25,18 @@ def iter_expectations(reality_claims_iter) :
     for reality_claim in reality_claims_iter:
         jobs_generators = entity_expectation_generator_map.get(reality_claim.entity_type, [])
 
-        _measurement_tags = dict(
-            ad_account_id=reality_claim.ad_account_id,
-            entity_type=reality_claim.entity_type
-        )
-
         # histogram measures min/max/ave per thing.
         # Here we are trying to measure how given entity type (per ad account)
         # fans out into expectations.
-        with Measure.histogram(_measurement_name_base + 'expectations_per_reality_claim', tags=_measurement_tags) as cntr:
-            cnt = 0
-            for jobs_generator in jobs_generators:
-                yield from jobs_generator(reality_claim)
-                cnt += 1
+        cnt = 0
+        for jobs_generator in jobs_generators:
+            yield from jobs_generator(reality_claim)
+            cnt += 1
 
-            cntr += cnt
+        Measure.histogram(
+            _measurement_name_base + 'expectations_per_reality_claim',
+            tags=dict(
+                ad_account_id=reality_claim.ad_account_id,
+                entity_type=reality_claim.entity_type
+            )
+        )(cnt)
