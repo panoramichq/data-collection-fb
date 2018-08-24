@@ -1,7 +1,9 @@
 import logging
+import time
 
 from typing import Generator, Callable
 
+from common.measurement import Measure
 from common.enums.entity import Entity
 from oozer.common.expecations_store import JobExpectationsWriter
 from oozer.common.sorted_jobs_queue import SortedJobsQueue
@@ -38,7 +40,20 @@ def iter_persist_prioritized(sweep_id, prioritized_iter):
     with SortedJobsQueue(sweep_id).JobsWriter() as add_to_queue, \
         JobExpectationsWriter(sweep_id) as expectation_add:
 
+
+        _measurement_name_base = __name__ + '.iter_persist_prioritized.'  # <- function name. adjust if changed
+        next_prioritized_timer = Measure.timing(
+            _measurement_name_base + 'fetch_prioritized',
+            sample_rate=0.1
+        )
+        add_to_queue_timer = Measure.timing(
+            _measurement_name_base + 'assign_score',
+            sample_rate=0.1
+        )
+
+        _before_next_prioritized = time.time()
         for prioritization_claim in prioritized_iter:
+            next_prioritized_timer(time.time() - _before_next_prioritized)
 
             # Approaches to Job queueing:
 
@@ -144,11 +159,12 @@ def iter_persist_prioritized(sweep_id, prioritized_iter):
                 extra_data['ad_account_timezone_name'] = prioritization_claim.timezone
 
             # we are adding only per-parent job to the queue
-            add_to_queue(
-                job_id_effective,
-                score,
-                **extra_data
-            )
+            with Measure.timer(_measurement_name_base + 'add_to_queue'):
+                add_to_queue(
+                    job_id_effective,
+                    score,
+                    **extra_data
+                )
 
             # This is our cheap way of ensuring that we are dealing
             # with platform-bound job that we need to report our expectations for
@@ -167,10 +183,15 @@ def iter_persist_prioritized(sweep_id, prioritized_iter):
                 # TODO: contemplate parsing these instead and making sure they are norm vs eff
                 # at this point all this checks is that we have more than one job_id scheduled
                 if job_id_normative != job_id_effective:
-                    expectation_add(
-                        job_id_effective,
-                        prioritization_claim.ad_account_id,
-                        prioritization_claim.entity_id
-                    )
+                    with Measure.timer(_measurement_name_base + 'expectation_add'):
+                        expectation_add(
+                            job_id_effective,
+                            prioritization_claim.ad_account_id,
+                            prioritization_claim.entity_id
+                        )
 
-            yield prioritization_claim
+
+            with Measure.timer(_measurement_name_base + 'yield_result'):
+                yield prioritization_claim
+
+            _before_next_prioritized = time.time()
