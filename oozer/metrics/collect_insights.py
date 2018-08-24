@@ -343,7 +343,7 @@ class Insights:
 
         report_status_obj = fb_entity.get_insights(
             params=report_params,
-            async=True
+            is_async=True
         )  # type: AdReportRun
 
         report_tracker = FacebookAsyncReportStatus(report_status_obj)
