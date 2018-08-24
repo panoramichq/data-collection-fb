@@ -41,6 +41,14 @@ class TestEntityFeedback(TestCase):
 
         return JobScope(base_data)
 
+    def test_aa(self):
+        job_scope = self._job_scope_factory(
+            report_type=ReportType.entity,
+            report_variant=Entity.AdAccount
+        )
+
+        assert inventory.resolve_job_scope_to_celery_task(job_scope), f"Ad account must have report handler for {ReportType.entity}"
+
     def test_entity_report_types_entities_per_aa(self):
 
         entity_types = [Entity.Campaign, Entity.AdSet, Entity.Ad, Entity.AdCreative, Entity.AdVideo, Entity.CustomAudience]
