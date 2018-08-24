@@ -2,7 +2,7 @@
 from tests.base.testcase import TestCase
 from datetime import datetime
 import pytz
-from facebookads.adobjects.campaign import Campaign
+from facebook_business.adobjects.campaign import Campaign
 
 from oozer.common import job_scope
 from common.enums.entity import Entity

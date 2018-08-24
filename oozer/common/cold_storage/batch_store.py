@@ -1,6 +1,6 @@
 import logging
 
-from facebookads.adobjects.adsinsights import AdsInsights
+from facebook_business.adobjects.adsinsights import AdsInsights
 from typing import Dict, List, Union, Optional
 
 from common.enums.entity import Entity

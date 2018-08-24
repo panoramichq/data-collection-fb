@@ -1,13 +1,13 @@
 from typing import List
 
-from facebookads.api import FacebookAdsApi, FacebookSession
-from facebookads.adobjects import abstractcrudobject
-from facebookads.adobjects.campaign import Campaign
-from facebookads.adobjects.adset import AdSet
-from facebookads.adobjects.ad import Ad
-from facebookads.adobjects.adcreative import AdCreative
-from facebookads.adobjects.advideo import AdVideo
-from facebookads.adobjects.customaudience import CustomAudience
+from facebook_business.api import FacebookAdsApi, FacebookSession
+from facebook_business.adobjects import abstractcrudobject
+from facebook_business.adobjects.campaign import Campaign
+from facebook_business.adobjects.adset import AdSet
+from facebook_business.adobjects.ad import Ad
+from facebook_business.adobjects.adcreative import AdCreative
+from facebook_business.adobjects.advideo import AdVideo
+from facebook_business.adobjects.customaudience import CustomAudience
 
 from oozer.common.enum import to_fb_model
 from oozer.common.facebook_fields import collapse_fields_children
@@ -173,8 +173,9 @@ _default_fields_map = {
         # 'frequency_control_specs',
         'id',
         # 'instagram_actor_id',
-        'is_autobid',
-        # 'is_average_price_pacing',
+        # ' is_autobid',  # Deprecated in v3.0, replaced with `bid_strategy`
+        # 'is_average_price_pacing',  # Deprecated in v3.0
+        'bid_strategy',
         'lifetime_budget',
         # 'lifetime_imps',
         'name',
@@ -275,7 +276,7 @@ _default_fields_map = {
         'url_tags',
         'video_id',
     ]),
-    AdVideo: ([
+    AdVideo: collapse_fields_children([
         'id',
         'ad_breaks',
         'backdated_time',
@@ -308,7 +309,7 @@ _default_fields_map = {
         'universal_video_id',
         'updated_time',
     ]),
-    CustomAudience: ([
+    CustomAudience: collapse_fields_children([
         'id',
         'account_id',
         'name',
@@ -317,7 +318,7 @@ _default_fields_map = {
         'delivery_status',
         'description',
         'rule',
-        'rule_aggregation'
+        'rule_aggregation',
         'subtype',
         'external_event_source',
         'is_value_based',
@@ -343,7 +344,7 @@ _default_fields_map = {
         'exclusions',
         'inclusions',
         'parent_audience_id',
-        'tags'
+        'tags',
     ])
 }
 

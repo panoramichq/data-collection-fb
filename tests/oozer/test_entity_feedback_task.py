@@ -6,7 +6,7 @@ from datetime import datetime, timezone, timedelta
 
 from common.facebook.entity_model_map import MODEL_ENTITY_TYPE_MAP as FB_MODEL_ENTITY_TYPE_MAP
 from common.store.entities import ENTITY_TYPE_MODEL_MAP as ENTITY_TYPE_DB_MODEL_MAP
-from facebookads.adobjects import campaign, adset, ad, adcreative, advideo, customaudience
+from facebook_business.adobjects import campaign, adset, ad, adcreative, advideo, customaudience
 from oozer.entities.tasks import feedback_entity_task
 from tests.base.random import gen_string_id
 

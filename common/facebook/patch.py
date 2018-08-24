@@ -11,7 +11,7 @@ def patch_facebook_sdk():
     are doing that specifically
     """
 
-    from facebookads.adobjects import adset
+    from facebook_business.adobjects import adset
 
     # See: https://github.com/facebook/facebook-php-ads-sdk/issues/294
     adset.AdSet.Field.daily_imps = 'daily_imp'

@@ -1,11 +1,11 @@
 from common.enums.entity import Entity
-from facebookads.adobjects.ad import Ad
-from facebookads.adobjects.adaccount import AdAccount
-from facebookads.adobjects.adset import AdSet
-from facebookads.adobjects.campaign import Campaign
-from facebookads.adobjects.adcreative import AdCreative
-from facebookads.adobjects.advideo import AdVideo
-from facebookads.adobjects.customaudience import CustomAudience
+from facebook_business.adobjects.ad import Ad
+from facebook_business.adobjects.adaccount import AdAccount
+from facebook_business.adobjects.adset import AdSet
+from facebook_business.adobjects.campaign import Campaign
+from facebook_business.adobjects.adcreative import AdCreative
+from facebook_business.adobjects.advideo import AdVideo
+from facebook_business.adobjects.customaudience import CustomAudience
 
 
 ENTITY_TYPE_MODEL_MAP = {

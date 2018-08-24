@@ -1,6 +1,6 @@
-from facebookads.adobjects.adreportrun import AdReportRun
-from facebookads.adobjects.adsinsights import AdsInsights
-from facebookads.api import FacebookAdsApi, FacebookSession
+from facebook_business.adobjects.adreportrun import AdReportRun
+from facebook_business.adobjects.adsinsights import AdsInsights
+from facebook_business.api import FacebookAdsApi, FacebookSession
 
 
 class FacebookReportDefinition:

@@ -33,7 +33,7 @@ import uuid
 import ujson as json
 
 from datetime import date, datetime, timezone
-from facebookads.api import FacebookAdsApi
+from facebook_business.api import FacebookAdsApi
 from common.measurement import Measure
 
 import config.aws

@@ -1,5 +1,5 @@
 from typing import Generator, Optional, Union
-from facebookads.exceptions import FacebookError
+from facebook_business.exceptions import FacebookError
 
 from common.enums.entity import Entity
 from common.enums.failure_bucket import FailureBucket

@@ -14,7 +14,7 @@ from io import BytesIO
 from common import tztools
 from common.enums.entity import Entity
 from common.enums.reporttype import ReportType
-from facebookads.adobjects.campaign import Campaign
+from facebook_business.adobjects.campaign import Campaign
 from oozer.common import cold_storage
 from oozer.common.job_scope import JobScope
 from tests.base.random import gen_string_id
@@ -128,7 +128,7 @@ class TestUploadToS3(TestCase):
             'platform': 'fb',
             'ad_account_id': ctx.ad_account_id,
             'report_type': ReportType.entity,
-            'platform_api_version': 'v2.11'
+            'platform_api_version': 'v3.1'
         }
 
 
