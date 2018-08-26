@@ -38,7 +38,7 @@ def iter_persist_prioritized(sweep_id, prioritized_iter):
     """
 
     with SortedJobsQueue(sweep_id).JobsWriter() as add_to_queue, \
-        JobExpectationsWriter(sweep_id) as expectation_add:
+        JobExpectationsWriter(sweep_id, cache_max_size=20000) as expectation_add:
 
         _measurement_name_base = __name__ + '.iter_persist_prioritized.'  # <- function name. adjust if changed
         _measurement_sample_rate = 1
