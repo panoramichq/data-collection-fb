@@ -22,15 +22,10 @@ def iter_prioritized(expectations_iter):
     :rtype: Generator[PrioritizationClaim]
     """
 
-    score_calculator = ScoreCalculator()
+    score_calculator = ScoreCalculator(cache_size=20000)
 
     _measurement_name_base = __name__ + '.iter_prioritized.'  # <- function name. adjust if changed
     _measurement_sample_rate = 1
-
-    assign_score_timer = Measure.timing(
-        _measurement_name_base + 'assign_score',
-        sample_rate=0.1
-    )
 
     _before_next_expectation = time.time()
     for expectation_claim in expectations_iter:
