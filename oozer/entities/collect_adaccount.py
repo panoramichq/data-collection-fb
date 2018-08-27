@@ -43,7 +43,7 @@ def collect_adaccount_task(job_scope, job_context):
 
 
 
-def collect_adaccount(job_scope: JobScope, _job_context):
+def collect_adaccount(job_scope, _job_context):
     """
     Collects ad account data for a AA specific JobScope definition
 
@@ -57,10 +57,8 @@ def collect_adaccount(job_scope: JobScope, _job_context):
     try:
         if job_scope.report_variant != Entity.AdAccount:
             raise ValueError(
-                f"Report level {job_scope.report_variant} specified is not one of supported values: {Entity.ALL}"
+                f"Report level {job_scope.report_variant} specified is not: {Entity.AdAccount}"
             )
-
-        entity_type = job_scope.report_variant
 
         token = job_scope.token
         if not token:
@@ -84,7 +82,7 @@ def collect_adaccount(job_scope: JobScope, _job_context):
     try:
         with PlatformApiContext(token) as fb_ctx:
             ad_account = fb_ctx.to_fb_model(
-                job_scope,
+                job_scope.ad_account_id,
                 Entity.AdAccount
             )
 
