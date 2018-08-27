@@ -86,10 +86,11 @@ def collect_adaccount(job_scope, _job_context):
                 Entity.AdAccount
             )
 
-        fields = get_default_fields(ad_account.__class__)
-        ad_account_data = ad_account.remote_read(fields=fields)
+            fields = get_default_fields(ad_account.__class__)
+            import ipdb; ipdb.set_trace()
+            ad_account_data = ad_account.remote_read(fields=fields)
 
-        return ad_account_data
+            return ad_account_data
 
     except FacebookError as e:
         # Build ourselves the error inspector
