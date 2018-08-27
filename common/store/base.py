@@ -1,5 +1,6 @@
 from typing import Optional
 
+from config import aws as aws_config
 from queue import deque
 from pynamodb.models import Model, BatchWrite as _BatchWrite
 from pynamodb import attributes
@@ -16,6 +17,17 @@ class BaseMeta:
     """
 
     host = dynamodb_config.HOST
+
+    # Normally this is None, and setting are
+    # taken from botocore which sniffs them out wherever.
+    # Unfortunately, in this container botocore cannot sniff out
+    # credentials from env vars. Must be a file in ~/
+    # To make local dev a little easier, explicitly
+    # capturing env vars from env, if set into config module
+    # and setting them here.
+    # Again, None values are default.
+    aws_access_key_id = aws_config.ACCESS_KEY_ID
+    aws_secret_access_key = aws_config.SECRET_ACCESS_KEY
 
     table_name = None
 
