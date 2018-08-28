@@ -87,9 +87,9 @@ def collect_adaccount(job_scope, _job_context):
             )
 
             fields = get_default_fields(ad_account.__class__)
-            import ipdb; ipdb.set_trace()
             ad_account_data = ad_account.remote_read(fields=fields)
-
+            # FIXME: feedback account?
+            # FIXME: store to s3
             return ad_account_data
 
     except FacebookError as e:
