@@ -36,7 +36,7 @@ def iter_entities_per_ad_account_id(ad_account_id, fields=None):
         entities.CustomAudienceEntity,
     ]
 
-    _step = 100
+    _step = 1000
 
     for EntityModel in entity_models:
         cnt = 0
@@ -56,4 +56,4 @@ def iter_entities_per_ad_account_id(ad_account_id, fields=None):
                     cntr += _step
 
             if cnt % _step:
-                cntr += _step
+                cntr += cnt % _step
