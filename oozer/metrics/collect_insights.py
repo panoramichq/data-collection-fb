@@ -127,6 +127,7 @@ DEFAULT_REPORT_FIELDS = [
     # 'unique_social_clicks',
 ]
 
+# "Default" attribution is 28d Click & 1d View.
 DEFAULT_ATTRIBUTION_WINDOWS = [
     AdsInsights.ActionAttributionWindows.value_1d_view,
     AdsInsights.ActionAttributionWindows.value_7d_view,
@@ -134,6 +135,7 @@ DEFAULT_ATTRIBUTION_WINDOWS = [
     AdsInsights.ActionAttributionWindows.value_1d_click,
     AdsInsights.ActionAttributionWindows.value_7d_click,
     AdsInsights.ActionAttributionWindows.value_28d_click,
+    AdsInsights.ActionAttributionWindows.value_default
 ]
 
 def _convert_and_validate_date_format(dt):
