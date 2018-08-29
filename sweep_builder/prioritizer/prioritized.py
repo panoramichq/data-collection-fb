@@ -22,6 +22,15 @@ def iter_prioritized(expectations_iter):
     :rtype: Generator[PrioritizationClaim]
     """
 
+    # cache_max_size allows us to avoid writing same score
+    # for same jobID when given objects rely on same JobID
+    # for collection.
+    # This number is
+    #  max Expectations permutations per Reality Claim (~6k Fandango ads)
+    #  x
+    #  margin of comfort (say, 3)
+    #  ========
+    #  ~20k
     score_calculator = ScoreCalculator(cache_size=20000)
 
     _measurement_name_base = __name__ + '.iter_prioritized.'  # <- function name. adjust if changed

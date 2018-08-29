@@ -37,6 +37,16 @@ def iter_persist_prioritized(sweep_id, prioritized_iter):
     :rtype: Generator[PrioritizationClaim]
     """
 
+    # cache_max_size allows us to avoid writing same score
+    # for same jobID when given objects rely on same JobID
+    # for collection.
+    # This number is
+    #  max Expectations permutations per Reality Claim (~6k for Fandango ads)
+    #  x
+    #  margin of comfort (say, 3)
+    #  ========
+    #  ~20k
+
     with SortedJobsQueue(sweep_id).JobsWriter() as add_to_queue, \
         JobExpectationsWriter(sweep_id, cache_max_size=20000) as expectation_add:
 
