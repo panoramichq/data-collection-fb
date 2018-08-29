@@ -14,9 +14,11 @@ All custom metrics will be prefixed with the value (and dot at the end)
 """
 
 PREFIX_COUNTER = 'counters'
-PREFIX_TIMING = 'timers'
 PREFIX_GAUGE = 'gauges'
+PREFIX_HISTOGRAM = 'histogram'
 PREFIX_SET = 'sets'
+PREFIX_TIMING = 'timers'
+
 """
 Prefixes for individual metric types
 """

@@ -359,6 +359,8 @@ class SweepStatusTracker():
         return pulse
 
 
+@Measure.timer(__name__, function_name_as_metric=True)
+@Measure.counter(__name__, function_name_as_metric=True, count_once=True)
 def run_tasks(sweep_id, limit=None, time_slices=looper_config.FB_THROTTLING_WINDOW, time_slice_length=1):
     """
     Oozes tasks gradually into Celery workers queue, accounting for total number of tasks
@@ -372,6 +374,12 @@ def run_tasks(sweep_id, limit=None, time_slices=looper_config.FB_THROTTLING_WIND
     :param time_slice_length: in seconds. can be fractional
     :return:
     """
+
+    _measurement_name_base = __name__ + '.run_tasks.'  # <- function name. adjust if changed
+    _measurement_tags = dict(
+        sweep_id=sweep_id
+    )
+    _step = 100
 
     n = limit or SortedJobsQueue(sweep_id).get_queue_length()
     if n < time_slices:
@@ -405,7 +413,9 @@ def run_tasks(sweep_id, limit=None, time_slices=looper_config.FB_THROTTLING_WIND
 
     tasks_iter = task_iter_score_gate(tasks_iter)
 
-    with TaskOozer(n, time_slices, time_slice_length, z) as ooze_task:
+    with TaskOozer(n, time_slices, time_slice_length, z) as ooze_task, \
+        Measure.counter(_measurement_name_base + 'oozed', tags=_measurement_tags) as cntr:
+
         next_pulse_review_second = time.time() + _pulse_refresh_interval
 
         # now, don't freak out about us looping 4 time off the same exact generator
@@ -425,10 +435,16 @@ def run_tasks(sweep_id, limit=None, time_slices=looper_config.FB_THROTTLING_WIND
             ooze_task(celery_task, job_scope, job_context)
             cnt += 1
 
+        cntr += cnt
+
         # if there are 1st quarter tasks left in queue, burn them out
         for celery_task, job_scope, job_context in tasks_iter:
             ooze_task(celery_task, job_scope, job_context)
             cnt += 1
+
+            if cnt % _step == 0:
+                cntr += _step
+
             if time.time() > quarter_time:
                 break  # to next for-loop
 
@@ -456,6 +472,9 @@ def run_tasks(sweep_id, limit=None, time_slices=looper_config.FB_THROTTLING_WIND
             # It will unblock by itself when it's time to release the task
             ooze_task(celery_task, job_scope, job_context)
             cnt += 1
+
+            if cnt % _step == 0:
+                cntr += _step
 
             if now > half_time:
                 break
@@ -487,6 +506,10 @@ def run_tasks(sweep_id, limit=None, time_slices=looper_config.FB_THROTTLING_WIND
 
             ooze_task(celery_task, job_scope, job_context)
             cnt += 1
+
+            if cnt % _step == 0:
+                cntr += _step
+
             break
 
         for celery_task, job_scope, job_context in tasks_iter:
@@ -519,10 +542,15 @@ def run_tasks(sweep_id, limit=None, time_slices=looper_config.FB_THROTTLING_WIND
             ooze_task(celery_task, job_scope, job_context)
             cnt += 1
 
+            if cnt % _step == 0:
+                cntr += _step
+
             if cnt > cut_off_at_cnt:
                 if cnt < n:
                     logger.info(f"#{sweep_id}: Queueing cut at {cnt} jobs of total {n}")
                 break
+
+    cntr += cnt % _step
 
     logger.info(f"#{sweep_id}: Queued up {cnt} jobs")
 
@@ -596,13 +624,21 @@ def run_tasks(sweep_id, limit=None, time_slices=looper_config.FB_THROTTLING_WIND
 
     # we wait for certain number of tasks to be done, until we run out of waiting time
     pulse = sweep_tracker.get_pulse()  # type: Pulse
-    while not its_time_to_quit(pulse):
-        running_time = int(time.time() - start_of_run_seconds)
-        logger.info(
-            f"#{sweep_id}: ({running_time} seconds in) Waiting on {cnt} jobs with last pulse being {pulse}"
-        )
-        gevent.sleep(time_slice_length)
-        pulse = sweep_tracker.get_pulse()  # type: Pulse
+    _last = 0
+    with Measure.counter(_measurement_name_base + 'done', tags=_measurement_tags) as cntr:
+
+        while not its_time_to_quit(pulse):
+            cntr += pulse.Total - _last
+            _last = pulse.Total
+
+            running_time = int(time.time() - start_of_run_seconds)
+            logger.info(
+                f"#{sweep_id}: ({running_time} seconds in) Waiting on {cnt} jobs with last pulse being {pulse}"
+            )
+            gevent.sleep(time_slice_length)
+            pulse = sweep_tracker.get_pulse()  # type: Pulse
+
+        cntr += pulse.Total - _last
 
     return cnt, pulse
 
