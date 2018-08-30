@@ -27,12 +27,14 @@ entity_expectation_generator_map[Entity.Scope] = list(filter(None,[
 
 
 from .entities import (
-    campaign_entities_per_ad_account,
-    adset_entities_per_ad_account,
-    ad_entities_per_ad_account,
     ad_creative_entities_per_ad_account,
-    ad_video_entities_per_ad_account)
+    ad_entities_per_ad_account,
+    ad_video_entities_per_ad_account,
+    adset_entities_per_ad_account,
+    campaign_entities_per_ad_account,
+)
 
+from .metrics import lifetime, breakdowns
 
 # mental note:
 # entities per AA data collection hook is as "normative" task on AA,
@@ -40,16 +42,18 @@ from .entities import (
 # At some point it may be meaningful to have a normative "entity" job on each
 # entity level too / instead (where these jobs become "effective" alternatives there)
 entity_expectation_generator_map[Entity.AdAccount] = list(filter(None, [
+    # Entities
     None if jobs_config.ENTITY_C_DISABLED else campaign_entities_per_ad_account,
     None if jobs_config.ENTITY_AS_DISABLED else adset_entities_per_ad_account,
     None if jobs_config.ENTITY_A_DISABLED else ad_entities_per_ad_account,
     None if jobs_config.ENTITY_AC_DISABLED else ad_creative_entities_per_ad_account,
     None if jobs_config.ENTITY_AV_DISABLED else ad_video_entities_per_ad_account,
+    # Insights
+    None if jobs_config.INSIGHTS_HOUR_C_DISABLED else breakdowns.hour_metrics_per_campaign_per_parent,
+    None if jobs_config.INSIGHTS_HOUR_AS_DISABLED else breakdowns.hour_metrics_per_adset_per_parent,
+    None if jobs_config.INSIGHTS_HOUR_A_DISABLED else breakdowns.hour_metrics_per_ad_per_parent,
     sync_expectations_per_ad_account
 ]))
-
-
-from .metrics import lifetime, breakdowns
 
 
 entity_expectation_generator_map[Entity.Campaign] = list(filter(None, [
@@ -72,6 +76,7 @@ entity_expectation_generator_map[Entity.Ad] = list(filter(None, [
     None if jobs_config.INSIGHTS_LIFETIME_A_DISABLED else lifetime.lifetime_metrics_per_ad,
     None if jobs_config.INSIGHTS_AGE_GENDER_A_DISABLED else breakdowns.day_age_gender_metrics_per_ad,
     None if jobs_config.INSIGHTS_DMA_A_DISABLED else breakdowns.day_dma_metrics_per_ad,
-    None if jobs_config.INSIGHTS_HOUR_A_DISABLED else breakdowns.day_hour_metrics_per_ad,
+    ## Replaced with AdAccount-level RealityClaims generator
+    # None if jobs_config.INSIGHTS_HOUR_A_DISABLED else breakdowns.day_hour_metrics_per_ad,
     None if jobs_config.INSIGHTS_PLATFORM_A_DISABLED else breakdowns.day_platform_metrics_per_ad
 ]))
