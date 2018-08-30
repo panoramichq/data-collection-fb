@@ -47,9 +47,13 @@ class _CommandLineValues(argparse.Namespace):
 class StarterWorkerType:
 
     sweep = 'sweep'
+    sweep_no_wait = 'sweep_no_wait'
+    sweeps_loop = 'sweeps_loop'
 
     ALL = {
-        sweep
+        sweep,
+        sweep_no_wait,
+        sweeps_loop
     }
 
 
@@ -114,7 +118,32 @@ def process_start_command(command_line_values):
     """
     :param _CommandLineValues command_line_values:
     """
+
+    if command_line_values.worker_type == StarterWorkerType.sweep_no_wait:
+        from oozer.full_loop import run_sweep
+        run_sweep()
+        return
+
+    # ** `sweep` is Default for Stage / Prod **
+    # This mode of operation runs just one sweep, waits recommended time and quits.
+    # This mode makes no sense until you realize how we provision / manage this
+    # container in the sky.
+    # We are using AWS Fargate and instruct the sweep controller container to be
+    # restarted if it exits.
+    # This mode of operation allows for several benefits:
+    # - Compared to run_sweeps_forever loop, which never quits, here we
+    #   benefit from all memory leakage to be flushed every sweep.
+    # - Compared to sweep_no_wait, here we internalize the management of
+    #   spacer time between sweep restarts (to avoid running it too frequently)
+    # This mode of operation exists only because of AWS Fargate auto-keep-alive
+    # setting we set.
+    # In local development, run_sweeps_forever and run_sweep make more sense.
     if command_line_values.worker_type == StarterWorkerType.sweep:
+        from oozer.full_loop import run_sweep_and_sleep
+        run_sweep_and_sleep()
+        return
+
+    if command_line_values.worker_type == StarterWorkerType.sweeps_loop:
         from oozer.full_loop import run_sweeps_forever
         run_sweeps_forever()
         return
