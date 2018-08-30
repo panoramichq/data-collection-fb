@@ -82,7 +82,7 @@ class TestCollectAdAccount(TestCase):
 
         assert store.called_with(account_data), 'Data should be stored with the cold store module'
 
-        status_job_last_call_parameters,_ , _ = status_task.call_args
+        status_job_last_call_parameters , _ = status_task.call_args # Last status task call arguments
         assert status_job_last_call_parameters == (JobStatus.Done, job_scope), 'Job status should be reported as Done'
 
 

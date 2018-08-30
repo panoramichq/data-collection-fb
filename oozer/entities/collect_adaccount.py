@@ -91,9 +91,7 @@ def collect_adaccount(job_scope, _job_context):
             fields = get_default_fields(ad_account.__class__)
             ad_account_data = ad_account.remote_read(fields=fields)
 
-            report_job_status_task(
-                ExternalPlatformJobStatus.DataFetched, job_scope
-            )
+            report_job_status_task.delay(ExternalPlatformJobStatus.DataFetched, job_scope)
             token_manager.report_usage(token)
 
             store = NormalStore(job_scope)
@@ -101,9 +99,7 @@ def collect_adaccount(job_scope, _job_context):
 
             # FIXME: feedback account?
 
-            report_job_status_task(
-                ExternalPlatformJobStatus.Done, job_scope
-            )
+            report_job_status_task.delay(ExternalPlatformJobStatus.Done, job_scope)
             token_manager.report_usage(token)
             return ad_account_data
 
