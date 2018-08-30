@@ -9,6 +9,7 @@ from common.enums.entity import Entity
 from common.enums.failure_bucket import FailureBucket
 from common.measurement import Measure
 from common.tokens import PlatformTokenManager
+from oozer.common.cold_storage.batch_store import NormalStore
 from oozer.common.report_job_status_task import report_job_status_task
 from oozer.common.enum import ExternalPlatformJobStatus
 from oozer.common.facebook_api import PlatformApiContext, get_default_fields, FacebookApiErrorInspector
@@ -41,6 +42,7 @@ def collect_adaccount_task(job_scope, job_context):
         if good_token is not None:
             job_scope.tokens = [good_token]
 
+    collect_adaccount(job_scope, job_context)
 
 
 def collect_adaccount(job_scope, _job_context):
@@ -88,8 +90,21 @@ def collect_adaccount(job_scope, _job_context):
 
             fields = get_default_fields(ad_account.__class__)
             ad_account_data = ad_account.remote_read(fields=fields)
+
+            report_job_status_task(
+                ExternalPlatformJobStatus.DataFetched, job_scope
+            )
+            token_manager.report_usage(token)
+
+            store = NormalStore(job_scope)
+            store.store(ad_account_data)
+
             # FIXME: feedback account?
-            # FIXME: store to s3
+
+            report_job_status_task(
+                ExternalPlatformJobStatus.Done, job_scope
+            )
+            token_manager.report_usage(token)
             return ad_account_data
 
     except FacebookError as e:
