@@ -7,6 +7,13 @@ from oozer.metrics.tasks import collect_insights_task
 from oozer.sync_expectations_task import sync_expectations_task
 
 
+# This map is used by code that maps JobID to handler that will
+# process that job.
+# It looks at report type first, and direct or effective
+# entity level next in determining if there is a handler for
+# that JobID.
+# We don't blow up, just warn when JobID does not resolve to
+# a handler. So, watch warnings and don't forget to add handler here.
 entity_report_handler_map = {
     ReportType.sync_expectations: {
         Entity.AdAccount: sync_expectations_task
@@ -35,6 +42,8 @@ entity_report_handler_map = {
         Entity.Ad: collect_insights_task
     },
     ReportType.day_hour: {
+        Entity.Campaign: collect_insights_task,
+        Entity.AdSet: collect_insights_task,
         Entity.Ad: collect_insights_task
     },
     ReportType.day_platform: {

@@ -1,6 +1,7 @@
 from typing import Generator
 
 from common.enums.entity import Entity
+from common.store import entities
 from sweep_builder.data_containers.reality_claim import RealityClaim
 
 from .adaccounts import iter_scopes, iter_active_ad_accounts_per_scope
@@ -63,7 +64,8 @@ def iter_reality_base():
             )
 
 
-def iter_reality_per_ad_account_claim(ad_account_claim):
+
+def iter_reality_per_ad_account_claim(ad_account_claim, entity_types=None):
     # type: (RealityClaim) -> Generator[RealityClaim]
     """
     A generator yielding instances of RealityClaim object, filled
@@ -75,13 +77,14 @@ def iter_reality_per_ad_account_claim(ad_account_claim):
     we are expected to perform for these objects.
 
     :param RealityClaim ad_account_claim: A RealityClaim instance representing existence of AdAccount
+    :param List[Entity] entity_types: If truethy, limits the reality iterator to those types of entities only.
     :return: Generator yielding RealityClaim objects pertaining to various levels of entities
     :rtype: Generator[RealityClaim]
     """
 
     # Naturally, we may know about some of the AdAccount's children
     # existing already and might need their supporting data refreshed too.
-    for entity_data in iter_entities_per_ad_account_id(ad_account_claim.ad_account_id):
+    for entity_data in iter_entities_per_ad_account_id(ad_account_claim.ad_account_id, entity_types=entity_types):
         yield RealityClaim(
             entity_data,
             timezone=ad_account_claim.timezone,
