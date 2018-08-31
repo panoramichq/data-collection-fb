@@ -17,24 +17,43 @@ these workers already collected some time before.
 
 from typing import Generator
 
+from common.enums.entity import Entity
 from common.store import entities
 from common.measurement import Measure
 
 
-def iter_entities_per_ad_account_id(ad_account_id, fields=None):
+entity_type_model_map = {
+    Entity.Campaign: entities.CampaignEntity,
+    Entity.AdSet: entities.AdsetEntity,
+    Entity.Ad: entities.AdEntity,
+    Entity.AdCreative: entities.AdCreativeEntity,
+    Entity.AdVideo: entities.AdVideoEntity,
+    Entity.CustomAudience: entities.CustomAudienceEntity,
+}
+
+
+def iter_entities_per_ad_account_id(ad_account_id, fields=None, entity_types=None):
     """
     :return: A generator of yielding data for all children of given AdAccounts
     :rtype: Generator[Dict]
     """
 
-    entity_models = [
-        entities.CampaignEntity,
-        entities.AdsetEntity,
-        entities.AdEntity,
-        entities.AdCreativeEntity,
-        entities.AdVideoEntity,
-        entities.CustomAudienceEntity,
-    ]
+    # occasionally it's important to pass through
+    # we are not overriding the values, but must pass some value
+    # state in entity_models
+    # There we treat explicit None, or empty array as "use default list"
+
+    if not entity_types:
+        # All types are returned
+        entity_models = entity_type_model_map.values()
+    else:
+        # intentionally leaving this logic brittle
+        # this function is linked to types "statically"
+        # and is not expected to hide misses in the map.
+        entity_models = [
+            entity_type_model_map[entity_type]
+            for entity_type in entity_types
+        ]
 
     _step = 1000
 
