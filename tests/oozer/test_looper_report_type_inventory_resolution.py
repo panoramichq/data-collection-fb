@@ -15,7 +15,7 @@ from unittest.mock import patch, Mock, ANY
 from oozer.looper import iter_tasks
 
 
-class TestEntityFeedback(TestCase):
+class TestLooperReportTypeInventoryResolution(TestCase):
     """
     Tests that looper code will recognize the types of reports we expect it to
     recognize from the job ID
