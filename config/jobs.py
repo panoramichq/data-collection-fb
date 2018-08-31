@@ -21,6 +21,7 @@ In this case, group level DISABLED clearly takes precedence.
 AD_ACCOUNT_IMPORT_DISABLED = False
 
 # actual entity jobs:
+ENTITY_AA_DISABLED = False
 ENTITY_C_DISABLED = False
 ENTITY_AS_DISABLED = False
 ENTITY_A_DISABLED = False
