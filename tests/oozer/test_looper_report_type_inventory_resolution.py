@@ -41,7 +41,7 @@ class TestLooperReportTypeInventoryResolution(TestCase):
 
         return JobScope(base_data)
 
-    def test_aa(self):
+    def test_aa_collection_job(self):
         job_scope = self._job_scope_factory(
             report_type=ReportType.entity,
             report_variant=Entity.AdAccount

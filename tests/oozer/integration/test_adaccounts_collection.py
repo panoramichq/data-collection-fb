@@ -19,6 +19,7 @@ class TestingAdAccountCollectionPipeline(TestCase):
 
         job_scope = JobScope(
             ad_account_id=AD_ACCOUNT,
+            entity_id=AD_ACCOUNT,
             tokens=[TOKEN],
             report_time=datetime.utcnow(),
             report_type='entity',

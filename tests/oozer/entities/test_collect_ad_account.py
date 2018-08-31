@@ -22,6 +22,7 @@ class TestCollectAdAccount(TestCase):
     def test_fails_with_wrong_report_variant(self):
         job_scope = JobScope(
             ad_account_id=self.ad_account_id,
+            entity_id=self.ad_account_id,
             tokens=['blah'],
             report_time=datetime.utcnow(),
             report_type='entity',
@@ -41,6 +42,7 @@ class TestCollectAdAccount(TestCase):
     def test_fails_without_a_token(self):
         job_scope = JobScope(
             ad_account_id=self.ad_account_id,
+            entity_id=self.ad_account_id,
             tokens=[None],
             report_time=datetime.utcnow(),
             report_type='entity',
@@ -61,6 +63,7 @@ class TestCollectAdAccount(TestCase):
     def test_runs_correctly(self):
         job_scope = JobScope(
             ad_account_id=self.ad_account_id,
+            entity_id=self.ad_account_id,
             tokens=['A_REAL_TOKEN'],
             report_time=datetime.utcnow(),
             report_type='entity',

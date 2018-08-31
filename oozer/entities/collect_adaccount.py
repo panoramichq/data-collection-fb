@@ -68,6 +68,8 @@ def collect_adaccount(job_scope, _job_context):
                 f"Job {job_scope.job_id} cannot proceed. No platform tokens provided."
             )
 
+        assert job_scope.ad_account_id == job_scope.entity_id, f'This is an ad account entity job, account_id should be equal to entity_id'
+
         # Used to report token usage by this job
         token_manager = PlatformTokenManager.from_job_scope(job_scope)
 
