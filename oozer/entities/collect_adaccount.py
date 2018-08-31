@@ -97,7 +97,8 @@ def collect_adaccount(job_scope, _job_context):
             store = NormalStore(job_scope)
             store.store(ad_account_data)
 
-            # FIXME: feedback account?
+            # TODO: feedback account? this probably wouldn't make sense at the moment
+            # because ad accounts are discovered from console and their lifecycle is controlled from there.
 
             report_job_status_task.delay(ExternalPlatformJobStatus.Done, job_scope)
             token_manager.report_usage(token)
