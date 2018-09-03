@@ -133,7 +133,6 @@ _default_fields_map = {
         'end_advertiser',
         'end_advertiser_name',
         'owner',
-        'rate_limit_reset_time',
         'rf_spec',
         'spend_cap',
         'timezone_id',
