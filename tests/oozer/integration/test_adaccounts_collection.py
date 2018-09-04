@@ -32,7 +32,5 @@ class TestingAdAccountCollectionPipeline(TestCase):
 
         assert aa_data
 
-        all_required_fields = filter(lambda field: field != 'rate_limit_reset_time', get_default_fields(AdAccount)) # FIXME: seems rate_limit_reset_time gets returned never or  not all the time
-
-        for required_field in all_required_fields:
+        for required_field in  get_default_fields(AdAccount):
             assert required_field in aa_data_keys, f'{required_field} should be in the response from FB'
