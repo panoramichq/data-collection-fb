@@ -32,7 +32,8 @@ from .entities import (
     ad_video_entities_per_ad_account,
     adset_entities_per_ad_account,
     campaign_entities_per_ad_account,
-    custom_audience_entities_per_ad_account)
+    custom_audience_entities_per_ad_account,
+)
 
 from .metrics import lifetime, breakdowns
 
