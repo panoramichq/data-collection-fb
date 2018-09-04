@@ -32,7 +32,7 @@ from .entities import (
     ad_video_entities_per_ad_account,
     adset_entities_per_ad_account,
     campaign_entities_per_ad_account,
-)
+    custom_audience_entities_per_ad_account)
 
 from .metrics import lifetime, breakdowns
 
@@ -48,6 +48,7 @@ entity_expectation_generator_map[Entity.AdAccount] = list(filter(None, [
     None if jobs_config.ENTITY_A_DISABLED else ad_entities_per_ad_account,
     None if jobs_config.ENTITY_AC_DISABLED else ad_creative_entities_per_ad_account,
     None if jobs_config.ENTITY_AV_DISABLED else ad_video_entities_per_ad_account,
+    None if jobs_config.ENTITY_CA_DISABLED else custom_audience_entities_per_ad_account,
     # Insights
     None if jobs_config.INSIGHTS_HOUR_C_DISABLED else breakdowns.hour_metrics_per_campaign_per_parent,
     None if jobs_config.INSIGHTS_HOUR_AS_DISABLED else breakdowns.hour_metrics_per_adset_per_parent,

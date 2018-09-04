@@ -80,3 +80,9 @@ ad_video_entities_per_ad_account = functools.partial(
     Entity.AdVideo
 )  # type: (RealityClaim) -> Generator[ExpectationClaim]
 
+
+custom_audience_entities_per_ad_account = functools.partial(
+    entities_per_ad_account,
+    Entity.AdVideo
+)  # type: (RealityClaim) -> Generator[ExpectationClaim]
+
