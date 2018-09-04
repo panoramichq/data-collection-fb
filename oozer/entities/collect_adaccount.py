@@ -1,5 +1,4 @@
 import logging
-import pprint
 
 from facebook_business.exceptions import FacebookError
 
