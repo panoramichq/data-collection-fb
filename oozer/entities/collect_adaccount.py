@@ -6,6 +6,7 @@ from common.bugsnag import BugSnagContextData
 from common.celeryapp import get_celery_app
 from common.enums.entity import Entity
 from common.enums.failure_bucket import FailureBucket
+from common.id_tools import generate_universal_id
 from common.measurement import Measure
 from common.tokens import PlatformTokenManager
 from oozer.common.cold_storage.batch_store import NormalStore
@@ -14,6 +15,7 @@ from oozer.common.enum import ExternalPlatformJobStatus
 from oozer.common.facebook_api import PlatformApiContext, get_default_fields, FacebookApiErrorInspector
 from oozer.common.job_scope import JobScope
 from oozer.common.sweep_running_flag import SweepRunningFlag
+from oozer.common.vendor_data import add_vendor_data
 
 app = get_celery_app()
 logger = logging.getLogger(__name__)
@@ -90,20 +92,40 @@ def collect_adaccount(job_scope, _job_context):
             )
 
             fields = get_default_fields(ad_account.__class__)
-            ad_account_data = ad_account.remote_read(fields=fields)
+
+            ad_account_with_selected_fields = ad_account.remote_read(fields=fields) # Read just the fields we need
+            ad_account_data_dict = ad_account_with_selected_fields.export_all_data() # Export the object to a dict
 
             report_job_status_task.delay(ExternalPlatformJobStatus.DataFetched, job_scope)
             token_manager.report_usage(token)
 
+            job_scope_base = dict(
+                # Duplicate the job_scope data to avoid mutating it
+                **job_scope.to_dict(),
+            )
+            job_scope_base.update(
+                # Augment the job scpecific job scope fields so that it represents a single ad account
+                # for the universal id construction
+                entity_type=Entity.AdAccount,
+                report_variant=None,
+            )
+
+            augmented_ad_account_data = add_vendor_data(
+                # Augment the data returned from the remote API with our vendor data
+                ad_account_data_dict,
+                id=generate_universal_id(
+                    **job_scope_base
+                )
+            )
+
             store = NormalStore(job_scope)
-            store.store(ad_account_data)
+            store.store(augmented_ad_account_data)
 
             # TODO: feedback account? this probably wouldn't make sense at the moment
             # because ad accounts are discovered from console and their lifecycle is controlled from there.
 
             report_job_status_task.delay(ExternalPlatformJobStatus.Done, job_scope)
-            token_manager.report_usage(token)
-            return ad_account_data
+            return ad_account_data_dict
 
     except FacebookError as e:
         # Build ourselves the error inspector
