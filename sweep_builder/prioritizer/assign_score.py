@@ -2,6 +2,7 @@ from datetime import date, datetime
 from collections import defaultdict, OrderedDict
 
 import config.application
+from common.enums.entity import Entity
 
 from common.enums.failure_bucket import FailureBucket
 from common.enums.reporttype import ReportType
@@ -175,6 +176,11 @@ class ScoreCalculator:
                     score += 5
 
         else:
+            if entity_type == Entity.AdAccount:
+                # This is an ad account sync job, let's rank it a bit higher as
+                # these updates ar quite important
+                score += 100
+
             # per entity_id
             # this is not used now, but is left for reuse when we unleash per-entity_id jobs
             # onto this code again. Must be revisited
