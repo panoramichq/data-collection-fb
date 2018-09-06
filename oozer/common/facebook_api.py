@@ -73,7 +73,7 @@ class FacebookApiErrorInspector:
     ]
     """
     List of known codes (subcodes) where FB complains about us asking for too
-    much data 
+    much data
     """
 
     _exception = None
@@ -332,19 +332,23 @@ _default_fields_map = {
         'time_content_updated',
         'time_created',
         'time_updated',
-        'allowed_domains',
-        'claim_objective',
-        'content_type',
-        'dataset_id',
-        'event_source_group',
-        'origin_audience_id',
-        'prefill',
-        'product_set_id',
-        'associated_audience_id',
-        'exclusions',
-        'inclusions',
-        'parent_audience_id',
-        'tags',
+
+        # These are Create/Update only fields
+        # 'allowed_domains',
+        # 'claim_objective',
+        # 'content_type',
+        # 'dataset_id',
+        # 'event_source_group',
+        # 'origin_audience_id',
+        # 'prefill',
+        # 'product_set_id',
+
+        # These fields are not part of the oficial api docs
+        # 'associated_audience_id',
+        # 'exclusions',
+        # 'inclusions',
+        # 'parent_audience_id',
+        # 'tags',
     ])
 }
 
