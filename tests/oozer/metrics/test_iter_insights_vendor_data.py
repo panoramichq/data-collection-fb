@@ -135,6 +135,66 @@ class VendorDataUniversalIdExtraction(TestCase):
                 entity_id='SomeID'
             )
 
+    def test_day_level_data(self):
+
+        entity_types = [
+            Entity.Campaign,
+            Entity.AdSet,
+            Entity.Ad
+        ]
+
+        # intentionally NOT reusing collect_insights._entity_type_id_field_map map
+        # effectively, here we are testing it too.
+        entity_id_attr_name_map = {
+            Entity.Campaign: 'campaign_id',
+            Entity.AdSet: 'adset_id',
+            Entity.Ad: 'ad_id'
+        }
+
+        for entity_type in entity_types:
+
+            input_data = {
+                entity_id_attr_name_map[entity_type]: 'SomeID',
+                "date_start": "2018-06-02",
+                "date_stop": "2018-06-02",
+                "clicks": "10",
+                "cpc": "0.117",
+                "cpm": "2.521552",
+                "cpp": "2.526998",
+                "ctr": "2.155172",
+                "impressions": "464",
+            }
+
+            vendor_data = vendor_data_extractor._from_day_segmented_entity(
+                input_data,
+                # used by code and for ID
+                entity_type=entity_type,
+                # data used for ID
+                ad_account_id='AAID',
+                report_type='reporttype',
+                # range_start=None,
+            )
+
+            universal_id_should_be = D.join([
+                'oprm',
+                'm',
+                NS,
+                'AAID',
+                entity_type, # entity Type
+                'SomeID', # entity ID
+                'reporttype',
+                '', # report variant
+                '2018-06-02', # Range start.
+                # '', # Range end
+            ])
+
+            assert vendor_data == dict(
+                id=universal_id_should_be,
+                range_start='2018-06-02',
+                entity_type=entity_type,
+                entity_id='SomeID'
+            )
+
     def test_agegender_level_data(self):
 
         entity_types = [
