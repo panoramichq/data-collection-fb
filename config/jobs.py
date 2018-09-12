@@ -38,12 +38,13 @@ INSIGHTS_LIFETIME_A_DISABLED = False
 # Not tested / used yet
 INSIGHTS_HOUR_C_DISABLED = True  # TODO: Switch to False once we verify pipeline needs it
 INSIGHTS_HOUR_AS_DISABLED = True  # TODO: Switch to False once we verify pipeline needs it
+
 # Definitely used
+INSIGHTS_AGE_GENDER_A_DISABLED = False
+INSIGHTS_DAY_A_DISABLED = False
+INSIGHTS_DMA_A_DISABLED = False
 INSIGHTS_HOUR_A_DISABLED = False
-# Temp disable due to inefficiency
-INSIGHTS_AGE_GENDER_A_DISABLED = True  # TODO: enable once converted from cubic to quadratic Expectation bloom fn
-INSIGHTS_DMA_A_DISABLED = True  # TODO: enable once converted from cubic to quadratic Expectation bloom fn
-INSIGHTS_PLATFORM_A_DISABLED = True  # TODO: enable once converted from cubic to quadratic Expectation bloom fn
+INSIGHTS_PLATFORM_A_DISABLED = False
 
 # group flags for insights jobs
 INSIGHTS_ALL_DISABLED = False
@@ -68,6 +69,7 @@ if INSIGHTS_ALL_LIFETIME_DISABLED:
 
 if INSIGHTS_ALL_SEGMENTED_DISABLED:
     INSIGHTS_AGE_GENDER_A_DISABLED = True
+    INSIGHTS_DAY_A_DISABLED = True
     INSIGHTS_DMA_A_DISABLED = True
     INSIGHTS_HOUR_A_DISABLED = True
     INSIGHTS_HOUR_AS_DISABLED = True
