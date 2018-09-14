@@ -35,6 +35,9 @@ entity_report_handler_map = {
         Entity.AdSet: collect_insights_task,
         Entity.Ad: collect_insights_task,
     },
+    ReportType.day: {
+        Entity.Ad: collect_insights_task
+    },
     ReportType.day_age_gender: {
         Entity.Ad: collect_insights_task
     },

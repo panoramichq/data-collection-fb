@@ -53,6 +53,7 @@ entity_expectation_generator_map[Entity.AdAccount] = list(filter(None, [
     # Insights
     None if jobs_config.INSIGHTS_HOUR_C_DISABLED else breakdowns.hour_metrics_per_campaign_per_parent,
     None if jobs_config.INSIGHTS_HOUR_AS_DISABLED else breakdowns.hour_metrics_per_adset_per_parent,
+    None if jobs_config.INSIGHTS_DAY_A_DISABLED else breakdowns.day_metrics_per_ad_per_parent,
     None if jobs_config.INSIGHTS_HOUR_A_DISABLED else breakdowns.hour_metrics_per_ad_per_parent,
     None if jobs_config.INSIGHTS_AGE_GENDER_A_DISABLED else breakdowns.day_age_gender_metrics_per_ad_per_parent,
     None if jobs_config.INSIGHTS_DMA_A_DISABLED else breakdowns.day_dma_metrics_per_ad_per_parent,
