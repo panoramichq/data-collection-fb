@@ -1,5 +1,6 @@
 from typing import List
 
+from facebook_business.adobjects.adaccount import AdAccount
 from facebook_business.api import FacebookAdsApi, FacebookSession
 from facebook_business.adobjects import abstractcrudobject
 from facebook_business.adobjects.campaign import Campaign
@@ -120,7 +121,24 @@ class FacebookApiErrorInspector:
 
 
 _default_fields_map = {
-    # AdAccount: ['id'],
+    AdAccount: collapse_fields_children([
+        'id',
+        'account_id',
+        'account_status',
+        'amount_spent',
+        'attribution_spec',
+        'can_create_brand_lift_study',
+        'capabilities',
+        'currency',
+        'end_advertiser',
+        'end_advertiser_name',
+        'owner',
+        'rf_spec',
+        'spend_cap',
+        'timezone_id',
+        'timezone_name',
+        'timezone_offset_hours_utc',
+    ]),
     Campaign: collapse_fields_children([
         'account_id',
         'adlabels',

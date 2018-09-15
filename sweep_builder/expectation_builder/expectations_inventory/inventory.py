@@ -33,6 +33,7 @@ from .entities import (
     adset_entities_per_ad_account,
     campaign_entities_per_ad_account,
     custom_audience_entities_per_ad_account,
+    ad_account_entity
 )
 
 from .metrics import lifetime, breakdowns
@@ -44,6 +45,7 @@ from .metrics import lifetime, breakdowns
 # entity level too / instead (where these jobs become "effective" alternatives there)
 entity_expectation_generator_map[Entity.AdAccount] = list(filter(None, [
     # Entities
+    None if jobs_config.ENTITY_AA_DISABLED else ad_account_entity,
     None if jobs_config.ENTITY_C_DISABLED else campaign_entities_per_ad_account,
     None if jobs_config.ENTITY_AS_DISABLED else adset_entities_per_ad_account,
     None if jobs_config.ENTITY_A_DISABLED else ad_entities_per_ad_account,

@@ -53,6 +53,31 @@ def entities_per_ad_account(entity_type, reality_claim):
     )
 
 
+def ad_account_entity(reality_claim): # type: (RealityClaim) -> Generator[ExpectationClaim]
+    assert reality_claim.entity_type == Entity.AdAccount, \
+        'Ad account expectation should be triggered only by ad account reality claims'
+
+    yield ExpectationClaim(
+        reality_claim.to_dict(),
+        job_signatures = [
+            JobSignature.bind(
+                generate_id(
+                    ad_account_id=reality_claim.ad_account_id,
+                    entity_id=reality_claim.entity_id,
+                    report_type=ReportType.entity,
+                    report_variant=Entity.AdAccount
+                )
+            )
+        ]
+    )
+
+
+
+ad_account = functools.partial(
+    entities_per_ad_account,
+    Entity.AdAccount
+) # type: (RealityClaim) -> Generator[ExpectationClaim]
+
 campaign_entities_per_ad_account = functools.partial(
     entities_per_ad_account,
     Entity.Campaign

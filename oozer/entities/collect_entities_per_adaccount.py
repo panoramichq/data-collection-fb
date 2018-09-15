@@ -29,10 +29,7 @@ from oozer.common.enum import (
     ENUM_VALUE_FB_MODEL_MAP,
     ExternalPlatformJobStatus
 )
-from oozer.entities.entity_hash import _checksum_entity, _checksum_from_job_context
 from oozer.entities.feedback_entity_task import feedback_entity_task
-
-
 
 
 def iter_native_entities_per_adaccount(ad_account, entity_type, fields=None, status=None, page_size=200):

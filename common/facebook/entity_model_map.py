@@ -15,7 +15,6 @@ ENTITY_TYPE_MODEL_MAP = {
     Entity.Campaign: Campaign,
     Entity.AdCreative: AdCreative,
     Entity.AdVideo: AdVideo,
-    Entity.AdCreative: AdCreative,
     Entity.CustomAudience: CustomAudience,
 }
 

@@ -1,6 +1,7 @@
 from common.enums.entity import Entity
 from common.enums.reporttype import ReportType
 from oozer.common.job_scope import JobScope
+from oozer.entities.collect_adaccount import collect_adaccount_task
 from oozer.entities.import_ad_accounts_task import import_ad_accounts_task
 from oozer.entities.tasks import collect_entities_per_adaccount_task
 from oozer.metrics.tasks import collect_insights_task
@@ -22,7 +23,7 @@ entity_report_handler_map = {
         Entity.Scope: import_ad_accounts_task,
     },
     ReportType.entity: {
-        Entity.AdAccount: None, # FIXME: Fetch ad accounts from facebook - regular pipeline
+        Entity.AdAccount: collect_adaccount_task,
         Entity.Campaign: collect_entities_per_adaccount_task,
         Entity.AdSet: collect_entities_per_adaccount_task,
         Entity.Ad: collect_entities_per_adaccount_task,
