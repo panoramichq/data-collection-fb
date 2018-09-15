@@ -42,6 +42,54 @@ _date_stop = 'date_stop'
 _hourly_stats_aggregated_by_advertiser_time_zone = 'hourly_stats_aggregated_by_advertiser_time_zone'
 
 
+def _from_day_segmented_entity(data, entity_type=None, **kwargs):
+    """
+    Generates Universal record ID from data that is
+    differentiated by entity ID and reporting date
+
+    :param str timezone_name: Intentionally used first to bind it so it's passed in only once.
+    :param dict entity_type:
+    :return:
+    """
+
+    assert entity_type
+
+    # ...
+    # "account_id": "2034428216844013",
+    # "ad_id": "23842698250300224",
+    # "adset_id": "23842698250720224",
+    # "campaign_id": "23842698250110224",
+    # "clicks": "0",
+    # "cpc": "0",
+    # "cpm": "5",
+    # "ctr": "0",
+    # "date_start": "2017-12-31", <--------------------
+    # "date_stop": "2017-12-31",
+    # "impressions": "2",
+    # "reach": "2",
+    # "spend": "0.01"
+    # ...
+
+    entity_id = data[_entity_type_id_field_map[entity_type]]
+
+    # let's be lazy here and assume we always get single day data
+    # so we'll ignore date_stop for now.
+
+    # The rest of data is in kwargs
+    return {
+        'id': generate_universal_id(
+            fields=universal_id_fields,
+            entity_id=entity_id,
+            entity_type=entity_type,
+            range_start=data[_date_start],
+            **kwargs
+        ),
+        'range_start': data[_date_start],
+        'entity_id': entity_id,
+        'entity_type': entity_type
+    }
+
+
 def _from_hour_segmented_entity(timezone_name, data, entity_type=None, **kwargs):
     """
     Generates Universal record ID from data that is
@@ -235,6 +283,7 @@ def _from_dma_segmented_entity(data, entity_type=None, **kwargs):
 
 
 report_type_vendor_data_extractor_map = {
+    ReportType.day: _from_day_segmented_entity,
     ReportType.day_age_gender: _from_age_gender_segmented_entity,
     ReportType.day_dma: _from_dma_segmented_entity,
     # Hour handler is special. Needs Timezone name as first arg

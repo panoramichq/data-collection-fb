@@ -77,17 +77,20 @@ class ReportType:
     # (This mostly affects Europe/London timezone)
 
     class Breakdown:
-        hour = 'hour'
         age_gender = 'agegender'
+        day = 'day'
         dma = 'dma'
+        hour = 'hour'
         platform = 'platform'
 
+    day = f'{Breakdown.day}'
     day_age_gender = f'day{Breakdown.age_gender}'
     day_dma = f'day{Breakdown.dma}'
     day_hour = f'day{Breakdown.hour}'
     day_platform = f'day{Breakdown.platform}'
 
     ALL_DAY_BREAKDOWNS = {
+        day,
         day_age_gender,
         day_dma,
         day_hour,
