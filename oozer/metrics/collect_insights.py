@@ -37,6 +37,7 @@ ENUM_LEVEL_MAP = {
 
 
 REPORT_TYPE_FB_BREAKDOWN_ENUM = {
+    ReportType.day: None,
     ReportType.day_age_gender: [
         AdsInsights.Breakdowns.age,
         AdsInsights.Breakdowns.gender
@@ -222,7 +223,7 @@ class JobScopeParsed:
             self.report_params.update(
                 date_preset=AdsInsights.DatePreset.lifetime
             )
-        else:  # some day-with-breakdown type
+        elif job_scope.report_type in REPORT_TYPE_FB_BREAKDOWN_ENUM:  # some day-with-breakdown type
             self.report_params.update(
                 time_increment=1,  # group by calendar day (in AA tz)
                 time_range={
@@ -231,6 +232,10 @@ class JobScopeParsed:
                     'until': _convert_and_validate_date_format(job_scope.range_end or job_scope.range_start),
                 },
                 breakdowns=REPORT_TYPE_FB_BREAKDOWN_ENUM[job_scope.report_type]
+            )
+        else:
+            raise ValueError(
+                f"Report type {job_scope.report_type} does not have a mapped Platform-side breakdown value."
             )
 
         # Indicates that datum returned in a per-parent report is by itself

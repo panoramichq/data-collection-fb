@@ -1,5 +1,6 @@
 from typing import List
 
+from facebook_business.adobjects.adaccount import AdAccount
 from facebook_business.api import FacebookAdsApi, FacebookSession
 from facebook_business.adobjects import abstractcrudobject
 from facebook_business.adobjects.campaign import Campaign
@@ -73,7 +74,7 @@ class FacebookApiErrorInspector:
     ]
     """
     List of known codes (subcodes) where FB complains about us asking for too
-    much data 
+    much data
     """
 
     _exception = None
@@ -120,7 +121,24 @@ class FacebookApiErrorInspector:
 
 
 _default_fields_map = {
-    # AdAccount: ['id'],
+    AdAccount: collapse_fields_children([
+        'id',
+        'account_id',
+        'account_status',
+        'amount_spent',
+        'attribution_spec',
+        'can_create_brand_lift_study',
+        'capabilities',
+        'currency',
+        'end_advertiser',
+        'end_advertiser_name',
+        'owner',
+        'rf_spec',
+        'spend_cap',
+        'timezone_id',
+        'timezone_name',
+        'timezone_offset_hours_utc',
+    ]),
     Campaign: collapse_fields_children([
         'account_id',
         'adlabels',
@@ -332,19 +350,23 @@ _default_fields_map = {
         'time_content_updated',
         'time_created',
         'time_updated',
-        'allowed_domains',
-        'claim_objective',
-        'content_type',
-        'dataset_id',
-        'event_source_group',
-        'origin_audience_id',
-        'prefill',
-        'product_set_id',
-        'associated_audience_id',
-        'exclusions',
-        'inclusions',
-        'parent_audience_id',
-        'tags',
+
+        # These are Create/Update only fields
+        # 'allowed_domains',
+        # 'claim_objective',
+        # 'content_type',
+        # 'dataset_id',
+        # 'event_source_group',
+        # 'origin_audience_id',
+        # 'prefill',
+        # 'product_set_id',
+
+        # These fields are not part of the oficial api docs
+        # 'associated_audience_id',
+        # 'exclusions',
+        # 'inclusions',
+        # 'parent_audience_id',
+        # 'tags',
     ])
 }
 

@@ -78,14 +78,15 @@ class TestCollectEntitiesPerAdAccount(TestCase):
                 data_received = list(iter_collect_entities_per_adaccount(job_scope, None))
 
             assert store.called
-            aa, kk = store.call_args
-            assert not kk
-            assert len(aa) == 1
-            data_actual = aa[0]
+            store_args, store_keyword_args = store.call_args
+            assert not store_keyword_args
+            assert len(store_args) == 1, 'Store method should be called with just 1 parameter'
+
+            data_actual = store_args[0]
 
             vendor_data_key = '__oprm'
 
-            assert vendor_data_key in data_actual and type(data_actual[vendor_data_key]) == dict
+            assert vendor_data_key in data_actual and type(data_actual[vendor_data_key]) == dict, 'Special vendor key is present in the returned data'
             assert data_actual[vendor_data_key] == {
                 'id': universal_id_should_be
-            }
+            }, 'Vendor data is set with the right universal id'

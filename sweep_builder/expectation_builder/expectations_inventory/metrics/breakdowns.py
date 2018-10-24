@@ -228,7 +228,13 @@ hour_metrics_per_ad_per_parent = functools.partial(
 )  # type: (RealityClaim) -> Generator[ExpectationClaim]
 
 
-# per Ad, sub-day breakdowns
+# per Ad, day and sub-day breakdowns
+
+day_metrics_per_ad_per_parent = functools.partial(
+    _day_metrics_per_ad_per_parent,
+    ReportType.day
+)  # type: (RealityClaim) -> Generator[ExpectationClaim]
+
 
 day_age_gender_metrics_per_ad_per_parent = functools.partial(
     _day_metrics_per_ad_per_parent,
@@ -240,6 +246,7 @@ day_dma_metrics_per_ad_per_parent = functools.partial(
     _day_metrics_per_ad_per_parent,
     ReportType.day_dma
 )  # type: (RealityClaim) -> Generator[ExpectationClaim]
+
 
 day_platform_metrics_per_ad_per_parent = functools.partial(
     _day_metrics_per_ad_per_parent,

@@ -15,7 +15,7 @@ from unittest.mock import patch, Mock, ANY
 from oozer.looper import iter_tasks
 
 
-class TestEntityFeedback(TestCase):
+class TestLooperReportTypeInventoryResolution(TestCase):
     """
     Tests that looper code will recognize the types of reports we expect it to
     recognize from the job ID
@@ -40,6 +40,14 @@ class TestEntityFeedback(TestCase):
         assert base_data['report_type'], 'Hey, cmon, must pass that value to us'
 
         return JobScope(base_data)
+
+    def test_aa_collection_job(self):
+        job_scope = self._job_scope_factory(
+            report_type=ReportType.entity,
+            report_variant=Entity.AdAccount
+        )
+
+        assert inventory.resolve_job_scope_to_celery_task(job_scope), f"Ad account must have report handler for {ReportType.entity}"
 
     def test_entity_report_types_entities_per_aa(self):
 
