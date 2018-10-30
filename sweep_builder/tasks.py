@@ -66,11 +66,11 @@ def build_sweep_slice_per_ad_account_task(sweep_id, ad_account_reality_claim, ta
             cnt += 1
 
             if cnt % _step == 0:
-                logger.info(f'#{sweep_id}-#{ad_account_reality_claim.ad_account_id}: Queueing up #{cnt}')
+                logger.info(f'#{sweep_id}-AA<{ad_account_reality_claim.ad_account_id}>: Queueing up #{cnt}')
 
             _before_fetch = time.time()
 
-        logger.info(f"#{sweep_id}-#{ad_account_reality_claim.ad_account_id}: Queued up a total of {cnt} tasks")
+        logger.info(f"#{sweep_id}-AA<{ad_account_reality_claim.ad_account_id}>: Queued up a total of {cnt} tasks")
 
         return cnt
 
@@ -148,6 +148,26 @@ def build_sweep(sweep_id):
     # # here we fan out actual work to celery workers
     # # and wait for all tasks to finish before returning
     group_result = group(delayed_tasks).delay()
+
+    # Monitor the progress. Although this obivously can be achieved with
+    # group_result.join(), we need to "see" into the task group progress
+    while True:
+        logger.info("Checking group result")
+        if group_result.ready():
+            logger.info(f"#{sweep_id}-root: Sweep build complete")
+            break
+
+        done = 0
+        for result in group_result.results:
+            logger.info(f'{result}: {result.state}')
+            if result.ready():
+                done += 1
+        # Sleep to not screw up CPU while waiting. With join_native and gevent,
+        # CPU goes to max waiting when something weird occurs.
+        logger.info(f"TOTAL: {done}/{len(group_result.results)}")
+        logger.info("=" * 20)
+        time.sleep(5)
+
     group_result.join_native()
 
     # # alternative to Celery's native group_result.join()
