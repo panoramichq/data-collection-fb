@@ -168,7 +168,9 @@ def build_sweep(sweep_id):
         logger.info("=" * 20)
         time.sleep(5)
 
+    logger.info("Waiting on join_native")
     group_result.join_native()
+    logger.info("Join complete, sweep build ended")
 
     # # alternative to Celery's native group_result.join()
     # # our manual task tracking code + join()
