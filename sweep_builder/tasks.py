@@ -150,20 +150,21 @@ def build_sweep(sweep_id):
     # # and wait for all tasks to finish before returning
     group_result = group(delayed_tasks).delay()
 
-    Measure.gauge(f'{_measurement_name_base}per_account_sweep.total',
-                    _measurement_tags)(len(group_result.results))
+    Measure.gauge(
+        f'{_measurement_name_base}per_account_sweep.total',
+        tags=_measurement_tags)(len(group_result.results)
+    )
 
     # Monitor the progress. Although this obviously can be achieved with
     # group_result.join(), we need to "see" into the task group progress
-    with Measure.gauge(f'{_measurement_name_base}per_account_sweep.done', _measurement_tags) as measure_done:
+    with Measure.gauge(f'{_measurement_name_base}per_account_sweep.done', tags=_measurement_tags) as measure_done:
         while True:
             done_counter = 0
             for result in group_result.results:
                 logger.info(f'{result}: {result.state}')
                 if result.ready():
                     done_counter += 1
-            # Sleep to not screw up CPU while waiting. With join_native and gevent,
-            # CPU goes to max waiting when something weird occurs.
+
             logger.info(f"TOTAL: {done_counter}/{len(group_result.results)}")
             logger.info("=" * 20)
 
