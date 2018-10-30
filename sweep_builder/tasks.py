@@ -150,29 +150,41 @@ def build_sweep(sweep_id):
     # # and wait for all tasks to finish before returning
     group_result = group(delayed_tasks).delay()
 
-    # Monitor the progress. Although this obivously can be achieved with
+    Measure.gauge(f'{_measurement_name_base}per_account_sweep.total',
+                    _measurement_tags)(len(group_result.results))
+
+    # Monitor the progress. Although this obviously can be achieved with
     # group_result.join(), we need to "see" into the task group progress
-    while True:
-        logger.info("Checking group result")
-        if group_result.ready():
-            logger.info(f"#{sweep_id}-root: Sweep build complete")
-            break
+    with Measure.gauge(f'{_measurement_name_base}per_account_sweep.done', _measurement_tags) as measure_done:
+        while True:
+            done_counter = 0
+            for result in group_result.results:
+                logger.info(f'{result}: {result.state}')
+                if result.ready():
+                    done_counter += 1
+            # Sleep to not screw up CPU while waiting. With join_native and gevent,
+            # CPU goes to max waiting when something weird occurs.
+            logger.info(f"TOTAL: {done_counter}/{len(group_result.results)}")
+            logger.info("=" * 20)
 
-        done = 0
-        for result in group_result.results:
-            logger.info(f'{result}: {result.state}')
-            if result.ready():
-                done += 1
-        # Sleep to not screw up CPU while waiting. With join_native and gevent,
-        # CPU goes to max waiting when something weird occurs.
-        logger.info(f"TOTAL: {done}/{len(group_result.results)}")
-        logger.info("=" * 20)
-        time.sleep(5)
+            logger.info("Checking group result")
 
-    logger.info("Waiting on join_native")
+            measure_done(done_counter)
+            if group_result.ready():
+                logger.info(f"#{sweep_id}-root: Sweep build complete")
+                break
+
+            # Important. If we don't sleep, the native join in celery context
+            # switches all the time and we end up with 100% cpu, eventually somehow
+            # deadlocking the process. 5 seconds is kind of an arbitrary number, but
+            # does what we need and the impact of a (potential) delay is absolutely
+            # minimal
+            time.sleep(5)
+
+    logger.info("Waiting on results join")
     group_result.join_native()
-    logger.info("Join complete, sweep build ended")
 
     # # alternative to Celery's native group_result.join()
     # # our manual task tracking code + join()
     # task_group.join()
+    logger.info("Join complete, sweep build ended")
