@@ -101,6 +101,7 @@ def build_sweep(sweep_id):
     # task_group = TaskGroup()
     delayed_tasks = []
 
+    cnt = 0
     with Measure.counter(_measurement_name_base + 'outer_loop', tags=_measurement_tags) as cntr:
 
         for reality_claim in iter_reality_base():

@@ -28,7 +28,7 @@ services:
 #      service: dd-agent
 
   app_default:
-    scale: 8
+    scale: 2
     extends:
       file: docker-compose-base.yaml
       service: app

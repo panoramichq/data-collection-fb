@@ -18,7 +18,7 @@ In this case, group level DISABLED clearly takes precedence.
 """
 
 # Ad account sourcing
-AD_ACCOUNT_IMPORT_DISABLED = True
+AD_ACCOUNT_IMPORT_DISABLED = False
 
 # actual entity jobs:
 ENTITY_AA_DISABLED = False
