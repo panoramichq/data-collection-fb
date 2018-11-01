@@ -3,6 +3,7 @@ import logging
 from collections import defaultdict
 from pynamodb.exceptions import PutError
 
+from common.measurement import Measure
 from common.bugsnag import BugSnagContextData
 from common.celeryapp import get_celery_app
 from common.enums.entity import Entity
@@ -38,6 +39,8 @@ _DEFAULT_TIMEZONE = 'America/Los_Angeles'
 
 
 @app.task
+@Measure.timer(__name__, function_name_as_metric=True)
+@Measure.counter(__name__, function_name_as_metric=True, count_once=True)
 def import_ad_accounts_task(job_scope, job_context):
     """
     Collect all facebook ad accounts that are active in the console api

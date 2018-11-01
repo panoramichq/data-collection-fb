@@ -164,25 +164,12 @@ class _JobsReader:
                     'job_id_score_pair_len': len(job_id_score_pair),
                     'job_id_score_pair_data': job_id_score_pair
                 }
-                try:
-                    with BugSnagContextData(**context_data):
-                        job_id, score = job_id_score_pair
-                except ValueError as ex:
-                    # "Too many values to unpack" errors in production.
-                    # Unable to replicate these in local env and don't have enough data from
-                    # exception to figure out what the deal is.
-                    # Instrumenting this code per:
-                    # https://docs.bugsnag.com/platforms/python/other/#sending-diagnostic-data
-                    # In order to see more context data next time this happens.
-                    if 'too many values to unpack' or 'not enough values to unpack' in str(ex):
-                        return
-                    else:
-                        raise
 
+                job_id, score = job_id_score_pair
                 yield job_id.decode('utf8'), score
 
             start += step
-            job_id_score_pairs = redis.zrevrange(key, start, start+step)
+            job_id_score_pairs = redis.zrevrange(key, start, start+step, withscores=True)
 
     def read_job_scope_data(self, job_id, max_cache_size=4000):
         """

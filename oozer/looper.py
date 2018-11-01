@@ -566,6 +566,8 @@ def run_tasks(sweep_id, limit=None, time_slices=looper_config.FB_THROTTLING_WIND
                     logger.info(f"#{sweep_id}: Queueing cut at {cnt} jobs of total {n}")
                 break
 
+            logger.info(f"#{sweep_id}: Queued up all jobs {n}")
+
     cntr += cnt % _step
 
     logger.info(f"#{sweep_id}: Queued up {cnt} jobs")
