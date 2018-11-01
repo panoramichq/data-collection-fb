@@ -150,6 +150,16 @@ def build_sweep(sweep_id):
     # # and wait for all tasks to finish before returning
     group_result = group(delayed_tasks).delay()
 
+    # In case the workers crash, go-away (scaling) or are otherwise
+    # non-responsive, the following would wait indefinitely.
+    # Since that's not desirable and the total sweep build time is minutes at
+    # maximum, we add a reasonable timeout
+    # Because we are not joining on the results, but actually periodically
+    # looking for "you done yet?", we can exit if this threshold is busted, and
+    # let the next run recover from the situation
+    # You will nee
+    should_be_done_by = time.time() + (60 * 20)
+
     Measure.gauge(
         f'{_measurement_name_base}per_account_sweep.total',
         tags=_measurement_tags)(len(group_result.results)
@@ -181,6 +191,17 @@ def build_sweep(sweep_id):
             # does what we need and the impact of a (potential) delay is absolutely
             # minimal
             time.sleep(5)
+
+            # The last line of defense. Workers did not finish in time we
+            # expected, no point waiting, kill it.
+            if time.time() > should_be_done_by:
+                Measure.gauge(
+                    f'{_measurement_name_base}per_account_sweep.early_exits',
+                    tags=_measurement_tags)(1)
+                logger.warning(
+                    "Exiting incomplete sweep build, it's taking too long"
+                )
+                return
 
     logger.info("Waiting on results join")
     group_result.join_native()
