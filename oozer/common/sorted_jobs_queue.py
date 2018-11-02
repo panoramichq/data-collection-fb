@@ -141,7 +141,7 @@ FrontRowParticipant = namedtuple(
 
 class _JobsReader:
 
-    def __init__(self, sorted_jobs_queue_interface, batch_size=200):
+    def __init__(self, sorted_jobs_queue_interface, batch_size):
         """
         :param SortedJobsQueueInterface sorted_jobs_queue_interface:
         """
@@ -168,7 +168,9 @@ class _JobsReader:
                 job_id, score = job_id_score_pair
                 yield job_id.decode('utf8'), score
 
-            start += step
+            # + 1, because zrange and zrevrange are *inclusive*
+            start += step + 1
+
             job_id_score_pairs = redis.zrevrange(key, start, start+step, withscores=True)
 
     def read_job_scope_data(self, job_id, max_cache_size=4000):
@@ -276,6 +278,8 @@ class SortedJobsQueue:
     and for reading jobs from the queue (in Sweep Looper).
     """
 
+    _JOBS_READER_BATCH_SIZE = 200
+
     def __init__(self, sweep_id):
         """
         Closure that exposes a callable that gets repeatedly called with item to add to one and same
@@ -360,4 +364,4 @@ class SortedJobsQueue:
 
         :return:
         """
-        return _JobsReader(self)
+        return _JobsReader(self, batch_size=self._JOBS_READER_BATCH_SIZE)
