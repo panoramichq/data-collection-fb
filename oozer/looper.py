@@ -446,6 +446,7 @@ def run_tasks(sweep_id, limit=None, time_slices=looper_config.FB_THROTTLING_WIND
                 cntr += _step
 
             if time.time() > quarter_time:
+                logger.info(f"Breaking early in 1st quarter time, I am too slow {time.time()} / {quarter_time}")
                 break  # to next for-loop
 
         for celery_task, job_scope, job_context in tasks_iter:
@@ -461,10 +462,16 @@ def run_tasks(sweep_id, limit=None, time_slices=looper_config.FB_THROTTLING_WIND
                     if pulse.Success < 0.10: # percent
                         # failures across the board
                         # return cnt, pulse
+                        logger.info(
+                            "Breaking early in 2nd quarter time, due to too many failures of any kind (more than 10 percent)"
+                        )
                         break
                     if pulse.Throttling > 0.40: # percent
                         # time to give it a rest
                         # return cnt, pulse
+                        logger.info(
+                            "Breaking early in 2nd quarter time, due to throttling (more than 40 percent)"
+                        )
                         break
                 next_pulse_review_second = now + _pulse_refresh_interval
 
@@ -477,6 +484,9 @@ def run_tasks(sweep_id, limit=None, time_slices=looper_config.FB_THROTTLING_WIND
                 cntr += _step
 
             if now > half_time:
+                logger.info(
+                    f"Breaking early in 2nd quarter time, I am too slow {now}/{half_time}"
+                )
                 break
 
         # In second half of the loop, if we still have tasks to release
@@ -530,10 +540,16 @@ def run_tasks(sweep_id, limit=None, time_slices=looper_config.FB_THROTTLING_WIND
                     if pulse.Success < 0.20: # percent
                         # failures across the board
                         # return cnt, pulse
+                        logger.info(
+                            "Breaking 2nd halif time, due to too many failures of any kind (more than 20 percent)"
+                        )
                         break
                     if pulse.Throttling > 0.40: # percent
                         # time to give it a rest
                         # return cnt, pulse
+                        logger.info(
+                            "Breaking early in 2nd quarter time, due to throttling (more than 40 percent)"
+                        )
                         break
                 next_pulse_review_second = time.time() + _pulse_refresh_interval
 
@@ -549,6 +565,8 @@ def run_tasks(sweep_id, limit=None, time_slices=looper_config.FB_THROTTLING_WIND
                 if cnt < n:
                     logger.info(f"#{sweep_id}: Queueing cut at {cnt} jobs of total {n}")
                 break
+
+            logger.info(f"#{sweep_id}: Queued up all jobs {n}")
 
     cntr += cnt % _step
 
