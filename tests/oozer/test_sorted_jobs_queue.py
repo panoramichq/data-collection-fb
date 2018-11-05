@@ -100,42 +100,37 @@ class JobsWriterTests(TestCase):
 
         assert jobs_queued_actual == jobs_queued_should_be
 
+    def test_sharding_does_not_break_and_does_not_duplicate(self):
+        # Comes from understanding that we need to write more than some multiple
+        # larger than number of internal shards (so currently 10, let's make it
+        # double that for fun)
+        jobs_to_generate = SortedJobsQueue._JOBS_READER_BATCH_SIZE * 20
+        extra_data = {'timezone': 'Some/Thing'}
 
-class TempTestingIterableUnpackingErrorCommunication(TestCase):
+        jobs_to_write = [(
+            generate_id(
+                ad_account_id='AAID',
+                entity_id=str(bogus_score),
+                report_type=ReportType.entity,
+                report_variant=Entity.Campaign
+            ),
+            bogus_score
+        )
+            for bogus_score in range(0, jobs_to_generate)
+        ]
 
-    def setUp(self):
-        super().setUp()
-        self.sweep_id = random.gen_string_id()
+        with SortedJobsQueue(self.sweep_id).JobsWriter() as add_to_queue:
+            for job_id, score in jobs_to_write:
+                # writes tasks to distributed sorting queues
+                add_to_queue(job_id, score, **extra_data)
 
-    def test_len_able_object_of_wrong_type(self):
-        import bugsnag
+        with SortedJobsQueue(self.sweep_id).JobsReader() as jobs_iter:
+            cnt = 0
 
-        redis = mock.Mock()
-        # returns iterable of a tuple that has more than 2 elements (inner code expects 2)
-        redis.zrevrange = mock.Mock(return_value=[[1,2,3]])
+            for job_id, job_scope_data, score in jobs_iter:
+                assert job_id is not None
+                assert job_scope_data is not None
+                assert score is not None
+                cnt += 1
 
-        with mock.patch.object(bugsnag, 'notify') as bug_notify:
-            gg = _JobsReader._iter_tasks_per_key(
-                'redis_key',
-                redis,
-                20
-            )
-
-            for _ in gg:
-                # it's a generator
-                # just need to spin it once to cause it to touch the code inside
-                pass
-
-        assert bug_notify.called
-
-        aa, kk = bug_notify.call_args
-
-        assert kk == {
-            'meta_data': {
-                'extra_data': {
-                    'job_id_score_pair_type': str(list),
-                    'job_id_score_pair_len': 3,
-                    'job_id_score_pair_data': [1,2,3]
-                }
-            }
-        }
+        assert cnt == jobs_to_generate
