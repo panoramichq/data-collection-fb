@@ -409,6 +409,10 @@ def run_tasks(sweep_id, limit=None, time_slices=looper_config.FB_THROTTLING_WIND
             if score < 2: # arbitrary
                 # cut the flow of tasks
                 return
+
+            # We need to see into the jobs scoring state per sweep
+            Measure.counter(_measurement_name_base + 'job_scores', tags=dict(_measurement_tags, **{'score': score})).increment()
+
             yield celery_task, job_scope, job_context
 
     tasks_iter = task_iter_score_gate(tasks_iter)
