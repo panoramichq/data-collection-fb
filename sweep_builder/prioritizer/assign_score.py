@@ -222,6 +222,11 @@ class ScoreCalculator:
                 decay_floor=0.10  # never decay to lower then 10% of the score
             )
 
+        elif report_type == ReportType.lifetime:
+            # Do not decrease the score for lifetime reports. Only decrease it based on last_success_dt, which
+            # happens in the block below. At minimum we should collect lifetime reports once in two hours.
+            pass
+
         if collection_record and collection_record.last_success_dt:
             seconds_old = (now() - collection_record.last_success_dt).seconds
             # at this rate, 80% of score id regained by 15th minute
