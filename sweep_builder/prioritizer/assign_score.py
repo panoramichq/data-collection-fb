@@ -16,11 +16,10 @@ from common.math import (
     get_fade_in_proportion,
 )
 
-
 # This controls score decay for insights that are day-specific
 # the further in the past, the less we care.
 # The edge of what we care about is deemed to be \/ 2 years.
-DAYS_BACK_DECAY_RATE = adapt_decay_rate_to_population(365*2)
+DAYS_BACK_DECAY_RATE = adapt_decay_rate_to_population(365 * 2)
 MINUTES_AWAY_FROM_WHOLE_HOUR_DECAY_RATE = adapt_decay_rate_to_population(30)
 
 
@@ -111,8 +110,8 @@ class ScoreCalculator:
         # if we are here, we have a per-parent job we have not seen before in this sweep run
         # but we might have run it in prior sweeps and have a record of outcome.
         try:
-            collection_record = JobReport.get(job_id) # type: JobReport
-        except: # TODO: proper error catching here
+            collection_record = JobReport.get(job_id)  # type: JobReport
+        except:  # TODO: proper error catching here
             collection_record = None  # type: JobReport
 
         score = 0
@@ -222,22 +221,6 @@ class ScoreCalculator:
                 rate=DAYS_BACK_DECAY_RATE,
                 decay_floor=0.10  # never decay to lower then 10% of the score
             )
-
-        elif report_type == ReportType.lifetime:
-            # These don't have reporting day ranges.
-            # But, these we need to try to collect "on the hour"
-            # or as close to "on the hour" as possible.
-            # On top of that, it's important to keep these fresh,
-            # (preferably under an hour old). So, in-addition to
-            # O-clock snapping, greater age == greater score.
-            minutes = get_minutes_away_from_whole_hour()
-            # with these ratios 80% of the score is gone by 8th minute away from whole hour
-            score = score * get_decay_proportion(
-                minutes,
-                rate=MINUTES_AWAY_FROM_WHOLE_HOUR_DECAY_RATE,
-                decay_floor=0.10  # never decay to lower then 10% of the score
-            )
-            # but now we need to boost it back
 
         if collection_record and collection_record.last_success_dt:
             seconds_old = (now() - collection_record.last_success_dt).seconds
