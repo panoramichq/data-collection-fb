@@ -84,9 +84,6 @@ class EntityBaseMixin:
     # Range Key (old name) == Sort Key (new name) [ == Secondary Key (Cassandra term, used by Daniel D) ]
     # See https://aws.amazon.com/blogs/database/choosing-the-right-dynamodb-partition-key/
 
-    # Note that each Entity is keyed by, effectively, a compound key: ad_account_id+entity_id
-    # This allows us to issue queries like "Get all objects per ad_account_id" rather quickly
-    ad_account_id = attributes.UnicodeAttribute(hash_key=True, attr_name='aaid')
     # do NOT set an index on secondary keys (unless you really really need it)
     # In DynamoDB this limits the table size to 10GB
     # Without secondary key index, table size is unbounded.
@@ -109,6 +106,14 @@ class EntityBaseMixin:
         'entity_type'
     }
 
+class AdEntityBaseMixin(EntityBaseMixin):
+    # Note that each Entity is keyed by, effectively, a compound key: ad_account_id+entity_id
+    # This allows us to issue queries like "Get all objects per ad_account_id" rather quickly
+    ad_account_id = attributes.UnicodeAttribute(hash_key=True, attr_name='aaid')
+
+class PageEntityBaseMixin(EntityBaseMixin):
+    page_id = attributes.UnicodeAttribute(hash_key=True, attr_name='pid')
+
 
 class EntityBaseMeta(BaseMeta):
     # Entity tables will be written to massively in parallel
@@ -117,7 +122,7 @@ class EntityBaseMeta(BaseMeta):
     write_capacity_units = 10
 
 
-class CampaignEntity(EntityBaseMixin, BaseModel):
+class CampaignEntity(AdEntityBaseMixin, BaseModel):
     """
     Represents a single facebook campaign entity
     """
@@ -126,7 +131,7 @@ class CampaignEntity(EntityBaseMixin, BaseModel):
     entity_type = Entity.Campaign
 
 
-class AdsetEntity(EntityBaseMixin, BaseModel):
+class AdsetEntity(AdEntityBaseMixin, BaseModel):
     """
     Represent a single facebook adset entity
     """
@@ -135,7 +140,7 @@ class AdsetEntity(EntityBaseMixin, BaseModel):
     entity_type = Entity.AdSet
 
 
-class AdEntity(EntityBaseMixin, BaseModel):
+class AdEntity(AdEntityBaseMixin, BaseModel):
     """
     Represents a single facebook ad entity
     """
@@ -144,7 +149,7 @@ class AdEntity(EntityBaseMixin, BaseModel):
     entity_type = Entity.Ad
 
 
-class AdCreativeEntity(EntityBaseMixin, BaseModel):
+class AdCreativeEntity(AdEntityBaseMixin, BaseModel):
     """
     Represents a single facebook ad creative entity
     """
@@ -155,7 +160,7 @@ class AdCreativeEntity(EntityBaseMixin, BaseModel):
     _default_bol = True
 
 
-class AdVideoEntity(EntityBaseMixin, BaseModel):
+class AdVideoEntity(AdEntityBaseMixin, BaseModel):
     """
     Represents a single facebook ad creative entity
     """
@@ -166,7 +171,7 @@ class AdVideoEntity(EntityBaseMixin, BaseModel):
     _default_bol = True
 
 
-class CustomAudienceEntity(EntityBaseMixin, BaseModel):
+class CustomAudienceEntity(AdEntityBaseMixin, BaseModel):
     """
     Represents a single facebook ad creative entity
     """
@@ -174,6 +179,26 @@ class CustomAudienceEntity(EntityBaseMixin, BaseModel):
     Meta = EntityBaseMeta(dynamodb_config.CUSTOM_AUDIENCE_ENTITY_TABLE)
 
     entity_type = Entity.CustomAudience
+
+
+class PageEntity(PageEntityBaseMixin, BaseModel):
+    """
+    Represents a single facebook page entity
+    """
+
+    Meta = EntityBaseMeta(dynamodb_config.PAGE_ENTITY_TABLE)
+
+    entity_type = Entity.Page
+
+
+class PagePostEntity(PageEntityBaseMixin, BaseModel):
+    """
+    Represents a single facebook page post entity
+    """
+
+    Meta = EntityBaseMeta(dynamodb_config.PAGE_POST_ENTITY_TABLE)
+
+    entity_type = Entity.PagePost
 
 
 # Used to map from entity_type str to Model for persistence-style tasks
@@ -187,6 +212,8 @@ ENTITY_TYPE_MODEL_MAP = {
         AdCreativeEntity,
         AdVideoEntity,
         CustomAudienceEntity,
+        PageEntity,
+        PagePostEntity
     ]
 }
 
@@ -208,6 +235,8 @@ def sync_schema(brute_force=False):
         AdCreativeEntity,
         AdVideoEntity,
         CustomAudienceEntity,
+        PageEntity,
+        PagePostEntity
     ]
 
     for table in tables:

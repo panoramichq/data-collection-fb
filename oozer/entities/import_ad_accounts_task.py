@@ -3,7 +3,6 @@ import logging
 from collections import defaultdict
 from pynamodb.exceptions import PutError
 
-from common.measurement import Measure
 from common.bugsnag import BugSnagContextData
 from common.celeryapp import get_celery_app
 from common.enums.entity import Entity
@@ -29,18 +28,7 @@ scope_api_map = {
 }
 
 
-# TODO: This is a little bit of a weird thing. We need TZ info for
-# reality/expectation claims, yet we can obtain that information form the
-# platform, which we do anyway.
-# Purposefully left here, because it's very likely we need to rethink this a
-# little bit - Console does NOT deal with timezones at all, better to
-# internalize this problem.
-_DEFAULT_TIMEZONE = 'America/Los_Angeles'
-
-
 @app.task
-@Measure.timer(__name__, function_name_as_metric=True)
-@Measure.counter(__name__, function_name_as_metric=True, count_once=True)
 def import_ad_accounts_task(job_scope, job_context):
     """
     Collect all facebook ad accounts that are active in the console api
@@ -91,7 +79,7 @@ def import_ad_accounts_task(job_scope, job_context):
                     job_scope.entity_id,  # scope ID
                     ad_account['ad_account_id'],
                     is_active=ad_account.get('active', True),
-                    timezone=ad_account.get('timezone', _DEFAULT_TIMEZONE),
+                    timezone=ad_account['timezone'],
                     updated_by_sweep_id=job_scope.sweep_id
                 )
             except PutError as ex:

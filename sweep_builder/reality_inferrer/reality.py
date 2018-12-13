@@ -1,11 +1,10 @@
 from typing import Generator
 
 from common.enums.entity import Entity
-from common.store import entities
 from sweep_builder.data_containers.reality_claim import RealityClaim
 
 from .adaccounts import iter_scopes, iter_active_ad_accounts_per_scope
-from .entities import iter_entities_per_ad_account_id
+from .entities import iter_entities_per_ad_account_id, iter_entities_per_page_id
 
 
 def iter_reality_base():
@@ -89,4 +88,28 @@ def iter_reality_per_ad_account_claim(ad_account_claim, entity_types=None):
             entity_data,
             timezone=ad_account_claim.timezone,
             tokens=ad_account_claim.tokens
+        )
+
+
+def iter_reality_per_page_claim(page_claim, entity_types=None):
+    # type: (RealityClaim) -> Generator[RealityClaim]
+    """
+    A generator yielding instances of RealityClaim object, filled
+    with data about some entity (one of Campaign, AdSet, Ad)
+
+    These claims represent our knowledge about the what exists.
+
+    Some consuming code will match these claims of existence to tasks
+    we are expected to perform for these objects.
+
+    :param RealityClaim page_claim: A RealityClaim instance representing existence of Page
+    :param List[Entity] entity_types: If truthy, limits the reality iterator to those types of entities only.
+    :return: Generator yielding RealityClaim objects pertaining to various levels of entities
+    :rtype: Generator[RealityClaim]
+    """
+
+    for entity_data in iter_entities_per_page_id(page_claim.entity_id, entity_types=entity_types):
+        yield RealityClaim(
+            entity_data,
+            tokens=page_claim.tokens
         )

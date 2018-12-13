@@ -9,6 +9,8 @@ from facebook_business.adobjects.ad import Ad
 from facebook_business.adobjects.adcreative import AdCreative
 from facebook_business.adobjects.advideo import AdVideo
 from facebook_business.adobjects.customaudience import CustomAudience
+from facebook_business.adobjects.page import Page
+from facebook_business.adobjects.pagepost import PagePost
 
 from oozer.common.enum import to_fb_model
 from oozer.common.facebook_fields import collapse_fields_children
@@ -350,7 +352,7 @@ _default_fields_map = {
         'time_content_updated',
         'time_created',
         'time_updated',
-
+        
         # These are Create/Update only fields
         # 'allowed_domains',
         # 'claim_objective',
@@ -367,6 +369,57 @@ _default_fields_map = {
         # 'inclusions',
         # 'parent_audience_id',
         # 'tags',
+    ]),
+    Page: collapse_fields_children ([
+        'id',
+        'about',
+        'access_token',
+        'can_checkin',
+        'category',
+        'checkins',
+        'current_location',
+        'description',
+        'description_html',
+        'display_subtext',
+        'displayed_message_response_time',
+        'emails',
+        'fan_count',
+        'general_info',
+        'has_whatsapp_number',
+        'is_always_open',
+        'is_chain',
+        'is_community_page',
+        'is_eligible_for_branded_content',
+        'is_messenger_platform_bot',
+        'is_owned',
+        'is_permanently_closed',
+        'is_published',
+        'is_unclaimed',
+        'link',
+        'name',
+        'phone',
+        'rating_count',
+        'talking_about_count',
+        'username',
+        'verification_status',
+        'website',
+        'whatsapp_number'
+    ]),
+    PagePost: collapse_fields_children ([
+        'id',
+        'created_time',
+        'updated_time',
+        'message',
+        'link',
+        'caption',
+        'description',
+        'call_to_action',
+        'message_tags',
+        'name',
+        'parent_id',
+        'picture',
+        'story',
+        'story_tags'
     ])
 }
 

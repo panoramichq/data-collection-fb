@@ -52,6 +52,47 @@ def entities_per_ad_account(entity_type, reality_claim):
         ]
     )
 
+def entities_per_page(entity_type, reality_claim):
+    # type: (str, RealityClaim) -> Generator[ExpectationClaim]
+    """
+    Generates "fetch EntityType entities metadata per given Page" job call sig
+
+    :param str entity_type: One of Entity enum values
+    :param RealityClaim reality_claim:
+    :rtype: Generator[ExpectationClaim]
+    """
+
+    assert entity_type in Entity.ALL
+
+    yield ExpectationClaim(
+        reality_claim.to_dict(),
+        job_signatures = [
+            JobSignature.bind(
+                generate_id(
+                    report_type=ReportType.entity,
+                    report_variant=entity_type
+                )
+            )
+        ]
+    )
+
+def page_entity(reality_claim): # type: (RealityClaim) -> Generator[ExpectationClaim]
+    assert reality_claim.entity_type == Entity.Page, \
+        'Page expectation should be triggered only by page reality claims'
+
+    yield ExpectationClaim(
+        reality_claim.to_dict(),
+        job_signatures = [
+            JobSignature.bind(
+                generate_id(
+                    entity_id=reality_claim.entity_id,
+                    entity_type=Entity.Page,
+                    report_type=ReportType.entity,
+                    report_variant=Entity.Page
+                )
+            )
+        ]
+    )
 
 def ad_account_entity(reality_claim): # type: (RealityClaim) -> Generator[ExpectationClaim]
     assert reality_claim.entity_type == Entity.AdAccount, \
@@ -105,9 +146,17 @@ ad_video_entities_per_ad_account = functools.partial(
     Entity.AdVideo
 )  # type: (RealityClaim) -> Generator[ExpectationClaim]
 
-
 custom_audience_entities_per_ad_account = functools.partial(
     entities_per_ad_account,
     Entity.CustomAudience
 )  # type: (RealityClaim) -> Generator[ExpectationClaim]
 
+page_entities = functools.partial(
+    page_entity,
+    Entity.Page
+)  # type: (RealityClaim) -> Generator[ExpectationClaim]
+
+page_post_entities_per_page = functools.partial( # this could be wrong?
+    entities_per_page,
+    Entity.PagePost
+)  # type: (RealityClaim) -> Generator[ExpectationClaim]

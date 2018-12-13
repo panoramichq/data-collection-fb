@@ -3,12 +3,14 @@ from datetime import datetime
 from tests.base.testcase import TestCase, integration
 
 from common.enums.entity import Entity
-from config.facebook import TOKEN, AD_ACCOUNT
+from config.facebook import TOKEN, AD_ACCOUNT, PAGE
 from oozer.common.job_scope import JobScope
 from oozer.common.facebook_api import PlatformApiContext
 from oozer.common.job_context import JobContext
 from oozer.entities.collect_entities_per_adaccount import \
     iter_collect_entities_per_adaccount, iter_native_entities_per_adaccount
+from oozer.entities.collect_entities_per_page import \
+    iter_collect_entities_per_page, iter_native_entities_per_page
 
 
 @integration('facebook')
@@ -108,6 +110,21 @@ class TestingEntityCollection(TestCase):
 
             assert cnt
 
+    def test_fetch_all_page_posts(self):
+        with PlatformApiContext(TOKEN) as ctx:
+            page = ctx.to_fb_model(PAGE, Entity.Page)
+            entities = iter_native_entities_per_page(
+                page,
+                Entity.PagePost
+            )
+            cnt = 0
+
+            for entity in entities:
+                cnt += 1
+                break
+
+            assert cnt
+
 
 class TestingEntityCollectionPipeline(TestCase):
     @integration('facebook')
@@ -194,6 +211,29 @@ class TestingEntityCollectionPipeline(TestCase):
         )
 
         data_iter = iter_collect_entities_per_adaccount(
+            job_scope, JobContext()
+        )
+
+        cnt = 0
+        for datum in data_iter:
+            cnt += 1
+            break
+
+        assert cnt
+
+    @integration('facebook')
+    def test_pipeline_page_posts(self):
+
+        job_scope = JobScope(
+            ad_account_id=AD_ACCOUNT,
+            tokens=[TOKEN],
+            report_time=datetime.utcnow(),
+            report_type='entity',
+            report_variant=Entity.PagePost,
+            sweep_id='1'
+        )
+
+        data_iter = iter_collect_entities_per_page(
             job_scope, JobContext()
         )
 

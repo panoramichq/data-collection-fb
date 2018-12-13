@@ -14,6 +14,9 @@ class Entity:
     AdVideo = 'AV'
     CustomAudience = 'CA'
 
+    Page = 'P'
+    PagePost = 'PP'
+
     # FIXME: split entities into general (C,AS,A) - insights enabled
     # FIXME: and into "entity only" - other (no insights fetched)
 
@@ -25,5 +28,12 @@ class Entity:
         AdCreative,
         AdVideo,
         CustomAudience,
-        Scope
+        Scope,
+        Page,
+        PagePost
+    }
+
+    NON_AA = {
+        Page,
+        PagePost
     }

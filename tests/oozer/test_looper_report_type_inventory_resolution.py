@@ -1,18 +1,11 @@
 # must be first, as it does event loop patching and other "first" things
-from oozer.common.sorted_jobs_queue import SortedJobsQueue
 from tests.base.testcase import TestCase
-
-from contextlib import contextmanager
-from datetime import datetime, timezone, timedelta
 
 from common.enums.entity import Entity
 from common.enums.reporttype import ReportType
 from oozer.common.job_scope import JobScope
 from oozer import inventory
 from tests.base.random import gen_string_id
-from unittest.mock import patch, Mock, ANY
-
-from oozer.looper import iter_tasks
 
 
 class TestLooperReportTypeInventoryResolution(TestCase):
@@ -61,6 +54,20 @@ class TestLooperReportTypeInventoryResolution(TestCase):
             )
 
             assert inventory.resolve_job_scope_to_celery_task(job_scope), f"Entity {entity_type} must have report handler for {report_type}"
+
+    def test_entity_report_types_entities_per_page(self):
+
+        entity_types = [Entity.PagePost]
+        report_type = ReportType.entity
+
+        for entity_type in entity_types:
+            job_scope = self._job_scope_factory(
+                report_type=report_type,
+                report_variant=entity_type
+            )
+
+            assert inventory.resolve_job_scope_to_celery_task(job_scope), f"Entity {entity_type} must have report handler for {report_type}"
+
 
     def test_entity_report_types_a_daily_insights(self):
 
