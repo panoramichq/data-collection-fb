@@ -13,13 +13,13 @@ from facebook_business.adobjects.pagepost import PagePost
 ENTITY_TYPE_MODEL_MAP = {
     Entity.Ad: Ad,
     Entity.AdAccount: AdAccount,
-    Entity.AdCreative: AdCreative,
     Entity.AdSet: AdSet,
     Entity.Campaign: Campaign,
+    Entity.AdCreative: AdCreative,
     Entity.AdVideo: AdVideo,
     Entity.CustomAudience: CustomAudience,
     Entity.Page: Page,
-    Entity.PagePost: PagePost
+    Entity.PagePost: PagePost,
 }
 
 

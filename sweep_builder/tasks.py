@@ -66,11 +66,11 @@ def build_sweep_slice_per_ad_account_task(sweep_id, ad_account_reality_claim, ta
             cnt += 1
 
             if cnt % _step == 0:
-                logger.info(f'#{sweep_id}-#{ad_account_reality_claim.ad_account_id}: Queueing up #{cnt}')
+                logger.info(f'#{sweep_id}-AA<{ad_account_reality_claim.ad_account_id}>: Queueing up #{cnt}')
 
             _before_fetch = time.time()
 
-        logger.info(f"#{sweep_id}-#{ad_account_reality_claim.ad_account_id}: Queued up a total of {cnt} tasks")
+        logger.info(f"#{sweep_id}-AA<{ad_account_reality_claim.ad_account_id}>: Queued up a total of {cnt} tasks")
 
         return cnt
 
@@ -151,6 +151,7 @@ def build_sweep(sweep_id):
     # task_group = TaskGroup()
     delayed_tasks = []
 
+    cnt = 0
     with Measure.counter(_measurement_name_base + 'outer_loop', tags=_measurement_tags) as cntr:
 
         for reality_claim in iter_reality_base():
@@ -205,8 +206,56 @@ def build_sweep(sweep_id):
     # # here we fan out actual work to celery workers
     # # and wait for all tasks to finish before returning
     group_result = group(delayed_tasks).delay()
+
+    # In case the workers crash, go-away (scaling) or are otherwise
+    # non-responsive, the following would wait indefinitely.
+    # Since that's not desirable and the total sweep build time is minutes at
+    # maximum, we add a reasonable timeout
+    # Because we are not joining on the results, but actually periodically
+    # looking for "you done yet?", we can exit if this threshold is busted, and
+    # let the next run recover from the situation
+    # You will nee
+    should_be_done_by = time.time() + (60 * 20)
+    Measure.gauge(
+        f'{_measurement_name_base}per_account_sweep.total',
+        tags=_measurement_tags)(len(group_result.results)
+    )
+     # Monitor the progress. Although this obviously can be achieved with
+    # group_result.join(), we need to "see" into the task group progress
+    with Measure.gauge(f'{_measurement_name_base}per_account_sweep.done', tags=_measurement_tags) as measure_done:
+        while True:
+            done_counter = 0
+            for result in group_result.results:
+                logger.info(f'{result}: {result.state}')
+                if result.ready():
+                    done_counter += 1
+            logger.info(f"TOTAL: {done_counter}/{len(group_result.results)}")
+            logger.info("=" * 20)
+            logger.info("Checking group result")
+            measure_done(done_counter)
+            if group_result.ready():
+                logger.info(f"#{sweep_id}-root: Sweep build complete")
+                break
+            # Important. If we don't sleep, the native join in celery context
+            # switches all the time and we end up with 100% cpu, eventually somehow
+            # deadlocking the process. 5 seconds is kind of an arbitrary number, but
+            # does what we need and the impact of a (potential) delay is absolutely
+            # minimal
+            time.sleep(5)
+            # The last line of defense. Workers did not finish in time we
+            # expected, no point waiting, kill it.
+            if time.time() > should_be_done_by:
+                Measure.gauge(
+                    f'{_measurement_name_base}per_account_sweep.early_exits',
+                    tags=_measurement_tags)(1)
+                logger.warning(
+                    "Exiting incomplete sweep build, it's taking too long"
+                )
+                return
+    logger.info("Waiting on results join")
     group_result.join_native()
 
     # # alternative to Celery's native group_result.join()
     # # our manual task tracking code + join()
     # task_group.join()
+    logger.info("Join complete, sweep build ended")

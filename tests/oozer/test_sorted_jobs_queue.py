@@ -100,6 +100,41 @@ class JobsWriterTests(TestCase):
 
         assert jobs_queued_actual == jobs_queued_should_be
 
+    def test_sharding_does_not_break_and_does_not_duplicate(self):
+        # Comes from understanding that we need to write more than some multiple
+        # larger than number of internal shards (so currently 10, let's make it
+        # double that for fun)
+        jobs_to_generate = SortedJobsQueue._JOBS_READER_BATCH_SIZE * 20
+        extra_data = {'timezone': 'Some/Thing'}
+
+        jobs_to_write = [(
+            generate_id(
+                ad_account_id='AAID',
+                entity_id=str(bogus_score),
+                report_type=ReportType.entity,
+                report_variant=Entity.Campaign
+            ),
+            bogus_score
+        )
+            for bogus_score in range(0, jobs_to_generate)
+        ]
+
+        with SortedJobsQueue(self.sweep_id).JobsWriter() as add_to_queue:
+            for job_id, score in jobs_to_write:
+                # writes tasks to distributed sorting queues
+                add_to_queue(job_id, score, **extra_data)
+
+        with SortedJobsQueue(self.sweep_id).JobsReader() as jobs_iter:
+            cnt = 0
+
+            for job_id, job_scope_data, score in jobs_iter:
+                assert job_id is not None
+                assert job_scope_data is not None
+                assert score is not None
+                cnt += 1
+
+        assert cnt == jobs_to_generate
+
 
 class TempTestingIterableUnpackingErrorCommunication(TestCase):
 

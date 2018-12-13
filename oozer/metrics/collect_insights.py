@@ -25,7 +25,8 @@ from oozer.common.report_job_status import ExternalPlatformJobStatus
 from oozer.common.report_job_status_task import report_job_status_task
 from oozer.common.vendor_data import add_vendor_data
 
-from .constants import ENUM_LEVEL_MAP, REPORT_TYPE_FB_BREAKDOWN_ENUM, DEFAULT_REPORT_FIELDS, PAGE_METRICS, POST_METRICS
+from .constants import ENUM_LEVEL_MAP, REPORT_TYPE_FB_BREAKDOWN_ENUM, \
+    DEFAULT_REPORT_FIELDS, PAGE_METRICS, POST_METRICS
 from .vendor_data_extractor import report_type_vendor_data_extractor_map
 
 

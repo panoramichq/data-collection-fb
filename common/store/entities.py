@@ -213,7 +213,7 @@ ENTITY_TYPE_MODEL_MAP = {
         AdVideoEntity,
         CustomAudienceEntity,
         PageEntity,
-        PagePostEntity
+        PagePostEntity,
     ]
 }
 
@@ -236,7 +236,7 @@ def sync_schema(brute_force=False):
         AdVideoEntity,
         CustomAudienceEntity,
         PageEntity,
-        PagePostEntity
+        PagePostEntity,
     ]
 
     for table in tables:
