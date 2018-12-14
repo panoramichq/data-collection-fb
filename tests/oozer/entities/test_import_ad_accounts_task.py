@@ -57,17 +57,14 @@ class TestAdAccountImportTask(TestCase):
 
         active_ad_account_id = random.gen_string_id()
         inactive_ad_account_id = random.gen_string_id()
-        tz = 'SovietAmerica/Cheburashka_grad'
 
         accounts = [
             dict(
                 ad_account_id=active_ad_account_id,
-                timezone=tz,
                 active=True,
             ),
             dict(
                 ad_account_id=inactive_ad_account_id,
-                timezone=tz,
                 active=False,
             ),
         ]
@@ -103,7 +100,6 @@ class TestAdAccountImportTask(TestCase):
             (self.scope_id, active_ad_account_id),
             {
                 'is_active': True,
-                'timezone': tz,
                 'updated_by_sweep_id': self.sweep_id
             }
         )
@@ -112,7 +108,6 @@ class TestAdAccountImportTask(TestCase):
             (self.scope_id, inactive_ad_account_id),
             {
                 'is_active': False,
-                'timezone': tz,
                 'updated_by_sweep_id': self.sweep_id
             }
         )
