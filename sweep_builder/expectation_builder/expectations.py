@@ -9,7 +9,7 @@ from sweep_builder.data_containers.reality_claim import RealityClaim
 from .expectations_inventory import entity_expectation_generator_map
 
 
-def iter_expectations(reality_claims_iter):
+def iter_expectations(reality_claims_iter) :
     # type: (Union[Generator[RealityClaim],List[RealityClaim]]) -> Generator[ExpectationClaim]
     """
     Converts an instance of RealityClaim object (claiming that certain
@@ -26,8 +26,7 @@ def iter_expectations(reality_claims_iter):
     _measurement_sample_rate = 1
 
     for reality_claim in reality_claims_iter:
-        jobs_generators_getter = entity_expectation_generator_map.get(reality_claim.entity_type, lambda reality: [])
-        jobs_generators = jobs_generators_getter(reality_claim)
+        jobs_generators = entity_expectation_generator_map.get(reality_claim.entity_type, [])
 
         # histogram measures min/max/ave per thing.
         # Here we are trying to measure how given entity type (per ad account)
