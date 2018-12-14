@@ -30,7 +30,7 @@ class TestCollectAdAccount(TestCase):
             tokens=['blah'],
             report_time=datetime.utcnow(),
             report_type='entity',
-            report_variant=None, # This actually should be set to AdAccount
+            report_variant=None,  # This actually should be set to AdAccount
             sweep_id='1'
         )
 
@@ -50,7 +50,7 @@ class TestCollectAdAccount(TestCase):
             tokens=[None],
             report_time=datetime.utcnow(),
             report_type='entity',
-            report_variant=Entity.AdAccount, # This actually should be set to AdAccount
+            report_variant=Entity.AdAccount,  # This actually should be set to AdAccount
             sweep_id='1'
         )
 
@@ -85,6 +85,9 @@ class TestCollectAdAccount(TestCase):
         account_data = AdAccount(
             fbid=123,
         )
+        # Did not find a better way how to set this data on the inner AbstractCrudObject.
+        account_data._data['timezone_name'] = 'Europe/Prague'
+        account_data._data['account_id'] = '123'
 
         with mock.patch.object(report_job_status_task, 'delay') as status_task, \
             mock.patch.object(FB_ADACCOUNT_MODEL, 'remote_read', return_value=account_data), \
@@ -92,7 +95,7 @@ class TestCollectAdAccount(TestCase):
 
             collect_adaccount(job_scope, None)
 
-        status_job_last_call_parameters , _ = status_task.call_args # Last status task call arguments
+        status_job_last_call_parameters, _ = status_task.call_args  # Last status task call arguments
         assert status_job_last_call_parameters == (JobStatus.Done, job_scope), 'Job status should be reported as Done'
 
         assert store.called_with(account_data), 'Data should be stored with the cold store module'
@@ -106,10 +109,8 @@ class TestCollectAdAccount(TestCase):
 
         vendor_data_key = '__oprm'
 
-        assert vendor_data_key in data_actual and type(data_actual[vendor_data_key]) == dict, 'Special vendor key is present in the returned data'
+        assert vendor_data_key in data_actual and type(
+            data_actual[vendor_data_key]) == dict, 'Special vendor key is present in the returned data'
         assert data_actual[vendor_data_key] == {
             'id': universal_id_should_be
         }, 'Vendor data is set with the right universal id'
-
-
-
