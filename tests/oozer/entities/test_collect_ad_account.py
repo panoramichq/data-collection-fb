@@ -2,6 +2,8 @@ from facebook_business.adobjects.adaccount import AdAccount
 
 from common.enums.reporttype import ReportType
 from common.id_tools import generate_universal_id
+from common.store.entities import AdAccountEntity
+from common.store.scope import DEFAULT_SCOPE
 from tests.base.testcase import TestCase, mock
 from tests.base import random
 
@@ -65,6 +67,7 @@ class TestCollectAdAccount(TestCase):
         assert (JobStatus.GenericError, job_scope) == status_task_args, 'Must report status correctly on failure'
 
     def test_runs_correctly(self):
+        account_id = random.gen_string_id()
         job_scope = JobScope(
             ad_account_id=self.ad_account_id,
             entity_id=self.ad_account_id,
@@ -83,16 +86,16 @@ class TestCollectAdAccount(TestCase):
         )
 
         account_data = AdAccount(
-            fbid=123,
+            fbid=account_id,
         )
         # Did not find a better way how to set this data on the inner AbstractCrudObject.
-        account_data._data['timezone_name'] = 'Europe/Prague'
-        account_data._data['account_id'] = '123'
+        timezone = 'Europe/Prague'
+        account_data._data['timezone_name'] = timezone
+        account_data._data['account_id'] = account_id
 
         with mock.patch.object(report_job_status_task, 'delay') as status_task, \
             mock.patch.object(FB_ADACCOUNT_MODEL, 'remote_read', return_value=account_data), \
             mock.patch.object(NormalStore, 'store') as store:
-
             collect_adaccount(job_scope, None)
 
         status_job_last_call_parameters, _ = status_task.call_args  # Last status task call arguments
@@ -108,6 +111,10 @@ class TestCollectAdAccount(TestCase):
         data_actual = store_args[0]
 
         vendor_data_key = '__oprm'
+
+        ad_account_dynamo = AdAccountEntity.get(DEFAULT_SCOPE, account_id)
+        assert ad_account_dynamo.timezone == timezone
+        assert ad_account_dynamo.ad_account_id == account_id
 
         assert vendor_data_key in data_actual and type(
             data_actual[vendor_data_key]) == dict, 'Special vendor key is present in the returned data'
