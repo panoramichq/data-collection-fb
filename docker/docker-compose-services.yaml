@@ -1,0 +1,25 @@
+version: '2.3'
+
+services:
+
+  redis-cluster:
+    extends:
+      file: docker-compose-base.yaml
+      service: redis-cluster
+    environment:
+    - IP=0.0.0.0 # So the cluster is accessible from localhost.
+
+  redis:
+    extends:
+      file: docker-compose-base.yaml
+      service: redis
+
+  dynamo:
+    extends:
+      file: docker-compose-base.yaml
+      service: dynamo
+
+  fakes3:
+    extends:
+      file: docker-compose-base.yaml
+      service: fakes3

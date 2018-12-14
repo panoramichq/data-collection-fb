@@ -1,7 +1,8 @@
 from datetime import datetime
 from dateutil.parser import parse as parse_iso_datetime_string
 
-from common.store.entities import ENTITY_TYPE_MODEL_MAP
+from common.store.entities import ENTITY_TYPE_MODEL_MAP, AdAccountEntity
+from common.store.scope import DEFAULT_SCOPE
 from common.tztools import dt_to_other_timezone, now
 from common.enums.entity import Entity
 
@@ -46,7 +47,32 @@ def feedback_entity(entity_data, entity_type, entity_hash_pair):
     if entity_type not in Entity.ALL:
         raise ValueError(f'Argument "entity_type" must be one of {Entity.ALL}. Received "{entity_type}" instead.')
     if not isinstance(entity_data, dict):
-        raise ValueError(f'Argument "entity_data" must be an instance of Dict type. Received "{type(entity_data)}" instead.')
+        raise ValueError(
+            f'Argument "entity_data" must be an instance of Dict type. Received "{type(entity_data)}" instead.')
+
+    if entity_type == Entity.AdAccount:
+        _upsert_ad_account_entity(entity_data, entity_type, entity_hash_pair)
+    else:
+        _upsert_regular_entity(entity_data, entity_type, entity_hash_pair)
+
+
+def _upsert_ad_account_entity(entity_data, entity_type, entity_hash_pair):
+    assert entity_type == Entity.AdAccount
+    upsert_data = {
+        'timezone': entity_data['timezone_name']
+    }
+    ad_account_id = entity_data['account_id']
+    # The scope enum here must be hardcoded to Console (it is not available on JobScope or entity data).
+    # Will have to be changed once we get more than one scope.
+    AdAccountEntity.upsert(DEFAULT_SCOPE, ad_account_id, **upsert_data)
+
+
+def _upsert_regular_entity(entity_data, entity_type, entity_hash_pair):
+    if entity_type not in Entity.ALL:
+        raise ValueError(f'Argument "entity_type" must be one of {Entity.ALL}. Received "{entity_type}" instead.')
+    if not isinstance(entity_data, dict):
+        raise ValueError(
+            f'Argument "entity_data" must be an instance of Dict type. Received "{type(entity_data)}" instead.')
 
     Model = ENTITY_TYPE_MODEL_MAP[entity_type]
 

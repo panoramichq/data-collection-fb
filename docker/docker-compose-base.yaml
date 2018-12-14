@@ -4,23 +4,23 @@ services:
 
   redis-cluster:
      image: operam/redis-cluster
-#     ports:
-#      - 7000:7000
-#      - 7001:7001
-#      - 7002:7002
+     ports:
+      - 7000:7000
+      - 7001:7001
+      - 7002:7002
 
   redis:
     image: redis:3
-#    # ports:
-#    #  - 6379:6379
+    ports:
+      - 6379:6379
     command: redis-server --appendonly no --appendfsync no --stop-writes-on-bgsave-error no --maxmemory 1gb
     logging:
       driver: none
 
   dynamo:
     image: operam/local-dynamodb
-    # ports:
-    #  - 8000:8000
+    ports:
+      - 8000:8000
     volumes:
       # >..< because this file is nested one level deep. We keep the directory
       # around so that data is available between restarts
@@ -29,8 +29,8 @@ services:
 
   fakes3:
     image: operam/fakes3
-    # ports:
-    #  - 4444:4444
+    ports:
+      - 4444:4444
     volumes:
       # >..< because this file is nested one level deep. We keep the directory
       # around so that data is available between restarts
