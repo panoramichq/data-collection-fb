@@ -16,6 +16,7 @@ from oozer.common.facebook_api import PlatformApiContext, get_default_fields, Fa
 from oozer.common.job_scope import JobScope
 from oozer.common.sweep_running_flag import SweepRunningFlag
 from oozer.common.vendor_data import add_vendor_data
+from oozer.entities.feedback_entity_task import feedback_entity_task
 
 app = get_celery_app()
 logger = logging.getLogger(__name__)
@@ -25,7 +26,6 @@ logger = logging.getLogger(__name__)
 @Measure.timer(__name__, function_name_as_metric=True)
 @Measure.counter(__name__, function_name_as_metric=True, count_once=True)
 def collect_adaccount_task(job_scope, job_context):
-
     # An early exit flag to kill off tasks before start when needed.
     # See the explanation in the entities per adaccount task
     if not SweepRunningFlag.is_set(job_scope.sweep_id):
@@ -93,8 +93,8 @@ def collect_adaccount(job_scope, _job_context):
 
             fields = get_default_fields(ad_account.__class__)
 
-            ad_account_with_selected_fields = ad_account.remote_read(fields=fields) # Read just the fields we need
-            ad_account_data_dict = ad_account_with_selected_fields.export_all_data() # Export the object to a dict
+            ad_account_with_selected_fields = ad_account.remote_read(fields=fields)  # Read just the fields we need
+            ad_account_data_dict = ad_account_with_selected_fields.export_all_data()  # Export the object to a dict
 
             report_job_status_task.delay(ExternalPlatformJobStatus.DataFetched, job_scope)
             token_manager.report_usage(token)
@@ -117,7 +117,7 @@ def collect_adaccount(job_scope, _job_context):
                     **job_scope_base
                 )
             )
-
+            feedback_entity_task.delay(ad_account_data_dict, job_scope.report_variant, [None, None])
             store = NormalStore(job_scope)
             store.store(augmented_ad_account_data)
 
@@ -160,7 +160,3 @@ def collect_adaccount(job_scope, _job_context):
         )
         token_manager.report_usage_per_failure_bucket(token, FailureBucket.Other)
         raise
-
-
-
-
