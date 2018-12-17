@@ -17,6 +17,8 @@ services:
     extends:
       file: docker-compose-base.yaml
       service: redis
+    ports:
+        - 6379:6379
 
   dynamo:
     extends:

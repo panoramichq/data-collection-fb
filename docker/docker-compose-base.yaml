@@ -11,8 +11,8 @@ services:
 
   redis:
     image: redis:3
-    ports:
-      - 6379:6379
+#    ports:
+#      - 6379:6379
     command: redis-server --appendonly no --appendfsync no --stop-writes-on-bgsave-error no --maxmemory 1gb
     logging:
       driver: none
