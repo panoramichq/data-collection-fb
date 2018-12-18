@@ -17,7 +17,9 @@ def lifetime_metrics_per_entity(entity_type, reality_claim):
     :param RealityClaim reality_claim:
     :rtype: Generator[ExpectationClaim]
     """
-
+    if not reality_claim.timezone:
+        # For metrics, reality claim must have timezone.
+        return
     assert entity_type in Entity.ALL
 
     normative_job_id = generate_id(
