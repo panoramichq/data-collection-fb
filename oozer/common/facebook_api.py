@@ -124,6 +124,7 @@ _default_fields_map = {
     AdAccount: collapse_fields_children([
         'id',
         'account_id',
+        'name',
         'account_status',
         'amount_spent',
         'attribution_spec',
