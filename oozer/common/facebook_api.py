@@ -9,6 +9,7 @@ from facebook_business.adobjects.ad import Ad
 from facebook_business.adobjects.adcreative import AdCreative
 from facebook_business.adobjects.advideo import AdVideo
 from facebook_business.adobjects.customaudience import CustomAudience
+from facebook_business.exceptions import FacebookRequestError
 
 from oozer.common.enum import to_fb_model
 from oozer.common.facebook_fields import collapse_fields_children
@@ -95,6 +96,12 @@ class FacebookApiErrorInspector:
         :param list values: List of individual codes or tuples of (code, subcode)
         :return bool: The exception conforms to our excepted list
         """
+
+        # If this is some other FB error than request error, no point in
+        # trying to get out codes out of responses.
+        if not isinstance(self._exception, FacebookRequestError):
+            return False
+
         code = self._exception.api_error_code()
         subcode = self._exception.api_error_subcode()
 
