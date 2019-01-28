@@ -151,6 +151,9 @@ def iter_persist_prioritized(sweep_id, prioritized_iter):
             _, job_id_effective = score_job_id_pairs[LAST]
             score = max(score for score, _ in score_job_id_pairs)
 
+            if prioritization_claim.ad_account_id == '23845179':
+                logger.warning(f'debugging job score. job_id: {job_id_effective} score: {score}')
+
             # Following are JobScope attributes we don't store on JobID
             # so we need to store them separately.
             # See JobScope object for exact attr names.
