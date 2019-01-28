@@ -151,7 +151,8 @@ class ScoreCalculator:
                 # either no or old history of success, overshadowed by failure or nothingness
 
                 elif collection_record.last_failure_dt:
-                    if ad_account_id == '23845179' and days_since_success > 7 and report_type is not ReportType.day_dma:
+                    if ad_account_id == '23845179' and (
+                        days_since_success > 7 or days_since_success == -1) and report_type is not ReportType.day_dma:
                         # Quick fix for increasing score of specific ad account jobs that failed, otherwise they won't
                         # get high enough score to be ran even for the first time.
                         # But increase the score only if the job did not succeed in past days. Otherwise, use the old
