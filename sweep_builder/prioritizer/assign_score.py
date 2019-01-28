@@ -125,6 +125,9 @@ class ScoreCalculator:
                 # this means we absolutely have to try it first (before per-element)
                 score += 1000
             else:
+                days_since_success = -1 # Not succeeded yet.
+                if collection_record.last_success_dt:
+                    days_since_success = (now() - collection_record.last_success_dt).days
 
                 # Happy outcomes
 
@@ -148,25 +151,33 @@ class ScoreCalculator:
                 # either no or old history of success, overshadowed by failure or nothingness
 
                 elif collection_record.last_failure_dt:
-                    if collection_record.last_failure_bucket == FailureBucket.Throttling:
-                        # not cool. it was important to us on prior runs, but
-                        # we got clobbered by something jumping in front of us last time
-                        # let's try a little higher priority
+                    if ad_account_id == '23845179' and days_since_success > 7 and report_type is not ReportType.day_dma:
+                        # Quick fix for increasing score of specific ad account jobs that failed, otherwise they won't
+                        # get high enough score to be ran even for the first time.
+                        # But increase the score only if the job did not succeed in past days. Otherwise, use the old
+                        # logic to not cause any unexpected spamming.
+                        # Temporary, this whole scoring fn should be revisited soon.
                         score += 100
-                    elif collection_record.last_failure_bucket == FailureBucket.TooLarge:
-                        # last time we tried this, report failed because we asked for
-                        # too much data and should probably not try us again.
-                        # however, if this was long time ago, maybe we should
-                        # to see if FB adjusted their API for these types of payloads
-                        # FB's release cycles are weekly (release on Tuesday)
-                        # Let's imagine that we should probably retry these failures if they are
-                        # 2+ weeks old
-                        days_since_failure = (now() - collection_record.last_failure_dt).days
-                        score += 10 * (days_since_failure / 14)
                     else:
-                        # some other failure. Not sure what approach to take, but
-                        # caution would probably be proper.
-                        score += 5
+                        if collection_record.last_failure_bucket == FailureBucket.Throttling:
+                            # not cool. it was important to us on prior runs, but
+                            # we got clobbered by something jumping in front of us last time
+                            # let's try a little higher priority
+                            score += 100
+                        elif collection_record.last_failure_bucket == FailureBucket.TooLarge:
+                            # last time we tried this, report failed because we asked for
+                            # too much data and should probably not try us again.
+                            # however, if this was long time ago, maybe we should
+                            # to see if FB adjusted their API for these types of payloads
+                            # FB's release cycles are weekly (release on Tuesday)
+                            # Let's imagine that we should probably retry these failures if they are
+                            # 2+ weeks old
+                            days_since_failure = (now() - collection_record.last_failure_dt).days
+                            score += 10 * (days_since_failure / 14)
+                        else:
+                            # some other failure. Not sure what approach to take, but
+                            # caution would probably be proper.
+                            score += 5
 
                 else:
                     # likely "in progress" still. let's wait for it to die or success
