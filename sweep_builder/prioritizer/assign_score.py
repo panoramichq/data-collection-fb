@@ -125,9 +125,6 @@ class ScoreCalculator:
                 # this means we absolutely have to try it first (before per-element)
                 score += 1000
             else:
-                days_since_success = -1 # Not succeeded yet.
-                if collection_record.last_success_dt:
-                    days_since_success = (now() - collection_record.last_success_dt).days
 
                 # Happy outcomes
 
