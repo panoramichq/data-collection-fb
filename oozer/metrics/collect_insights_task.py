@@ -58,18 +58,16 @@ def collect_insights_task(job_scope, job_context):
         data_iter = Insights.iter_collect_insights(
             job_scope, job_context
         )
+        for datum in data_iter:
+            cnt += 1
+            if cnt % 100 == 0:
+                if job_scope.ad_account_id == FABFITFUN_ACCOUNT_ID:
+                    logger.warning(f'{job_scope} processed {cnt} data points so far')
+                logger.info(f'{job_scope} processed {cnt} data points so far')
     except Exception as e:
         if job_scope.ad_account_id == FABFITFUN_ACCOUNT_ID:
             logger.warning(f'Error while processing job {job_scope}. {e}')
         raise e
-    for datum in data_iter:
-        cnt += 1
-        if cnt % 100 == 0:
-            if job_scope.ad_account_id == FABFITFUN_ACCOUNT_ID:
-                logger.warning(f'{job_scope} processed {cnt} data points so far')
-            logger.info(
-                f'{job_scope} processed {cnt} data points so far'
-            )
     if job_scope.ad_account_id == FABFITFUN_ACCOUNT_ID:
         logger.warning(
             f'{job_scope} complete a total of {cnt} data points'
