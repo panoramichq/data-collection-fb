@@ -31,6 +31,10 @@ class AdAccountEntity(BaseModel):
     # copied indicator of activity from Console DB per each sync
     # (alternative to deletion. To be discussed later if deletion is better)
     is_active = attributes.BooleanAttribute(default=False, attr_name='a')
+
+    # Provides an option to manually disable accounts from syncing, even if they are imported as active from console.
+    manually_disabled = attributes.BooleanAttribute(default=False, attr_name='man_dis')
+
     # utilized by logic that prunes out Ad Accounts
     # that are switched to "inactive" on Console
     # Expectation is that after a long-running update job
