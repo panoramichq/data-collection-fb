@@ -1,6 +1,7 @@
 import logging
 
 from common.celeryapp import get_celery_app
+from common.enums.other import FABFITFUN_ACCOUNT_ID
 from common.measurement import Measure
 from common.tokens import PlatformTokenManager
 from oozer.common.job_context import JobContext
@@ -51,16 +52,28 @@ def collect_insights_task(job_scope, job_context):
         # Here we prep, but don't complain.
 
     cnt = 0
-    data_iter = Insights.iter_collect_insights(
-        job_scope, job_context
-    )
+    if job_scope.ad_account_id == FABFITFUN_ACCOUNT_ID:
+        logger.warning(f'Starting to process job {job_scope}')
+    try:
+        data_iter = Insights.iter_collect_insights(
+            job_scope, job_context
+        )
+    except Exception as e:
+        if job_scope.ad_account_id == FABFITFUN_ACCOUNT_ID:
+            logger.warning(f'Error while processing job {job_scope}. {e}')
+        raise e
     for datum in data_iter:
         cnt += 1
         if cnt % 100 == 0:
+            if job_scope.ad_account_id == FABFITFUN_ACCOUNT_ID:
+                logger.warning(f'{job_scope} processed {cnt} data points so far')
             logger.info(
                 f'{job_scope} processed {cnt} data points so far'
             )
-
+    if job_scope.ad_account_id == FABFITFUN_ACCOUNT_ID:
+        logger.warning(
+            f'{job_scope} complete a total of {cnt} data points'
+        )
     logger.info(
         f'{job_scope} complete a total of {cnt} data points'
     )
