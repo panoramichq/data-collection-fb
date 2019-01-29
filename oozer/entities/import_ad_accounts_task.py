@@ -1,7 +1,7 @@
 import logging
 
 from collections import defaultdict
-from pynamodb.exceptions import PutError, DoesNotExist
+from pynamodb.exceptions import PutError
 
 from common.measurement import Measure
 from common.bugsnag import BugSnagContextData
@@ -76,14 +76,13 @@ def import_ad_accounts_task(job_scope, job_context):
         accounts = api.get_accounts()
         for ad_account in accounts:
             # TODO: maybe create a normative job scope that says ("extracting ad account")
-
             try:
                 # TODO: maybe rather get the entity first and update insert accordingly / if it has change
                 AdAccountEntity.upsert(
                     job_scope.entity_id,  # scope ID
                     ad_account['ad_account_id'],
                     is_active=ad_account.get('active', True),
-                    updated_by_sweep_id=job_scope.sweep_id,
+                    updated_by_sweep_id=job_scope.sweep_id
                 )
             except PutError as ex:
                 # TODO: ? report_job_status_task.delay(ConsoleExtractionJobStatus.UpsertError, normative_job_scope)
