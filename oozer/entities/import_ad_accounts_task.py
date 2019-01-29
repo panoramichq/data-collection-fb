@@ -77,12 +77,6 @@ def import_ad_accounts_task(job_scope, job_context):
         for ad_account in accounts:
             # TODO: maybe create a normative job scope that says ("extracting ad account")
 
-            manually_disabled = False
-            try:
-                manually_disabled = AdAccountEntity.get(job_scope.entity_id,
-                                                        ad_account['ad_account_id']).manually_disabled
-            except DoesNotExist as e:
-                pass
             try:
                 # TODO: maybe rather get the entity first and update insert accordingly / if it has change
                 AdAccountEntity.upsert(
@@ -90,7 +84,6 @@ def import_ad_accounts_task(job_scope, job_context):
                     ad_account['ad_account_id'],
                     is_active=ad_account.get('active', True),
                     updated_by_sweep_id=job_scope.sweep_id,
-                    manually_disabled=manually_disabled
                 )
             except PutError as ex:
                 # TODO: ? report_job_status_task.delay(ConsoleExtractionJobStatus.UpsertError, normative_job_scope)
