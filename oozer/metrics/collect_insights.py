@@ -449,6 +449,7 @@ class Insights:
             token_manager.report_usage(token)
 
         except FacebookError as e:
+            BugSnagContextData.notify(e, job_scope=job_scope)
             # Build ourselves the error inspector
             inspector = FacebookApiErrorInspector(e)
 
