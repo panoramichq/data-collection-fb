@@ -35,12 +35,6 @@ def day_metrics_per_entity(entity_type, day_breakdown, reality_claim):
         report_type=day_breakdown
     )
 
-    base_effective_data = dict(
-        ad_account_id=reality_claim.ad_account_id,
-        report_type=day_breakdown,
-        report_variant=entity_type
-    )
-
     range_start = reality_claim.bol
     # expected to be stored in AA timezone
     if range_start is None:
@@ -72,20 +66,7 @@ def day_metrics_per_entity(entity_type, day_breakdown, reality_claim):
         )
         yield ExpectationClaim(
             reality_claim_data,
-            job_signatures = [
-                # normative job signature
-                JobSignature.bind(
-                    normative_job_id
-                ),
-                # possible alternative "effective" job signatures:
-                JobSignature.bind(
-                    generate_id(
-                        range_start=day,
-                        **base_effective_data
-                    ),
-                    normative_job_id=normative_job_id
-                )
-            ]
+            job_signatures=[JobSignature.bind(normative_job_id)]
         )
 
 
