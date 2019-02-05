@@ -1,10 +1,13 @@
+import itertools
 from typing import Generator, Union, List
 from collections import defaultdict
 
+from common.enums.entity import Entity
 from common.id_tools import parse_id_parts
 from common.measurement import Measure
 from sweep_builder.data_containers.expectation_claim import ExpectationClaim
 from sweep_builder.data_containers.reality_claim import RealityClaim
+from sweep_builder.expectation_builder.expectations_inventory.metrics import breakdowns
 
 from .expectations_inventory import entity_expectation_generator_map
 
@@ -32,6 +35,18 @@ def iter_expectations(reality_claims_iter) :
         # Here we are trying to measure how given entity type (per ad account)
         # fans out into expectations.
         counts = defaultdict(int)
+
+        # Temporary fix for ad account id 23845179
+        if reality_claim.entity_type == Entity.Campaign and reality_claim.ad_account_id == '23845179':
+            jobs_generators = itertools.chain(jobs_generators, [
+                breakdowns.hour_metrics_per_campaign,
+                breakdowns.hour_metrics_per_adset_per_per_campaign,
+                breakdowns.day_metrics_per_ad_per_campaign,
+                breakdowns.hour_metrics_per_ad_per_campaign,
+                breakdowns.day_age_gender_metrics_per_ad_per_campaign,
+                breakdowns.day_dma_metrics_per_ad_per_campaign,
+                breakdowns.day_platform_metrics_per_ad_per_campaign,
+            ])
 
         for jobs_generator in jobs_generators:
             for expectation_claim in jobs_generator(reality_claim):  # type: ExpectationClaim
