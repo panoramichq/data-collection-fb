@@ -100,6 +100,13 @@ class ScoreCalculator:
 
         is_per_parent_job = bool(not entity_type and report_variant)
 
+        if ad_account_id == '23845179':
+            # Temporary fix for ad account id 23845179
+            if is_per_parent_job:
+                return 0
+            else:
+                return 200
+
         if not is_per_parent_job:
             # at this time, it's impossible to have per-entity_id
             # jobs here becase sweep builder specifically avoids
