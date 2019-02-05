@@ -169,15 +169,15 @@ _day_metrics_per_ad = functools.partial(
 
 # per campaign generators
 
-day_metrics_per_campaign = functools.partial(
-    _day_metrics_per_campaign,
-    ReportType.day,
-)  # type: (RealityClaim) -> Generator[ExpectationClaim]
-
-hour_metrics_per_campaign = functools.partial(
-    _day_metrics_per_campaign,
-    ReportType.day_hour,
-)  # type: (RealityClaim) -> Generator[ExpectationClaim]
+# day_metrics_per_campaign = functools.partial(
+#     _day_metrics_per_campaign,
+#     ReportType.day,
+# )  # type: (RealityClaim) -> Generator[ExpectationClaim]
+#
+# hour_metrics_per_campaign = functools.partial(
+#     _day_metrics_per_campaign,
+#     ReportType.day_hour,
+# )  # type: (RealityClaim) -> Generator[ExpectationClaim]
 
 hour_metrics_per_adset_per_per_campaign = functools.partial(
     _day_metrics_per_adset,
