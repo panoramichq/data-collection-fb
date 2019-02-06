@@ -30,9 +30,9 @@ def day_metrics_per_entity(entity_type, day_breakdown, reality_claim):
 
     base_normative_data = dict(
         ad_account_id=reality_claim.ad_account_id,
-        entity_type=entity_type,
+        entity_type=reality_claim.entity_type,
         entity_id=reality_claim.entity_id,
-        report_type=day_breakdown
+        report_type=day_breakdown,
     )
 
     range_start = reality_claim.bol
@@ -169,15 +169,15 @@ _day_metrics_per_ad = functools.partial(
 
 # per campaign generators
 
-# day_metrics_per_campaign = functools.partial(
-#     _day_metrics_per_campaign,
-#     ReportType.day,
-# )  # type: (RealityClaim) -> Generator[ExpectationClaim]
+day_metrics_per_campaign = functools.partial(
+    _day_metrics_per_campaign,
+    ReportType.day,
+)  # type: (RealityClaim) -> Generator[ExpectationClaim]
 #
-# hour_metrics_per_campaign = functools.partial(
-#     _day_metrics_per_campaign,
-#     ReportType.day_hour,
-# )  # type: (RealityClaim) -> Generator[ExpectationClaim]
+hour_metrics_per_campaign = functools.partial(
+    _day_metrics_per_campaign,
+    ReportType.day_hour,
+)  # type: (RealityClaim) -> Generator[ExpectationClaim]
 
 hour_metrics_per_adset_per_per_campaign = functools.partial(
     _day_metrics_per_adset,

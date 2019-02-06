@@ -12,7 +12,7 @@ from sweep_builder.expectation_builder.expectations_inventory.metrics import bre
 from .expectations_inventory import entity_expectation_generator_map
 
 
-def iter_expectations(reality_claims_iter) :
+def iter_expectations(reality_claims_iter):
     # type: (Union[Generator[RealityClaim],List[RealityClaim]]) -> Generator[ExpectationClaim]
     """
     Converts an instance of RealityClaim object (claiming that certain
@@ -39,8 +39,6 @@ def iter_expectations(reality_claims_iter) :
         # Temporary fix for ad account id 23845179
         if reality_claim.entity_type == Entity.Campaign and reality_claim.ad_account_id == '23845179':
             jobs_generators = itertools.chain(jobs_generators, [
-                # breakdowns.hour_metrics_per_campaign,
-                # breakdowns.day_metrics_per_campaign,
                 breakdowns.hour_metrics_per_adset_per_per_campaign,
                 breakdowns.day_metrics_per_ad_per_campaign,
                 breakdowns.hour_metrics_per_ad_per_campaign,
