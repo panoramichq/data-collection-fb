@@ -24,7 +24,9 @@ def day_metrics_per_entity(entity_type, day_breakdown, reality_claim):
     :param RealityClaim reality_claim:
     :rtype: Generator[ExpectationClaim]
     """
-
+    if not reality_claim.timezone:
+        # For metrics, reality claim must have timezone.
+        return
     assert entity_type in Entity.ALL
     assert day_breakdown in ReportType.ALL_DAY_BREAKDOWNS
 
@@ -114,7 +116,9 @@ def day_metrics_per_entities_under_ad_account(entity_type, day_breakdown, realit
     :param RealityClaim reality_claim:
     :rtype: Generator[ExpectationClaim]
     """
-
+    if not reality_claim.timezone:
+        # For metrics, reality claim must have timezone.
+        return
     assert entity_type in Entity.ALL
     assert entity_type is not Entity.AdAccount
     assert day_breakdown in ReportType.ALL_DAY_BREAKDOWNS

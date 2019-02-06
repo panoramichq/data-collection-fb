@@ -2,6 +2,8 @@ from facebook_business.adobjects.adaccount import AdAccount
 
 from common.enums.reporttype import ReportType
 from common.id_tools import generate_universal_id
+from common.store.entities import AdAccountEntity
+from common.store.scope import DEFAULT_SCOPE
 from tests.base.testcase import TestCase, mock
 from tests.base import random
 
@@ -30,7 +32,7 @@ class TestCollectAdAccount(TestCase):
             tokens=['blah'],
             report_time=datetime.utcnow(),
             report_type='entity',
-            report_variant=None, # This actually should be set to AdAccount
+            report_variant=None,  # This actually should be set to AdAccount
             sweep_id='1'
         )
 
@@ -50,7 +52,7 @@ class TestCollectAdAccount(TestCase):
             tokens=[None],
             report_time=datetime.utcnow(),
             report_type='entity',
-            report_variant=Entity.AdAccount, # This actually should be set to AdAccount
+            report_variant=Entity.AdAccount,  # This actually should be set to AdAccount
             sweep_id='1'
         )
 
@@ -65,6 +67,7 @@ class TestCollectAdAccount(TestCase):
         assert (JobStatus.GenericError, job_scope) == status_task_args, 'Must report status correctly on failure'
 
     def test_runs_correctly(self):
+        account_id = random.gen_string_id()
         job_scope = JobScope(
             ad_account_id=self.ad_account_id,
             entity_id=self.ad_account_id,
@@ -83,16 +86,19 @@ class TestCollectAdAccount(TestCase):
         )
 
         account_data = AdAccount(
-            fbid=123,
+            fbid=account_id,
         )
+        # Did not find a better way how to set this data on the inner AbstractCrudObject.
+        timezone = 'Europe/Prague'
+        account_data._data['timezone_name'] = timezone
+        account_data._data['account_id'] = account_id
 
         with mock.patch.object(report_job_status_task, 'delay') as status_task, \
             mock.patch.object(FB_ADACCOUNT_MODEL, 'remote_read', return_value=account_data), \
             mock.patch.object(NormalStore, 'store') as store:
-
             collect_adaccount(job_scope, None)
 
-        status_job_last_call_parameters , _ = status_task.call_args # Last status task call arguments
+        status_job_last_call_parameters, _ = status_task.call_args  # Last status task call arguments
         assert status_job_last_call_parameters == (JobStatus.Done, job_scope), 'Job status should be reported as Done'
 
         assert store.called_with(account_data), 'Data should be stored with the cold store module'
@@ -106,10 +112,12 @@ class TestCollectAdAccount(TestCase):
 
         vendor_data_key = '__oprm'
 
-        assert vendor_data_key in data_actual and type(data_actual[vendor_data_key]) == dict, 'Special vendor key is present in the returned data'
+        ad_account_dynamo = AdAccountEntity.get(DEFAULT_SCOPE, account_id)
+        assert ad_account_dynamo.timezone == timezone
+        assert ad_account_dynamo.ad_account_id == account_id
+
+        assert vendor_data_key in data_actual and type(
+            data_actual[vendor_data_key]) == dict, 'Special vendor key is present in the returned data'
         assert data_actual[vendor_data_key] == {
             'id': universal_id_should_be
         }, 'Vendor data is set with the right universal id'
-
-
-
