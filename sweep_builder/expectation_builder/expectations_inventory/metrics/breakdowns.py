@@ -33,6 +33,7 @@ def day_metrics_per_entity(entity_type, day_breakdown, reality_claim):
         entity_type=reality_claim.entity_type,
         entity_id=reality_claim.entity_id,
         report_type=day_breakdown,
+        report_variant=entity_type,
     )
 
     range_start = reality_claim.bol
