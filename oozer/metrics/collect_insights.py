@@ -447,9 +447,9 @@ class Insights:
                             ExternalPlatformJobStatus.DataFetched, job_scope
                         )
                         # default paging size for entities per parent
-                        # is typically around 25. So, each 100 results
-                        # means about 4 hits to FB
-                        token_manager.report_usage(token, 4)
+                        # is typically around 25. So, each 1000 results
+                        # means about 40 hits to FB
+                        token_manager.report_usage(token, 40)
 
             report_job_status_task(
                 ExternalPlatformJobStatus.Done, job_scope
