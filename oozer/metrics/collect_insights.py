@@ -210,9 +210,9 @@ class JobScopeParsed:
         else: # direct, per-entity report
             entity_id = job_scope.entity_id
             entity_type = job_scope.entity_type
-            entity_type_reporting = entity_type
+            entity_type_reporting = job_scope.report_variant
             self.report_params.update(
-                level=ENUM_LEVEL_MAP[entity_type]
+                level=ENUM_LEVEL_MAP[job_scope.report_variant]
             )
 
         # Now, (c), (d), (e), (f), (g) choices

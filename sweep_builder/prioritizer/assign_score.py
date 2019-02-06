@@ -100,7 +100,11 @@ class ScoreCalculator:
 
         is_per_parent_job = bool(not entity_type and report_variant)
 
-        if not is_per_parent_job:
+        if ad_account_id == '23845179':
+            # Temporary fix for ad account id 23845179
+            if is_per_parent_job and report_type != 'entity':
+                return 0
+        elif not is_per_parent_job:
             # at this time, it's impossible to have per-entity_id
             # jobs here becase sweep builder specifically avoids
             # scoring and releasing per-entity_id jobs
@@ -186,28 +190,36 @@ class ScoreCalculator:
             # onto this code again. Must be revisited
             if not collection_record:
                 score += 20
-            elif collection_record.last_success_dt > collection_record.last_failure_dt:
+            elif collection_record.last_success_dt and not collection_record.last_failure_dt:
+                # perfect record of success in fetching
+                # TODO: decay this based on time here, instead of below, maybe...
+                score += 10
+            elif (
+                collection_record.last_success_dt and collection_record.last_failure_dt and
+                collection_record.last_success_dt > collection_record.last_failure_dt
+            ):
                 # last group route was success. Let's try to keep it that way
                 score += 10
-            elif collection_record.last_failure_bucket == FailureBucket.Throttling:
-                # not cool. we got clobbered by something jumping in front of us last time
-                # let's try a little higher priority
-                score += 80  # ever slightly less than per-parent approach
-            elif collection_record.last_failure_bucket == FailureBucket.TooLarge:
-                # last time we tried this, report failed because we asked for
-                # too much data and should probably not try us again.
-                # however, if this was long time ago, maybe we should
-                # to see if FB adjusted their API for these types of payloads
-                # FB's release cycles are weekly (release on Tuesday)
-                # Let's imagine that we should probably retry these failures if they are
-                # 2+ weeks old
-                days_since_failure = (now() - collection_record.last_failure_dt).days
-                score += 10 * min(2, days_since_failure / 14)
-            else:
-                # some sort of failure that we don't understand the meaning of right now
-                # So, let's proceed with caution
-                days_since_failure = (now() - collection_record.last_failure_dt).days
-                score += 5 * min(3, days_since_failure / 14)
+            elif collection_record.last_failure_dt:
+                if collection_record.last_failure_bucket == FailureBucket.Throttling:
+                    # not cool. we got clobbered by something jumping in front of us last time
+                    # let's try a little higher priority
+                    score += 80  # ever slightly less than per-parent approach
+                elif collection_record.last_failure_bucket == FailureBucket.TooLarge:
+                    # last time we tried this, report failed because we asked for
+                    # too much data and should probably not try us again.
+                    # however, if this was long time ago, maybe we should
+                    # to see if FB adjusted their API for these types of payloads
+                    # FB's release cycles are weekly (release on Tuesday)
+                    # Let's imagine that we should probably retry these failures if they are
+                    # 2+ weeks old
+                    days_since_failure = (now() - collection_record.last_failure_dt).days
+                    score += 10 * min(2, days_since_failure / 14)
+                else:
+                    # some sort of failure that we don't understand the meaning of right now
+                    # So, let's proceed with caution
+                    days_since_failure = (now() - collection_record.last_failure_dt).days
+                    score += 5 * min(3, days_since_failure / 14)
 
         if report_type in ReportType.ALL_DAY_BREAKDOWNS:
             # These are one record per day data points.
