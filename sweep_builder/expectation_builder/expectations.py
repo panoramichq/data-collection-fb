@@ -7,6 +7,7 @@ from common.id_tools import parse_id_parts
 from common.measurement import Measure
 from sweep_builder.data_containers.expectation_claim import ExpectationClaim
 from sweep_builder.data_containers.reality_claim import RealityClaim
+from sweep_builder.expectation_builder.expectations_inventory.entities import custom_audience_entities_per_ad_account
 from sweep_builder.expectation_builder.expectations_inventory.metrics import breakdowns
 
 from .expectations_inventory import entity_expectation_generator_map
@@ -36,6 +37,9 @@ def iter_expectations(reality_claims_iter):
         # fans out into expectations.
         counts = defaultdict(int)
 
+        if reality_claim.entity_type == Entity.AdAccount and reality_claim.ad_account_id == '23845179':
+            # Temporarily remove custom audiences for ad account id 23845179
+            jobs_generators.remove(custom_audience_entities_per_ad_account)
         # Temporary fix for ad account id 23845179
         if reality_claim.entity_type == Entity.Campaign and reality_claim.ad_account_id == '23845179':
             jobs_generators = itertools.chain(jobs_generators, [
