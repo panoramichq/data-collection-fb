@@ -187,7 +187,7 @@ class TaskOozer():
         """
 
         count = 0
-        while (self._redis.get(self.rate_queue_key) or 0) > 0.90:
+        while (self._redis.get(self.rate_queue_key) or 0) > 0.90 and count < 5:
             gevent.sleep(0.1 * min(2.0, 2 ** count))
             count += 1
 

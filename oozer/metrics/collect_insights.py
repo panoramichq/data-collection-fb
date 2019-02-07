@@ -498,7 +498,7 @@ class Insights:
     def iter_collect_insights_safe(cls, job_scope, job_context):
         """iter_collect_insights with retry logic"""
         count = 0
-        while 1:
+        while count < 5:
             try:
                 return cls.iter_collect_insights(job_scope, job_context)
             except FacebookRequestError as e:
@@ -507,3 +507,5 @@ class Insights:
                     raise
                 gevent.sleep(0.5, min(2.0, 2 ** count))
                 count += 1
+
+        raise e
