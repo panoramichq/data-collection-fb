@@ -20,6 +20,9 @@ def entities_per_ad_account(entity_type, reality_claim):
     :rtype: Generator[ExpectationClaim]
     """
 
+    if reality_claim.ad_account_id == '23845179' and entity_type == Entity.AdAccount:
+        raise StopIteration
+
     # Mental Note:
     # This job signature generator is designed to be parked
     # *under AdAccount job signatures generators inventory*
