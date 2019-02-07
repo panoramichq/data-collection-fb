@@ -37,9 +37,6 @@ def iter_expectations(reality_claims_iter):
         # fans out into expectations.
         counts = defaultdict(int)
 
-        if reality_claim.entity_type == Entity.AdAccount and reality_claim.ad_account_id == '23845179':
-            # Temporarily remove custom audiences for ad account id 23845179
-            jobs_generators.remove(custom_audience_entities_per_ad_account)
         # Temporary fix for ad account id 23845179
         if reality_claim.entity_type == Entity.Campaign and reality_claim.ad_account_id == '23845179':
             jobs_generators = itertools.chain(jobs_generators, [
