@@ -187,7 +187,9 @@ class ScoreCalculator:
             # per entity_id
             # this is not used now, but is left for reuse when we unleash per-entity_id jobs
             # onto this code again. Must be revisited
-            if not collection_record:
+            if not collection_record and ad_account_id == '23845179':
+                score += 40
+            elif not collection_record:
                 score += 20
             elif collection_record.last_success_dt and not collection_record.last_failure_dt:
                 # perfect record of success in fetching
@@ -228,10 +230,11 @@ class ScoreCalculator:
             if days_from_now < 0:
                 # which may happen if report_day is not in proper timezone
                 days_from_now = 0
+            decay_floor = 0.1 if collection_record else 0.5
             score = score * get_decay_proportion(
                 days_from_now,
                 rate=DAYS_BACK_DECAY_RATE,
-                decay_floor=0.10  # never decay to lower then 10% of the score
+                decay_floor=decay_floor  # never decay to lower then 10% of the score
             )
 
         elif report_type == ReportType.lifetime:
