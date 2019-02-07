@@ -1,11 +1,12 @@
 import functools
+
 import gevent
 
 from datetime import datetime, date
 from facebook_business.adobjects.abstractcrudobject import AbstractCrudObject
 from facebook_business.adobjects.adreportrun import AdReportRun
 from facebook_business.adobjects.adsinsights import AdsInsights
-from facebook_business.exceptions import FacebookError
+from facebook_business.exceptions import FacebookError, FacebookRequestError
 from typing import Callable, Dict
 
 from config.facebook import INSIGHTS_POLLING_INTERVAL, \
@@ -477,6 +478,9 @@ class Insights:
 
             report_job_status_task.delay(failure_status, job_scope)
             token_manager.report_usage_per_failure_bucket(token, failure_bucket)
+            usage_rate = inspector.ad_account_usage_rate
+            if usage_rate is not None:
+                token_manager.report_rate_usage(token, usage_rate)
             raise
 
         except Exception as ex:
@@ -489,3 +493,17 @@ class Insights:
             )
             token_manager.report_usage_per_failure_bucket(token, FailureBucket.Other)
             raise
+
+    @classmethod
+    def iter_collect_insights_safe(cls, job_scope, job_context):
+        """iter_collect_insights with retry logic"""
+        count = 0
+        while 1:
+            try:
+                return cls.iter_collect_insights(job_scope, job_context)
+            except FacebookRequestError as e:
+                inspector = FacebookApiErrorInspector(e)
+                if not inspector.is_throttling_exception():
+                    raise
+                gevent.sleep(0.5, min(2.0, 2 ** count))
+                count += 1

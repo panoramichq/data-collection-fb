@@ -51,7 +51,7 @@ def collect_insights_task(job_scope, job_context):
         # Here we prep, but don't complain.
 
     cnt = 0
-    data_iter = Insights.iter_collect_insights(
+    data_iter = Insights.iter_collect_insights_safe(
         job_scope, job_context
     )
     for datum in data_iter:

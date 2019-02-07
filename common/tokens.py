@@ -23,7 +23,8 @@ failure_bucket_count_map = {
 class PlatformTokenManager:
 
     def __init__(self, asset_scope, sweep_id):
-        self.queue_key = f'{asset_scope}-{sweep_id}-sorted-token-queue'
+        self.queue_key = f'{sweep_id}-sorted-token-queue'
+        self.rate_queue_key = f'{asset_scope}-{sweep_id}-sorted-token-rate-queue'
         self._redis = get_redis()
 
     @classmethod
@@ -183,3 +184,7 @@ class PlatformTokenManager:
             token,
             failure_bucket_count_map.get(failure_bucket, 1)
         )
+
+    def report_rate_usage(self, token, rate):
+        # TODO: eventually set token rate using zadd
+        self._redis.set(self.rate_queue_key, rate)
