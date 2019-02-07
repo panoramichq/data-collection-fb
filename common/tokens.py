@@ -23,8 +23,8 @@ failure_bucket_count_map = {
 class PlatformTokenManager:
 
     def __init__(self, asset_scope, sweep_id):
-        self.queue_key = f'{sweep_id}-sorted-token-queue'
-        self.rate_queue_key = f'{asset_scope}-{sweep_id}-sorted-token-rate-queue'
+        self.queue_key = f'{asset_scope}-{sweep_id}-sorted-token-queue'
+        self.rate_queue_key = f'{sweep_id}-sorted-token-rate-queue'
         self._redis = get_redis()
 
     @classmethod
