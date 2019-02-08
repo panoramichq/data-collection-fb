@@ -48,7 +48,7 @@ def build_sweep_slice_per_ad_account_task(sweep_id, ad_account_reality_claim, ta
 
         reality_claims_iter = itertools.chain(
             [ad_account_reality_claim],
-            iter_reality_per_ad_account_claim(ad_account_reality_claim)
+            iter_reality_per_ad_account_claim(ad_account_reality_claim, entity_types=[Entity.Campaign])
         )
         cnt = 0
 
@@ -158,7 +158,7 @@ def build_sweep(sweep_id):
     # looking for "you done yet?", we can exit if this threshold is busted, and
     # let the next run recover from the situation
     # You will nee
-    should_be_done_by = time.time() + (60 * 20)
+    should_be_done_by = time.time() + (60 * 60)
 
     Measure.gauge(
         f'{_measurement_name_base}per_account_sweep.total',

@@ -169,10 +169,11 @@ class TaskOozer():
         # doing this odd way of creating a method to trap decay_fn in the closure
         start_time = round(time.time()) - 1
         decay_fn = create_decay_function(n, t, z)
-        fn = lambda: find_area_covered_so_far(
-            decay_fn,
-            (round(time.time()) - start_time ) / time_slice_length
-        )
+        #  fn = lambda: find_area_covered_so_far(
+            #  decay_fn,
+            #  (round(time.time()) - start_time ) / time_slice_length
+        #  )
+        fn = lambda: (time.time() - start_time) * 1
 
         self.get_normative_processed = fn
         self._redis = get_redis()
@@ -185,11 +186,8 @@ class TaskOozer():
         :param job_context:
         :return:
         """
-
-        count = 0
-        while (self._redis.get(self.rate_queue_key) or 0) > 0.90 and count < 5:
-            gevent.sleep(0.1 * min(2.0, 2 ** count))
-            count += 1
+        while self.actual_processed > self.get_normative_processed():
+            gevent.sleep(10)
 
         task.delay(job_scope, job_context)
         self.actual_processed += 1

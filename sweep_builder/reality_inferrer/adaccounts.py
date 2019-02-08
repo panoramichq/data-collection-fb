@@ -47,6 +47,7 @@ def iter_active_ad_accounts_per_scope(scope):
         # but this involves setting up an index on the partition,
         # which may limit the size of the partition.
         # TODO: investigate the risk and move this filter DB-side
-        if aa_record.is_active and aa_record.manually_disabled is not True:
+        #  if aa_record.is_active and aa_record.manually_disabled is not True:
+        if aa_record.is_active:
             yield aa_record
 
