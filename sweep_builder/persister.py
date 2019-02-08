@@ -56,6 +56,11 @@ def iter_persist_prioritized(sweep_id, prioritized_iter):
         _before_next_prioritized = time.time()
         for prioritization_claim in prioritized_iter:
 
+            # Don't persist jobs with 0 score
+            if prioritization_claim.job_scores[-1] == 0:
+                #  logger.warning('Skipping job with 0 score')
+                continue
+
             _measurement_tags = dict(
                 entity_type=prioritization_claim.entity_type,
                 ad_account_id=prioritization_claim.ad_account_id,
