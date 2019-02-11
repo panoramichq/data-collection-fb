@@ -40,9 +40,15 @@ def iter_expectations(reality_claims_iter):
         # Temporary fix for ad account id 23845179
         if reality_claim.entity_type == Entity.Campaign and reality_claim.ad_account_id == '23845179':
             jobs_generators = itertools.chain(jobs_generators, [
-                #  breakdowns.hour_metrics_per_adset_per_entity,
-                breakdowns.day_metrics_per_ad_per_entity,
+                # finished
+                # breakdowns.day_metrics_per_ad_per_entity,
+
+                # processing
+                #  breakdowns.hour_metrics_per_campaign,
+
+                # Mark trying shit
                 #  breakdowns.hour_metrics_per_ad_per_entity,
+                #  breakdowns.hour_metrics_per_adset_per_entity,
                 #  breakdowns.day_age_gender_metrics_per_ad_per_entity,
                 #  breakdowns.day_dma_metrics_per_ad_per_entity,
                 #  breakdowns.day_platform_metrics_per_ad_per_entity,

@@ -18,16 +18,16 @@ In this case, group level DISABLED clearly takes precedence.
 """
 
 # Ad account sourcing
-AD_ACCOUNT_IMPORT_DISABLED = False
+AD_ACCOUNT_IMPORT_DISABLED = True
 
 # actual entity jobs:
-ENTITY_AA_DISABLED = False
+ENTITY_AA_DISABLED = True
 ENTITY_C_DISABLED = False
-ENTITY_AS_DISABLED = False
-ENTITY_A_DISABLED = False
-ENTITY_AC_DISABLED = False
-ENTITY_AV_DISABLED = False
-ENTITY_CA_DISABLED = False
+ENTITY_AS_DISABLED = True
+ENTITY_A_DISABLED = True
+ENTITY_AC_DISABLED = True
+ENTITY_AV_DISABLED = True
+ENTITY_CA_DISABLED = True
 
 # group flag for entities
 ENTITY_ALL_DISABLED = False
@@ -41,7 +41,7 @@ INSIGHTS_HOUR_C_DISABLED = True  # TODO: Switch to False once we verify pipeline
 INSIGHTS_HOUR_AS_DISABLED = True  # TODO: Switch to False once we verify pipeline needs it
 
 # Definitely used
-INSIGHTS_AGE_GENDER_A_DISABLED = False
+INSIGHTS_AGE_GENDER_A_DISABLED = True
 INSIGHTS_DAY_A_DISABLED = False
 INSIGHTS_DMA_A_DISABLED = False
 INSIGHTS_HOUR_A_DISABLED = False
@@ -49,8 +49,8 @@ INSIGHTS_PLATFORM_A_DISABLED = False
 
 # group flags for insights jobs
 INSIGHTS_ALL_DISABLED = False
-INSIGHTS_ALL_LIFETIME_DISABLED = False
-INSIGHTS_ALL_SEGMENTED_DISABLED = False
+INSIGHTS_ALL_LIFETIME_DISABLED = True
+INSIGHTS_ALL_SEGMENTED_DISABLED = True
 
 # here we allow external env vars to influence above values...
 from common.updatefromenv import update_from_env

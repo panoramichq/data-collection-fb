@@ -38,6 +38,7 @@ def build_sweep_slice_per_ad_account_task(sweep_id, ad_account_reality_claim, ta
     from .reality_inferrer.reality import iter_reality_per_ad_account_claim
     from .data_containers.prioritization_claim import PrioritizationClaim
 
+    logger.info('here')
     with TaskGroup.task_context(task_id) as task_context:
 
         _measurement_name_base = __name__ + '.build_sweep_per_ad_account.'  # <- function name. adjust if changed
@@ -52,8 +53,9 @@ def build_sweep_slice_per_ad_account_task(sweep_id, ad_account_reality_claim, ta
         )
         cnt = 0
 
-        _step = 1000
+        _step = 10
         _before_fetch = time.time()
+        logger.info(f'start {ad_account_reality_claim.ad_account_id}')
         for claim in iter_pipeline(sweep_id, reality_claims_iter):
             Measure.timing(
                 _measurement_name_base + 'next_persisted',

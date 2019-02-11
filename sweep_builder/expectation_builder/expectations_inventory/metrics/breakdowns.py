@@ -62,15 +62,16 @@ def day_metrics_per_entity(entity_type, day_breakdown, reality_claim):
 
     reality_claim_data = reality_claim.to_dict()
 
-    for day in date_range(range_start, range_end):
-        normative_job_id = generate_id(
-            range_start=day,
-            **base_normative_data
-        )
-        yield ExpectationClaim(
-            reality_claim_data,
-            job_signatures=[JobSignature.bind(normative_job_id)]
-        )
+    #  for day in date_range(range_start, range_end):
+    normative_job_id = generate_id(
+        range_start=range_start,
+        range_end=range_end,
+        **base_normative_data
+    )
+    yield ExpectationClaim(
+        reality_claim_data,
+        job_signatures=[JobSignature.bind(normative_job_id)]
+    )
 
 
 def _determine_active_date_range_for_claim(reality_claim):

@@ -121,7 +121,7 @@ def _job_scope_to_metadata(job_scope):
             'platform': job_scope.namespace,
             'ad_account_id': job_scope.ad_account_id,
             'report_type': job_scope.report_type,
-            'entity_type': job_scope.entity_type or job_scope.report_variant,
+            'entity_type': 'C', # job_scope.entity_type or job_scope.report_variant,
             # TODO: communicate this with JobScope somewhere
             # so that when we have requests done in multiple versions
             # we communicate the right one.
@@ -160,6 +160,7 @@ def store(data, job_scope, chunk_marker=0):
     if not isinstance(data, (list, tuple, set)):
         data = [data]
 
+    print('KEY: {}'.format(key))
     _bucket.put_object(
         Key=key,
         Body=json.dumps(data, ensure_ascii=False).encode(),
