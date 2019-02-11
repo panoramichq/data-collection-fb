@@ -73,7 +73,7 @@ def _id_parts_datetime_converter(v):
 
 _id_parts_converters = {
     'range_start': _id_parts_datetime_converter,
-    'range_end': _id_parts_default_converter
+    'range_end': _id_parts_datetime_converter
 }
 
 
