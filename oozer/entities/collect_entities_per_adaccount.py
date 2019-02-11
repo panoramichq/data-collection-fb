@@ -162,7 +162,9 @@ def iter_collect_entities_per_adaccount(job_scope, job_context):
                 store(entity_data)
 
                 # Signal to the system the new entity
-                feedback_entity_task.delay(entity_data, entity_type, [None, None])
+
+                ## Not feedbacking entities...
+                # feedback_entity_task.delay(entity_data, entity_type, [None, None])
 
                 yield entity_data
                 cnt += 1

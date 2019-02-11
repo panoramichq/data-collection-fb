@@ -51,6 +51,11 @@ def iter_reality_base():
         # yielding out existence claims pertaining to AdAccounts per scope
 
         for ad_account in iter_active_ad_accounts_per_scope(scope_record.scope):
+            if ad_account.ad_account_id != '23845179':
+                continue
+            
+            assert ad_account.timezone  # we need the timezone to align insights properly
+
 
             # This reality claim is base for expectation to have
             # its children lists refreshed.
