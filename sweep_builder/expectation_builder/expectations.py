@@ -44,12 +44,11 @@ def iter_expectations(reality_claims_iter):
                 # breakdowns.day_metrics_per_ad_per_entity,
 
                 # processing
-                #  breakdowns.hour_metrics_per_campaign,
+                 breakdowns.day_age_gender_metrics_per_ad_per_entity,
 
-                # Mark trying shit
+                # to do
                 #  breakdowns.hour_metrics_per_ad_per_entity,
                 #  breakdowns.hour_metrics_per_adset_per_entity,
-                #  breakdowns.day_age_gender_metrics_per_ad_per_entity,
                 #  breakdowns.day_dma_metrics_per_ad_per_entity,
                 #  breakdowns.day_platform_metrics_per_ad_per_entity,
             ])

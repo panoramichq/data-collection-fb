@@ -86,7 +86,7 @@ def _from_day_segmented_entity(data, entity_type=None, **kwargs):
         ),
         'range_start': data[_date_start],
         'entity_id': entity_id,
-        'entity_type': 'C'
+        'entity_type': entity_type
     }
 
 
@@ -136,7 +136,7 @@ def _from_hour_segmented_entity(timezone_name, data, entity_type=None, **kwargs)
         # in Facebook's original data.
         'range_start': dt_as_utc.strftime('%Y-%m-%dT%H:%M:%S'),
         'entity_id': entity_id,
-        'entity_type': 'C'
+        'entity_type': entity_type
     }
 
 
@@ -175,7 +175,7 @@ def _from_age_gender_segmented_entity(data, entity_type=None, **kwargs):
         'id': generate_universal_id(
             fields=universal_id_fields + ['age','gender'],
             entity_id=entity_id,
-            entity_type=entity_type,
+            entity_type='A',
             range_start=data[_date_start],
             age=data['age'],
             gender=data['gender'],

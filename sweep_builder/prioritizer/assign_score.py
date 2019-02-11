@@ -71,7 +71,6 @@ class ScoreCalculator:
         """
 
         job_id = job_signature.job_id
-        print(job_id)
 
         prior_score = self._the_cache.get(job_id)
         if prior_score is not None:
