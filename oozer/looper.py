@@ -434,7 +434,7 @@ def run_tasks(sweep_id, limit=None, time_slices=looper_config.FB_THROTTLING_WIND
         # thinking about pulse or failures.
         # This makes sure that seed rounds that have so few
         # tasks get all COMPLETELY pushed out.
-        for celery_task, job_scope, job_context in islice(tasks_iter, 0, 100):
+        for celery_task, job_scope, job_context in tasks_iter:
             # FYI: ooze_task blocks if we pushed too many tasks in the allotted time
             # It will unblock by itself when it's time to release the task
             ooze_task(celery_task, job_scope, job_context)
