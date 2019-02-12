@@ -121,8 +121,8 @@ class ScoreCalculator:
         score = 0
 
         # Don't download jobs more than once
-        if collection_record is not None and collection_record.last_success_dt is not None:
-            return 0
+        # if collection_record is not None and collection_record.last_success_dt is not None:
+        #     return 0
         # Don't download jobs for reports older than 60 days
         days_from_now = (now_in_tz(timezone).date() - report_day).days
         if days_from_now > 61:
