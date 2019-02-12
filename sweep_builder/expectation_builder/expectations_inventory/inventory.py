@@ -65,15 +65,15 @@ entity_expectation_generator_map[Entity.AdAccount] = list(filter(None, [
 
 
 entity_expectation_generator_map[Entity.Campaign] = list(filter(None, [
-    None if jobs_config.INSIGHTS_LIFETIME_C_DISABLED else lifetime.lifetime_metrics_per_campaign,
+    # None if jobs_config.INSIGHTS_LIFETIME_C_DISABLED else lifetime.lifetime_metrics_per_campaign,
 ]))
 
 
 entity_expectation_generator_map[Entity.AdSet] = list(filter(None, [
-    None if jobs_config.INSIGHTS_LIFETIME_AS_DISABLED else lifetime.lifetime_metrics_per_adset,
+    # None if jobs_config.INSIGHTS_LIFETIME_AS_DISABLED else lifetime.lifetime_metrics_per_adset,
 ]))
 
 
 entity_expectation_generator_map[Entity.Ad] = list(filter(None, [
-    None if jobs_config.INSIGHTS_LIFETIME_A_DISABLED else lifetime.lifetime_metrics_per_ad,
+    # None if jobs_config.INSIGHTS_LIFETIME_A_DISABLED else lifetime.lifetime_metrics_per_ad,
 ]))
