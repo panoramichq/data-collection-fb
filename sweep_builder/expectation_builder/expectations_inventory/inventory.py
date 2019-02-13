@@ -77,3 +77,31 @@ entity_expectation_generator_map[Entity.AdSet] = list(filter(None, [
 entity_expectation_generator_map[Entity.Ad] = list(filter(None, [
     None if jobs_config.INSIGHTS_LIFETIME_A_DISABLED else lifetime.lifetime_metrics_per_ad,
 ]))
+
+# Special cases for ad account 23845179
+ad_account_entity_collection_job_set = [
+    None if jobs_config.ENTITY_AA_DISABLED else ad_account_entity,
+    None if jobs_config.ENTITY_C_DISABLED else campaign_entities_per_ad_account,
+    None if jobs_config.ENTITY_AS_DISABLED else adset_entities_per_ad_account,
+    None if jobs_config.ENTITY_A_DISABLED else ad_entities_per_ad_account,
+    None if jobs_config.ENTITY_AC_DISABLED else ad_creative_entities_per_ad_account,
+    None if jobs_config.ENTITY_AV_DISABLED else ad_video_entities_per_ad_account,
+    None if jobs_config.ENTITY_CA_DISABLED else custom_audience_entities_per_ad_account,
+    sync_expectations_per_ad_account
+]
+
+campaign_metrics_job_set = [
+    # Lifetime tasks
+    lifetime.lifetime_metrics_per_ad,
+    lifetime.lifetime_metrics_per_adset,
+    lifetime.lifetime_metrics_per_campaign,
+
+    # Insights
+    breakdowns.hour_metrics_per_campaign_per_entity,
+    breakdowns.hour_metrics_per_adset_per_entity,
+    breakdowns.day_metrics_per_ad_per_entity,
+    breakdowns.hour_metrics_per_ad_per_entity,
+    breakdowns.day_age_gender_metrics_per_ad_per_entity,
+    breakdowns.day_dma_metrics_per_ad_per_entity,
+    breakdowns.day_platform_metrics_per_ad_per_entity,
+]

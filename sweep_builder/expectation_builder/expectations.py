@@ -1,10 +1,13 @@
 from typing import Generator, Union, List
 from collections import defaultdict
 
+from common.enums.entity import Entity
 from common.id_tools import parse_id_parts
 from common.measurement import Measure
 from sweep_builder.data_containers.expectation_claim import ExpectationClaim
 from sweep_builder.data_containers.reality_claim import RealityClaim
+from sweep_builder.expectation_builder.expectations_inventory.inventory import ad_account_entity_collection_job_set, \
+    campaign_metrics_job_set
 
 from .expectations_inventory import entity_expectation_generator_map
 
@@ -26,7 +29,19 @@ def iter_expectations(reality_claims_iter) :
     _measurement_sample_rate = 1
 
     for reality_claim in reality_claims_iter:
-        jobs_generators = entity_expectation_generator_map.get(reality_claim.entity_type, [])
+        if reality_claim.ad_account_id == '23845179':
+            if reality_claim.entity_type == Entity.AdAccount:
+                # For ad account download entities and sync expectations
+                jobs_generators = ad_account_entity_collection_job_set
+            elif reality_claim.entity_type == Entity.Campaign:
+                # For campaigns generate jobs to download reports
+                jobs_generators = campaign_metrics_job_set
+            else:
+                # For other entities we are covered by above
+                continue
+        else:
+            # For other accounts, proceed as usual
+            jobs_generators = entity_expectation_generator_map.get(reality_claim.entity_type, [])
 
         # histogram measures min/max/ave per thing.
         # Here we are trying to measure how given entity type (per ad account)
