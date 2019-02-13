@@ -30,19 +30,6 @@ def day_metrics_per_entity(entity_type, day_breakdown, reality_claim):
     assert entity_type in Entity.ALL
     assert day_breakdown in ReportType.ALL_DAY_BREAKDOWNS
 
-    base_normative_data = dict(
-        ad_account_id=reality_claim.ad_account_id,
-        entity_type=entity_type,
-        entity_id=reality_claim.entity_id,
-        report_type=day_breakdown
-    )
-
-    base_effective_data = dict(
-        ad_account_id=reality_claim.ad_account_id,
-        report_type=day_breakdown,
-        report_variant=entity_type
-    )
-
     range_start = reality_claim.bol
     # expected to be stored in AA timezone
     if range_start is None:
@@ -67,28 +54,20 @@ def day_metrics_per_entity(entity_type, day_breakdown, reality_claim):
 
     reality_claim_data = reality_claim.to_dict()
 
-    for day in date_range(range_start, range_end):
-        normative_job_id = generate_id(
-            range_start=day,
-            **base_normative_data
-        )
-        yield ExpectationClaim(
-            reality_claim_data,
-            job_signatures = [
-                # normative job signature
-                JobSignature.bind(
-                    normative_job_id
-                ),
-                # possible alternative "effective" job signatures:
-                JobSignature.bind(
-                    generate_id(
-                        range_start=day,
-                        **base_effective_data
-                    ),
-                    normative_job_id=normative_job_id
-                )
-            ]
-        )
+    yield ExpectationClaim(
+        reality_claim_data,
+        job_signatures=[
+            JobSignature.bind(generate_id(
+                ad_account_id=reality_claim.ad_account_id,
+                entity_id=reality_claim.entity_id,
+                entity_type=reality_claim.entity_type,
+                report_type=day_breakdown,
+                report_variant=entity_type,
+                range_end=range_end,
+                range_start=range_start,
+            )),
+        ]
+    )
 
 
 def _determine_active_date_range_for_claim(reality_claim):
