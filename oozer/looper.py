@@ -156,7 +156,7 @@ def find_area_covered_so_far(fn, x):
 
 class TaskOozer():
 
-    def __init__(self, n, t, time_slice_length=1, z=looper_config.DECAY_FN_START_MULTIPLIER, sweep_id=None):
+    def __init__(self, n, t, time_slice_length=1, z=looper_config.DECAY_FN_START_MULTIPLIER):
         """
         :param n: Number of tasks to release
         :param t: Time slices to release the tasks over
@@ -164,7 +164,6 @@ class TaskOozer():
         """
         self.actual_processed = 0
         self.time_slice_length = time_slice_length
-        self.rate_queue_key = f'-{sweep_id}-sorted-token-rate-queue'
 
         # doing this odd way of creating a method to trap decay_fn in the closure
         start_time = round(time.time()) - 1
@@ -175,7 +174,6 @@ class TaskOozer():
         )
 
         self.get_normative_processed = fn
-        self._redis = get_redis()
 
     def ooze_task(self, task, job_scope, job_context):
         """
@@ -186,10 +184,12 @@ class TaskOozer():
         :return:
         """
 
-        count = 0
-        while (self._redis.get(self.rate_queue_key) or 0) > 0.90 and count < 5:
-            gevent.sleep(0.1 * min(2.0, 2 ** count))
-            count += 1
+        ### WE ARE BLOCKING HERE ####
+        # (Albeit in a concurrent way)
+        # This means that calling process will be stuck waiting for us to exit,
+        # without even knowing they are blocked.
+        while self.actual_processed > self.get_normative_processed():
+            gevent.sleep(self.time_slice_length)
 
         task.delay(job_scope, job_context)
         self.actual_processed += 1
@@ -417,7 +417,7 @@ def run_tasks(sweep_id, limit=None, time_slices=looper_config.FB_THROTTLING_WIND
 
     tasks_iter = task_iter_score_gate(tasks_iter)
 
-    with TaskOozer(n, time_slices, time_slice_length, z, sweep_id) as ooze_task, \
+    with TaskOozer(n, time_slices, time_slice_length, z) as ooze_task, \
         Measure.counter(_measurement_name_base + 'oozed', tags=_measurement_tags) as cntr:
 
         next_pulse_review_second = time.time() + _pulse_refresh_interval

@@ -32,10 +32,15 @@ def day_metrics_per_entity(entity_type, day_breakdown, reality_claim):
 
     base_normative_data = dict(
         ad_account_id=reality_claim.ad_account_id,
-        entity_type=reality_claim.entity_type,
+        entity_type=entity_type,
         entity_id=reality_claim.entity_id,
+        report_type=day_breakdown
+    )
+
+    base_effective_data = dict(
+        ad_account_id=reality_claim.ad_account_id,
         report_type=day_breakdown,
-        report_variant=entity_type,
+        report_variant=entity_type
     )
 
     range_start = reality_claim.bol
@@ -69,7 +74,20 @@ def day_metrics_per_entity(entity_type, day_breakdown, reality_claim):
         )
         yield ExpectationClaim(
             reality_claim_data,
-            job_signatures=[JobSignature.bind(normative_job_id)]
+            job_signatures = [
+                # normative job signature
+                JobSignature.bind(
+                    normative_job_id
+                ),
+                # possible alternative "effective" job signatures:
+                JobSignature.bind(
+                    generate_id(
+                        range_start=day,
+                        **base_effective_data
+                    ),
+                    normative_job_id=normative_job_id
+                )
+            ]
         )
 
 
@@ -172,47 +190,6 @@ _day_metrics_per_ad = functools.partial(
     Entity.Ad
 )
 
-# per campaign generators
-
-day_metrics_per_campaign = functools.partial(
-    _day_metrics_per_campaign,
-    ReportType.day,
-)  # type: (RealityClaim) -> Generator[ExpectationClaim]
-#
-hour_metrics_per_campaign = functools.partial(
-    _day_metrics_per_campaign,
-    ReportType.day_hour,
-)  # type: (RealityClaim) -> Generator[ExpectationClaim]
-
-hour_metrics_per_adset_per_entity = functools.partial(
-    _day_metrics_per_adset,
-    ReportType.day_hour,
-)  # type: (RealityClaim) -> Generator[ExpectationClaim]
-
-day_metrics_per_ad_per_entity = functools.partial(
-    _day_metrics_per_ad,
-    ReportType.day,
-)  # type: (RealityClaim) -> Generator[ExpectationClaim]
-
-hour_metrics_per_ad_per_entity = functools.partial(
-    _day_metrics_per_ad,
-    ReportType.day_hour,
-)  # type: (RealityClaim) -> Generator[ExpectationClaim]
-
-day_age_gender_metrics_per_ad_per_entity = functools.partial(
-    _day_metrics_per_ad,
-    ReportType.day_age_gender,
-)  # type: (RealityClaim) -> Generator[ExpectationClaim]
-
-day_dma_metrics_per_ad_per_entity = functools.partial(
-    _day_metrics_per_ad,
-    ReportType.day_dma,
-)  # type: (RealityClaim) -> Generator[ExpectationClaim]
-
-day_platform_metrics_per_ad_per_entity = functools.partial(
-    _day_metrics_per_ad,
-    ReportType.day_platform,
-)  # type: (RealityClaim) -> Generator[ExpectationClaim]
 
 # per-parent generators
 

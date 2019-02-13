@@ -1,5 +1,3 @@
-import json
-
 from typing import List
 
 from facebook_business.adobjects.adaccount import AdAccount
@@ -108,22 +106,6 @@ class FacebookApiErrorInspector:
         subcode = self._exception.api_error_subcode()
 
         return (code, subcode) in values
-
-    @property
-    def ad_account_usage_rate(self):
-        """
-        Return ad account usage rate from exception:
-        https://developers.facebook.com/docs/graph-api/advanced/rate-limiting
-
-        :return double: Rate of usage
-        """
-        if not isinstance(self._exception, FacebookRequestError):
-            return None
-
-        usage_dict = self._exception.http_headers().get('x-ad-account-usage')
-        if usage_dict is None:
-            return None
-        return json.loads(usage_dict).get('acc_id_util_pct')
 
     def is_throttling_exception(self):
         """
