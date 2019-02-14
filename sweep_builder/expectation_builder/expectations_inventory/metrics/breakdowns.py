@@ -31,7 +31,7 @@ def lifecycle_metrics_per_entity(entity_type, day_breakdown, reality_claim):
 
     range_start, range_end = _determine_active_date_range_for_claim(reality_claim)
     # Temporarily go back max 7 days
-    range_start = max(range_start, now_in_tz(reality_claim.timezone).date() - timedelta(days=60))
+    range_start = max(range_start, now_in_tz(reality_claim.timezone).date() - timedelta(days=7))
     reality_claim_data = reality_claim.to_dict()
 
     yield ExpectationClaim(
@@ -68,7 +68,7 @@ def daily_metrics_per_entity(entity_type, day_breakdown, reality_claim):
 
     range_start, range_end = _determine_active_date_range_for_claim(reality_claim)
     # Temporarily go back max 7 days
-    range_start = max(range_start, now_in_tz(reality_claim.timezone).date() - timedelta(days=60))
+    range_start = max(range_start, now_in_tz(reality_claim.timezone).date() - timedelta(days=7))
     reality_claim_data = reality_claim.to_dict()
 
     for day in date_range(range_start, range_end):
