@@ -26,6 +26,11 @@ subject_to_expectation_publication = {
 }
 
 
+def should_persist(job_score):
+    """Determine whether job with score should be persisted."""
+    return job_score > 0
+
+
 def iter_persist_prioritized(sweep_id, prioritized_iter):
     # type: (str, Generator[PrioritizationClaim]) -> Generator[PrioritizationClaim]
     """
@@ -150,6 +155,10 @@ def iter_persist_prioritized(sweep_id, prioritized_iter):
             #  - effective (optional) (blah per AA)
             _, job_id_effective = score_job_id_pairs[LAST]
             score = max(score for score, _ in score_job_id_pairs)
+
+            if not should_persist(score):
+                logger.info(f'Not persisting job {job_id_effective} due to low score: {score}')
+                continue
 
             # Following are JobScope attributes we don't store on JobID
             # so we need to store them separately.
