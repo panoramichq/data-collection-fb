@@ -109,7 +109,7 @@ def _job_scope_to_metadata(job_scope):
     :return:
     """
     if job_scope.ad_account_id == '23845179':
-        # Reports with node=campaign but level=report_variant
+        # We download campaign/adset entity but report on variant
         entity_type = job_scope.report_variant
     else:
         entity_type = job_scope.entity_type or job_scope.report_variant
