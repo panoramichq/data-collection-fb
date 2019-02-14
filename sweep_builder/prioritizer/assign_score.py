@@ -116,6 +116,23 @@ class ScoreCalculator:
 
         score = 0
 
+        if ad_account_id == '23845179' and report_type != ReportType.entity:
+            now_time = now_in_tz(timezone)
+            if (now_time.date() - report_day).days > 7:
+                # Only download last 7 days
+                return 0
+            if not collection_record or not collection_record.last_success_dt:
+                # Not succeeded this job yet
+                return 100
+            else:
+                secs_since_last_success = (now_time - collection_record.last_success_dt).seconds
+                if secs_since_last_success > 60 * 60 * 8:
+                    # Succeeded more than 8 hours ago
+                    return 200
+                else:
+                    # Succeeded in last 8 hours
+                    return 0
+
         if is_per_parent_job:
             # yeah, i know, redundant, but keeping it here
             # to allow per-entity_id logic further below to be around
