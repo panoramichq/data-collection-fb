@@ -102,6 +102,9 @@ campaign_metrics_job_set = [
     breakdowns.day_metrics_per_ad_per_entity,
     breakdowns.hour_metrics_per_ad_per_entity,
     breakdowns.day_age_gender_metrics_per_ad_per_entity,
-    breakdowns.day_dma_metrics_per_ad_per_entity,
     breakdowns.day_platform_metrics_per_ad_per_entity,
+]
+
+adset_metrics_job_set = [
+    breakdowns.day_dma_metrics_per_ad_per_entity,
 ]
