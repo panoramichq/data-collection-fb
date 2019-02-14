@@ -118,9 +118,6 @@ class ScoreCalculator:
 
         if ad_account_id == '23845179' and report_type != ReportType.entity:
             now_time = now_in_tz(timezone)
-            if (now_time.date() - report_day).days > 7:
-                # Only download last 7 days
-                return 0
             if not collection_record or not collection_record.last_success_dt:
                 # Not succeeded this job yet
                 return 100
