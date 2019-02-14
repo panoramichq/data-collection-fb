@@ -71,12 +71,6 @@ def _id_parts_datetime_converter(v):
     return _id_parts_default_converter(v)
 
 
-_id_parts_converters = {
-    'range_start': _id_parts_datetime_converter,
-    'range_end': _id_parts_default_converter
-}
-
-
 def generate_id(
     fields=fields,
     trailing_parts=None,
@@ -135,9 +129,16 @@ def generate_id(
 
     # per Universal ID spec, we must URL+Plus encode all parts
     # https://operam.atlassian.net/wiki/spaces/EN/pages/160596078/Universal+IDs
+    converters = {
+        'range_start': _id_parts_datetime_converter,
+    }
+
+    # If range_end specified, convert as date
+    if parts.get('range_end'):
+        converters['range_end'] = _id_parts_datetime_converter
 
     parts = [
-        _id_parts_converters.get(
+        converters.get(
             field,
             _id_parts_default_converter
         )(
