@@ -99,7 +99,7 @@ class ScoreCalculator:
 
         is_per_parent_job = bool(not entity_type and report_variant)
 
-        if not is_per_parent_job:
+        if not is_per_parent_job and ad_account_id != '23845179':
             # at this time, it's impossible to have per-entity_id
             # jobs here becase sweep builder specifically avoids
             # scoring and releasing per-entity_id jobs
@@ -107,8 +107,6 @@ class ScoreCalculator:
             # Until then, we are making sure per-parent jobs get out first
             return 0
 
-        # if we are here, we have a per-parent job we have not seen before in this sweep run
-        # but we might have run it in prior sweeps and have a record of outcome.
         try:
             collection_record = JobReport.get(job_id)  # type: JobReport
         except:  # TODO: proper error catching here
