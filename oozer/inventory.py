@@ -46,6 +46,7 @@ entity_report_handler_map = {
     },
     ReportType.day_dma: {
         Entity.Ad: collect_insights_task,
+        Entity.AdSet: collect_insights_task,
         Entity.Campaign: collect_insights_task,
     },
     ReportType.day_hour: {
