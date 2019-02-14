@@ -112,7 +112,7 @@ jobs:
           export AWS_ACCESS_KEY_ID=AKIAIEALXSNAAK2QWY4Q
           export AWS_SECRET_ACCESS_KEY=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
           aws configure set default.region $AWS_REGION
-          aws ssm put-parameter --overwrite --name "data-collection-tw-${SSM_PARAM_SUFFIX}" --type "String" --value ${IMAGE_NAME}
+          aws ssm put-parameter --overwrite --name "data-collection-fb-${SSM_PARAM_SUFFIX}" --type "String" --value ${IMAGE_NAME}
 
   run_tests:
     machine:
