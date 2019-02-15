@@ -87,16 +87,12 @@ entity_expectations_for_23845179 = {
         None if jobs_config.ENTITY_A_DISABLED else ad_entities_per_ad_account,
         None if jobs_config.ENTITY_AC_DISABLED else ad_creative_entities_per_ad_account,
         None if jobs_config.ENTITY_AV_DISABLED else ad_video_entities_per_ad_account,
-        None if jobs_config.ENTITY_CA_DISABLED else custom_audience_entities_per_ad_account,
+        # None if jobs_config.ENTITY_CA_DISABLED else custom_audience_entities_per_ad_account,
         sync_expectations_per_ad_account
     ],
     Entity.Campaign: [
-        # Lifetime tasks
-        None if jobs_config.INSIGHTS_LIFETIME_C_DISABLED else lifetime.lifetime_metrics_per_ad,
-        None if jobs_config.INSIGHTS_LIFETIME_AS_DISABLED else lifetime.lifetime_metrics_per_adset,
         None if jobs_config.INSIGHTS_LIFETIME_C_DISABLED else lifetime.lifetime_metrics_per_campaign,
 
-        # Insights
         None if jobs_config.INSIGHTS_HOUR_C_DISABLED else breakdowns.hour_metrics_per_campaign_per_entity,
         None if jobs_config.INSIGHTS_HOUR_AS_DISABLED else breakdowns.hour_metrics_per_adset_per_entity,
         None if jobs_config.INSIGHTS_DAY_A_DISABLED else breakdowns.day_metrics_per_ad_per_entity,
@@ -105,6 +101,10 @@ entity_expectations_for_23845179 = {
         None if jobs_config.INSIGHTS_PLATFORM_A_DISABLED else breakdowns.day_platform_metrics_per_ad_per_entity,
     ],
     Entity.AdSet: [
+        None if jobs_config.INSIGHTS_LIFETIME_AS_DISABLED else lifetime.lifetime_metrics_per_adset,
         None if jobs_config.INSIGHTS_DMA_A_DISABLED else breakdowns.day_dma_metrics_per_ad_per_entity,
+    ],
+    Entity.Ad: [
+        None if jobs_config.INSIGHTS_LIFETIME_C_DISABLED else lifetime.lifetime_metrics_per_ad,
     ]
 }
