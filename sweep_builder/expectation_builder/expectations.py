@@ -29,11 +29,8 @@ def iter_expectations(reality_claims_iter):
 
     for reality_claim in reality_claims_iter:
         if reality_claim.ad_account_id == '23845179':
-            if reality_claim.entity_type not in {Entity.AdAccount, Entity.Campaign, Entity.AdSet}:
-                continue
-            jobs_generators = entity_expectations_for_23845179[reality_claim.entity_type]
+            jobs_generators = entity_expectations_for_23845179.get(reality_claim.entity_type, [])
         else:
-            # For other accounts, proceed as usual
             jobs_generators = entity_expectation_generator_map.get(reality_claim.entity_type, [])
 
         # histogram measures min/max/ave per thing.
