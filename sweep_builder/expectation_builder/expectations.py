@@ -11,7 +11,7 @@ from sweep_builder.expectation_builder.expectations_inventory.inventory import e
 from .expectations_inventory import entity_expectation_generator_map
 
 
-def iter_expectations(reality_claims_iter) :
+def iter_expectations(reality_claims_iter):
     # type: (Union[Generator[RealityClaim],List[RealityClaim]]) -> Generator[ExpectationClaim]
     """
     Converts an instance of RealityClaim object (claiming that certain
