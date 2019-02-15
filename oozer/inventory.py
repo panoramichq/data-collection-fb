@@ -38,12 +38,10 @@ entity_report_handler_map = {
     },
     ReportType.day: {
         Entity.Ad: collect_insights_task,
-        Entity.AdSet: collect_insights_task,
         Entity.Campaign: collect_insights_task,
     },
     ReportType.day_age_gender: {
         Entity.Ad: collect_insights_task,
-        Entity.AdSet: collect_insights_task,
         Entity.Campaign: collect_insights_task,
     },
     ReportType.day_dma: {
@@ -58,7 +56,6 @@ entity_report_handler_map = {
     },
     ReportType.day_platform: {
         Entity.Ad: collect_insights_task,
-        Entity.AdSet: collect_insights_task,
         Entity.Campaign: collect_insights_task,
     }
 }

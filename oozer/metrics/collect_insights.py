@@ -1,12 +1,11 @@
 import functools
-
 import gevent
 
 from datetime import datetime, date
 from facebook_business.adobjects.abstractcrudobject import AbstractCrudObject
 from facebook_business.adobjects.adreportrun import AdReportRun
 from facebook_business.adobjects.adsinsights import AdsInsights
-from facebook_business.exceptions import FacebookError, FacebookRequestError
+from facebook_business.exceptions import FacebookError
 from typing import Callable, Dict
 
 from config.facebook import INSIGHTS_POLLING_INTERVAL, \
@@ -28,7 +27,6 @@ from oozer.common.vendor_data import add_vendor_data
 
 from .vendor_data_extractor import report_type_vendor_data_extractor_map
 
-
 ENUM_LEVEL_MAP = {
     Entity.AdAccount: AdsInsights.Level.account,
     Entity.Campaign: AdsInsights.Level.campaign,
@@ -36,21 +34,19 @@ ENUM_LEVEL_MAP = {
     Entity.Ad: AdsInsights.Level.ad,
 }
 
-
 REPORT_TYPE_FB_BREAKDOWN_ENUM = {
     ReportType.day: None,
     ReportType.day_age_gender: [
         AdsInsights.Breakdowns.age,
         AdsInsights.Breakdowns.gender
     ],
-    ReportType.day_dma: [ AdsInsights.Breakdowns.dma ],
-    ReportType.day_hour: [ AdsInsights.Breakdowns.hourly_stats_aggregated_by_advertiser_time_zone ],
+    ReportType.day_dma: [AdsInsights.Breakdowns.dma],
+    ReportType.day_hour: [AdsInsights.Breakdowns.hourly_stats_aggregated_by_advertiser_time_zone],
     ReportType.day_platform: [
         AdsInsights.Breakdowns.publisher_platform,
         AdsInsights.Breakdowns.platform_position
     ]
 }
-
 
 DEFAULT_REPORT_FIELDS = [
     AdsInsights.Field.account_id,
@@ -108,7 +104,6 @@ DEFAULT_REPORT_FIELDS = [
     # 'video_30_sec_watched_actions',
     # 'website_ctr',
 
-
     # Unique
 
     # Essential
@@ -140,6 +135,7 @@ DEFAULT_ATTRIBUTION_WINDOWS = [
     AdsInsights.ActionAttributionWindows.value_default
 ]
 
+
 def _convert_and_validate_date_format(dt):
     """
     Converts incoming values that may represent a date
@@ -165,7 +161,6 @@ def _convert_and_validate_date_format(dt):
 
 
 class JobScopeParsed:
-
     report_params = None  # type: dict
     datum_handler = None  # type: Callable[Dict, None]
     report_root_fb_entity = None  # type: AbstractCrudObject
@@ -191,8 +186,8 @@ class JobScopeParsed:
                 # Be super conservative about askijg for more
                 AdsInsights.ActionAttributionWindows.value_1d_view,  # requirement for Fandango
                 # AdsInsights.ActionAttributionWindows.value_7d_view,  # noone cared to ask for it
-                AdsInsights.ActionAttributionWindows.value_28d_view, # nice to have for Fandango
-                AdsInsights.ActionAttributionWindows.value_1d_click, # nice to have for Fandango
+                AdsInsights.ActionAttributionWindows.value_28d_view,  # nice to have for Fandango
+                AdsInsights.ActionAttributionWindows.value_1d_click,  # nice to have for Fandango
                 # AdsInsights.ActionAttributionWindows.value_7d_click,  # noone cared to ask for it
                 AdsInsights.ActionAttributionWindows.value_28d_click,  # requirement for Fandango
             ]
@@ -208,12 +203,13 @@ class JobScopeParsed:
             self.report_params.update(
                 level=ENUM_LEVEL_MAP[job_scope.report_variant]
             )
-        else: # direct, per-entity report
+        else:
+            # direct, per-entity report
             entity_id = job_scope.entity_id
             entity_type = job_scope.entity_type
             entity_type_reporting = job_scope.report_variant
             self.report_params.update(
-                level=ENUM_LEVEL_MAP[job_scope.report_variant]
+                level=ENUM_LEVEL_MAP[entity_type_reporting]
             )
 
         # Now, (c), (d), (e), (f), (g) choices
@@ -478,9 +474,6 @@ class Insights:
 
             report_job_status_task.delay(failure_status, job_scope)
             token_manager.report_usage_per_failure_bucket(token, failure_bucket)
-            usage_rate = inspector.ad_account_usage_rate
-            if usage_rate is not None:
-                token_manager.report_rate_usage(token, usage_rate)
             raise
 
         except Exception as ex:
@@ -493,19 +486,3 @@ class Insights:
             )
             token_manager.report_usage_per_failure_bucket(token, FailureBucket.Other)
             raise
-
-    @classmethod
-    def iter_collect_insights_safe(cls, job_scope, job_context):
-        """iter_collect_insights with retry logic"""
-        count = 0
-        while count < 5:
-            try:
-                return cls.iter_collect_insights(job_scope, job_context)
-            except FacebookRequestError as e:
-                inspector = FacebookApiErrorInspector(e)
-                if not inspector.is_throttling_exception():
-                    raise
-                gevent.sleep(0.5, min(2.0, 2 ** count))
-                count += 1
-
-        raise e
