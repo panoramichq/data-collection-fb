@@ -30,8 +30,8 @@ def lifecycle_metrics_per_entity(entity_type, day_breakdown, reality_claim):
     assert day_breakdown in ReportType.ALL_DAY_BREAKDOWNS
 
     range_start, range_end = _determine_active_date_range_for_claim(reality_claim)
-    # Temporarily go back max 30 days
-    range_start = max(range_start, now_in_tz(reality_claim.timezone).date() - timedelta(days=30))
+    # Temporarily go back max 10 days
+    range_start = max(range_start, now_in_tz(reality_claim.timezone).date() - timedelta(days=10))
     if range_start > range_end:
         return
 
@@ -68,8 +68,8 @@ def daily_metrics_per_entity(entity_type, day_breakdown, reality_claim):
     assert day_breakdown in ReportType.ALL_DAY_BREAKDOWNS
 
     range_start, range_end = _determine_active_date_range_for_claim(reality_claim)
-    # Temporarily go back max 30 days
-    range_start = max(range_start, now_in_tz(reality_claim.timezone).date() - timedelta(days=30))
+    # Temporarily go back max 10 days
+    range_start = max(range_start, now_in_tz(reality_claim.timezone).date() - timedelta(days=10))
     if range_start > range_end:
         return
 
