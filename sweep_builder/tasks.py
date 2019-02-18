@@ -261,7 +261,11 @@ def build_sweep(sweep_id):
                 return
 
     logger.info("Waiting on results join")
-    group_result.join_native()
+    if group_result.supports_native_join:
+        group_result.join_native()
+    else:
+        # Eager mode does not support native join.
+        group_result.join()
 
     # # alternative to Celery's native group_result.join()
     # # our manual task tracking code + join()

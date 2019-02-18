@@ -17,34 +17,42 @@ def lifetime_metrics_per_entity(entity_type, reality_claim):
     :param RealityClaim reality_claim:
     :rtype: Generator[ExpectationClaim]
     """
-
+    if not reality_claim.timezone:
+        # For metrics, reality claim must have timezone.
+        return
     assert entity_type in Entity.ALL
 
     normative_job_id = generate_id(
         ad_account_id=reality_claim.ad_account_id,
-        entity_type=entity_type,
+        entity_type=reality_claim.entity_type,
         entity_id=reality_claim.entity_id,
-        report_type=ReportType.lifetime
+        report_type=ReportType.lifetime,
+        report_variant=entity_type,
     )
 
-    yield ExpectationClaim(
-        reality_claim.to_dict(),
-        job_signatures = [
-            # normative job signature
-            JobSignature.bind(
-                normative_job_id
-            ),
-            # possible alternative "effective" job signatures:
-            JobSignature.bind(
-                generate_id(
-                    ad_account_id=reality_claim.ad_account_id,
-                    report_type=ReportType.lifetime,
-                    report_variant=entity_type
-                ),
-                normative_job_id=normative_job_id
-            )
-        ]
-    )
+    if reality_claim.ad_account_id == '23845179':
+        # Use normative job for ad account 23845179
+        yield ExpectationClaim(
+            reality_claim.to_dict(),
+            job_signatures=[JobSignature.bind(normative_job_id)]
+        )
+    else:
+        yield ExpectationClaim(
+            reality_claim.to_dict(),
+            job_signatures=[
+                # normative job signature
+                JobSignature.bind(normative_job_id),
+                # possible alternative "effective" job signatures:
+                JobSignature.bind(
+                    generate_id(
+                        ad_account_id=reality_claim.ad_account_id,
+                        report_type=ReportType.lifetime,
+                        report_variant=entity_type
+                    ),
+                    normative_job_id=normative_job_id
+                )
+            ]
+        )
 
 
 lifetime_metrics_per_campaign = functools.partial(
@@ -52,12 +60,10 @@ lifetime_metrics_per_campaign = functools.partial(
     Entity.Campaign
 )  # type: (RealityClaim) -> Generator[ExpectationClaim]
 
-
 lifetime_metrics_per_adset = functools.partial(
     lifetime_metrics_per_entity,
     Entity.AdSet
 )  # type: (RealityClaim) -> Generator[ExpectationClaim]
-
 
 lifetime_metrics_per_ad = functools.partial(
     lifetime_metrics_per_entity,

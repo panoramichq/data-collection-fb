@@ -22,11 +22,11 @@ def feedback_entity_task(entity_data, entity_type, entity_hash_pair):
 
     """
     from .feedback_entity import feedback_entity
-    from pynamodb.exceptions import PutError
+    from pynamodb.exceptions import PutError, UpdateError
 
     try:
         feedback_entity(entity_data, entity_type, entity_hash_pair)
-    except PutError as ex:
+    except (PutError, UpdateError) as ex:
         # pynamodb.exceptions.PutError: Failed to put item: An error occurred (ProvisionedThroughputExceededException) on request (6P1M2OO24PI2RJ6ALBBSDROE8RVV4KQNSO5AEMVJF66Q9ASUAAJG) on table (1c5595-datacol-APP_DYNAMODB_FB_SWEEP_ENTITY_REPORT_TYPE_TABLE) when calling the PutItem operation: The level of configured provisioned throughput for the table was exceeded. Consider increasing your provisioning level with the UpdateTable API
         # a particular noisy type of this error - ProvisionedThroughputExceededException
         # may happen a lot in prod. At some point Write Units on the table

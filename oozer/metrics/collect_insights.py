@@ -55,7 +55,6 @@ def _convert_and_validate_date_format(dt):
 
 
 class JobScopeParsed:
-
     report_params = None  # type: dict
     datum_handler = None  # type: Callable[Dict, None]
     report_root_fb_entity = None  # type: AbstractCrudObject
@@ -81,8 +80,8 @@ class JobScopeParsed:
                 # Be super conservative about askijg for more
                 AdsInsights.ActionAttributionWindows.value_1d_view,  # requirement for Fandango
                 # AdsInsights.ActionAttributionWindows.value_7d_view,  # noone cared to ask for it
-                AdsInsights.ActionAttributionWindows.value_28d_view, # nice to have for Fandango
-                AdsInsights.ActionAttributionWindows.value_1d_click, # nice to have for Fandango
+                AdsInsights.ActionAttributionWindows.value_28d_view,  # nice to have for Fandango
+                AdsInsights.ActionAttributionWindows.value_1d_click,  # nice to have for Fandango
                 # AdsInsights.ActionAttributionWindows.value_7d_click,  # noone cared to ask for it
                 AdsInsights.ActionAttributionWindows.value_28d_click,  # requirement for Fandango
             ]
@@ -98,12 +97,13 @@ class JobScopeParsed:
             self.report_params.update(
                 level=ENUM_LEVEL_MAP[job_scope.report_variant]
             )
-        else: # direct, per-entity report
+        else:
+            # direct, per-entity report
             entity_id = job_scope.entity_id
             entity_type = job_scope.entity_type
-            entity_type_reporting = entity_type
+            entity_type_reporting = job_scope.report_variant
             self.report_params.update(
-                level=ENUM_LEVEL_MAP[entity_type]
+                level=ENUM_LEVEL_MAP[entity_type_reporting]
             )
 
         # Now, (c), (d), (e), (f), (g) choices

@@ -126,6 +126,19 @@ drop-stack:
 	WORKDIR=$(WORKDIR) \
 	docker-compose -f docker/docker-compose-stack.yaml down
 
+# Use this for standing up services in docker, but not the app (that can be ran on host). Useful for local dev.
+start-services: .dynamodb_data .s3_data
+	DYNAMODIR=$(DYNAMODIR) \
+	FAKES3DIR=$(FAKES3DIR) \
+	DDOG_IMAGE_NAME_FULL=${DDOG_IMAGE_NAME_FULL} \
+	DDOG_HOSTNAME=${DDOG_HOSTNAME} \
+	DDOG_API_KEY=${DDOG_API_KEY} \
+	IMAGE_NAME_FULL=$(IMAGE_NAME_FULL) \
+	USER_ID=$(shell id -u) \
+	GROUP_ID=$(shell id -g) \
+	WORKDIR=$(WORKDIR) \
+	docker-compose -f docker/docker-compose-services.yaml up
+
 .PHONY: start-dev start-stack drop-stack
 
 #############

@@ -35,6 +35,7 @@ entity_report_handler_map = {
         Entity.AdCreative: collect_entities_per_adaccount_task,
         Entity.AdVideo: collect_entities_per_adaccount_task,
         Entity.CustomAudience: collect_entities_per_adaccount_task,
+
         Entity.Page: None,
         Entity.PagePost: collect_entities_per_page_task
     },
@@ -42,21 +43,29 @@ entity_report_handler_map = {
         Entity.Campaign: collect_insights_task,
         Entity.AdSet: collect_insights_task,
         Entity.Ad: collect_insights_task,
+
         Entity.Page: collect_insights_task,
         Entity.PagePost: collect_insights_task
     },
     ReportType.day: {
         Entity.Ad: collect_insights_task,
+        Entity.Campaign: collect_insights_task,
+
         Entity.Page: collect_insights_task,
         Entity.PagePost: collect_insights_task
     },
     ReportType.day_age_gender: {
         Entity.Ad: collect_insights_task,
+        Entity.Campaign: collect_insights_task,
+
         Entity.Page: collect_insights_task,
         Entity.PagePost: collect_insights_task
     },
     ReportType.day_dma: {
         Entity.Ad: collect_insights_task,
+        Entity.AdSet: collect_insights_task,
+        Entity.Campaign: collect_insights_task,
+
         Entity.Page: collect_insights_task,
         Entity.PagePost: collect_insights_task
     },
@@ -64,11 +73,14 @@ entity_report_handler_map = {
         Entity.Campaign: collect_insights_task,
         Entity.AdSet: collect_insights_task,
         Entity.Ad: collect_insights_task,
+
         Entity.Page: collect_insights_task,
         Entity.PagePost: collect_insights_task
     },
     ReportType.day_platform: {
         Entity.Ad: collect_insights_task,
+        Entity.Campaign: collect_insights_task,
+
         Entity.Page: collect_insights_task,
         Entity.PagePost: collect_insights_task
     }
