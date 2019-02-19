@@ -101,18 +101,10 @@ jobs:
           export AWS_REGION=us-east-1
           export IMAGE_NAME=`cat /tmp/workspace/image_name`
           export IMAGE_BRANCH_NAME=`cat /tmp/workspace/branch_name`
-
-            if [ $IMAGE_BRANCH_NAME = "master" ] # Master branch is deployed to staging aws account.
-            then
-                export SSM_PARAM_SUFFIX="staging"
-            else
-                export SSM_PARAM_SUFFIX=$IMAGE_BRANCH_NAME
-            fi
-
           export AWS_ACCESS_KEY_ID=AKIAIEALXSNAAK2QWY4Q
           export AWS_SECRET_ACCESS_KEY=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
           aws configure set default.region $AWS_REGION
-          aws ssm put-parameter --overwrite --name "data-collection-fb-${SSM_PARAM_SUFFIX}" --type "String" --value ${IMAGE_NAME}
+          aws ssm put-parameter --overwrite --name "data-collection-fb-${IMAGE_BRANCH_NAME}" --type "String" --value ${IMAGE_NAME}
 
   run_tests:
     machine:
@@ -201,7 +193,7 @@ workflows:
           filters:
             branches:
               only:
-                - master
+                - staging
                 - production
 
       # - hold_for_deploy_staging:
