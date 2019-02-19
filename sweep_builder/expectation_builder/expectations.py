@@ -1,17 +1,15 @@
 from typing import Generator, Union, List
 from collections import defaultdict
 
-from common.enums.entity import Entity
 from common.id_tools import parse_id_parts
 from common.measurement import Measure
 from sweep_builder.data_containers.expectation_claim import ExpectationClaim
 from sweep_builder.data_containers.reality_claim import RealityClaim
-from sweep_builder.expectation_builder.expectations_inventory.inventory import entity_expectations_for_23845179
 
 from .expectations_inventory import entity_expectation_generator_map
 
 
-def iter_expectations(reality_claims_iter):
+def iter_expectations(reality_claims_iter) :
     # type: (Union[Generator[RealityClaim],List[RealityClaim]]) -> Generator[ExpectationClaim]
     """
     Converts an instance of RealityClaim object (claiming that certain
@@ -28,10 +26,7 @@ def iter_expectations(reality_claims_iter):
     _measurement_sample_rate = 1
 
     for reality_claim in reality_claims_iter:
-        if reality_claim.ad_account_id == '23845179':
-            jobs_generators = entity_expectations_for_23845179.get(reality_claim.entity_type, [])
-        else:
-            jobs_generators = entity_expectation_generator_map.get(reality_claim.entity_type, [])
+        jobs_generators = entity_expectation_generator_map.get(reality_claim.entity_type, [])
 
         # histogram measures min/max/ave per thing.
         # Here we are trying to measure how given entity type (per ad account)

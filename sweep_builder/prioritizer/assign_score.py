@@ -99,7 +99,7 @@ class ScoreCalculator:
 
         is_per_parent_job = bool(not entity_type and report_variant)
 
-        if not is_per_parent_job and ad_account_id != '23845179':
+        if not is_per_parent_job:
             # at this time, it's impossible to have per-entity_id
             # jobs here becase sweep builder specifically avoids
             # scoring and releasing per-entity_id jobs
@@ -107,26 +107,14 @@ class ScoreCalculator:
             # Until then, we are making sure per-parent jobs get out first
             return 0
 
+        # if we are here, we have a per-parent job we have not seen before in this sweep run
+        # but we might have run it in prior sweeps and have a record of outcome.
         try:
             collection_record = JobReport.get(job_id)  # type: JobReport
         except:  # TODO: proper error catching here
             collection_record = None  # type: JobReport
 
         score = 0
-
-        if ad_account_id == '23845179' and report_type != ReportType.entity:
-            now_time = now_in_tz(timezone)
-            if not collection_record or not collection_record.last_success_dt:
-                # Not succeeded this job yet
-                return 100
-            else:
-                secs_since_last_success = (now_time - collection_record.last_success_dt).seconds
-                if secs_since_last_success > 60 * 60 * 8:
-                    # Succeeded more than 8 hours ago
-                    return 200
-                else:
-                    # Succeeded in last 8 hours
-                    return 0
 
         if is_per_parent_job:
             # yeah, i know, redundant, but keeping it here

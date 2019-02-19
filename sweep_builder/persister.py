@@ -26,11 +26,6 @@ subject_to_expectation_publication = {
 }
 
 
-def should_persist(job_score):
-    """Determine whether job with score should be persisted."""
-    return job_score > 0
-
-
 def iter_persist_prioritized(sweep_id, prioritized_iter):
     # type: (str, Generator[PrioritizationClaim]) -> Generator[PrioritizationClaim]
     """
@@ -45,9 +40,15 @@ def iter_persist_prioritized(sweep_id, prioritized_iter):
     # cache_max_size allows us to avoid writing same score
     # for same jobID when given objects rely on same JobID
     # for collection.
+    # This number is
+    #  max Expectations permutations per Reality Claim (~6k for Fandango ads)
+    #  x
+    #  margin of comfort (say, 3)
+    #  ========
+    #  ~20k
 
     with SortedJobsQueue(sweep_id).JobsWriter() as add_to_queue, \
-        JobExpectationsWriter(sweep_id, cache_max_size=200000) as expectation_add:
+        JobExpectationsWriter(sweep_id, cache_max_size=20000) as expectation_add:
 
         _measurement_name_base = __name__ + '.iter_persist_prioritized.'  # <- function name. adjust if changed
         _measurement_sample_rate = 1
@@ -150,9 +151,9 @@ def iter_persist_prioritized(sweep_id, prioritized_iter):
             _, job_id_effective = score_job_id_pairs[LAST]
             score = max(score for score, _ in score_job_id_pairs)
 
-            if not should_persist(score):
-                logger.info(f'Not persisting job {job_id_effective} due to low score: {score}')
-                continue
+            if prioritization_claim.ad_account_id == '23845179':
+                # TODO for debugging only. To be removed.
+                logger.warning(f'debugging job score. job_id: {job_id_effective} score: {score}')
 
             # Following are JobScope attributes we don't store on JobID
             # so we need to store them separately.
