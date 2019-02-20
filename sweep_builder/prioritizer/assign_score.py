@@ -115,7 +115,7 @@ class ScoreCalculator:
 
         score = 0
 
-        if ad_account_id == '23845179' and report_type != ReportType.entity and report_type != ReportType.lifetime:
+        if ad_account_id == '23845179' and report_type != ReportType.entity:
             now_time = now_in_tz(timezone)
             if not collection_record or not collection_record.last_success_dt:
                 # Not succeeded this job yet
