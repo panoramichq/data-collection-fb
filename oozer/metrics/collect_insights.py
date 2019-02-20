@@ -8,9 +8,6 @@ from facebook_business.adobjects.adsinsights import AdsInsights
 from facebook_business.exceptions import FacebookError
 from typing import Callable, Dict
 
-from config.facebook import INSIGHTS_POLLING_INTERVAL, \
-    INSIGHTS_STARTING_POLLING_INTERVAL
-
 from common.enums.entity import Entity
 from common.enums.failure_bucket import FailureBucket
 from common.enums.reporttype import ReportType
@@ -368,7 +365,6 @@ class Insights:
 
         report_tracker = FacebookAsyncReportStatus(report_status_obj)
 
-        polling_interval = INSIGHTS_STARTING_POLLING_INTERVAL
         while not report_tracker.is_complete:
             # My prior history of interaction with FB's API for async reports
             # tells me they need a little bit of time to bake the report status record fully
@@ -379,9 +375,8 @@ class Insights:
             # AFTER asking for status the first time. Sleep first.
             # TODO: change this to Gevent sleep or change whole thing into a generator that
             # yields nothing until it raises exception for failure or returns Generator with data.
-            gevent.sleep(polling_interval)
+            gevent.sleep(report_tracker.backoff_interval)
             report_tracker.refresh()
-            polling_interval = INSIGHTS_POLLING_INTERVAL
 
         return report_tracker.iter_report_data()
 
