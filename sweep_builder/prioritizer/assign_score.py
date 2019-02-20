@@ -1,12 +1,13 @@
-from datetime import date, datetime
-from collections import defaultdict, OrderedDict
+import random
+
+from collections import OrderedDict
 
 import config.application
 from common.enums.entity import Entity
 
 from common.enums.failure_bucket import FailureBucket
 from common.enums.reporttype import ReportType
-from common.id_tools import parse_id_parts, generate_id
+from common.id_tools import parse_id_parts
 from common.job_signature import JobSignature
 from common.store.jobreport import JobReport
 from common.tztools import now_in_tz, now
@@ -115,6 +116,20 @@ class ScoreCalculator:
             collection_record = None  # type: JobReport
 
         score = 0
+
+        if ad_account_id == '23845179' and report_type != ReportType.entity:
+            now_time = now_in_tz(timezone)
+            if not collection_record or not collection_record.last_success_dt:
+                # Not succeeded this job yet
+                return random.randint(8, 15)
+            else:
+                secs_since_last_success = (now_time - collection_record.last_success_dt).seconds
+                if secs_since_last_success > 60 * 60 * 8:
+                    # Succeeded more than 8 hours ago
+                    return random.randint(8, 15)
+                else:
+                    # Succeeded in last 8 hours
+                    return 0
 
         if is_per_parent_job:
             # yeah, i know, redundant, but keeping it here
