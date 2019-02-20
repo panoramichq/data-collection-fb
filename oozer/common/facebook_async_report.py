@@ -50,6 +50,7 @@ class FacebookAsyncReportStatus:
     SUCCEEDED_STATE = {'Job Completed',}
     FAILED_STATE = {'Job Failed', 'Job Skipped'}
     COMPLETED_STATE = SUCCEEDED_STATE | FAILED_STATE
+    MAX_POLLING_INTERVAL = 16
 
     _report = None
 
@@ -68,11 +69,13 @@ class FacebookAsyncReportStatus:
         # When we hit that need, we may need to change internals
         # to store only report ID and token. Until then...
         self._report = report_status_obj
+        self._refresh_count = 0
 
     def refresh(self):
         """
         Get fresh status of the report with FB
         """
+        self._refresh_count += 1
         return self._report.remote_read()
 
     @property
@@ -88,6 +91,10 @@ class FacebookAsyncReportStatus:
         :return bool: Report completed somehow
         """
         return self.status in self.COMPLETED_STATE
+
+    @property
+    def backoff_interval(self):
+        return min(0.5 * (2 ** self._refresh_count), self.MAX_POLLING_INTERVAL)
 
     @property
     def is_success(self):
