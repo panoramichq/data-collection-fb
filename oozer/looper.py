@@ -37,7 +37,8 @@ def iter_tasks(sweep_id):
             job_scope = JobScope(
                 job_scope_additional_data,
                 job_id_parts,
-                sweep_id=sweep_id
+                sweep_id=sweep_id,
+                score=score,
             )
 
             celery_task = resolve_job_scope_to_celery_task(job_scope)

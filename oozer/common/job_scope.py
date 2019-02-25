@@ -30,6 +30,8 @@ class JobScope:
 
     tokens = None  # type: list
 
+    score = None  # type: int
+
     # Indicates that this is a synthetically created instance of JobScope
     # (likely by the worker code to indicate some sub-level of work done)
     # and not the original JobScope pushed out by Sweep Looper that triggered the task
