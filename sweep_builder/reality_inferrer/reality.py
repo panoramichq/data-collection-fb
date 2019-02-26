@@ -63,7 +63,6 @@ def iter_reality_base():
             )
 
 
-
 def iter_reality_per_ad_account_claim(ad_account_claim, entity_types=None):
     # type: (RealityClaim) -> Generator[RealityClaim]
     """
