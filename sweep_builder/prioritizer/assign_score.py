@@ -1,15 +1,13 @@
 import random
 
 from collections import OrderedDict
-from datetime import datetime
-from typing import Optional
 
 import config.application
 from common.enums.entity import Entity
 
 from common.enums.failure_bucket import FailureBucket
 from common.enums.reporttype import ReportType
-from common.id_tools import parse_id_parts, JobIdParts
+from common.id_tools import parse_id_parts
 from common.job_signature import JobSignature
 from common.store.jobreport import JobReport
 from common.tztools import now_in_tz, now
@@ -22,6 +20,8 @@ from common.math import (
 # This controls score decay for insights that are day-specific
 # the further in the past, the less we care.
 # The edge of what we care about is deemed to be \/ 2 years.
+from sweep_builder.prioritizer.gatekeeper import JobGateKeeper
+
 DAYS_BACK_DECAY_RATE = adapt_decay_rate_to_population(365 * 2)
 MINUTES_AWAY_FROM_WHOLE_HOUR_DECAY_RATE = adapt_decay_rate_to_population(30)
 
@@ -268,38 +268,3 @@ class ScoreCalculator:
                 self._the_cache.popitem()
 
         return score
-
-
-class JobGateKeeper:
-    """Prevent over-collection of datapoints."""
-
-    JOB_NOT_PASSED_SCORE = 1
-
-    @staticmethod
-    def shall_pass(job: JobIdParts, last_success_dt: Optional[datetime]):
-        """Return true if job should be re-collected."""
-        if last_success_dt is None or job.bol is None:
-            return True
-
-        # Single-day jobs have no range_end
-        job_range_end = job.range_start if job.range_end is None else job.range_end
-
-        minutes_since_success = (now() - last_success_dt).total_seconds() / 60
-        datapoint_age_in_days = (now().date() - job_range_end).total_seconds() / (60 * 60 * 24)
-
-        if datapoint_age_in_days < 3:
-            return True
-        elif datapoint_age_in_days < 7:
-            return JobGateKeeper._every_x_hours(minutes_since_success, 1)
-        elif datapoint_age_in_days < 14:
-            return JobGateKeeper._every_x_hours(minutes_since_success, 5)
-        elif datapoint_age_in_days < 30:
-            return JobGateKeeper._every_x_hours(minutes_since_success, 24)
-        elif datapoint_age_in_days < 90:
-            return JobGateKeeper._every_x_hours(minutes_since_success, 24 * 3)
-        else:
-            return JobGateKeeper._every_x_hours(minutes_since_success, 24 * 7)
-
-    @staticmethod
-    def _every_x_hours(minutes_since_success, x_hours):
-        return minutes_since_success > 60 * x_hours
