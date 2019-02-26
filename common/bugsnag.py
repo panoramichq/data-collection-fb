@@ -17,6 +17,9 @@ from config.build import BUILD_ID
 
 _logger = logging.getLogger(__name__)
 
+SEVERITY_ERROR = 'error'
+SEVERITY_WARNING = 'warning'
+
 
 def configure_bugsnag():
     """
@@ -80,7 +83,7 @@ class BugSnagContextData(AbstractContextManager):
         return self.context_data
 
     @staticmethod
-    def notify(exc, **context_data):
+    def notify(exc, severity=SEVERITY_ERROR, **context_data):
         # Serialize errors and send to Bugsnag
 
         # When we have a top-level exception trapper as well
@@ -103,7 +106,8 @@ class BugSnagContextData(AbstractContextManager):
                 # json decoder / encoder are (ab)used to do deep
                 # but safe serialization of whatever is passed to us as context data.
                 'extra_data': _make_data_safe_for_serialization(context_data)
-            }
+            },
+            severity=severity,
         )
 
     def __exit__(self, exc_type, exc, exc_tb):

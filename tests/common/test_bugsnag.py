@@ -1,7 +1,9 @@
 # must be first, as it does event loop patching and other "first" things
 from tests.base.testcase import TestCase
+from unittest.mock import patch
 
 from common import bugsnag
+
 
 # because it's declared global.y, it's pickle-able
 class GlobalBlahForTests:
@@ -15,19 +17,18 @@ class TestingSafeEncoder(TestCase):
         assert data == 'Some Text'
 
     def test_array(self):
-        data = bugsnag._make_data_safe_for_serialization([1,2,3])
-        assert data == [1,2,3]
+        data = bugsnag._make_data_safe_for_serialization([1, 2, 3])
+        assert data == [1, 2, 3]
 
     def test_complex_nested(self):
         data = bugsnag._make_data_safe_for_serialization({
-            'a': [1,2,3]
+            'a': [1, 2, 3]
         })
         assert data == {
-            'a': [1,2,3]
+            'a': [1, 2, 3]
         }
 
     def test_some_non_jsonable_but_pickleable_instance(self):
-
         instance = GlobalBlahForTests()
 
         data = bugsnag._make_data_safe_for_serialization({
@@ -38,7 +39,6 @@ class TestingSafeEncoder(TestCase):
         }
 
     def test_some_non_jsonable_and_non_pickleable_instance(self):
-
         # because it's declared in-line, it's unpickle-able
         class LocalBlahForTests:
             pass
@@ -51,3 +51,34 @@ class TestingSafeEncoder(TestCase):
         assert data == {
             'a': repr(instance)
         }
+
+
+def test_notify_no_severity_specified():
+    with patch('common.bugsnag.bugsnag') as mock_bugsnag:
+        exc = Exception('test error')
+        bugsnag.BugSnagContextData.notify(exc, key='value')
+        mock_bugsnag.notify.assert_called_once_with(exc, meta_data={
+            'extra_data': {"key": "value"}
+        }, severity='error')
+
+
+def test_notify_warning_severity_specified():
+    with patch('common.bugsnag.bugsnag') as mock_bugsnag:
+        exc = Exception('test error')
+        bugsnag.BugSnagContextData.notify(exc, key='value', severity=bugsnag.SEVERITY_WARNING)
+        mock_bugsnag.notify.assert_called_once_with(
+            exc,
+            meta_data={'extra_data': {"key": "value"}},
+            severity='warning'
+        )
+
+
+def test_notify_error_severity_specified():
+    with patch('common.bugsnag.bugsnag') as mock_bugsnag:
+        exc = Exception('test error')
+        bugsnag.BugSnagContextData.notify(exc, severity=bugsnag.SEVERITY_ERROR, key='value')
+        mock_bugsnag.notify.assert_called_once_with(
+            exc,
+            meta_data={'extra_data': {"key": "value"}},
+            severity='error'
+        )
