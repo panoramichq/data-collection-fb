@@ -48,19 +48,38 @@ entity_expectation_generator_map[Entity.AdAccount] = list(filter(None, [
     None if jobs_config.ENTITY_AC_DISABLED else ad_creative_entities_per_ad_account,
     None if jobs_config.ENTITY_AV_DISABLED else ad_video_entities_per_ad_account,
     None if jobs_config.ENTITY_CA_DISABLED else custom_audience_entities_per_ad_account,
+    # Lifetime
+    None if jobs_config.INSIGHTS_LIFETIME_C_DISABLED else lifetime.lifetime_metrics_per_campaign,
+    None if jobs_config.INSIGHTS_LIFETIME_AS_DISABLED else lifetime.lifetime_metrics_per_adset,
+    None if jobs_config.INSIGHTS_LIFETIME_A_DISABLED else lifetime.lifetime_metrics_per_ad,
 
     sync_expectations_per_ad_account
 ]))
 
 
-# Insights are also downloaded from Ad Account node but generated using Campaign entities
+# Insights are also downloaded from Ad Account node but generated using Campaign, Adset, Ad entities
 # so we have access to the full date range.
 entity_expectation_generator_map[Entity.Campaign] = list(filter(None, [
-    # Lifetime
-    None if jobs_config.INSIGHTS_LIFETIME_C_DISABLED else lifetime.lifetime_metrics_per_campaign,
-    None if jobs_config.INSIGHTS_LIFETIME_AS_DISABLED else lifetime.lifetime_metrics_per_adset,
-    None if jobs_config.INSIGHTS_LIFETIME_A_DISABLED else lifetime.lifetime_metrics_per_ad,
-    # Insights
+    None if jobs_config.INSIGHTS_HOUR_C_DISABLED else breakdowns.hour_metrics_per_campaign_per_ad_account,
+    None if jobs_config.INSIGHTS_HOUR_AS_DISABLED else breakdowns.hour_metrics_per_adset_per_ad_account,
+    None if jobs_config.INSIGHTS_DAY_A_DISABLED else breakdowns.day_metrics_per_ad_per_ad_account,
+    None if jobs_config.INSIGHTS_HOUR_A_DISABLED else breakdowns.hour_metrics_per_ad_per_ad_account,
+    None if jobs_config.INSIGHTS_AGE_GENDER_A_DISABLED else breakdowns.day_age_gender_metrics_per_ad_per_ad_account,
+    None if jobs_config.INSIGHTS_DMA_A_DISABLED else breakdowns.day_dma_metrics_per_ad_per_ad_account,
+    None if jobs_config.INSIGHTS_PLATFORM_A_DISABLED else breakdowns.day_platform_metrics_per_ad_per_ad_account,
+]))
+
+entity_expectation_generator_map[Entity.AdSet] = list(filter(None, [
+    None if jobs_config.INSIGHTS_HOUR_C_DISABLED else breakdowns.hour_metrics_per_campaign_per_ad_account,
+    None if jobs_config.INSIGHTS_HOUR_AS_DISABLED else breakdowns.hour_metrics_per_adset_per_ad_account,
+    None if jobs_config.INSIGHTS_DAY_A_DISABLED else breakdowns.day_metrics_per_ad_per_ad_account,
+    None if jobs_config.INSIGHTS_HOUR_A_DISABLED else breakdowns.hour_metrics_per_ad_per_ad_account,
+    None if jobs_config.INSIGHTS_AGE_GENDER_A_DISABLED else breakdowns.day_age_gender_metrics_per_ad_per_ad_account,
+    None if jobs_config.INSIGHTS_DMA_A_DISABLED else breakdowns.day_dma_metrics_per_ad_per_ad_account,
+    None if jobs_config.INSIGHTS_PLATFORM_A_DISABLED else breakdowns.day_platform_metrics_per_ad_per_ad_account,
+]))
+
+entity_expectation_generator_map[Entity.Ad] = list(filter(None, [
     None if jobs_config.INSIGHTS_HOUR_C_DISABLED else breakdowns.hour_metrics_per_campaign_per_ad_account,
     None if jobs_config.INSIGHTS_HOUR_AS_DISABLED else breakdowns.hour_metrics_per_adset_per_ad_account,
     None if jobs_config.INSIGHTS_DAY_A_DISABLED else breakdowns.day_metrics_per_ad_per_ad_account,
