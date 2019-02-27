@@ -58,6 +58,8 @@ entity_expectation_generator_map[Entity.AdAccount] = list(filter(None, [
 entity_expectation_generator_map[Entity.Campaign] = list(filter(None, [
     # Lifetime
     None if jobs_config.INSIGHTS_LIFETIME_C_DISABLED else lifetime.lifetime_metrics_per_campaign,
+    None if jobs_config.INSIGHTS_LIFETIME_AS_DISABLED else lifetime.lifetime_metrics_per_adset,
+    None if jobs_config.INSIGHTS_LIFETIME_A_DISABLED else lifetime.lifetime_metrics_per_ad,
     # Insights
     None if jobs_config.INSIGHTS_HOUR_C_DISABLED else breakdowns.hour_metrics_per_campaign_per_ad_account,
     None if jobs_config.INSIGHTS_HOUR_AS_DISABLED else breakdowns.hour_metrics_per_adset_per_ad_account,
@@ -68,15 +70,6 @@ entity_expectation_generator_map[Entity.Campaign] = list(filter(None, [
     None if jobs_config.INSIGHTS_PLATFORM_A_DISABLED else breakdowns.day_platform_metrics_per_ad_per_ad_account,
 ]))
 
-
-entity_expectation_generator_map[Entity.AdSet] = list(filter(None, [
-    None if jobs_config.INSIGHTS_LIFETIME_AS_DISABLED else lifetime.lifetime_metrics_per_adset,
-]))
-
-
-entity_expectation_generator_map[Entity.Ad] = list(filter(None, [
-    None if jobs_config.INSIGHTS_LIFETIME_A_DISABLED else lifetime.lifetime_metrics_per_ad,
-]))
 
 # Special cases for ad account 23845179
 entity_expectations_for_23845179 = {
@@ -101,10 +94,6 @@ entity_expectations_for_23845179 = {
         None if jobs_config.INSIGHTS_HOUR_A_DISABLED else breakdowns.hour_metrics_per_ad_per_entity,
         None if jobs_config.INSIGHTS_AGE_GENDER_A_DISABLED else breakdowns.day_age_gender_metrics_per_ad_per_entity,
         None if jobs_config.INSIGHTS_PLATFORM_A_DISABLED else breakdowns.day_platform_metrics_per_ad_per_entity,
-    ])),
-    Entity.AdSet: list(filter(None, [
         #  None if jobs_config.INSIGHTS_DMA_A_DISABLED else breakdowns.day_dma_metrics_per_ad_per_entity,
     ])),
-    Entity.Ad: list(filter(None, [
-    ]))
 }

@@ -1,7 +1,6 @@
 from typing import Generator, Union, List
 from collections import defaultdict
 
-from common.enums.entity import Entity
 from common.id_tools import parse_id_parts
 from common.measurement import Measure
 from sweep_builder.data_containers.expectation_claim import ExpectationClaim

@@ -2,7 +2,7 @@ import logging
 import itertools
 import time
 
-from celery import chord, group
+from celery import group
 
 from common.celeryapp import get_celery_app, RoutingKey
 from common.enums.entity import Entity
@@ -36,7 +36,6 @@ def build_sweep_slice_per_ad_account_task(sweep_id, ad_account_reality_claim, ta
     """
     from .pipeline import iter_pipeline
     from .reality_inferrer.reality import iter_reality_per_ad_account_claim
-    from .data_containers.prioritization_claim import PrioritizationClaim
 
     with TaskGroup.task_context(task_id) as task_context:
 
@@ -48,7 +47,8 @@ def build_sweep_slice_per_ad_account_task(sweep_id, ad_account_reality_claim, ta
 
         reality_claims_iter = itertools.chain(
             [ad_account_reality_claim],
-            iter_reality_per_ad_account_claim(ad_account_reality_claim)
+            # Iterating over campaigns is enough to produce expectations
+            iter_reality_per_ad_account_claim(ad_account_reality_claim, entity_types=[Entity.Campaign])
         )
         cnt = 0
 
