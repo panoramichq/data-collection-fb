@@ -44,15 +44,13 @@ def configure_bugsnag():
 
 
 class _JSONEncoder(json.JSONEncoder):
-
     def default(self, o):
         try:
-            return super(_JSONEncoder, self).default(o)
+            return super().default(o)
         except:
-            try:
+            if isinstance(o, BaseModel):
                 return 'data:application/python-pickle;base64,' + base64.b64encode(pickle.dumps(o)).decode('ascii')
-            except Exception:
-                return repr(o)
+            return repr(o)
 
 
 def _make_data_safe_for_serialization(data):

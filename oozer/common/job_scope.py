@@ -50,6 +50,10 @@ class JobScope:
         return False
 
     def __repr__(self):
+        return serialize_class_with_props(self)
+        # return f'<JobScope {self.sweep_id}:{self.job_id}>'
+
+    def __str__(self):
         return f'<JobScope {self.sweep_id}:{self.job_id}>'
 
     def update(self, *args, **kwargs):
