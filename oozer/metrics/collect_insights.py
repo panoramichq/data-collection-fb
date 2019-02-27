@@ -12,7 +12,7 @@ from common.enums.entity import Entity
 from common.enums.failure_bucket import FailureBucket
 from common.enums.reporttype import ReportType
 from common.tokens import PlatformTokenManager
-from common.bugsnag import BugSnagContextData
+from common.bugsnag import BugSnagContextData, SEVERITY_WARNING
 from oozer.common.cold_storage import batch_store
 from oozer.common.facebook_api import PlatformApiContext, FacebookApiErrorInspector
 from oozer.common.facebook_async_report import FacebookAsyncReportStatus
@@ -449,6 +449,7 @@ class Insights:
             token_manager.report_usage(token)
 
         except FacebookError as e:
+            BugSnagContextData.notify(e, severity=SEVERITY_WARNING, job_scope=job_scope)
             # Build ourselves the error inspector
             inspector = FacebookApiErrorInspector(e)
 
