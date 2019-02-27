@@ -11,6 +11,7 @@ import pickle
 from bugsnag.celery import connect_failure_handler
 from contextlib import AbstractContextManager
 
+from common.store.base import BaseModel
 from config.application import ENVIRONMENT
 from config.bugsnag import API_KEY
 from config.build import BUILD_ID
