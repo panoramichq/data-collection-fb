@@ -1,6 +1,5 @@
 from facebook_business.adobjects.adreportrun import AdReportRun
 from facebook_business.adobjects.adsinsights import AdsInsights
-from facebook_business.api import FacebookAdsApi, FacebookSession
 
 from config.facebook import INSIGHTS_MAX_POLLING_INTERVAL, INSIGHTS_MIN_POLLING_INTERVAL
 
@@ -52,6 +51,7 @@ class FacebookAsyncReportStatus:
     SUCCEEDED_STATE = {'Job Completed',}
     FAILED_STATE = {'Job Failed', 'Job Skipped'}
     COMPLETED_STATE = SUCCEEDED_STATE | FAILED_STATE
+    BACKOFF_MAX_REFRESH_COUNT = 10
 
     _report = None
 
@@ -95,7 +95,9 @@ class FacebookAsyncReportStatus:
 
     @property
     def backoff_interval(self):
-        return min(INSIGHTS_MIN_POLLING_INTERVAL * (2 ** self._refresh_count), INSIGHTS_MAX_POLLING_INTERVAL)
+        # Cap refresh count to avoid large powers
+        refresh_count = min(self._refresh_count, self.BACKOFF_MAX_REFRESH_COUNT)
+        return min(INSIGHTS_MAX_POLLING_INTERVAL, INSIGHTS_MIN_POLLING_INTERVAL * (2 ** refresh_count))
 
     @property
     def is_success(self):
