@@ -3,11 +3,13 @@ from tests.base.testcase import TestCase
 from unittest.mock import patch
 
 from common import bugsnag
+from common.util import convert_class_with_props_to_str
 
 
 # because it's declared global.y, it's pickle-able
 class GlobalBlahForTests:
-    pass
+    def __repr__(self):
+        return convert_class_with_props_to_str(GlobalBlahForTests)
 
 
 class TestingSafeEncoder(TestCase):
@@ -35,7 +37,7 @@ class TestingSafeEncoder(TestCase):
             'a': instance
         })
         assert data == {
-            'a': 'data:application/python-pickle;base64,gANjdGVzdHMuY29tbW9uLnRlc3RfYnVnc25hZwpHbG9iYWxCbGFoRm9yVGVzdHMKcQApgXEBLg=='
+            'a': repr(instance) + ';data:application/python-pickle;base64,gANjdGVzdHMuY29tbW9uLnRlc3RfYnVnc25hZwpHbG9iYWxCbGFoRm9yVGVzdHMKcQApgXEBLg=='
         }
 
     def test_some_non_jsonable_and_non_pickleable_instance(self):

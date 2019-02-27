@@ -1,6 +1,7 @@
 from datetime import datetime, date
 
 from common.id_tools import generate_id
+from common.util import convert_class_with_props_to_str
 
 
 class JobScope:
@@ -50,8 +51,7 @@ class JobScope:
         return False
 
     def __repr__(self):
-        return serialize_class_with_props(self)
-        # return f'<JobScope {self.sweep_id}:{self.job_id}>'
+        return convert_class_with_props_to_str(self)
 
     def __str__(self):
         return f'<JobScope {self.sweep_id}:{self.job_id}>'

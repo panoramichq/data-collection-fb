@@ -49,9 +49,13 @@ class _JSONEncoder(json.JSONEncoder):
         try:
             return super().default(o)
         except:
-            if isinstance(o, BaseModel):
-                return 'data:application/python-pickle;base64,' + base64.b64encode(pickle.dumps(o)).decode('ascii')
-            return repr(o)
+            try:
+                pickle_repr = 'data:application/python-pickle;base64,' + base64.b64encode(pickle.dumps(o)).decode('ascii')
+                if isinstance(o, BaseModel):
+                    return pickle_repr
+                return repr(o) + ';' + pickle_repr
+            except:
+                return repr(o)
 
 
 def _make_data_safe_for_serialization(data):
