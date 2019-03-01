@@ -9,6 +9,7 @@ from common.enums.failure_bucket import FailureBucket
 from common.enums.reporttype import ReportType
 from common.id_tools import parse_id_parts
 from common.job_signature import JobSignature
+from common.measurement import Measure
 from common.store.jobreport import JobReport
 from common.tztools import now_in_tz, now
 from common.math import (
@@ -84,7 +85,6 @@ class ScoreCalculator:
         # exploding the job id parts into individual vars
         job_id_parts = parse_id_parts(job_id)
         ad_account_id = job_id_parts.ad_account_id
-        entity_id = job_id_parts.entity_id
         entity_type = job_id_parts.entity_type
         report_day = job_id_parts.range_start
         report_type = job_id_parts.report_type
@@ -116,6 +116,14 @@ class ScoreCalculator:
 
         last_success_dt = None if collection_record is None else collection_record.last_success_dt
         if not JobGateKeeper.shall_pass(job_id_parts, last_success_dt=last_success_dt):
+            _measurement_name_base = __name__ + ScoreCalculator.assign_score.__name__
+            measurement_tags = {
+                'ad_account_id': ad_account_id,
+                'entity_type': entity_type,
+                'report_type': report_type,
+                'report_variant': report_variant
+            }
+            Measure.counter(_measurement_name_base + '.gatekeeper_stop_jobs', tags=measurement_tags).increment()
             return JobGateKeeper.JOB_NOT_PASSED_SCORE
 
         score = 0
