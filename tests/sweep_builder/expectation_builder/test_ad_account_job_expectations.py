@@ -24,7 +24,6 @@ class AdAccountJobsExpectationsTests(TestCase):
             tokens=['blah']
         )
 
-
         def is_adaccount_entity_job(expectation_claim):
             first_job_sign = expectation_claim.job_signatures[0].job_id
             parsed_id_parts = parse_id_parts(first_job_sign)
