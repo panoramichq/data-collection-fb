@@ -74,14 +74,18 @@ def import_ad_accounts_task(job_scope, job_context):
 
     try:
         accounts = api.get_accounts()
+        accounts_status = {}
         for ad_account in accounts:
+            ad_account_id = ad_account['ad_account_id']
+            accounts_status[ad_account_id] = accounts_status.get(ad_account_id, False) or accounts.get('active', True)
+
             # TODO: maybe create a normative job scope that says ("extracting ad account")
             try:
                 # TODO: maybe rather get the entity first and update insert accordingly / if it has change
                 AdAccountEntity.upsert(
                     job_scope.entity_id,  # scope ID
-                    ad_account['ad_account_id'],
-                    is_active=ad_account.get('active', True),
+                    ad_account_id,
+                    is_active=accounts_status[ad_account_id],
                     updated_by_sweep_id=job_scope.sweep_id
                 )
             except PutError as ex:
