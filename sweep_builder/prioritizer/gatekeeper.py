@@ -25,13 +25,12 @@ class JobGateKeeper:
         if job.report_type == ReportType.lifetime:
             return JobGateKeeper._every_x_hours(minutes_since_success, JobGateKeeper.REPORT_TYPE_LIFETIME_FREQUENCY)
 
-        # just in case we generate job without start_time (so it wont crash whole sweep building)
-        if job.range_start is None:
-            return True
-
         # Single-day jobs have no range_end
         job_range_end = job.range_start if job.range_end is None else job.range_end
 
+        # just in case we generate job without range_end, we better let it go :)
+        if job_range_end is None:
+            return True
         datapoint_age_in_days = (now().date() - job_range_end).total_seconds() / (60 * 60 * 24)
 
         if datapoint_age_in_days < 3:
