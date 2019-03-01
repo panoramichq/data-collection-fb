@@ -16,11 +16,11 @@ from common.math import (
     get_decay_proportion,
     get_fade_in_proportion,
 )
+from sweep_builder.prioritizer.gatekeeper import JobGateKeeper
 
 # This controls score decay for insights that are day-specific
 # the further in the past, the less we care.
 # The edge of what we care about is deemed to be \/ 2 years.
-from sweep_builder.prioritizer.gatekeeper import JobGateKeeper
 
 DAYS_BACK_DECAY_RATE = adapt_decay_rate_to_population(365 * 2)
 MINUTES_AWAY_FROM_WHOLE_HOUR_DECAY_RATE = adapt_decay_rate_to_population(30)
