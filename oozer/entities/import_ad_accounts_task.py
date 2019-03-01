@@ -74,10 +74,8 @@ def import_ad_accounts_task(job_scope, job_context):
 
     try:
         accounts = api.get_accounts()
-        accounts_status = {}
-        for ad_account in accounts:
+        for ad_account in _get_accounts_to_import(accounts):
             ad_account_id = ad_account['ad_account_id']
-            accounts_status[ad_account_id] = accounts_status.get(ad_account_id, False) or accounts.get('active', True)
 
             # TODO: maybe create a normative job scope that says ("extracting ad account")
             try:
@@ -85,7 +83,7 @@ def import_ad_accounts_task(job_scope, job_context):
                 AdAccountEntity.upsert(
                     job_scope.entity_id,  # scope ID
                     ad_account_id,
-                    is_active=accounts_status[ad_account_id],
+                    is_active=ad_account.get('active', True),
                     updated_by_sweep_id=job_scope.sweep_id
                 )
             except PutError as ex:
@@ -106,3 +104,20 @@ def import_ad_accounts_task(job_scope, job_context):
         BugSnagContextData.notify(ex, job_scope=job_scope)
         logger.error(str(ex))
         report_job_status_task.delay(JobStatus.GenericError, job_scope)
+
+
+def _get_accounts_to_import(accounts):
+    """
+    Fixes issue describe here https://operam.slack.com/archives/GC03M0PB5/p1548841927032100?thread_ts=1548803775.031500&cid=GC03M0PB5
+    """
+    grouped_accounts = {}
+    for account in accounts:
+        ad_account_id = account['ad_account_id']
+        should_overwrite = True
+        if ad_account_id in grouped_accounts:
+            should_overwrite = not grouped_accounts[ad_account_id].get('active', True) and accounts.get('active', True)
+
+        if should_overwrite:
+            grouped_accounts[ad_account_id] = account
+
+    return grouped_accounts.values()
