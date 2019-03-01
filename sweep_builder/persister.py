@@ -1,12 +1,14 @@
 import logging
 import time
+from collections import defaultdict
 
-from typing import Generator, Callable
+from typing import Generator
 
 from common.measurement import Measure
 from common.enums.entity import Entity
 from oozer.common.expecations_store import JobExpectationsWriter
 from oozer.common.sorted_jobs_queue import SortedJobsQueue
+from sweep_builder.prioritizer.gatekeeper import JobGateKeeper
 
 from .data_containers.prioritization_claim import PrioritizationClaim
 
@@ -28,7 +30,7 @@ subject_to_expectation_publication = {
 
 def should_persist(job_score):
     """Determine whether job with score should be persisted."""
-    return job_score > 0
+    return job_score > JobGateKeeper.JOB_NOT_PASSED_SCORE
 
 
 def iter_persist_prioritized(sweep_id, prioritized_iter):
@@ -53,13 +55,14 @@ def iter_persist_prioritized(sweep_id, prioritized_iter):
         _measurement_sample_rate = 1
 
         _before_next_prioritized = time.time()
+        skipped_jobs = {}
         for prioritization_claim in prioritized_iter:
 
-            _measurement_tags = dict(
-                entity_type=prioritization_claim.entity_type,
-                ad_account_id=prioritization_claim.ad_account_id,
-                sweep_id=sweep_id
-            )
+            _measurement_tags = {
+                'entity_type': prioritization_claim.entity_type,
+                'ad_account_id': prioritization_claim.ad_account_id,
+                'sweep_id': sweep_id,
+            }
 
             Measure.timing(
                 _measurement_name_base + 'next_prioritized',
@@ -152,6 +155,12 @@ def iter_persist_prioritized(sweep_id, prioritized_iter):
 
             if not should_persist(score):
                 logger.info(f'Not persisting job {job_id_effective} due to low score: {score}')
+                ad_account_id = prioritization_claim.ad_account_id
+                report_type = prioritization_claim.job_signatures[LAST].report_type
+
+                if ad_account_id not in skipped_jobs:
+                    skipped_jobs[ad_account_id] = defaultdict(int)
+                skipped_jobs[ad_account_id][report_type] += 1
                 continue
 
             # Following are JobScope attributes we don't store on JobID
@@ -225,3 +234,16 @@ def iter_persist_prioritized(sweep_id, prioritized_iter):
                 yield prioritization_claim
 
             _before_next_prioritized = time.time()
+
+        if skipped_jobs:
+            _measurement_name_base = __name__ + iter_persist_prioritized.__name__
+            for ad_account_id in skipped_jobs:
+                for report_type in skipped_jobs[ad_account_id]:
+                    measurement_tags = {
+                        'sweep_id': sweep_id,
+                        'ad_account_id': ad_account_id,
+                        'report_type': report_type,
+                    }
+                    Measure.counter(_measurement_name_base + '.gatekeeper_stop_jobs', tags=measurement_tags).increment(
+                        skipped_jobs[ad_account_id][report_type]
+                    )

@@ -12,7 +12,7 @@ from common.enums.entity import Entity
 from common.enums.failure_bucket import FailureBucket
 from common.enums.reporttype import ReportType
 from common.tokens import PlatformTokenManager
-from common.bugsnag import BugSnagContextData
+from common.bugsnag import BugSnagContextData, SEVERITY_WARNING
 from oozer.common.cold_storage import batch_store
 from oozer.common.facebook_api import PlatformApiContext, FacebookApiErrorInspector
 from oozer.common.facebook_async_report import FacebookAsyncReportStatus
@@ -439,9 +439,9 @@ class Insights:
                             ExternalPlatformJobStatus.DataFetched, job_scope
                         )
                         # default paging size for entities per parent
-                        # is typically around 25. So, each 100 results
-                        # means about 4 hits to FB
-                        token_manager.report_usage(token, 4)
+                        # is typically around 25. So, each 1000 results
+                        # means about 40 hits to FB
+                        token_manager.report_usage(token, 40)
 
             report_job_status_task(
                 ExternalPlatformJobStatus.Done, job_scope
@@ -449,6 +449,7 @@ class Insights:
             token_manager.report_usage(token)
 
         except FacebookError as e:
+            BugSnagContextData.notify(e, severity=SEVERITY_WARNING, job_scope=job_scope)
             # Build ourselves the error inspector
             inspector = FacebookApiErrorInspector(e)
 

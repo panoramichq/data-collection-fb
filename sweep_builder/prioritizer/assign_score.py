@@ -16,10 +16,12 @@ from common.math import (
     get_decay_proportion,
     get_fade_in_proportion,
 )
+from sweep_builder.prioritizer.gatekeeper import JobGateKeeper
 
 # This controls score decay for insights that are day-specific
 # the further in the past, the less we care.
 # The edge of what we care about is deemed to be \/ 2 years.
+
 DAYS_BACK_DECAY_RATE = adapt_decay_rate_to_population(365 * 2)
 MINUTES_AWAY_FROM_WHOLE_HOUR_DECAY_RATE = adapt_decay_rate_to_population(30)
 
@@ -82,7 +84,6 @@ class ScoreCalculator:
         # exploding the job id parts into individual vars
         job_id_parts = parse_id_parts(job_id)
         ad_account_id = job_id_parts.ad_account_id
-        entity_id = job_id_parts.entity_id
         entity_type = job_id_parts.entity_type
         report_day = job_id_parts.range_start
         report_type = job_id_parts.report_type
@@ -97,7 +98,6 @@ class ScoreCalculator:
             return 1000
 
         # if we are here, we have Platform-flavored job
-
         is_per_parent_job = bool(not entity_type and report_variant)
 
         if not is_per_parent_job and ad_account_id != '23845179':
@@ -112,6 +112,10 @@ class ScoreCalculator:
             collection_record = JobReport.get(job_id)  # type: JobReport
         except:  # TODO: proper error catching here
             collection_record = None  # type: JobReport
+
+        last_success_dt = None if collection_record is None else collection_record.last_success_dt
+        if not JobGateKeeper.shall_pass(job_id_parts, last_success_dt=last_success_dt):
+            return JobGateKeeper.JOB_NOT_PASSED_SCORE
 
         score = 0
 
