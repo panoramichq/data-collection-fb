@@ -51,7 +51,7 @@ def iter_persist_prioritized(sweep_id, prioritized_iter):
     with SortedJobsQueue(sweep_id).JobsWriter() as add_to_queue, \
         JobExpectationsWriter(sweep_id, cache_max_size=200000) as expectation_add:
 
-        _measurement_name_base = __name__ + '.iter_persist_prioritized.'  # <- function name. adjust if changed
+        _measurement_name_base = __name__ + iter_persist_prioritized.__name__
         _measurement_sample_rate = 1
 
         _before_next_prioritized = time.time()
@@ -232,12 +232,12 @@ def iter_persist_prioritized(sweep_id, prioritized_iter):
             _before_next_prioritized = time.time()
 
         if skipped_jobs:
-            _measurement_name_base = __name__ + iter_persist_prioritized.__name__
+            _measurement_name = _measurement_name_base + '.gatekeeper_stop_jobs'
             for ad_account_id in skipped_jobs:
                 measurement_tags = {
                     'sweep_id': sweep_id,
                     'ad_account_id': ad_account_id,
                 }
-                Measure.counter(_measurement_name_base + '.gatekeeper_stop_jobs', tags=measurement_tags).increment(
+                Measure.gauge(_measurement_name, tags=measurement_tags)(
                     skipped_jobs[ad_account_id]
                 )
