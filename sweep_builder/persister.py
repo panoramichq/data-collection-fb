@@ -51,11 +51,11 @@ def iter_persist_prioritized(sweep_id, prioritized_iter):
     with SortedJobsQueue(sweep_id).JobsWriter() as add_to_queue, \
         JobExpectationsWriter(sweep_id, cache_max_size=200000) as expectation_add:
 
-        _measurement_name_base = __name__ + '.iter_persist_prioritized.'  # <- function name. adjust if changed
+        _measurement_name_base = __name__ + '.' + iter_persist_prioritized.__name__
         _measurement_sample_rate = 1
 
         _before_next_prioritized = time.time()
-        skipped_jobs = {}
+        skipped_jobs = defaultdict(int)
         for prioritization_claim in prioritized_iter:
 
             _measurement_tags = {
@@ -156,11 +156,7 @@ def iter_persist_prioritized(sweep_id, prioritized_iter):
             if not should_persist(score):
                 logger.info(f'Not persisting job {job_id_effective} due to low score: {score}')
                 ad_account_id = prioritization_claim.ad_account_id
-                report_type = prioritization_claim.job_signatures[LAST].report_type
-
-                if ad_account_id not in skipped_jobs:
-                    skipped_jobs[ad_account_id] = defaultdict(int)
-                skipped_jobs[ad_account_id][report_type] += 1
+                skipped_jobs[ad_account_id] += 1
                 continue
 
             # Following are JobScope attributes we don't store on JobID
@@ -236,14 +232,12 @@ def iter_persist_prioritized(sweep_id, prioritized_iter):
             _before_next_prioritized = time.time()
 
         if skipped_jobs:
-            _measurement_name_base = __name__ + iter_persist_prioritized.__name__
+            _measurement_name = _measurement_name_base + '.gatekeeper_stop_jobs'
             for ad_account_id in skipped_jobs:
-                for report_type in skipped_jobs[ad_account_id]:
-                    measurement_tags = {
-                        'sweep_id': sweep_id,
-                        'ad_account_id': ad_account_id,
-                        'report_type': report_type,
-                    }
-                    Measure.counter(_measurement_name_base + '.gatekeeper_stop_jobs', tags=measurement_tags).increment(
-                        skipped_jobs[ad_account_id][report_type]
-                    )
+                measurement_tags = {
+                    'sweep_id': sweep_id,
+                    'ad_account_id': ad_account_id,
+                }
+                Measure.gauge(_measurement_name, tags=measurement_tags)(
+                    skipped_jobs[ad_account_id]
+                )
