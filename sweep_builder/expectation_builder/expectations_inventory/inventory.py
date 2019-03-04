@@ -3,9 +3,11 @@ This file contains a mapping of normative report type labels to entities that
 require these reports and to report task implementations effectively fulfilling
 the normative report requirement.
 """
+import functools
 from typing import Dict, List, Generator
 
 from common.enums.entity import Entity
+from common.enums.reporttype import ReportType
 
 from sweep_builder.data_containers.reality_claim import RealityClaim
 from sweep_builder.data_containers.expectation_claim import ExpectationClaim
@@ -15,6 +17,8 @@ from config import jobs as jobs_config
 # map of source / trigger entity type to
 # a list of generator functions each of which, given RealityClaim instance
 # generate one or more ExpectationClaim objects
+from sweep_builder.expectation_builder.expectations_inventory.metrics.breakdowns import metrics_per_ad_per_ad_account
+
 entity_expectation_generator_map = {}  # type: Dict[str, List[(RealityClaim) -> Generator[ExpectationClaim]]]
 
 
@@ -45,21 +49,23 @@ from .metrics import lifetime, breakdowns
 # entity level too / instead (where these jobs become "effective" alternatives there)
 entity_expectation_generator_map[Entity.AdAccount] = list(filter(None, [
     # Entities
-    None if jobs_config.ENTITY_AA_DISABLED else ad_account_entity,
-    None if jobs_config.ENTITY_C_DISABLED else campaign_entities_per_ad_account,
-    None if jobs_config.ENTITY_AS_DISABLED else adset_entities_per_ad_account,
-    None if jobs_config.ENTITY_A_DISABLED else ad_entities_per_ad_account,
-    None if jobs_config.ENTITY_AC_DISABLED else ad_creative_entities_per_ad_account,
-    None if jobs_config.ENTITY_AV_DISABLED else ad_video_entities_per_ad_account,
-    None if jobs_config.ENTITY_CA_DISABLED else custom_audience_entities_per_ad_account,
-    # Insights
-    None if jobs_config.INSIGHTS_HOUR_C_DISABLED else breakdowns.hour_metrics_per_campaign_per_parent,
-    None if jobs_config.INSIGHTS_HOUR_AS_DISABLED else breakdowns.hour_metrics_per_adset_per_parent,
-    None if jobs_config.INSIGHTS_DAY_A_DISABLED else breakdowns.day_metrics_per_ad_per_parent,
-    None if jobs_config.INSIGHTS_HOUR_A_DISABLED else breakdowns.hour_metrics_per_ad_per_parent,
-    None if jobs_config.INSIGHTS_AGE_GENDER_A_DISABLED else breakdowns.day_age_gender_metrics_per_ad_per_parent,
-    None if jobs_config.INSIGHTS_DMA_A_DISABLED else breakdowns.day_dma_metrics_per_ad_per_parent,
-    None if jobs_config.INSIGHTS_PLATFORM_A_DISABLED else breakdowns.day_platform_metrics_per_ad_per_parent,
+    # None if jobs_config.ENTITY_AA_DISABLED else ad_account_entity,
+    # None if jobs_config.ENTITY_C_DISABLED else campaign_entities_per_ad_account,
+    # None if jobs_config.ENTITY_AS_DISABLED else adset_entities_per_ad_account,
+    # None if jobs_config.ENTITY_A_DISABLED else ad_entities_per_ad_account,
+    # None if jobs_config.ENTITY_AC_DISABLED else ad_creative_entities_per_ad_account,
+    # None if jobs_config.ENTITY_AV_DISABLED else ad_video_entities_per_ad_account,
+    # None if jobs_config.ENTITY_CA_DISABLED else custom_audience_entities_per_ad_account,
+    # # Insights
+    # None if jobs_config.INSIGHTS_HOUR_C_DISABLED else breakdowns.hour_metrics_per_campaign_per_parent,
+    # None if jobs_config.INSIGHTS_HOUR_AS_DISABLED else breakdowns.hour_metrics_per_adset_per_parent,
+    functools.partial(metrics_per_ad_per_ad_account, list(filter(None, [
+        None if jobs_config.INSIGHTS_DAY_A_DISABLED else ReportType.day,
+        None if jobs_config.INSIGHTS_HOUR_A_DISABLED else ReportType.day_hour,
+        None if jobs_config.INSIGHTS_AGE_GENDER_A_DISABLED else ReportType.day_age_gender,
+        None if jobs_config.INSIGHTS_DMA_A_DISABLED else ReportType.day_dma,
+        None if jobs_config.INSIGHTS_PLATFORM_A_DISABLED else ReportType.day_platform,
+    ]))),
     sync_expectations_per_ad_account
 ]))
 
