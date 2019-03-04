@@ -11,6 +11,7 @@ import pickle
 from bugsnag.celery import connect_failure_handler
 from contextlib import AbstractContextManager
 
+from common.store.base import BaseModel
 from config.application import ENVIRONMENT
 from config.bugsnag import API_KEY
 from config.build import BUILD_ID
@@ -44,14 +45,16 @@ def configure_bugsnag():
 
 
 class _JSONEncoder(json.JSONEncoder):
-
     def default(self, o):
         try:
-            return super(_JSONEncoder, self).default(o)
+            return super().default(o)
         except:
             try:
-                return 'data:application/python-pickle;base64,' + base64.b64encode(pickle.dumps(o)).decode('ascii')
-            except Exception:
+                pickle_repr = 'data:application/python-pickle;base64,' + base64.b64encode(pickle.dumps(o)).decode('ascii')
+                if isinstance(o, BaseModel):
+                    return pickle_repr
+                return repr(o) + ';' + pickle_repr
+            except:
                 return repr(o)
 
 
