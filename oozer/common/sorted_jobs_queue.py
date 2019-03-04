@@ -279,6 +279,8 @@ class SortedJobsQueue:
     and for reading jobs from the queue (in Sweep Looper).
     """
 
+    _JOBS_READER_BATCH_SIZE = 200
+
     def __init__(self, sweep_id):
         """
         Closure that exposes a callable that gets repeatedly called with item to add to one and same
