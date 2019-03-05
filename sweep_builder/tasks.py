@@ -14,6 +14,13 @@ app = get_celery_app()
 logger = logging.getLogger(__name__)
 
 
+def extract_tags_for_build_sweep_slice(sweep_id, ad_account_reality_claim, *args, **kwargs):
+    return {
+        'sweep_id': sweep_id,
+        'ad_account_id': ad_account_reality_claim.ad_account_id,
+    }
+
+
 @app.task(routing_key=RoutingKey.longrunning)
 @Measure.timer(__name__, function_name_as_metric=True)
 @Measure.counter(__name__, function_name_as_metric=True, count_once=True)
@@ -22,8 +29,17 @@ def echo(message='This is Long-Running queue'):
 
 
 @app.task(routing_key=RoutingKey.longrunning, ignore_result=False)
-@Measure.timer(__name__, function_name_as_metric=True)
-@Measure.counter(__name__, function_name_as_metric=True, count_once=True)
+@Measure.timer(
+    __name__,
+    function_name_as_metric=True,
+    extract_tags_from_arguments=extract_tags_for_build_sweep_slice
+)
+@Measure.counter(
+    __name__,
+    function_name_as_metric=True,
+    count_once=True,
+    extract_tags_from_arguments=extract_tags_for_build_sweep_slice
+)
 def build_sweep_slice_per_ad_account_task(sweep_id, ad_account_reality_claim, task_id=None):
     """
 
