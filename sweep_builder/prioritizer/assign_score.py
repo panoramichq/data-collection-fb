@@ -16,6 +16,7 @@ from common.math import (
     get_decay_proportion,
     get_fade_in_proportion,
 )
+from config.jobs import ACTIVATE_JOB_GATEKEEPER
 from sweep_builder.prioritizer.gatekeeper import JobGateKeeper
 
 # This controls score decay for insights that are day-specific
@@ -114,7 +115,7 @@ class ScoreCalculator:
             collection_record = None  # type: JobReport
 
         last_success_dt = None if collection_record is None else collection_record.last_success_dt
-        if not JobGateKeeper.shall_pass(job_id_parts, last_success_dt=last_success_dt):
+        if ACTIVATE_JOB_GATEKEEPER and not JobGateKeeper.shall_pass(job_id_parts, last_success_dt=last_success_dt):
             return JobGateKeeper.JOB_NOT_PASSED_SCORE
 
         score = 0
