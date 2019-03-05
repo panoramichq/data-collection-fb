@@ -67,14 +67,16 @@ class MeasuringPrimitive(ContextDecorator):
 
 
     """
+
     def __init__(
-            self,
-            # Auto bound methods
-            measure_function, prefix, default_value,
-            # Actual invocation related methods
-            metric, tags=None, sample_rate=1,
-            # Binding options and so on
-            bind=None, function_name_as_metric=False
+        self,
+        # Auto bound methods
+        measure_function, prefix, default_value,
+        # Actual invocation related methods
+        metric, tags=None, sample_rate=1,
+        # Binding options and so on
+        bind=None, function_name_as_metric=False,
+        extract_tags_from_arguments=None,
     ):
         """
 
@@ -86,6 +88,7 @@ class MeasuringPrimitive(ContextDecorator):
         :param sample_rate:
         :param bind: String indicating the name of kwarg to inject into wrapped function
         :param function_name_as_metric:
+        :param extract_tags_from_arguments: extracts tag from wrappee's arguments
         """
         self._statsd_func = measure_function
         self._default_value = default_value
@@ -105,6 +108,8 @@ class MeasuringPrimitive(ContextDecorator):
         # Decorators only: If function_name_as_metric is true, it will append
         # the function name to the metric name, joined on . (dot) character
         self._function_name_as_metric = function_name_as_metric
+        self._extract_tags_from_arguments = extract_tags_from_arguments
+        self._extracted_tags = {}
 
     def _wrap_callable(self, func, hook=None):
         """
@@ -126,6 +131,8 @@ class MeasuringPrimitive(ContextDecorator):
         def wrapper(*args, **kwargs):
             if hook:
                 hook()
+            if self._extract_tags_from_arguments:
+                self._extracted_tags = self._extract_tags_from_arguments(args, kwargs)
             return func(*args, **kwargs)
 
         return wrapper
@@ -140,12 +147,11 @@ class MeasuringPrimitive(ContextDecorator):
         value = value or self._default_value
 
         logger.debug(f"Submitting metric: {self._metric}")
-        self._statsd_func(
-            self._metric,
-            value,
-            _dict_as_statsd_tags(self._tags),
-            self._sample_rate
-        )
+        final_tags = {
+            **self._extracted_tags,
+            **self._tags,
+        }
+        self._statsd_func(self._metric, value, _dict_as_statsd_tags(final_tags), self._sample_rate)
 
     def __call__(self, argument):
         """
@@ -170,7 +176,6 @@ class MeasuringPrimitive(ContextDecorator):
                         'measure' if self._bind is True else self._bind : self
                     }
                 )
-
 
             # Optionally append callable name as metric name
             if self._function_name_as_metric:
