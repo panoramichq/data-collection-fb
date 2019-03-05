@@ -132,19 +132,8 @@ def day_metrics_per_entities_under_ad_account(entity_type, report_types, reality
     :param RealityClaim reality_claim:
     :rtype: Generator[ExpectationClaim]
     """
-    if not report_types:
+    if not report_types or not reality_claim.timezone:
         return
-    if not reality_claim.timezone:
-        # For metrics, reality claim must have timezone.
-        return
-    assert entity_type in Entity.ALL
-    assert entity_type is not Entity.AdAccount
-    # assert day_breakdown in ReportType.ALL_DAY_BREAKDOWNS
-
-    base_normative_data = dict(
-        ad_account_id=reality_claim.ad_account_id,
-        report_variant=entity_type
-    )
 
     reality_claim_data = reality_claim.to_dict()
     _days_cache = set()
@@ -165,7 +154,8 @@ def day_metrics_per_entities_under_ad_account(entity_type, report_types, reality
                                 generate_id(
                                     range_start=day,
                                     report_type=report_type,
-                                    **base_normative_data
+                                    ad_account_id=reality_claim.ad_account_id,
+                                    report_variant=entity_type,
                                 )
                             )
                         ]
