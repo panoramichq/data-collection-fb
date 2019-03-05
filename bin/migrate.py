@@ -7,6 +7,10 @@ sys.path.insert(0, '.')
 
 
 def do_it_all():
+    from common.store.base import BaseMeta
+    if BaseMeta.host is None:
+        raise ValueError(f'DynamoDB host config not set. Could be running against prod/staging environment')
+
     from common.store.sync_schema import sync_schema
     sync_schema(brute_force=True)
 

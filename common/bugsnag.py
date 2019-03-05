@@ -11,11 +11,15 @@ import pickle
 from bugsnag.celery import connect_failure_handler
 from contextlib import AbstractContextManager
 
+from common.store.base import BaseModel
 from config.application import ENVIRONMENT
 from config.bugsnag import API_KEY
 from config.build import BUILD_ID
 
 _logger = logging.getLogger(__name__)
+
+SEVERITY_ERROR = 'error'
+SEVERITY_WARNING = 'warning'
 
 
 def configure_bugsnag():
@@ -41,14 +45,16 @@ def configure_bugsnag():
 
 
 class _JSONEncoder(json.JSONEncoder):
-
     def default(self, o):
         try:
-            return super(_JSONEncoder, self).default(o)
+            return super().default(o)
         except:
             try:
-                return 'data:application/python-pickle;base64,' + base64.b64encode(pickle.dumps(o)).decode('ascii')
-            except Exception:
+                pickle_repr = 'data:application/python-pickle;base64,' + base64.b64encode(pickle.dumps(o)).decode('ascii')
+                if isinstance(o, BaseModel):
+                    return pickle_repr
+                return repr(o) + ';' + pickle_repr
+            except:
                 return repr(o)
 
 
@@ -80,7 +86,7 @@ class BugSnagContextData(AbstractContextManager):
         return self.context_data
 
     @staticmethod
-    def notify(exc, **context_data):
+    def notify(exc, severity=SEVERITY_ERROR, **context_data):
         # Serialize errors and send to Bugsnag
 
         # When we have a top-level exception trapper as well
@@ -103,7 +109,8 @@ class BugSnagContextData(AbstractContextManager):
                 # json decoder / encoder are (ab)used to do deep
                 # but safe serialization of whatever is passed to us as context data.
                 'extra_data': _make_data_safe_for_serialization(context_data)
-            }
+            },
+            severity=severity,
         )
 
     def __exit__(self, exc_type, exc, exc_tb):

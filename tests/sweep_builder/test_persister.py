@@ -112,6 +112,7 @@ class PersisterSavesJobScopeData(TestCase):
             # comes from Persister code
             # manually peeled off *Claim and injected into Data Flower
             ad_account_timezone_name='Europe/London',
+            score=100,
         )
 
         assert job_scope.to_dict() == job_scope_should_be.to_dict()

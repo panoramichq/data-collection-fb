@@ -130,7 +130,8 @@ def _job_scope_to_metadata(job_scope):
             # TODO: communicate this with JobScope somewhere
             # so that when we have requests done in multiple versions
             # we communicate the right one.
-            'platform_api_version': FacebookAdsApi.API_VERSION
+            'platform_api_version': FacebookAdsApi.API_VERSION,
+            'score': None if job_scope.score is None else str(job_scope.score),
         }.items()
         # S3 driver (boto) freaks out about None as values -
         # > value.encode('ascii')

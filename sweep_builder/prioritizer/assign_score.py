@@ -1,12 +1,13 @@
-from datetime import date, datetime
-from collections import defaultdict, OrderedDict
+import random
+
+from collections import OrderedDict
 
 import config.application
 from common.enums.entity import Entity
 
 from common.enums.failure_bucket import FailureBucket
 from common.enums.reporttype import ReportType
-from common.id_tools import parse_id_parts, generate_id
+from common.id_tools import parse_id_parts
 from common.job_signature import JobSignature
 from common.store.jobreport import JobReport
 from common.tztools import now_in_tz, now
@@ -15,10 +16,12 @@ from common.math import (
     get_decay_proportion,
     get_fade_in_proportion,
 )
+from sweep_builder.prioritizer.gatekeeper import JobGateKeeper
 
 # This controls score decay for insights that are day-specific
 # the further in the past, the less we care.
 # The edge of what we care about is deemed to be \/ 2 years.
+
 DAYS_BACK_DECAY_RATE = adapt_decay_rate_to_population(365 * 2)
 MINUTES_AWAY_FROM_WHOLE_HOUR_DECAY_RATE = adapt_decay_rate_to_population(30)
 
@@ -81,7 +84,6 @@ class ScoreCalculator:
         # exploding the job id parts into individual vars
         job_id_parts = parse_id_parts(job_id)
         ad_account_id = job_id_parts.ad_account_id
-        entity_id = job_id_parts.entity_id
         entity_type = job_id_parts.entity_type
         report_day = job_id_parts.range_start
         report_type = job_id_parts.report_type
@@ -96,7 +98,6 @@ class ScoreCalculator:
             return 1000
 
         # if we are here, we have Platform-flavored job
-
         is_per_parent_job = bool(not entity_type and report_variant)
 
         if not is_per_parent_job and ad_account_id != '23845179':
@@ -112,18 +113,22 @@ class ScoreCalculator:
         except:  # TODO: proper error catching here
             collection_record = None  # type: JobReport
 
+        last_success_dt = None if collection_record is None else collection_record.last_success_dt
+        if not JobGateKeeper.shall_pass(job_id_parts, last_success_dt=last_success_dt):
+            return JobGateKeeper.JOB_NOT_PASSED_SCORE
+
         score = 0
 
         if ad_account_id == '23845179' and report_type != ReportType.entity:
             now_time = now_in_tz(timezone)
             if not collection_record or not collection_record.last_success_dt:
                 # Not succeeded this job yet
-                return 100
+                return random.randint(8, 15)
             else:
                 secs_since_last_success = (now_time - collection_record.last_success_dt).seconds
                 if secs_since_last_success > 60 * 60 * 8:
                     # Succeeded more than 8 hours ago
-                    return 200
+                    return random.randint(8, 15)
                 else:
                     # Succeeded in last 8 hours
                     return 0

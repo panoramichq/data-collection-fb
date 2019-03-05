@@ -1,6 +1,7 @@
 from facebook_business.adobjects.adreportrun import AdReportRun
 from facebook_business.adobjects.adsinsights import AdsInsights
-from facebook_business.api import FacebookAdsApi, FacebookSession
+
+from config.facebook import INSIGHTS_MAX_POLLING_INTERVAL, INSIGHTS_MIN_POLLING_INTERVAL
 
 
 class FacebookReportDefinition:
@@ -50,6 +51,7 @@ class FacebookAsyncReportStatus:
     SUCCEEDED_STATE = {'Job Completed',}
     FAILED_STATE = {'Job Failed', 'Job Skipped'}
     COMPLETED_STATE = SUCCEEDED_STATE | FAILED_STATE
+    BACKOFF_MAX_REFRESH_COUNT = 10
 
     _report = None
 
@@ -68,11 +70,13 @@ class FacebookAsyncReportStatus:
         # When we hit that need, we may need to change internals
         # to store only report ID and token. Until then...
         self._report = report_status_obj
+        self._refresh_count = 0
 
     def refresh(self):
         """
         Get fresh status of the report with FB
         """
+        self._refresh_count += 1
         return self._report.remote_read()
 
     @property
@@ -88,6 +92,12 @@ class FacebookAsyncReportStatus:
         :return bool: Report completed somehow
         """
         return self.status in self.COMPLETED_STATE
+
+    @property
+    def backoff_interval(self):
+        # Cap refresh count to avoid large powers
+        refresh_count = min(self._refresh_count, self.BACKOFF_MAX_REFRESH_COUNT)
+        return min(INSIGHTS_MAX_POLLING_INTERVAL, INSIGHTS_MIN_POLLING_INTERVAL * (2 ** refresh_count))
 
     @property
     def is_success(self):
