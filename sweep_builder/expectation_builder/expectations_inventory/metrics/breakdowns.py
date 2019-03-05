@@ -220,7 +220,7 @@ day_dma_metrics_per_ad_per_entity = functools.partial(
 hour_metrics_per_campaign_per_parent = functools.partial(
     day_metrics_per_entities_under_ad_account,
     Entity.Campaign,
-    ReportType.day_hour
+    [ReportType.day_hour],
 )  # type: (RealityClaim) -> Generator[ExpectationClaim]
 
 # Per AS, per report type
@@ -228,7 +228,7 @@ hour_metrics_per_campaign_per_parent = functools.partial(
 hour_metrics_per_adset_per_parent = functools.partial(
     day_metrics_per_entities_under_ad_account,
     Entity.AdSet,
-    ReportType.day_hour
+    [ReportType.day_hour],
 )  # type: (RealityClaim) -> Generator[ExpectationClaim]
 
 # per Ad, day and sub-day breakdowns

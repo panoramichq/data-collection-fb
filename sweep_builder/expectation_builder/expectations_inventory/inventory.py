@@ -4,21 +4,20 @@ require these reports and to report task implementations effectively fulfilling
 the normative report requirement.
 """
 import functools
+
 from typing import Dict, List, Generator
 
+from config import jobs as jobs_config
 from common.enums.entity import Entity
 from common.enums.reporttype import ReportType
-
 from sweep_builder.data_containers.reality_claim import RealityClaim
 from sweep_builder.data_containers.expectation_claim import ExpectationClaim
+from sweep_builder.expectation_builder.expectations_inventory.metrics.breakdowns import metrics_per_ad_per_ad_account
 
-from config import jobs as jobs_config
 
 # map of source / trigger entity type to
 # a list of generator functions each of which, given RealityClaim instance
 # generate one or more ExpectationClaim objects
-from sweep_builder.expectation_builder.expectations_inventory.metrics.breakdowns import metrics_per_ad_per_ad_account
-
 entity_expectation_generator_map = {}  # type: Dict[str, List[(RealityClaim) -> Generator[ExpectationClaim]]]
 
 
