@@ -1,9 +1,9 @@
 # must be first, as it does event loop patching and other "first" things
-from tests.base.testcase import TestCase, mock
-import time
+from unittest.mock import patch
 
-from common.measurement import MeasureWrapper, TimerMeasuringPrimitive
-from config import measurement, build, application
+from tests.base.testcase import TestCase, mock
+
+from config import measurement, build
 
 # TODO: Mock out actual statsd calls and verify it does what it's supposed to do
 # TODO: Run for disabled env too
@@ -12,7 +12,7 @@ from config import measurement, build, application
 class BaseMeasureTestCase(TestCase):
 
     def setUp(self):
-
+        from common.measurement import MeasureWrapper
         self.Measure = MeasureWrapper(
             host='localhost',
             port=measurement.STATSD_PORT,
@@ -169,7 +169,7 @@ class TestAutotimingMeasurements(BaseMeasureTestCase):
             entropy + 1.5, # first .elapsed call time
             entropy + 2.75  # exit - end time
         ]
-        with mock.patch.object(TimerMeasuringPrimitive, '_get_now_in_seconds', side_effect=now_values):
+        with mock.patch('common.measurement._get_now_in_seconds', side_effect=now_values):
 
             with self._construct_measure('timer', 'ctx') as timer:
 
@@ -195,7 +195,7 @@ class TestAutotimingMeasurements(BaseMeasureTestCase):
             entropy + 1.5, # first .elapsed call time
             entropy + 2.75  # exit - end time
         ]
-        with mock.patch.object(TimerMeasuringPrimitive, '_get_now_in_seconds', side_effect=now_values):
+        with mock.patch('common.measurement._get_now_in_seconds', side_effect=now_values):
 
             @self._construct_measure('timer', 'deco', bind='timer')
             def some_func(timer):
@@ -269,3 +269,27 @@ class TestCounterMeasurements(BaseMeasureTestCase):
 
             measure -= 5
             self.assertEqual(15, measure.total_value)
+
+
+def test_measurement_extract_tags_from_arguments():
+    """Check that extract_tags_from_arguments extracts arguments correctly."""
+
+    def test_extract_tags_from_arguments(*args, **kwargs):
+        return {'arg': args[0], 'kwarg': kwargs['kwarg']}
+
+    from datadog import DogStatsd
+    with patch.object(DogStatsd, 'timing') as mock_timing:
+        from common.measurement import Measure
+
+        @Measure.timer('test.metric', extract_tags_from_arguments=test_extract_tags_from_arguments)
+        def timed_func(arg, kwarg=None):
+            pass
+
+        timed_func(5, kwarg=10)
+
+        mock_timing.assert_called_once_with(
+            'data_collection_fb.timers.test.metric',
+            mock.ANY,
+            ['arg:5', 'kwarg:10'],
+            1
+        )

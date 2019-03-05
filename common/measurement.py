@@ -132,7 +132,7 @@ class MeasuringPrimitive(ContextDecorator):
             if hook:
                 hook()
             if self._extract_tags_from_arguments:
-                self._extracted_tags = self._extract_tags_from_arguments(args, kwargs)
+                self._extracted_tags = self._extract_tags_from_arguments(*args, **kwargs)
             return func(*args, **kwargs)
 
         return wrapper
