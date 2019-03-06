@@ -17,6 +17,9 @@ is more meaningful in context of some particular job DISABLED=False
 In this case, group level DISABLED clearly takes precedence.
 """
 
+# Activate Job Gatekeeper
+ACTIVATE_JOB_GATEKEEPER = False
+
 # Ad account sourcing
 AD_ACCOUNT_IMPORT_DISABLED = False
 

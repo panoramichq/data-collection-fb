@@ -1,9 +1,7 @@
-# must be first, as it does event loop patching and other "first" things
+from common.measurement import MeasuringPrimitive, TimerMeasuringPrimitive, MeasureWrapper
 from tests.base.testcase import TestCase, mock
-import time
 
-from common.measurement import MeasureWrapper, TimerMeasuringPrimitive
-from config import measurement, build, application
+from config import measurement, build
 
 # TODO: Mock out actual statsd calls and verify it does what it's supposed to do
 # TODO: Run for disabled env too
@@ -12,7 +10,6 @@ from config import measurement, build, application
 class BaseMeasureTestCase(TestCase):
 
     def setUp(self):
-
         self.Measure = MeasureWrapper(
             host='localhost',
             port=measurement.STATSD_PORT,
@@ -269,3 +266,27 @@ class TestCounterMeasurements(BaseMeasureTestCase):
 
             measure -= 5
             self.assertEqual(15, measure.total_value)
+
+
+def test_measurement_extract_tags_from_arguments():
+    """Check that extract_tags_from_arguments extracts arguments correctly."""
+
+    def test_extract_tags_from_arguments(*args, **kwargs):
+        return {'arg': args[0], 'kwarg': kwargs['kwarg']}
+
+    measure_mock = mock.Mock()
+
+    primitive = MeasuringPrimitive(
+        measure_mock, 'prefix', None, 'metric',
+        extract_tags_from_arguments=test_extract_tags_from_arguments
+    )
+
+    @primitive
+    def timed_func(arg, kwarg=None):
+        pass
+
+    timed_func(5, kwarg=10)
+
+    primitive(100)
+
+    measure_mock.assert_called_once_with('prefix.metric', 100, ['arg:5', 'kwarg:10'], 1)
