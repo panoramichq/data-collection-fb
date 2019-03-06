@@ -52,9 +52,8 @@ def build_sweep_slice_per_ad_account_task(sweep_id, ad_account_reality_claim, ta
     """
     from .pipeline import iter_pipeline
     from .reality_inferrer.reality import iter_reality_per_ad_account_claim
-    from .data_containers.prioritization_claim import PrioritizationClaim
 
-    with TaskGroup.task_context(task_id) as task_context:
+    with TaskGroup.task_context(task_id) as __:
 
         _measurement_name_base = __name__ + '.build_sweep_per_ad_account.'  # <- function name. adjust if changed
         _measurement_tags = dict(
@@ -64,7 +63,7 @@ def build_sweep_slice_per_ad_account_task(sweep_id, ad_account_reality_claim, ta
 
         reality_claims_iter = itertools.chain(
             [ad_account_reality_claim],
-            iter_reality_per_ad_account_claim(ad_account_reality_claim)
+            iter_reality_per_ad_account_claim(ad_account_reality_claim, entity_types=[Entity.Campaign, Entity.AdSet, Entity.Ad])
         )
         cnt = 0
 
