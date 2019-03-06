@@ -61,7 +61,7 @@ def iter_prioritized(expectations_iter):
 
         # score of zero is returned for all jobs in the beginning of the expectation_claim.job_signatures
         # list, and only the last job in the list gets an actual score
-        job_scores = [0 for _ in range(0, len(expectation_claim.job_signatures) - 1)] + [last_task_score]
+        job_scores = [0] * (len(expectation_claim.job_signatures) - 1) + [last_task_score]
 
         # This time includes the time consumer of this generator wastes
         # between reads from us. Good way to measure how quickly we are
