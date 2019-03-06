@@ -15,7 +15,7 @@ Here we base our understanding of the world based on scraps of data
 these workers already collected some time before.
 """
 
-from typing import Generator
+from typing import Generator, Tuple
 
 from common.store import entities, scope
 

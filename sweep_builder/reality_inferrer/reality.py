@@ -1,6 +1,7 @@
 from typing import Generator
 
 from common.enums.entity import Entity
+from common.store import entities
 from sweep_builder.data_containers.reality_claim import RealityClaim
 
 from .adaccounts import iter_scopes, iter_active_ad_accounts_per_scope
@@ -60,6 +61,7 @@ def iter_reality_base():
                 timezone=ad_account.timezone,
                 tokens=scope_record.platform_tokens
             )
+
 
 
 def iter_reality_per_ad_account_claim(ad_account_claim, entity_types=None):

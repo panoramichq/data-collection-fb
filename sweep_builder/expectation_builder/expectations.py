@@ -1,14 +1,18 @@
-from typing import Generator, Iterable
+from typing import Generator, Union, List
+from collections import defaultdict
 
+from common.enums.entity import Entity
+from common.id_tools import parse_id_parts
 from common.measurement import Measure
 from sweep_builder.data_containers.expectation_claim import ExpectationClaim
 from sweep_builder.data_containers.reality_claim import RealityClaim
-from sweep_builder.expectation_builder.expectations_inventory.inventory import entity_expectations_for_23845179, \
-    entity_expectation_generator_map
+from sweep_builder.expectation_builder.expectations_inventory.inventory import entity_expectations_for_23845179
+
+from .expectations_inventory import entity_expectation_generator_map
 
 
 def iter_expectations(reality_claims_iter):
-    # type: (Iterable[RealityClaim]) -> Generator[ExpectationClaim]
+    # type: (Union[Generator[RealityClaim],List[RealityClaim]]) -> Generator[ExpectationClaim]
     """
     Converts an instance of RealityClaim object (claiming that certain
     entities exist and providing some metadata about their existence)
@@ -20,24 +24,39 @@ def iter_expectations(reality_claims_iter):
     :return: Generator yielding ExpectationClaim objects
     :rtype: Generator[ExpectationClaim]
     """
+    _measurement_name_base = __name__ + '.iter_expectations.'  # <- function name. adjust if changed
+    _measurement_sample_rate = 1
+
     for reality_claim in reality_claims_iter:
         if reality_claim.ad_account_id == '23845179':
             jobs_generators = entity_expectations_for_23845179.get(reality_claim.entity_type, [])
         else:
             jobs_generators = entity_expectation_generator_map.get(reality_claim.entity_type, [])
 
-        count = 0
+        # histogram measures min/max/ave per thing.
+        # Here we are trying to measure how given entity type (per ad account)
+        # fans out into expectations.
+        counts = defaultdict(int)
 
         for jobs_generator in jobs_generators:
             for expectation_claim in jobs_generator(reality_claim):  # type: ExpectationClaim
                 yield expectation_claim
-                count += 1
 
-        Measure.histogram(
-            __name__ + '.iter_expectations.expectations_per_reality_claim',
-            tags={
-                'ad_account_id': reality_claim.ad_account_id,
-                'entity_type': reality_claim.entity_type,
-            },
-            sample_rate=1
-        )(count)
+                if len(expectation_claim.job_signatures):
+                    job_signature = expectation_claim.job_signatures[-1]
+                    report_type = parse_id_parts(job_signature.job_id).report_type
+                else:
+                    report_type = 'unknown'
+
+                counts[report_type] += 1
+
+        for report_type, cnt in counts.items():
+            Measure.histogram(
+                _measurement_name_base + 'expectations_per_reality_claim',
+                tags=dict(
+                    ad_account_id=reality_claim.ad_account_id,
+                    entity_type=reality_claim.entity_type,
+                    report_type=report_type
+                ),
+                sample_rate=_measurement_sample_rate
+            )(cnt)
