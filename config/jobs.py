@@ -18,7 +18,7 @@ In this case, group level DISABLED clearly takes precedence.
 """
 
 # Activate Job Gatekeeper
-ACTIVATE_JOB_GATEKEEPER = False
+ACTIVATE_JOB_GATEKEEPER = True
 
 # Ad account sourcing
 AD_ACCOUNT_IMPORT_DISABLED = False
