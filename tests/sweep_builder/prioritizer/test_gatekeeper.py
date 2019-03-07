@@ -78,8 +78,8 @@ def test_shall_pass_lifetime_report_type(last_success_delta, expected):
 @pytest.mark.parametrize(
     ['last_success_delta', 'expected'],
     [
-        (timedelta(hours=25), True),
-        (timedelta(hours=23), False),
+        (timedelta(hours=13), True),
+        (timedelta(hours=11), False),
     ]
 )
 def test_shall_pass_entity_report_type(last_success_delta, expected):
