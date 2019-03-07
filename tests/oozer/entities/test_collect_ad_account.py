@@ -36,14 +36,10 @@ class TestCollectAdAccount(TestCase):
             sweep_id='1'
         )
 
-        with mock.patch.object(report_job_status_task, 'delay') as status_task, \
-            self.assertRaises(ValueError) as ex_trap:
+        with self.assertRaises(ValueError) as ex_trap:
             collect_adaccount(job_scope, None)
 
         assert 'Report level' in str(ex_trap.exception)
-        assert status_task.called
-        parameters, _ = status_task.call_args
-        assert (JobStatus.GenericError, job_scope) == parameters, 'Must report status correctly on failure'
 
     def test_fails_without_a_token(self):
         job_scope = JobScope(
@@ -56,15 +52,10 @@ class TestCollectAdAccount(TestCase):
             sweep_id='1'
         )
 
-        with mock.patch.object(report_job_status_task, 'delay') as status_task, \
-            self.assertRaises(ValueError) as ex_trap:
+        with self.assertRaises(ValueError) as ex_trap:
             collect_adaccount(job_scope, None)
 
         assert 'token' in str(ex_trap.exception)
-        assert status_task.called
-
-        status_task_args, _ = status_task.call_args
-        assert (JobStatus.GenericError, job_scope) == status_task_args, 'Must report status correctly on failure'
 
     def test_runs_correctly(self):
         account_id = random.gen_string_id()
@@ -93,13 +84,9 @@ class TestCollectAdAccount(TestCase):
         account_data._data['timezone_name'] = timezone
         account_data._data['account_id'] = account_id
 
-        with mock.patch.object(report_job_status_task, 'delay') as status_task, \
-            mock.patch.object(FB_ADACCOUNT_MODEL, 'remote_read', return_value=account_data), \
+        with mock.patch.object(FB_ADACCOUNT_MODEL, 'remote_read', return_value=account_data), \
             mock.patch.object(NormalStore, 'store') as store:
             collect_adaccount(job_scope, None)
-
-        status_job_last_call_parameters, _ = status_task.call_args  # Last status task call arguments
-        assert status_job_last_call_parameters == (JobStatus.Done, job_scope), 'Job status should be reported as Done'
 
         assert store.called_with(account_data), 'Data should be stored with the cold store module'
 

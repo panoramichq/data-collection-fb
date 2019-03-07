@@ -11,7 +11,8 @@ from facebook_business.adobjects.advideo import AdVideo
 from facebook_business.adobjects.customaudience import CustomAudience
 from facebook_business.exceptions import FacebookRequestError
 
-from oozer.common.enum import to_fb_model
+from common.enums.failure_bucket import FailureBucket
+from oozer.common.enum import to_fb_model, ExternalPlatformJobStatus
 from oozer.common.facebook_fields import collapse_fields_children
 
 
@@ -125,6 +126,26 @@ class FacebookApiErrorInspector:
         :return bool: If True, the exception is of type "too much data"
         """
         return self._is_exception_in_list(self.TOO_MUCH_DATA_CODES)
+
+    def get_status_and_bucket(self):
+        # type: () -> (int, int)
+        """Extract status and bucket from inspected exception."""
+        # Is this a throttling error?
+        if self.is_throttling_exception():
+            failure_status = ExternalPlatformJobStatus.ThrottlingError
+            failure_bucket = FailureBucket.Throttling
+
+        # Did we ask for too much data?
+        elif self.is_too_large_data_exception():
+            failure_status = ExternalPlatformJobStatus.TooMuchData
+            failure_bucket = FailureBucket.TooLarge
+
+        # It's something else which we don't understand
+        else:
+            failure_status = ExternalPlatformJobStatus.GenericPlatformError
+            failure_bucket = FailureBucket.Other
+
+        return failure_status, failure_bucket
 
 
 _default_fields_map = {

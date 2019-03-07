@@ -32,6 +32,8 @@ class JobScope:
     tokens = None  # type: list
 
     score = None  # type: int
+    running_time = None  # type: int
+    datapoint_count = None  # type: int
 
     # Indicates that this is a synthetically created instance of JobScope
     # (likely by the worker code to indicate some sub-level of work done)

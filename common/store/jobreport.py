@@ -202,6 +202,9 @@ class JobReport(BaseModel, MemoizeMixin):
     last_failure_error = attributes.UnicodeAttribute(null=True, attr_name='fmessage')
     last_failure_bucket = attributes.NumberAttribute(null=True, attr_name='fb')
 
+    last_running_time = attributes.NumberAttribute(null=True, attr_name='rt')
+    last_datapoint_count = attributes.NumberAttribute(null=True, attr_name='dc')
+
 
 def sync_schema(brute_force=False):
     """

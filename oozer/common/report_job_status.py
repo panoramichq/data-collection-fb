@@ -96,6 +96,8 @@ def report_job_status(stage_id, job_scope):
             data = dict(
                 last_success_dt=datetime.utcnow(),
                 last_success_sweep_id=job_scope.sweep_id,
+                last_running_time=job_scope.running_time,
+                last_datapoint_count=job_scope.datapoint_count,
             )
             is_done = True
 
@@ -103,7 +105,9 @@ def report_job_status(stage_id, job_scope):
             data = dict(
                 last_progress_dt=datetime.utcnow(),
                 last_progress_stage_id=stage_id,
-                last_progress_sweep_id=job_scope.sweep_id
+                last_progress_sweep_id=job_scope.sweep_id,
+                last_running_time=None,
+                last_datapoint_count=None,
             )
 
         elif stage_id < 0:
@@ -112,18 +116,16 @@ def report_job_status(stage_id, job_scope):
                 last_failure_stage_id=stage_id,
                 last_failure_sweep_id=job_scope.sweep_id,
                 # last_failure_error=?
-                last_failure_bucket=status_bucket
+                last_failure_bucket=status_bucket,
+                last_running_time=job_scope.running_time,
+                last_datapoint_count=None,
             )
 
         # important to use upsert, not .save()
         # .save() saves entire model, including zeroing out the optional fields
         # not set here. Must use blind update that updates only the fields we specify.
         if data:
-
-            JobReport.upsert(
-                job_scope.job_id,
-                **data
-            )
+            JobReport.upsert(job_scope.job_id, **data)
 
         # job_scope.namespace == JobScope.namespace means equal to default value
         # which is the value for external platform namespace
