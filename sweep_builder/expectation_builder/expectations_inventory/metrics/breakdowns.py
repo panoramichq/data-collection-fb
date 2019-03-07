@@ -210,8 +210,7 @@ day_platform_metrics_per_ad_per_entity = functools.partial(
 )  # type: (RealityClaim) -> Generator[ExpectationClaim]
 
 day_dma_metrics_per_ad_per_entity = functools.partial(
-    daily_metrics_per_entity,
-    Entity.Ad,
+    _lifecycle_metrics_per_ad,
     ReportType.day_dma,
 )  # type: (RealityClaim) -> Generator[ExpectationClaim]
 
