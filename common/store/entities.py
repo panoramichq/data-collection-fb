@@ -1,11 +1,20 @@
+from typing import Any
+
 from common.enums.entity import Entity
 from common.memoize import memoized_property
 from config import dynamodb as dynamodb_config
+from oozer.common.job_scope import JobScope
 
 from .base import BaseMeta, BaseModel, attributes
 
 
-class AdAccountEntity(BaseModel):
+class ConsoleEntityMixin:
+    @classmethod
+    def upsert_entity_from_console(cls, job_scope: JobScope, entity: Any):
+        pass
+
+
+class AdAccountEntity(ConsoleEntityMixin, BaseModel):
     """
     Represents a single facebook ad account entity
     """
@@ -76,6 +85,15 @@ class AdAccountEntity(BaseModel):
 
         return AdAccount(fbid=f'act_{self.ad_account_id}', api=api)
 
+    @classmethod
+    def upsert_entity_from_console(cls, job_scope: JobScope, entity: Any):
+        cls.upsert(
+            job_scope.entity_id,  # scope ID
+            entity['ad_account_id'],
+            is_active=entity.get('active', True),
+            updated_by_sweep_id=job_scope.sweep_id
+        )
+
 
 class EntityBaseMixin:
     """
@@ -110,13 +128,20 @@ class EntityBaseMixin:
         'entity_type'
     }
 
+
 class AdEntityBaseMixin(EntityBaseMixin):
     # Note that each Entity is keyed by, effectively, a compound key: ad_account_id+entity_id
     # This allows us to issue queries like "Get all objects per ad_account_id" rather quickly
     ad_account_id = attributes.UnicodeAttribute(hash_key=True, attr_name='aaid')
 
-class PageEntityBaseMixin(EntityBaseMixin):
+
+class PageEntityBaseMixin:
     page_id = attributes.UnicodeAttribute(hash_key=True, attr_name='pid')
+
+    entity_type = None  # will be overridden in subclass
+    _additional_fields = {
+        'entity_type'
+    }
 
 
 class EntityBaseMeta(BaseMeta):
@@ -185,14 +210,47 @@ class CustomAudienceEntity(AdEntityBaseMixin, BaseModel):
     entity_type = Entity.CustomAudience
 
 
-class PageEntity(PageEntityBaseMixin, BaseModel):
+class PageEntity(ConsoleEntityMixin, BaseModel):
     """
     Represents a single facebook page entity
     """
 
     Meta = EntityBaseMeta(dynamodb_config.PAGE_ENTITY_TABLE)
 
+    scope = attributes.UnicodeAttribute(hash_key=True, attr_name='scope')
+    page_id = attributes.UnicodeAttribute(range_key=True, attr_name='pid')
+
+    # copied indicator of activity from Console DB per each sync
+    # (alternative to deletion. To be discussed later if deletion is better)
+    is_active = attributes.BooleanAttribute(default=False, attr_name='a')
+
+    # utilized by logic that prunes out Ad Accounts
+    # that are switched to "inactive" on Console
+    # Expectation is that after a long-running update job
+    # there is a task at the end that goes back and marks
+    # all AA records with non-last-sweep_id as "inactive"
+    # See https://operam.atlassian.net/browse/PROD-1825 for context
+    updated_by_sweep_id = attributes.UnicodeAttribute(null=True, attr_name='u')
+
+    # Each AdAccount on FB side can be set to a particular timezone
+    # A lot of reporting on FB is pegged to a "day" that is interpreted
+    # in that AdAccount's timezone (not UTC).
+    timezone = attributes.UnicodeAttribute(attr_name='tz')
+
     entity_type = Entity.Page
+
+    _additional_fields = {
+        'entity_type'
+    }
+
+    @classmethod
+    def upsert_entity_from_console(cls, job_scope: JobScope, entity: Any):
+        cls.upsert(
+            job_scope.entity_id,  # scope ID
+            entity['ad_account_id'],
+            is_active=entity.get('active', True),
+            updated_by_sweep_id=job_scope.sweep_id
+        )
 
 
 class PagePostEntity(PageEntityBaseMixin, BaseModel):
@@ -201,6 +259,7 @@ class PagePostEntity(PageEntityBaseMixin, BaseModel):
     """
 
     Meta = EntityBaseMeta(dynamodb_config.PAGE_POST_ENTITY_TABLE)
+    entity_id = attributes.UnicodeAttribute(range_key=True, attr_name='eid')
 
     entity_type = Entity.PagePost
 

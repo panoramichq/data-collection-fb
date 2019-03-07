@@ -15,14 +15,16 @@ from config import jobs as jobs_config
 # map of source / trigger entity type to
 # a list of generator functions each of which, given RealityClaim instance
 # generate one or more ExpectationClaim objects
+
 entity_expectation_generator_map = {}  # type: Dict[str, List[(RealityClaim) -> Generator[ExpectationClaim]]]
 
 
 from .adaccount import ad_accounts_per_scope, sync_expectations_per_ad_account
+from sweep_builder.expectation_builder.expectations_inventory.pages import pages_per_scope, sync_expectations_per_page
 
-
-entity_expectation_generator_map[Entity.Scope] = list(filter(None,[
+entity_expectation_generator_map[Entity.Scope] = list(filter(None, [
     None if jobs_config.AD_ACCOUNT_IMPORT_DISABLED else ad_accounts_per_scope,
+    None if jobs_config.PAGES_IMPORT_DISABLED else pages_per_scope,
 ]))
 
 
@@ -61,11 +63,12 @@ entity_expectation_generator_map[Entity.AdAccount] = list(filter(None, [
     None if jobs_config.INSIGHTS_AGE_GENDER_A_DISABLED else breakdowns.day_age_gender_metrics_per_ad_per_parent,
     None if jobs_config.INSIGHTS_DMA_A_DISABLED else breakdowns.day_dma_metrics_per_ad_per_parent,
     None if jobs_config.INSIGHTS_PLATFORM_A_DISABLED else breakdowns.day_platform_metrics_per_ad_per_parent,
-    sync_expectations_per_ad_account
+    sync_expectations_per_ad_account,
 ]))
 
 entity_expectation_generator_map[Entity.Page] = list(filter(None, [
     None if jobs_config.ENTITY_P_DISABLED else page_entities,
+    sync_expectations_per_page,
 ]))
 
 entity_expectation_generator_map[Entity.Campaign] = list(filter(None, [

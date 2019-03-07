@@ -15,10 +15,10 @@ from sweep_builder.data_containers.reality_claim import RealityClaim
 logger = logging.getLogger(__name__)
 
 
-def ad_accounts_per_scope(reality_claim):
+def pages_per_scope(reality_claim):
     # type: (RealityClaim) -> Generator[ExpectationClaim]
     """
-    Generates "fetch AAs active entity metadata per given scope" job ID
+    Generates "fetch Pages active entity metadata per given scope" job ID
 
     To be used by Scope-level RealityClaim / ExpectationClaim.
 
@@ -42,15 +42,15 @@ def ad_accounts_per_scope(reality_claim):
                     # This is "all AA per scope X" job.
                     entity_id=reality_claim.entity_id,
                     entity_type=reality_claim.entity_type,
-                    report_type=ReportType.import_accounts,
-                    report_variant=Entity.AdAccount
+                    report_type=ReportType.import_pages,
+                    report_variant=Entity.Page
                 )
             )
         ]
     )
 
 
-def sync_expectations_per_ad_account(reality_claim):
+def sync_expectations_per_page(reality_claim):
     # type: (RealityClaim) -> Generator[ExpectationClaim]
     """
     Generates "Communicate all calculated expectation Job IDs to Cold Store" job ID
@@ -61,19 +61,19 @@ def sync_expectations_per_ad_account(reality_claim):
     :rtype: Generator[ExpectationClaim]
     """
 
-    if not reality_claim.ad_account_id:
-        ValueError("AdAccountID value is missing")
+    if not reality_claim.page_id:
+        ValueError("PageID value is missing")
 
-    if reality_claim.entity_type != Entity.AdAccount:
-        ValueError("Only AdAccount-level expectations may generate this job signature")
+    if reality_claim.entity_type != Entity.Page:
+        ValueError("Only Page-level expectations may generate this job signature")
 
     yield ExpectationClaim(
         reality_claim.to_dict(),
         job_signatures=[
             JobSignature.bind(
                 generate_id(
-                    ad_account_id=reality_claim.ad_account_id,
-                    entity_id=reality_claim.ad_account_id,
+                    page_id=reality_claim.page_id,
+                    entity_id=reality_claim.page_id,
                     entity_type=reality_claim.entity_type,
                     report_type=ReportType.sync_expectations
                 )

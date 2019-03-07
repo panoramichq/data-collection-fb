@@ -1,5 +1,5 @@
 from .feedback_entity_task import feedback_entity_task
 from .collect_entities_per_adaccount_task import collect_entities_per_adaccount_task
 from .collect_entities_per_page_task import collect_entities_per_page_task
-from .import_ad_accounts_task import import_ad_accounts_task
+from .import_scope_entities_task import import_ad_accounts_task
 from .import_pages_task import import_pages_task

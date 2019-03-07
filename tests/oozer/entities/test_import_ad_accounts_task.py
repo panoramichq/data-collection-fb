@@ -9,7 +9,7 @@ from oozer.common.console_api import ConsoleApi
 from oozer.common.job_scope import JobScope
 from oozer.common.enum import JobStatus
 from oozer.common.report_job_status_task import report_job_status_task
-from oozer.entities.import_ad_accounts_task import import_ad_accounts_task, scope_api_map, _get_accounts_to_import
+from oozer.entities.import_scope_entities_task import import_ad_accounts_task, scope_api_map, _get_entities_to_import
 from tests.base import random
 
 
@@ -20,8 +20,8 @@ class TestAdAccountImportTask(TestCase):
         self.sweep_id = random.gen_string_id()
         self.scope_id = random.gen_string_id()
 
-    def _ad_acc(self, id, active):
-        return dict(ad_account_id=id, active=active)
+    def _ad_acc(self, entity_id, active):
+        return dict(ad_account_id=entity_id, active=active)
 
     def test_aa_import_dies_on_missing_token(self):
 
@@ -120,7 +120,7 @@ class TestAdAccountImportTask(TestCase):
         assert args1 == active_account_upsert_args
         assert args2 == inactive_account_upsert_args
 
-    def test__get_accounts_to_import(self):
+    def test__get_entities_to_import(self):
         accounts = [
             self._ad_acc('1', True),
             self._ad_acc('2', False),
@@ -128,7 +128,7 @@ class TestAdAccountImportTask(TestCase):
             self._ad_acc('3', False),
             self._ad_acc('4', False),
         ]
-        result = list(_get_accounts_to_import(accounts))
+        result = list(_get_entities_to_import(accounts, 'ad_account_id'))
         expected = [
             self._ad_acc('1', True),
             self._ad_acc('2', False),

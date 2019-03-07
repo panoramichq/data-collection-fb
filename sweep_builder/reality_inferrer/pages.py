@@ -17,16 +17,8 @@ these workers already collected some time before.
 
 from typing import Generator
 
-from common.store import entities, scope
+from common.store import entities
 
-
-def iter_scopes():
-    # type: () -> Generator[scope.AssetScope]
-    """
-    :return: a generator of pairs of: tuple of scope id and its associated set of FB tokens
-    :rtype: Generator[scope.AssetScope]
-    """
-    yield from scope.AssetScope.scan()
 
 def iter_active_pages_per_scope(scope):
     # type: (str) -> Generator[entities.PageEntity]

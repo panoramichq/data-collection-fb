@@ -36,11 +36,10 @@ def build_sweep_slice_per_ad_account_task(sweep_id, ad_account_reality_claim, ta
     """
     from .pipeline import iter_pipeline
     from .reality_inferrer.reality import iter_reality_per_ad_account_claim
-    from .data_containers.prioritization_claim import PrioritizationClaim
 
-    with TaskGroup.task_context(task_id) as task_context:
+    with TaskGroup.task_context(task_id):
 
-        _measurement_name_base = __name__ + '.build_sweep_per_ad_account.'  # <- function name. adjust if changed
+        _measurement_name_base = __name__ + '.' + build_sweep_slice_per_ad_account_task.__name__ + '.'
         _measurement_tags = dict(
             sweep_id=sweep_id,
             ad_account_id=ad_account_reality_claim.ad_account_id
@@ -75,6 +74,9 @@ def build_sweep_slice_per_ad_account_task(sweep_id, ad_account_reality_claim, ta
         return cnt
 
 
+@app.task(routing_key=RoutingKey.longrunning, ignore_result=False)
+@Measure.timer(__name__, function_name_as_metric=True)
+@Measure.counter(__name__, function_name_as_metric=True, count_once=True)
 def build_sweep_slice_per_page(sweep_id, page_reality_claim, task_id=None):
     """
 
@@ -88,9 +90,9 @@ def build_sweep_slice_per_page(sweep_id, page_reality_claim, task_id=None):
     from .pipeline import iter_pipeline
     from .reality_inferrer.reality import iter_reality_per_page_claim
 
-    with TaskGroup.task_context(task_id) as task_context:
+    with TaskGroup.task_context(task_id):
 
-        _measurement_name_base = __name__ + '.build_sweep_per_page.'  # <- function name. adjust if changed
+        _measurement_name_base = __name__ + '.' + build_sweep_slice_per_page.__name__ + '.'
         _measurement_tags = dict(
             sweep_id=sweep_id,
             entity_id=page_reality_claim.entity_id
@@ -133,7 +135,7 @@ def build_sweep(sweep_id):
     from .pipeline import iter_pipeline
     from .reality_inferrer.reality import iter_reality_base
 
-    _measurement_name_base = __name__ + '.build_sweep.'  # <- function name. adjust if changed
+    _measurement_name_base = __name__ + '.' + build_sweep.__name__ + '.'
     _measurement_tags = dict(
         sweep_id=sweep_id
     )
@@ -190,7 +192,7 @@ def build_sweep(sweep_id):
             else:
                 cnt = 1
                 _step = 1000
-                for claim in iter_pipeline(sweep_id, [reality_claim]):
+                for _ in iter_pipeline(sweep_id, [reality_claim]):
                     cnt += 1
                     if cnt % _step == 0:
                         cntr += _step
@@ -199,7 +201,6 @@ def build_sweep(sweep_id):
                 # because above counter communicates only increments of _step,
                 # we need to report remainder --- amount under _step
                 cntr += cnt % _step
-
 
     logger.info(f"#{sweep_id}-root: Queued up a total of {cnt} tasks")
 
@@ -217,10 +218,7 @@ def build_sweep(sweep_id):
     # You will nee
     should_be_done_by = time.time() + (60 * 20)
 
-    Measure.gauge(
-        f'{_measurement_name_base}per_account_sweep.total',
-        tags=_measurement_tags)(len(group_result.results)
-    )
+    Measure.gauge(f'{_measurement_name_base}per_account_sweep.total', tags=_measurement_tags)(len(group_result.results))
 
     # Monitor the progress. Although this obviously can be achieved with
     # group_result.join(), we need to "see" into the task group progress

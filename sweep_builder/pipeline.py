@@ -1,6 +1,6 @@
 import logging
 
-from typing import Generator
+from typing import Generator, Union, List
 
 from sweep_builder.data_containers.reality_claim import RealityClaim
 from .data_containers.prioritization_claim import PrioritizationClaim
@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 def iter_pipeline(sweep_id, reality_claims_iter):
-    # type: (str, Generator[RealityClaim]) -> Generator[PrioritizationClaim]
+    # type: (str, Union[Generator[RealityClaim], List[RealityClaim]]) -> Generator[PrioritizationClaim]
     """
     Convenience method. Packs together multiple layers
     of code that unpack RealityClaim into expectations,

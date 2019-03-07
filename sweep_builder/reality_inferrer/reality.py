@@ -2,6 +2,7 @@ from typing import Generator
 
 from common.enums.entity import Entity
 from sweep_builder.data_containers.reality_claim import RealityClaim
+from sweep_builder.reality_inferrer.pages import iter_active_pages_per_scope
 
 from .adaccounts import iter_scopes, iter_active_ad_accounts_per_scope
 from .entities import iter_entities_per_ad_account_id, iter_entities_per_page_id
@@ -61,6 +62,14 @@ def iter_reality_base():
                 tokens=scope_record.platform_tokens
             )
 
+        for page in iter_active_pages_per_scope(scope_record.scope):
+            yield RealityClaim(
+                page_id=page.page_id,
+                entity_id=page.page_id,
+                entity_type=Entity.Page,
+                timezone=page.timezone,
+                tokens=scope_record.platform_tokens
+            )
 
 
 def iter_reality_per_ad_account_claim(ad_account_claim, entity_types=None):
