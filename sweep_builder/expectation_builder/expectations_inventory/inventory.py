@@ -108,7 +108,7 @@ entity_expectations_for_23845179 = {
         None if jobs_config.INSIGHTS_PLATFORM_A_DISABLED else breakdowns.day_platform_metrics_per_ad_per_entity,
     ])),
     Entity.AdSet: list(filter(None, [
-        #  None if jobs_config.INSIGHTS_DMA_A_DISABLED else breakdowns.day_dma_metrics_per_ad_per_entity,
+         None if jobs_config.INSIGHTS_DMA_A_DISABLED else breakdowns.day_dma_metrics_per_ad_per_entity,
     ])),
     Entity.Ad: list(filter(None, [
     ]))
