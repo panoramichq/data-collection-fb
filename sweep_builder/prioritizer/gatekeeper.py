@@ -11,6 +11,7 @@ class JobGateKeeper:
 
     JOB_NOT_PASSED_SCORE = 1
     REPORT_TYPE_LIFETIME_FREQUENCY = 6
+    REPORT_TYPE_ENTITY_FREQUENCY = 24
 
     @staticmethod
     def shall_pass(job: JobIdParts, last_success_dt: Optional[datetime]):
@@ -24,6 +25,10 @@ class JobGateKeeper:
         # lifetime data should be attempted to collect at least 6 hours apart
         if job.report_type == ReportType.lifetime:
             return JobGateKeeper._every_x_hours(minutes_since_success, JobGateKeeper.REPORT_TYPE_LIFETIME_FREQUENCY)
+
+        # entity collection every 24 hours
+        if job.report_type == ReportType.entity:
+            return JobGateKeeper._every_x_hours(minutes_since_success, JobGateKeeper.REPORT_TYPE_ENTITY_FREQUENCY)
 
         # Single-day jobs have no range_end
         job_range_end = job.range_start if job.range_end is None else job.range_end
