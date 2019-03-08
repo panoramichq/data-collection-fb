@@ -65,6 +65,7 @@ class FacebookApiErrorInspector:
     THROTTLING_CODES = {
         (4, None),  # Application request limit reached
         (17, None),  # User request limit reached
+        (17, 2446079),  # User request limit reached
         (613, 1487742),  # AdAccount request limit reached
     }
     """
