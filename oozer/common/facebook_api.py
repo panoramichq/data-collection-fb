@@ -62,22 +62,26 @@ class FacebookApiErrorInspector:
     cna throw at us and we're interested in them
     """
 
-    THROTTLING_CODES = [
+    THROTTLING_CODES = {
         (4, None),  # Application request limit reached
         (17, None),  # User request limit reached
         (613, 1487742),  # AdAccount request limit reached
-    ]
+    }
     """
     List of known codes (subcodes) where FB starts throttling us
     """
 
-    TOO_MUCH_DATA_CODES = [
+    TOO_MUCH_DATA_CODES = {
         (100, 1487534)  # Too big a report
-    ]
+    }
     """
     List of known codes (subcodes) where FB complains about us asking for too
     much data
     """
+
+    TOO_MUCH_DATA_MESSAGES = {
+        "Please reduce the amount of data you're asking for, then retry your request",
+    }
 
     _exception = None
 
@@ -89,17 +93,18 @@ class FacebookApiErrorInspector:
         """
         self._exception = exception
 
-    def _is_exception_in_list(self, values):
+    @property
+    def _is_generic_error(self) -> bool:
+        """Check if exception is a generic error."""
+        return 1 == self._exception.api_error_code()
+
+    def _is_exception_code_in_set(self, values) -> bool:
         """
-        Check an exception against a given list of possible codes/subcodes
+        Check the exception code and subcode a given set.
 
-
-        :param list values: List of individual codes or tuples of (code, subcode)
+        :param set values: List of individual codes or tuples of (code, subcode)
         :return bool: The exception conforms to our excepted list
         """
-
-        # If this is some other FB error than request error, no point in
-        # trying to get out codes out of responses.
         if not isinstance(self._exception, FacebookRequestError):
             return False
 
@@ -108,16 +113,27 @@ class FacebookApiErrorInspector:
 
         return (code, subcode) in values
 
-    def is_throttling_exception(self):
+    def _is_exception_message_in_set(self, values) -> bool:
+        """
+        Check the exception error message against a given set.
+        :param values:
+        :return:
+        """
+        if not isinstance(self._exception, FacebookRequestError):
+            return False
+
+        return self._exception.api_error_message() in values
+
+    def is_throttling_exception(self) -> bool:
         """
         Checks whether given Facebook Exception is of throttling type
 
         :param FacebookRequestError exception: The Facebook Exception
         :return bool: If True, the exception is of type throttling
         """
-        return self._is_exception_in_list(self.THROTTLING_CODES)
+        return self._is_exception_code_in_set(self.THROTTLING_CODES)
 
-    def is_too_large_data_exception(self):
+    def is_too_large_data_exception(self) -> bool:
         """
         Checks whether given Facebook Exception is of a type that says "you are
         asking me to do / calculate too much"
@@ -125,10 +141,11 @@ class FacebookApiErrorInspector:
         :param FacebookRequestError exception: The Facebook Exception
         :return bool: If True, the exception is of type "too much data"
         """
-        return self._is_exception_in_list(self.TOO_MUCH_DATA_CODES)
+        return self._is_exception_code_in_set(self.TOO_MUCH_DATA_CODES) or (
+            self._is_generic_error and self._is_exception_message_in_set(self.TOO_MUCH_DATA_MESSAGES)
+        )
 
-    def get_status_and_bucket(self):
-        # type: () -> (int, int)
+    def get_status_and_bucket(self) -> (int, int):
         """Extract status and bucket from inspected exception."""
         # Is this a throttling error?
         if self.is_throttling_exception():
