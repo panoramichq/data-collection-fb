@@ -12,6 +12,7 @@ from bugsnag.celery import connect_failure_handler
 from contextlib import AbstractContextManager
 
 from common.store.base import BaseModel
+from common.util import redact_access_token
 from config.application import ENVIRONMENT
 from config.bugsnag import API_KEY
 from config.build import BUILD_ID
@@ -101,6 +102,8 @@ class BugSnagContextData(AbstractContextManager):
         # Populate BugSnag's thread-local "session" and add middleware to
         # top-level bugsnag to read that session data and add it to
         # error reporting it does. One error report with all context data
+
+        exc = redact_access_token(exc)
 
         bugsnag.notify(
             exc,
