@@ -3,14 +3,17 @@ This file contains a mapping of normative report type labels to entities that
 require these reports and to report task implementations effectively fulfilling
 the normative report requirement.
 """
+import functools
+
 from typing import Dict, List, Generator
 
+from config import jobs as jobs_config
 from common.enums.entity import Entity
-
+from common.enums.reporttype import ReportType
 from sweep_builder.data_containers.reality_claim import RealityClaim
 from sweep_builder.data_containers.expectation_claim import ExpectationClaim
+from sweep_builder.expectation_builder.expectations_inventory.metrics.breakdowns import metrics_per_ad_per_ad_account
 
-from config import jobs as jobs_config
 
 # map of source / trigger entity type to
 # a list of generator functions each of which, given RealityClaim instance
@@ -58,11 +61,13 @@ entity_expectation_generator_map[Entity.AdAccount] = list(filter(None, [
     # Insights
     None if jobs_config.INSIGHTS_HOUR_C_DISABLED else breakdowns.hour_metrics_per_campaign_per_parent,
     None if jobs_config.INSIGHTS_HOUR_AS_DISABLED else breakdowns.hour_metrics_per_adset_per_parent,
-    None if jobs_config.INSIGHTS_DAY_A_DISABLED else breakdowns.day_metrics_per_ad_per_parent,
-    None if jobs_config.INSIGHTS_HOUR_A_DISABLED else breakdowns.hour_metrics_per_ad_per_parent,
-    None if jobs_config.INSIGHTS_AGE_GENDER_A_DISABLED else breakdowns.day_age_gender_metrics_per_ad_per_parent,
-    None if jobs_config.INSIGHTS_DMA_A_DISABLED else breakdowns.day_dma_metrics_per_ad_per_parent,
-    None if jobs_config.INSIGHTS_PLATFORM_A_DISABLED else breakdowns.day_platform_metrics_per_ad_per_parent,
+    functools.partial(metrics_per_ad_per_ad_account, list(filter(None, [
+        None if jobs_config.INSIGHTS_DAY_A_DISABLED else ReportType.day,
+        None if jobs_config.INSIGHTS_HOUR_A_DISABLED else ReportType.day_hour,
+        None if jobs_config.INSIGHTS_AGE_GENDER_A_DISABLED else ReportType.day_age_gender,
+        None if jobs_config.INSIGHTS_DMA_A_DISABLED else ReportType.day_dma,
+        None if jobs_config.INSIGHTS_PLATFORM_A_DISABLED else ReportType.day_platform,
+    ]))),
     sync_expectations_per_ad_account,
 ]))
 
@@ -110,7 +115,7 @@ entity_expectations_for_23845179 = {
         None if jobs_config.INSIGHTS_PLATFORM_A_DISABLED else breakdowns.day_platform_metrics_per_ad_per_entity,
     ])),
     Entity.AdSet: list(filter(None, [
-        #  None if jobs_config.INSIGHTS_DMA_A_DISABLED else breakdowns.day_dma_metrics_per_ad_per_entity,
+         # None if jobs_config.INSIGHTS_DMA_A_DISABLED else breakdowns.day_dma_metrics_per_ad_per_entity,
     ])),
     Entity.Ad: list(filter(None, [
     ]))

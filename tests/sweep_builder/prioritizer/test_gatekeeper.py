@@ -2,6 +2,8 @@ import pytest
 
 from unittest.mock import Mock
 from datetime import timedelta
+
+from common.enums.reporttype import ReportType
 from common.tztools import now
 from sweep_builder.prioritizer.assign_score import JobGateKeeper
 
@@ -55,5 +57,33 @@ def test_shall_pass_range_end_less_than_seven_days_true(range_start_delta, last_
 def test_shall_pass_range_end_less_than_seven_days_true(range_end_delta, last_success_delta, expected):
     """Check range_start now - delta and last_success now - delta returns expected."""
     parts = Mock(range_start=None, range_end=(now() - range_end_delta).date())
+
+    assert expected == JobGateKeeper.shall_pass(parts, now() - last_success_delta)
+
+
+@pytest.mark.parametrize(
+    ['last_success_delta', 'expected'],
+    [
+        (timedelta(hours=7), True),
+        (timedelta(hours=5), False),
+    ]
+)
+def test_shall_pass_lifetime_report_type(last_success_delta, expected):
+    """Check behaviour for lifetime report type"""
+    parts = Mock(range_start=None, range_end=None, report_type=ReportType.lifetime)
+
+    assert expected == JobGateKeeper.shall_pass(parts, now() - last_success_delta)
+
+
+@pytest.mark.parametrize(
+    ['last_success_delta', 'expected'],
+    [
+        (timedelta(hours=3), True),
+        (timedelta(hours=1), False),
+    ]
+)
+def test_shall_pass_entity_report_type(last_success_delta, expected):
+    """Check behaviour for entity report type"""
+    parts = Mock(range_start=None, range_end=None, report_type=ReportType.entity)
 
     assert expected == JobGateKeeper.shall_pass(parts, now() - last_success_delta)

@@ -71,7 +71,6 @@ def iter_reality_base():
                 tokens=scope_record.platform_tokens
             )
 
-
 def iter_reality_per_ad_account_claim(ad_account_claim, entity_types=None):
     # type: (RealityClaim) -> Generator[RealityClaim]
     """
