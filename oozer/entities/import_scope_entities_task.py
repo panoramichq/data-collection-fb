@@ -1,6 +1,5 @@
 import logging
 
-from collections import defaultdict
 from pynamodb.exceptions import PutError
 
 from common.measurement import Measure
@@ -8,7 +7,6 @@ from common.bugsnag import BugSnagContextData
 from common.celeryapp import get_celery_app
 from common.enums.entity import Entity
 from common.store.entities import AdAccountEntity, PageEntity
-from common.store.scope import DEFAULT_SCOPE
 from common.tokens import PlatformTokenManager
 from oozer.common.console_api import ConsoleApi
 from oozer.common.enum import JobStatus
@@ -19,15 +17,6 @@ from oozer.common.report_job_status_task import report_job_status_task
 
 app = get_celery_app()
 logger = logging.getLogger(__name__)
-
-
-# TODO: Rethink registration of these.
-# effectively, even though we store scopes in DB, unless they are added
-# to code below, they don't exist. Seems kinda silly
-entity_type_map = {
-    'ad_account': (ConsoleApi.get_accounts, AdAccountEntity),
-    'page': (ConsoleApi.get_pages, PageEntity),
-}
 
 
 @app.task
@@ -88,6 +77,14 @@ def _get_good_token(job_scope: JobScope):
 
 
 def _import_entities_from_console(entity_type, job_scope):
+    # TODO: Rethink registration of these.
+    # effectively, even though we store scopes in DB, unless they are added
+    # to code below, they don't exist. Seems kinda silly
+    entity_type_map = {
+        'ad_account': (ConsoleApi.get_accounts, AdAccountEntity),
+        'page': (ConsoleApi.get_pages, PageEntity),
+    }
+
     report_job_status_task.delay(JobStatus.Start, job_scope)
 
     if entity_type not in entity_type_map:

@@ -138,6 +138,11 @@ class AdEntityBaseMixin(EntityBaseMixin):
 class PageEntityBaseMixin:
     page_id = attributes.UnicodeAttribute(hash_key=True, attr_name='pid')
 
+    bol = attributes.UTCDateTimeAttribute(null=True)
+    eol = attributes.UTCDateTimeAttribute(null=True)
+    hash = attributes.UnicodeAttribute(null=True, attr_name='h')  # Could be binary
+    hash_fields = attributes.UnicodeAttribute(null=True, attr_name='hf')  # Could be binary
+
     entity_type = None  # will be overridden in subclass
     _additional_fields = {
         'entity_type'
@@ -242,6 +247,7 @@ class PageEntity(ConsoleEntityMixin, BaseModel):
     _additional_fields = {
         'entity_type'
     }
+    _default_bol = True
 
     @classmethod
     def upsert_entity_from_console(cls, job_scope: JobScope, entity: Any):
@@ -262,6 +268,7 @@ class PagePostEntity(PageEntityBaseMixin, BaseModel):
     entity_id = attributes.UnicodeAttribute(range_key=True, attr_name='eid')
 
     entity_type = Entity.PagePost
+    _default_bol = True
 
 
 # Used to map from entity_type str to Model for persistence-style tasks
