@@ -25,5 +25,5 @@ def redact_access_token_from_str(value: str) -> str:
 
 def redact_access_token(e: Exception) -> Exception:
     """Remove access token from exception message."""
-    e.args = redact_access_token(e.args[0]),
+    e.args = redact_access_token_from_str(e.args[0]),
     return e
