@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Type
 
 from facebook_business.adobjects.adaccount import AdAccount
 from facebook_business.api import FacebookAdsApi, FacebookSession
@@ -371,14 +371,14 @@ _default_fields_map = {
         # 'prefill',
         # 'product_set_id',
 
-        # These fields are not part of the oficial api docs
+        # These fields are not part of the official api docs
         # 'associated_audience_id',
         # 'exclusions',
         # 'inclusions',
         # 'parent_audience_id',
         # 'tags',
     ]),
-    Page: collapse_fields_children ([
+    Page: collapse_fields_children([
         'id',
         'about',
         'access_token',
@@ -413,42 +413,86 @@ _default_fields_map = {
         'website',
         'whatsapp_number'
     ]),
-    PagePost: collapse_fields_children ([
+    PagePost: collapse_fields_children([
         'id',
-        'created_time',
-        'updated_time',
-        'message',
-        'link',
-        'caption',
-        'description',
+        'admin_creator',
+        'allowed_advertising_objectives',
+        'application',
+        'backdated_time',
         'call_to_action',
+        # 'can_reply_privately',  # requires READ_PAGE_MAILBOXES or PAGES_MESSAGING permission
+        'caption',
+        'child_attachments',
+        'comments_mirroring_domain',
+        'coordinates',
+        'created_time',
+        'description',
+        'event',
+        'expanded_height',
+        'expanded_width',
+        'feed_targeting',
+        'from',
+        'full_picture',
+        'height',
+        'icon',
+        'instagram_eligibility',
+        'is_app_share',
+        'is_expired',
+        'is_hidden',
+        'is_instagram_eligible',
+        'is_popular',
+        'is_published',
+        'is_spherical',
+        'link',
+        'message',
         'message_tags',
+        'multi_share_end_card',
+        'multi_share_optimized',
         'name',
+        'object_id',
         'parent_id',
+        'permalink_url',
         'picture',
+        'place',
+        'privacy',
+        'promotable_id',
+        'promotion_status',
+        'properties',
+        'scheduled_publish_time',
+        'shares',
+        'source',
+        'status_type',
         'story',
-        'story_tags'
+        'story_tags',
+        'subscribed',
+        'target',
+        'targeting',
+        'timeline_visibility',
+        'type',
+        'updated_time',        
+        'via',
+        'video_buying_eligibility',
+        'width',
     ])
 }
 
 
-def get_default_fields(Model):
-    # type: (Model) -> List[str]
+def get_default_fields(model_klazz: Type['Model']) -> List[str]:
     """
     Obtain default fields for a given entity type. Note that the entity
     class must come from the Facebook SDK
 
-    :param Model:
+    :param model_klazz:
     :rtype: List[str] of fields
     """
-    assert issubclass(Model, abstractcrudobject.AbstractCrudObject)
+    assert issubclass(model_klazz, abstractcrudobject.AbstractCrudObject)
 
-    if Model in _default_fields_map:
-        return _default_fields_map[Model]
+    if model_klazz in _default_fields_map:
+        return _default_fields_map[model_klazz]
 
     return [
-        getattr(Model.Field, field_name)
-        for field_name in dir(Model.Field)
+        getattr(model_klazz.Field, field_name)
+        for field_name in dir(model_klazz.Field)
         if not field_name.startswith('__')
     ]
 
@@ -470,18 +514,18 @@ _default_page_size = {
     Ad: 400
 }
 
-def get_default_page_size(Model):
-    # type: (Model) -> List[str]
+
+def get_default_page_size(model_klazz: Type['Model']) -> List[str]:
     """
     Default paging size on FB API is too small for large collections
     It's usually some 25 items. We page through a lot of stuff, hence this fn.
 
-    :param Model:
+    :param model_klazz:
     :rtype: List[str] of fields
     """
-    assert issubclass(Model, abstractcrudobject.AbstractCrudObject)
+    assert issubclass(model_klazz, abstractcrudobject.AbstractCrudObject)
 
-    return _default_page_size.get(Model)
+    return _default_page_size.get(model_klazz)
 
 
 # By default ARCHIVED is filtered out
@@ -533,8 +577,7 @@ _default_fetch_statuses = {
 }
 
 
-def get_default_status(Model):
-    # type: (Model) -> List[str]
+def get_default_status(model_klazz: Type['Model']) -> List[str]:
     """
     Each Entity Level has its own set of possible valid status values
     acceptable as filtering parameters for "get all per parent AA" calls.
@@ -543,8 +586,8 @@ def get_default_status(Model):
     from all calls by repeating all possible fetch-able effective status values
     per that FB Entity Level, including Archived
 
-    :param Model:
+    :param model_klazz:
     :rtype: List[str] of fields
     """
-    assert issubclass(Model, abstractcrudobject.AbstractCrudObject)
-    return _default_fetch_statuses.get(Model)
+    assert issubclass(model_klazz, abstractcrudobject.AbstractCrudObject)
+    return _default_fetch_statuses.get(model_klazz)

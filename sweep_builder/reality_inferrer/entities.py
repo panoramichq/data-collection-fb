@@ -81,6 +81,7 @@ def iter_entities_per_ad_account_id(ad_account_id, fields=None, entity_types=Non
             if cnt % _step:
                 cntr += cnt % _step
 
+
 def iter_entities_per_page_id(page_id, fields=None, page_entity_types=None):
     """
     :return: A generator of yielding data for all children of given Page

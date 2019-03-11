@@ -22,7 +22,6 @@ class RealityClaim:
     entity_type = None  # type: str or None
 
     ad_account_id = None  # type: str or None
-    page_id = None  # type: str or None
 
     tokens = None  # type: Set[str]
 

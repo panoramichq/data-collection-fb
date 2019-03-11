@@ -56,10 +56,10 @@ def build_sweep_slice_per_ad_account_task(sweep_id, ad_account_reality_claim, ta
     with TaskGroup.task_context(task_id):
 
         _measurement_name_base = __name__ + '.' + build_sweep_slice_per_ad_account_task.__name__ + '.'
-        _measurement_tags = dict(
-            sweep_id=sweep_id,
-            ad_account_id=ad_account_reality_claim.ad_account_id
-        )
+        _measurement_tags = {
+            'sweep_id': sweep_id,
+            'ad_account_id': ad_account_reality_claim.ad_account_id,
+        }
 
         reality_claims_iter = itertools.chain(
             [ad_account_reality_claim],
@@ -109,10 +109,10 @@ def build_sweep_slice_per_page(sweep_id, page_reality_claim, task_id=None):
     with TaskGroup.task_context(task_id):
 
         _measurement_name_base = __name__ + '.' + build_sweep_slice_per_page.__name__ + '.'
-        _measurement_tags = dict(
-            sweep_id=sweep_id,
-            entity_id=page_reality_claim.entity_id
-        )
+        _measurement_tags = {
+            'sweep_id': sweep_id,
+            'page_id': page_reality_claim.entity_id,
+        }
 
         reality_claims_iter = itertools.chain(
             [page_reality_claim],
@@ -152,9 +152,9 @@ def build_sweep(sweep_id):
     from .reality_inferrer.reality import iter_reality_base
 
     _measurement_name_base = __name__ + '.' + build_sweep.__name__ + '.'
-    _measurement_tags = dict(
-        sweep_id=sweep_id
-    )
+    _measurement_tags = {
+        'sweep_id': sweep_id,
+    }
 
     # In the jobs persister we purposefully avoid persisting
     # anything besides the Job ID. This means that things like tokens

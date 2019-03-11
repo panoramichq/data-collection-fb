@@ -27,7 +27,7 @@ from oozer.common.enum import (
 from oozer.entities.feedback_entity_task import feedback_entity_task
 
 
-def iter_native_entities_per_page(page, entity_type, fields=None, status=None, page_size=200):
+def iter_native_entities_per_page(page, entity_type, fields=None, status=None, page_size=100):
     # type: (FB_ADACCOUNT_MODEL, str, Optional[list]) -> Generator[Union[FB_PAGE_MODEL, FB_PAGE_POST_MODEL]]
     """
     Generic getter for entities from the Page edge
@@ -53,9 +53,9 @@ def iter_native_entities_per_page(page, entity_type, fields=None, status=None, p
     fields_to_fetch = fields or get_default_fields(FBModel)
     page_size = page_size or get_default_page_size(FBModel)
 
-    params = dict(
-        summary=False
-    )
+    params = {
+        'summary': False,
+    }
 
     if page_size:
         params['limit'] = page_size
@@ -109,7 +109,7 @@ def iter_collect_entities_per_page(job_scope, job_context):
     try:
         with PlatformApiContext(token) as fb_ctx:
             root_fb_entity = fb_ctx.to_fb_model(
-                job_scope.entity_id, Entity.Page
+                job_scope.ad_account_id, Entity.Page
             )
 
         entities = iter_native_entities_per_page(

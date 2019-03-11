@@ -8,8 +8,7 @@ from .adaccounts import iter_scopes, iter_active_ad_accounts_per_scope
 from .entities import iter_entities_per_ad_account_id, iter_entities_per_page_id
 
 
-def iter_reality_base():
-    # type: () -> Generator[RealityClaim]
+def iter_reality_base() -> Generator[RealityClaim, None, None]:
     """
     A generator yielding instances of RealityClaim object, filled
     with data about some entity (one of Scope, AdAccount)
@@ -64,15 +63,18 @@ def iter_reality_base():
 
         for page in iter_active_pages_per_scope(scope_record.scope):
             yield RealityClaim(
-                page_id=page.page_id,
+                ad_account_id=page.page_id,
                 entity_id=page.page_id,
                 entity_type=Entity.Page,
                 timezone=page.timezone,
                 tokens=scope_record.platform_tokens
             )
 
-def iter_reality_per_ad_account_claim(ad_account_claim, entity_types=None):
-    # type: (RealityClaim) -> Generator[RealityClaim]
+
+def iter_reality_per_ad_account_claim(
+    ad_account_claim: RealityClaim,
+    entity_types: str = None,
+) -> Generator[RealityClaim, None, None]:
     """
     A generator yielding instances of RealityClaim object, filled
     with data about some entity (one of Campaign, AdSet, Ad)
@@ -98,8 +100,10 @@ def iter_reality_per_ad_account_claim(ad_account_claim, entity_types=None):
         )
 
 
-def iter_reality_per_page_claim(page_claim, entity_types=None):
-    # type: (RealityClaim) -> Generator[RealityClaim]
+def iter_reality_per_page_claim(
+    page_claim: RealityClaim,
+    entity_types: str = None,
+) -> Generator[RealityClaim, None, None]:
     """
     A generator yielding instances of RealityClaim object, filled
     with data about some entity (one of Campaign, AdSet, Ad)
@@ -115,7 +119,7 @@ def iter_reality_per_page_claim(page_claim, entity_types=None):
     :rtype: Generator[RealityClaim]
     """
 
-    for entity_data in iter_entities_per_page_id(page_claim.entity_id, entity_types=entity_types):
+    for entity_data in iter_entities_per_page_id(page_claim.entity_id, page_entity_types=entity_types):
         yield RealityClaim(
             entity_data,
             tokens=page_claim.tokens

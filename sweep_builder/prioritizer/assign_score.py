@@ -166,7 +166,7 @@ def assign_score(job_id, timezone):
                 score += 5
 
     else:
-        if entity_type == Entity.AdAccount:
+        if entity_type in [Entity.AdAccount, Entity.Page]:
             # This is an ad account sync job, let's rank it a bit higher as
             # these updates ar quite important
             score += 100

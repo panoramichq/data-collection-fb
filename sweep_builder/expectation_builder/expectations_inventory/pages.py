@@ -61,8 +61,8 @@ def sync_expectations_per_page(reality_claim):
     :rtype: Generator[ExpectationClaim]
     """
 
-    if not reality_claim.page_id:
-        ValueError("PageID value is missing")
+    if not reality_claim.ad_account_id:
+        ValueError("AdAccountID value is missing")
 
     if reality_claim.entity_type != Entity.Page:
         ValueError("Only Page-level expectations may generate this job signature")
@@ -72,8 +72,8 @@ def sync_expectations_per_page(reality_claim):
         job_signatures=[
             JobSignature.bind(
                 generate_id(
-                    page_id=reality_claim.page_id,
-                    entity_id=reality_claim.page_id,
+                    ad_account_id=reality_claim.ad_account_id,
+                    entity_id=reality_claim.ad_account_id,
                     entity_type=reality_claim.entity_type,
                     report_type=ReportType.sync_expectations
                 )

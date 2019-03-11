@@ -1,15 +1,15 @@
 # must be first, as it does event loop patching and other "first" things
+from oozer.common.console_api import ConsoleApi
+from oozer.entities.import_scope_entities_task import import_pages_task
 from tests.base.testcase import TestCase, mock
 
 from common.enums.entity import Entity
 from common.enums.reporttype import ReportType
 from common.tokens import PlatformTokenManager
 from common.store.entities import PageEntity
-from oozer.common.scraper_api import ScraperApi
 from oozer.common.job_scope import JobScope
 from oozer.common.enum import JobStatus
 from oozer.common.report_job_status_task import report_job_status_task
-from oozer.entities.import_pages_task import import_pages_task, scope_api_map
 from tests.base import random
 
 
@@ -59,7 +59,7 @@ class TestPageImportTask(TestCase):
 
         pages = [
             dict(
-                id=page_id
+                ad_account_id=page_id
             )
         ]
 
@@ -72,8 +72,7 @@ class TestPageImportTask(TestCase):
             tokens=['token']
         )
 
-        with mock.patch.object(ScraperApi, 'get_pages', return_value=pages) as gp, \
-            mock.patch.dict(scope_api_map, {self.scope_id: ScraperApi}), \
+        with mock.patch.object(ConsoleApi, 'get_pages', return_value=pages) as gp, \
             mock.patch.object(PageEntity, 'upsert') as page_upsert, \
             mock.patch.object(report_job_status_task, 'delay') as status_task:
 
@@ -92,6 +91,7 @@ class TestPageImportTask(TestCase):
         page_upsert_args = (
             (self.scope_id, page_id),
             {
+                'is_active': True,
                 'updated_by_sweep_id': self.sweep_id
             }
         )

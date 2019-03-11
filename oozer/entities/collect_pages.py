@@ -17,7 +17,7 @@ from oozer.common.facebook_api import (
     FacebookApiErrorInspector,
     get_default_fields
 )
-from oozer.common.cold_storage.batch_store import NormalStore
+from oozer.common.cold_storage.batch_store import ChunkDumpStore
 from oozer.common.job_context import JobContext
 from oozer.common.job_scope import JobScope
 from oozer.common.report_job_status_task import report_job_status_task
@@ -56,7 +56,7 @@ def collect_pages(job_scope, _job_context):
     Collect all facebook pages that are active
 
     :param JobScope job_scope: The dict representation of JobScope
-    :param JobContext job_context:
+    :param JobContext _job_context:
     """
 
     report_job_status_task.delay(ExternalPlatformJobStatus.Start, job_scope)
@@ -122,10 +122,10 @@ def collect_pages(job_scope, _job_context):
                     )
                 )
 
-                store = NormalStore(job_scope)
+                store = ChunkDumpStore(job_scope)
                 store.store(entity_data)
 
-                report_job_status_task.delay(ExternalPlatformJobStatus.Done, job_scope)
+        report_job_status_task.delay(ExternalPlatformJobStatus.Done, job_scope)
         return businesses
 
     except FacebookError as e:

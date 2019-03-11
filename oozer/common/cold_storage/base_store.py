@@ -19,7 +19,6 @@ import boto3
 import xxhash
 import io
 import logging
-import time
 import uuid
 # ujson is faster for massive amounts of small data units
 # which is actually the pattern we have - yielding small datum per normative

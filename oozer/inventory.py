@@ -18,7 +18,8 @@ from oozer.sync_expectations_task import sync_expectations_task
 # a handler. So, watch warnings and don't forget to add handler here.
 entity_report_handler_map = {
     ReportType.sync_expectations: {
-        Entity.AdAccount: sync_expectations_task
+        Entity.AdAccount: sync_expectations_task,
+        Entity.Page: sync_expectations_task,
     },
     ReportType.import_accounts: {
         Entity.Scope: import_ad_accounts_task,
@@ -35,7 +36,7 @@ entity_report_handler_map = {
         Entity.AdVideo: collect_entities_per_adaccount_task,
         Entity.CustomAudience: collect_entities_per_adaccount_task,
 
-        Entity.Page: None,
+        Entity.Page: None,  # at the moment, we fetch Pages from Console API
         Entity.PagePost: collect_entities_per_page_task
     },
     ReportType.lifetime: {
@@ -86,7 +87,7 @@ entity_report_handler_map = {
 }
 
 
-def resolve_job_scope_to_celery_task(job_scope):
+def resolve_job_scope_to_celery_task(job_scope: JobScope):
     """
     Given parameters of the jon expressed in JobScope object
     returns registered Celery task handler for the job.
