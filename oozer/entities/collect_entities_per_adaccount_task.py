@@ -43,7 +43,7 @@ def collect_entities_per_adaccount_task(job_scope: JobScope, job_context: JobCon
             if cnt % 100 == 0:
                 logger.info(f'{job_scope} processed {cnt} data points so far')
     except Exception as e:
-        raise CollectionError(cnt) from e
+        raise CollectionError(e, cnt)
 
     logger.info(f'{job_scope} complete a total of {cnt} data points')
     return cnt

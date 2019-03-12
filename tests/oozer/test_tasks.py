@@ -1,16 +1,17 @@
+import pytest
+
 from unittest.mock import patch, call, Mock
 
-import pytest
 from facebook_business.exceptions import FacebookError
 
-from common.bugsnag import SEVERITY_WARNING
+from common.bugsnag import SEVERITY_WARNING, SEVERITY_ERROR
 from common.enums.failure_bucket import FailureBucket
 from oozer.common.enum import ExternalPlatformJobStatus
 from oozer.tasks import reported_task
 
 
 @patch('oozer.tasks.report_job_status_task')
-def test_base_task_on_success(mock_report):
+def test_reported_task_on_success(mock_report):
     mock_job_scope = Mock()
 
     @reported_task
@@ -32,7 +33,7 @@ def test_base_task_on_success(mock_report):
 @patch('oozer.tasks.report_job_status_task')
 @patch('oozer.tasks.BugSnagContextData.notify')
 @patch('oozer.tasks.FacebookApiErrorInspector.get_status_and_bucket')
-def test_base_task_on_failure_facebook_error(mock_get_status_and_bucket, mock_notify, mock_report, mock_from_job_scope):
+def test_reported_task_on_failure_facebook_error(mock_get_status_and_bucket, mock_notify, mock_report, mock_from_job_scope):
     exc = FacebookError('test')
     mock_job_scope = Mock(token='token')
     mock_get_status_and_bucket.return_value = (
@@ -66,7 +67,7 @@ def test_base_task_on_failure_facebook_error(mock_get_status_and_bucket, mock_no
 @patch('oozer.tasks.PlatformTokenManager.from_job_scope')
 @patch('oozer.tasks.report_job_status_task')
 @patch('oozer.tasks.BugSnagContextData.notify')
-def test_base_task_on_failure_generic_error(mock_notify, mock_report, mock_from_job_scope):
+def test_reported_task_on_failure_generic_error(mock_notify, mock_report, mock_from_job_scope):
     exc = Exception('test')
     mock_job_scope = Mock(token='token')
 
@@ -86,7 +87,7 @@ def test_base_task_on_failure_generic_error(mock_notify, mock_report, mock_from_
         call(ExternalPlatformJobStatus.GenericError, mock_job_scope),
     ]
 
-    mock_notify.assert_called_once_with(exc, job_scope=mock_job_scope)
+    mock_notify.assert_called_once_with(exc, job_scope=mock_job_scope, severity=SEVERITY_ERROR)
     mock_from_job_scope.return_value.report_usage_per_failure_bucket.assert_called_once_with(
         'token',
         FailureBucket.Other

@@ -153,8 +153,7 @@ constant annoyance.
 
 """
 
-from common.id_tools import parse_id, generate_id, JobIdParts, fields as job_id_fields
-from common.memoize import MemoizeMixin, memoized_property
+from common.memoize import MemoizeMixin
 from config import dynamodb as dynamodb_config
 
 from .base import BaseMeta, BaseModel, attributes

@@ -99,7 +99,7 @@ def report_job_status(stage_id: int, job_scope: JobScope):
         actions = [
             JobReport.last_success_dt.set(datetime.utcnow()),
             JobReport.last_success_sweep_id.set(job_scope.sweep_id),
-            JobReport.fails_in_row.set(0),
+            JobReport.fails_in_row.remove(),
             _set_or_remove(JobReport.last_total_running_time, job_scope.running_time),
             _set_or_remove(JobReport.last_total_datapoint_count, job_scope.datapoint_count),
         ]

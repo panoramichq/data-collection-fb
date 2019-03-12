@@ -90,7 +90,7 @@ class FacebookApiErrorInspector:
         """
         Store the exception we want to test
 
-        :param FacebookRequestError exception: The Facebook Exception
+        :param FacebookError exception: The Facebook Exception
         """
         self._exception = exception
 
