@@ -12,7 +12,7 @@ from common.enums.reporttype import ReportType
 from sweep_builder.data_containers.reality_claim import RealityClaim
 from sweep_builder.data_containers.expectation_claim import ExpectationClaim
 from sweep_builder.expectation_builder.expectations_inventory.metrics.breakdowns import metrics_per_ad_per_ad_account
-from sweep_builder.expectation_builder.expectations_inventory.pages import pages_per_scope, sync_expectations_per_page
+from sweep_builder.expectation_builder.expectations_inventory.page import pages_per_scope, sync_expectations_per_page
 
 from .adaccount import ad_accounts_per_scope, sync_expectations_per_ad_account
 from .entities import (
@@ -68,6 +68,7 @@ entity_expectation_generator_map[Entity.AdAccount] = list(filter(None, [
 ]))
 
 entity_expectation_generator_map[Entity.Page] = list(filter(None, [
+    None if jobs_config.ENTITY_P_DISABLED else page_entity,
     None if jobs_config.ENTITY_PP_DISABLED else page_post_entities_per_page,
     sync_expectations_per_page,
 ]))

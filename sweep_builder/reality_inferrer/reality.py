@@ -1,4 +1,4 @@
-from typing import Generator
+from typing import Generator, List
 
 from common.enums.entity import Entity
 from sweep_builder.data_containers.reality_claim import RealityClaim
@@ -73,7 +73,7 @@ def iter_reality_base() -> Generator[RealityClaim, None, None]:
 
 def iter_reality_per_ad_account_claim(
     ad_account_claim: RealityClaim,
-    entity_types: str = None,
+    entity_types: List[str] = None,
 ) -> Generator[RealityClaim, None, None]:
     """
     A generator yielding instances of RealityClaim object, filled
@@ -102,7 +102,7 @@ def iter_reality_per_ad_account_claim(
 
 def iter_reality_per_page_claim(
     page_claim: RealityClaim,
-    entity_types: str = None,
+    entity_types: List[str] = None,
 ) -> Generator[RealityClaim, None, None]:
     """
     A generator yielding instances of RealityClaim object, filled

@@ -47,7 +47,7 @@ def iter_native_entities_per_page(page, entity_type, fields=None, status=None, p
     FBModel = ENUM_VALUE_FB_MODEL_MAP[entity_type]
 
     getter_method = {
-        FB_PAGE_POST_MODEL: page.get_posts
+        FB_PAGE_POST_MODEL: page.get_posts,
     }[FBModel]
 
     fields_to_fetch = fields or get_default_fields(FBModel)
