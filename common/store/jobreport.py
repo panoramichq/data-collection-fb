@@ -208,6 +208,8 @@ class JobReport(BaseModel, MemoizeMixin):
     last_partial_running_time = attributes.NumberAttribute(null=True, attr_name='prt')
     last_partial_datapoint_count = attributes.NumberAttribute(null=True, attr_name='pdc')
 
+    fails_in_row = attributes.NumberAttribute(attr_name='fir')
+
 
 def sync_schema(brute_force=False):
     """
