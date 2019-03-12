@@ -6,9 +6,9 @@ from common.tokens import PlatformTokenManager
 from oozer.common.job_context import JobContext
 from oozer.common.job_scope import JobScope
 from oozer.common.sweep_running_flag import SweepRunningFlag
+from oozer.entities.collect_entities_per_adaccount import iter_collect_entities_per_adaccount
+from oozer.common.errors import CollectionError
 from oozer.tasks import reported_task
-
-from .collect_entities_per_adaccount import iter_collect_entities_per_adaccount
 
 app = get_celery_app()
 logger = logging.getLogger(__name__)
@@ -38,9 +38,12 @@ def collect_entities_per_adaccount_task(job_scope: JobScope, job_context: JobCon
 
     data_iter = iter_collect_entities_per_adaccount(job_scope, job_context)
     cnt = 0
-    for cnt, datum in enumerate(data_iter):
-        if cnt % 100 == 0:
-            logger.info(f'{job_scope} processed {cnt} data points so far')
+    try:
+        for cnt, datum in enumerate(data_iter):
+            if cnt % 100 == 0:
+                logger.info(f'{job_scope} processed {cnt} data points so far')
+    except Exception as e:
+        raise CollectionError(cnt) from e
 
     logger.info(f'{job_scope} complete a total of {cnt} data points')
     return cnt

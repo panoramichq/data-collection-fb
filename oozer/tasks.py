@@ -12,6 +12,7 @@ from oozer.common.job_scope import JobScope
 from oozer.common.report_job_status_task import report_job_status_task
 from oozer.common.enum import ExternalPlatformJobStatus
 from oozer.common.facebook_api import FacebookApiErrorInspector
+from oozer.common.errors import CollectionError
 
 
 def _report_failure(job_scope: JobScope, start_time: float, exc: Exception):
@@ -20,6 +21,9 @@ def _report_failure(job_scope: JobScope, start_time: float, exc: Exception):
     """
     end_time = time.time()
     job_scope.running_time = math.ceil(end_time - start_time)
+
+    if isinstance(exc, CollectionError):
+        job_scope.datapoint_count = exc.partial_datapoint_count
 
     token_manager = PlatformTokenManager.from_job_scope(job_scope)
     token = job_scope.token
@@ -59,8 +63,8 @@ def reported_task(func):
         try:
             retval = func(job_scope, *args, **kwargs)
             _report_success(job_scope, start_time, retval)
-        except Exception as exc:
-            _report_failure(job_scope, start_time, exc)
+        except Exception as e:
+            _report_failure(job_scope, start_time, e)
             raise
 
     return wrapper

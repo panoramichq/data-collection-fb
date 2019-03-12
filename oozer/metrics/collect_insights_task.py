@@ -6,9 +6,9 @@ from common.tokens import PlatformTokenManager
 from oozer.common.job_context import JobContext
 from oozer.common.job_scope import JobScope
 from oozer.common.sweep_running_flag import SweepRunningFlag
+from oozer.common.errors import CollectionError
 from oozer.tasks import reported_task
 from .collect_insights import Insights
-
 
 logger = logging.getLogger(__name__)
 app = get_celery_app()
@@ -37,9 +37,12 @@ def collect_insights_task(job_scope, job_context):
     data_iter = Insights.iter_collect_insights(job_scope, job_context)
 
     cnt = 0
-    for cnt, datum in enumerate(data_iter):
-        if cnt % 100 == 0:
-            logger.info(f'{job_scope} processed {cnt} data points so far')
+    try:
+        for cnt, datum in enumerate(data_iter):
+            if cnt % 100 == 0:
+                logger.info(f'{job_scope} processed {cnt} data points so far')
+    except Exception as e:
+        raise CollectionError(cnt) from e
 
     logger.info(f'{job_scope} complete a total of {cnt} data points')
     return cnt

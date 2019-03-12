@@ -8,7 +8,6 @@ class JobScope:
     """
     A context object serving as dumping ground for all information about a given
     job, be it normative or effective
-
     """
 
     # System information

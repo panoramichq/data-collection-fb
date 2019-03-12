@@ -9,9 +9,7 @@ from oozer.common import cold_storage
 from oozer.common.enum import ExternalPlatformJobStatus
 from oozer.common.job_scope import JobScope
 
-
 logger = logging.getLogger(__name__)
-
 
 _to_date_string_if_set = lambda v: v.strftime('%Y-%m-%d') if isinstance(v, (date, datetime)) else v
 
@@ -44,12 +42,11 @@ def _report_job_done_to_cold_store(job_scope):
     )
 
 
-def report_job_status(stage_id, job_scope):
+def report_job_status(stage_id: int, job_scope: JobScope):
     """
     Report the job status to the job status store
 
-    :param int|tuple stage_id: Either a scalar value with stage_id, or a
-        tuple in the format of (stage_id, failure_bucket_id). This is used
+    :param int stage_id: Scalar value with stage_id used
         for convenience to communicate distinct failure "types"
     :param JobScope job_scope: The job scope that is attached to this particular
         report
@@ -81,7 +78,7 @@ def report_job_status(stage_id, job_scope):
                 logger.warning(
                     f'#{job_scope.sweep_id} Failure status report "{job_scope.job_id}": "{status_bucket}"'
                 )
-            else: # is zero
+            else:  # is zero
                 # "terminal" Done
                 logger.info(
                     f'#{job_scope.sweep_id} Done status report "{job_scope.job_id}": "{status_bucket}"'
@@ -96,8 +93,8 @@ def report_job_status(stage_id, job_scope):
             data = dict(
                 last_success_dt=datetime.utcnow(),
                 last_success_sweep_id=job_scope.sweep_id,
-                last_running_time=job_scope.running_time,
-                last_datapoint_count=job_scope.datapoint_count,
+                last_total_running_time=job_scope.running_time,
+                last_total_datapoint_count=job_scope.datapoint_count,
             )
             is_done = True
 
@@ -106,8 +103,6 @@ def report_job_status(stage_id, job_scope):
                 last_progress_dt=datetime.utcnow(),
                 last_progress_stage_id=stage_id,
                 last_progress_sweep_id=job_scope.sweep_id,
-                last_running_time=None,
-                last_datapoint_count=None,
             )
 
         elif stage_id < 0:
@@ -117,8 +112,8 @@ def report_job_status(stage_id, job_scope):
                 last_failure_sweep_id=job_scope.sweep_id,
                 # last_failure_error=?
                 last_failure_bucket=status_bucket,
-                last_running_time=job_scope.running_time,
-                last_datapoint_count=None,
+                last_partial_running_time=job_scope.running_time,
+                last_partial_datapoint_count=job_scope.datapoint_count,
             )
 
         # important to use upsert, not .save()

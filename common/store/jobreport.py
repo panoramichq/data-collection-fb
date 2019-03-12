@@ -202,8 +202,11 @@ class JobReport(BaseModel, MemoizeMixin):
     last_failure_error = attributes.UnicodeAttribute(null=True, attr_name='fmessage')
     last_failure_bucket = attributes.NumberAttribute(null=True, attr_name='fb')
 
-    last_running_time = attributes.NumberAttribute(null=True, attr_name='rt')
-    last_datapoint_count = attributes.NumberAttribute(null=True, attr_name='dc')
+    last_total_running_time = attributes.NumberAttribute(null=True, attr_name='trt')
+    last_total_datapoint_count = attributes.NumberAttribute(null=True, attr_name='tdc')
+
+    last_partial_running_time = attributes.NumberAttribute(null=True, attr_name='prt')
+    last_partial_datapoint_count = attributes.NumberAttribute(null=True, attr_name='pdc')
 
 
 def sync_schema(brute_force=False):
