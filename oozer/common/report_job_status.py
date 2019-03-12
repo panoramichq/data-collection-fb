@@ -95,37 +95,35 @@ def report_job_status(stage_id: int, job_scope: JobScope):
     is_done = False
     actions = None
 
-    model = JobReport(job_scope.job_id)
-
     if stage_id == ExternalPlatformJobStatus.Done:
         actions = [
-            _set_or_remove(model.last_success_dt, datetime.utcnow()),
-            _set_or_remove(model.last_success_sweep_id, job_scope.sweep_id),
-            _set_or_remove(model.last_total_running_time, job_scope.running_time),
-            _set_or_remove(model.last_total_datapoint_count, job_scope.datapoint_count),
-            _set_or_remove(model.fails_in_row, 0)
+            JobReport.last_success_dt.set(datetime.utcnow()),
+            JobReport.last_success_sweep_id.set(job_scope.sweep_id),
+            JobReport.fails_in_row.set(0),
+            _set_or_remove(JobReport.last_total_running_time, job_scope.running_time),
+            _set_or_remove(JobReport.last_total_datapoint_count, job_scope.datapoint_count),
         ]
         is_done = True
     elif stage_id > 0:
         actions = [
-            _set_or_remove(model.last_progress_dt, datetime.utcnow()),
-            _set_or_remove(model.last_progress_stage_id, stage_id),
-            _set_or_remove(model.last_progress_sweep_id, job_scope.sweep_id),
+            JobReport.last_progress_dt.set(datetime.utcnow()),
+            JobReport.last_progress_stage_id.set(stage_id),
+            JobReport.last_progress_sweep_id.set(job_scope.sweep_id),
         ]
     elif stage_id < 0:
         actions = [
-            _set_or_remove(model.last_failure_dt, datetime.utcnow()),
-            _set_or_remove(model.last_failure_stage_id, stage_id),
-            _set_or_remove(model.last_failure_sweep_id, job_scope.sweep_id),
+            JobReport.last_failure_dt.set(datetime.utcnow()),
+            JobReport.last_failure_stage_id.set(stage_id),
+            JobReport.last_failure_sweep_id.set(job_scope.sweep_id),
+            JobReport.fails_in_row + 1,
             # last_failure_error=?
-            _set_or_remove(model.last_failure_bucket, status_bucket),
-            _set_or_remove(model.last_partial_running_time, job_scope.running_time),
-            _set_or_remove(model.last_partial_datapoint_count, job_scope.datapoint_count),
-            model.fails_in_row + 1
+            _set_or_remove(JobReport.last_failure_bucket, status_bucket),
+            _set_or_remove(JobReport.last_partial_running_time, job_scope.running_time),
+            _set_or_remove(JobReport.last_partial_datapoint_count, job_scope.datapoint_count),
         ]
 
     if actions:
-        model.update(actions=actions)
+        JobReport(job_scope.job_id).update(actions=actions)
 
     if is_done and job_scope.namespace == JobScope.namespace:
         _report_job_done_to_cold_store(job_scope)
