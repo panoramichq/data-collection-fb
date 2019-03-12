@@ -9,7 +9,7 @@ from tests.base.testcase import TestCase, mock
 from oozer.common.enum import JobStatus
 from oozer.common.job_scope import JobScope
 from oozer.common.report_job_status_task import report_job_status_task
-from oozer.entities.collect_pages import collect_pages
+from oozer.entities.collect_pages import collect_pages_from_business
 
 
 class TestCollectPages(TestCase):
@@ -30,7 +30,7 @@ class TestCollectPages(TestCase):
 
         with mock.patch.object(report_job_status_task, 'delay') as status_task, \
             self.assertRaises(ValueError) as ex_trap:
-            collect_pages(job_scope, None)
+            collect_pages_from_business(job_scope, None)
 
         assert 'Report level' in str(ex_trap.exception)
         assert status_task.called
@@ -48,7 +48,7 @@ class TestCollectPages(TestCase):
 
         with mock.patch.object(report_job_status_task, 'delay') as status_task, \
             self.assertRaises(ValueError) as ex_trap:
-            collect_pages(job_scope, None)
+            collect_pages_from_business(job_scope, None)
 
         assert 'token' in str(ex_trap.exception)
         assert status_task.called
@@ -94,7 +94,7 @@ class TestCollectPages(TestCase):
             mock.patch.object(Business, 'get_owned_pages', return_value=owned_pages), \
             mock.patch.object(report_job_status_task, 'delay') as status_task:
 
-            collect_pages(job_scope, None)
+            collect_pages_from_business(job_scope, None)
 
         assert gp.called
 
