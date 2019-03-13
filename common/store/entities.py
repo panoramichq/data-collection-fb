@@ -237,11 +237,6 @@ class PageEntity(ConsoleEntityMixin, BaseModel):
     # See https://operam.atlassian.net/browse/PROD-1825 for context
     updated_by_sweep_id = attributes.UnicodeAttribute(null=True, attr_name='u')
 
-    # Each AdAccount on FB side can be set to a particular timezone
-    # A lot of reporting on FB is pegged to a "day" that is interpreted
-    # in that AdAccount's timezone (not UTC).
-    timezone = attributes.UnicodeAttribute(attr_name='tz')
-
     entity_type = Entity.Page
 
     _additional_fields = {

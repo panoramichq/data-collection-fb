@@ -66,7 +66,6 @@ def iter_reality_base() -> Generator[RealityClaim, None, None]:
                 ad_account_id=page.page_id,
                 entity_id=page.page_id,
                 entity_type=Entity.Page,
-                timezone=page.timezone,
                 tokens=scope_record.platform_tokens
             )
 
