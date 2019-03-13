@@ -111,7 +111,11 @@ def iter_entities_per_page_id(page_id, fields=None, page_entity_types=None):
 
             for record in EntityModel.query(page_id):
                 cnt += 1
-                yield record.to_dict(fields=fields, skip_null=True)
+                record_dict = record.to_dict(fields=fields, skip_null=True)
+                # this is unfortunate, but we need to change page_id to ad_account_id
+                record_dict['ad_account_id'] = record_dict['page_id']
+                del record_dict['page_id']
+                yield record_dict
                 if cnt % _step == 0:
                     cntr += _step
 

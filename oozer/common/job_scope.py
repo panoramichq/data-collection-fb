@@ -51,6 +51,9 @@ class JobScope:
             return self.to_dict() == other.to_dict()
         return False
 
+    def __getitem__(self, item):
+        return self.__dict__.get(item)
+
     def __repr__(self):
         return convert_class_with_props_to_str(self)
 

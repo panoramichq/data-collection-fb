@@ -3,6 +3,7 @@ from facebook_business.adobjects import (
     adaccount,
     adset,
     campaign,
+    comment,
     adcreative,
     advideo,
     customaudience,
@@ -23,6 +24,7 @@ FB_AD_VIDEO_MODEL = advideo.AdVideo
 FB_CUSTOM_AUDIENCE_MODEL = customaudience.CustomAudience
 FB_PAGE_MODEL = page.Page
 FB_PAGE_POST_MODEL = pagepost.PagePost
+FB_COMMENT_MODEL = comment.Comment
 
 FB_MODEL_ENUM_VALUE_MAP = {
     FB_ADACCOUNT_MODEL: Entity.AdAccount,
@@ -34,6 +36,7 @@ FB_MODEL_ENUM_VALUE_MAP = {
     FB_CUSTOM_AUDIENCE_MODEL: Entity.CustomAudience,
     FB_PAGE_MODEL: Entity.Page,
     FB_PAGE_POST_MODEL: Entity.PagePost,
+    FB_COMMENT_MODEL: Entity.Comment,
 }
 
 ENUM_VALUE_FB_MODEL_MAP = {
@@ -51,7 +54,6 @@ def to_fb_model(entity_id, entity_type, api=None):
         fbid = entity_id
 
     return ENUM_VALUE_FB_MODEL_MAP[entity_type](fbid=fbid, api=api)
-
 
 
 class JobStatus:

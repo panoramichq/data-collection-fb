@@ -1,16 +1,17 @@
 from datetime import datetime
 
+from oozer.entities.collect_entities_iterators import (
+    iter_native_entities_per_adaccount,
+    iter_native_entities_per_page,
+    iter_collect_entities_per_adaccount,
+    iter_collect_entities_per_page,
+)
 from tests.base.testcase import TestCase, integration
 
 from common.enums.entity import Entity
 from config.facebook import TOKEN, AD_ACCOUNT, PAGE
 from oozer.common.job_scope import JobScope
 from oozer.common.facebook_api import PlatformApiContext
-from oozer.common.job_context import JobContext
-from oozer.entities.collect_entities_per_adaccount import \
-    iter_collect_entities_per_adaccount, iter_native_entities_per_adaccount
-from oozer.entities.collect_entities_per_page import \
-    iter_collect_entities_per_page, iter_native_entities_per_page
 
 
 @integration('facebook')
@@ -26,7 +27,7 @@ class TestingEntityCollection(TestCase):
                 Entity.Campaign
             )
             cnt = 0
-            for entity in entities:
+            for _ in entities:
                 cnt += 1
                 break
 
@@ -42,7 +43,7 @@ class TestingEntityCollection(TestCase):
                 Entity.AdSet
             )
             cnt = 0
-            for entity in entities:
+            for _ in entities:
                 cnt += 1
                 break
 
@@ -58,7 +59,7 @@ class TestingEntityCollection(TestCase):
                 Entity.Ad
             )
             cnt = 0
-            for entity in entities:
+            for _ in entities:
                 cnt += 1
                 break
 
@@ -73,7 +74,7 @@ class TestingEntityCollection(TestCase):
                 Entity.AdCreative
             )
             cnt = 0
-            for entity in entities:
+            for _ in entities:
                 cnt += 1
                 break
 
@@ -104,7 +105,7 @@ class TestingEntityCollection(TestCase):
             )
             cnt = 0
 
-            for entity in entities:
+            for _ in entities:
                 cnt += 1
                 break
 
@@ -119,7 +120,7 @@ class TestingEntityCollection(TestCase):
             )
             cnt = 0
 
-            for entity in entities:
+            for _ in entities:
                 cnt += 1
                 break
 
@@ -140,11 +141,11 @@ class TestingEntityCollectionPipeline(TestCase):
         )
 
         data_iter = iter_collect_entities_per_adaccount(
-            job_scope, JobContext()
+            job_scope
         )
 
         cnt = 0
-        for datum in data_iter:
+        for _ in data_iter:
             cnt += 1
             if cnt == 4:
                 break
@@ -164,11 +165,11 @@ class TestingEntityCollectionPipeline(TestCase):
         )
 
         data_iter = iter_collect_entities_per_adaccount(
-            job_scope, JobContext()
+            job_scope
         )
 
         cnt = 0
-        for datum in data_iter:
+        for _ in data_iter:
             cnt += 1
             if cnt == 4:
                 break
@@ -188,11 +189,11 @@ class TestingEntityCollectionPipeline(TestCase):
         )
 
         data_iter = iter_collect_entities_per_adaccount(
-            job_scope, JobContext()
+            job_scope
         )
 
         cnt = 0
-        for datum in data_iter:
+        for _ in data_iter:
             cnt += 1
             break
 
@@ -211,11 +212,11 @@ class TestingEntityCollectionPipeline(TestCase):
         )
 
         data_iter = iter_collect_entities_per_adaccount(
-            job_scope, JobContext()
+            job_scope
         )
 
         cnt = 0
-        for datum in data_iter:
+        for _ in data_iter:
             cnt += 1
             break
 
@@ -234,11 +235,11 @@ class TestingEntityCollectionPipeline(TestCase):
         )
 
         data_iter = iter_collect_entities_per_page(
-            job_scope, JobContext()
+            job_scope
         )
 
         cnt = 0
-        for datum in data_iter:
+        for _ in data_iter:
             cnt += 1
             break
 

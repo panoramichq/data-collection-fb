@@ -72,7 +72,7 @@ def assign_score(job_id, timezone):
         return 1000
 
     # if we are here, we have Platform-flavored job
-    is_per_parent_job = bool(not entity_type and report_variant)
+    is_per_parent_job = bool(report_variant and (not entity_type or entity_type == Entity.PagePost))
 
     if not is_per_parent_job and ad_account_id != '23845179':
         # at this time, it's impossible to have per-entity_id

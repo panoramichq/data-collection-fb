@@ -78,6 +78,32 @@ def entities_per_page(entity_type: str, reality_claim: RealityClaim) -> Generato
     )
 
 
+def entities_per_page_post(entity_type: str, reality_claim: RealityClaim) -> Generator[ExpectationClaim, None, None]:
+    """
+    Generates "fetch EntityType entities metadata per given Page" job call sig
+
+    :param str entity_type: One of Entity enum values
+    :param RealityClaim reality_claim:
+    :rtype: Generator[ExpectationClaim]
+    """
+
+    assert entity_type in Entity.ALL
+
+    yield ExpectationClaim(
+        reality_claim.to_dict(),
+        job_signatures=[
+            JobSignature.bind(
+                generate_id(
+                    ad_account_id=reality_claim.ad_account_id,
+                    report_type=ReportType.entity,
+                    report_variant=entity_type,
+                    entity_id=reality_claim.entity_id,
+                )
+            )
+        ]
+    )
+
+
 def page_entity(reality_claim: RealityClaim) -> Generator[ExpectationClaim, None, None]:
     assert reality_claim.entity_type == Entity.Page, \
         'Page expectation should be triggered only by page reality claims'
@@ -126,12 +152,10 @@ campaign_entities_per_ad_account: ExpectationGeneratorType = functools.partial(
     Entity.Campaign
 )
 
-
 adset_entities_per_ad_account: ExpectationGeneratorType = functools.partial(
     entities_per_ad_account,
     Entity.AdSet
 )
-
 
 ad_entities_per_ad_account: ExpectationGeneratorType = functools.partial(
     entities_per_ad_account,
@@ -156,4 +180,9 @@ custom_audience_entities_per_ad_account: ExpectationGeneratorType = functools.pa
 page_post_entities_per_page: ExpectationGeneratorType = functools.partial(
     entities_per_page,
     Entity.PagePost
+)
+
+comment_entities_per_page_post: ExpectationGeneratorType = functools.partial(
+    entities_per_page_post,
+    Entity.Comment
 )

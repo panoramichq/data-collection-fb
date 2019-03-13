@@ -1,6 +1,7 @@
 from typing import List, Type
 
 from facebook_business.adobjects.adaccount import AdAccount
+from facebook_business.adobjects.comment import Comment
 from facebook_business.api import FacebookAdsApi, FacebookSession
 from facebook_business.adobjects import abstractcrudobject
 from facebook_business.adobjects.campaign import Campaign
@@ -614,6 +615,34 @@ _default_fields_map = {
         'via',
         'video_buying_eligibility',
         'width',
+    ]),
+    Comment: collapse_fields_children([
+        'application',
+        'attachment',
+        'can_comment',
+        # 'can_hide',  # Error message: "(#210) A page access token is required to request this resource."
+        'can_like',
+        'can_remove',
+        # 'can_reply_privately',
+        'comment_count',
+        'created_time',
+        'from',
+        'id',
+
+        'is_hidden',
+        'is_private',
+        'like_count',
+        'live_broadcast_timestamp',
+
+        'message',
+        'message_tags',
+        'object',
+        'parent',
+        'parent_id',
+        'permalink_url',
+        # Error message: "(#200) The page does not have READ_PAGE_MAILBOXES or PAGES_MESSAGING permission."
+        # 'private_reply_conversation',
+        'user_likes',
     ])
 }
 
@@ -666,7 +695,7 @@ def get_default_page_size(model_klazz: Type['Model']) -> List[str]:
     """
     assert issubclass(model_klazz, abstractcrudobject.AbstractCrudObject)
 
-    return _default_page_size.get(model_klazz)
+    return _default_page_size.get(model_klazz, 100)
 
 
 # By default ARCHIVED is filtered out

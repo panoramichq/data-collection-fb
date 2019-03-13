@@ -1,4 +1,5 @@
 # must be first, as it does event loop patching and other "first" things
+from oozer.entities.collect_entities_iterators import iter_collect_entities_per_adaccount
 from tests.base.testcase import TestCase, mock
 
 from common.enums.entity import Entity
@@ -6,9 +7,15 @@ from common.enums.reporttype import ReportType
 from common.id_tools import generate_universal_id
 from oozer.common.cold_storage.batch_store import ChunkDumpStore
 from oozer.common.job_scope import JobScope
-from oozer.entities.collect_entities_per_adaccount import iter_collect_entities_per_adaccount
-from oozer.entities.collect_entities_per_adaccount import \
-    FB_AD_VIDEO_MODEL, FB_AD_CREATIVE_MODEL, FB_AD_MODEL, FB_ADSET_MODEL, FB_CAMPAIGN_MODEL, FB_ADACCOUNT_MODEL, FB_CUSTOM_AUDIENCE_MODEL
+from oozer.common.enum import (
+    FB_AD_VIDEO_MODEL,
+    FB_AD_CREATIVE_MODEL,
+    FB_AD_MODEL,
+    FB_ADSET_MODEL,
+    FB_CAMPAIGN_MODEL,
+    FB_ADACCOUNT_MODEL,
+    FB_CUSTOM_AUDIENCE_MODEL,
+)
 
 from tests.base import random
 
@@ -23,7 +30,14 @@ class TestCollectEntitiesPerAdAccount(TestCase):
 
     def test_correct_vendor_data_inserted_into_cold_store_payload_campaigns(self):
 
-        entity_types = [Entity.Campaign, Entity.AdSet, Entity.Ad, Entity.AdCreative, Entity.AdVideo, Entity.CustomAudience]
+        entity_types = [
+            Entity.Campaign,
+            Entity.AdSet,
+            Entity.Ad,
+            Entity.AdCreative,
+            Entity.AdVideo,
+            Entity.CustomAudience,
+        ]
         fb_model_map = {
             Entity.Campaign: FB_CAMPAIGN_MODEL,
             Entity.AdSet: FB_ADSET_MODEL,
@@ -75,7 +89,7 @@ class TestCollectEntitiesPerAdAccount(TestCase):
             with mock.patch.object(FB_ADACCOUNT_MODEL, get_method_name, return_value=entities_data), \
                  mock.patch.object(ChunkDumpStore, 'store') as store:
 
-                data_received = list(iter_collect_entities_per_adaccount(job_scope, None))
+                list(iter_collect_entities_per_adaccount(job_scope))
 
             assert store.called
             store_args, store_keyword_args = store.call_args

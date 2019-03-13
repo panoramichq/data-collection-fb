@@ -1,4 +1,3 @@
-from common.enums.entity import Entity
 from common.memoize import memoized_property, MemoizeMixin
 from config import dynamodb as dynamodb_config
 from config import operam_console_api as operam_console_api_config

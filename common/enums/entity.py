@@ -16,6 +16,7 @@ class Entity:
 
     Page = 'P'
     PagePost = 'PP'
+    Comment = 'CM'
 
     # FIXME: split entities into general (C,AS,A) - insights enabled
     # FIXME: and into "entity only" - other (no insights fetched)
@@ -30,10 +31,12 @@ class Entity:
         CustomAudience,
         Scope,
         Page,
-        PagePost
+        PagePost,
+        Comment,
     }
 
     NON_AA = {
         Page,
-        PagePost
+        PagePost,
+        Comment,
     }

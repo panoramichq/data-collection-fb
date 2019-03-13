@@ -18,7 +18,7 @@ click==6.7                # via pip-tools
 datadog==0.19.0
 decorator==4.2.1
 docutils==0.14
-facebook_business==3.1.2
+facebook_business==3.1.8
 first==2.0.1              # via pip-tools
 flake8-polyfill==1.0.2
 flake8-string-format==0.2.3

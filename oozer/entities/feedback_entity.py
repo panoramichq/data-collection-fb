@@ -77,7 +77,7 @@ def _upsert_regular_entity(entity_data, entity_type, entity_hash_pair):
     Model = ENTITY_TYPE_MODEL_MAP[entity_type]
 
     entity_id = entity_data['id']
-    ad_account_id = entity_data['account_id'] if entity_type not in Entity.NON_AA else '0'
+    ad_account_id = entity_data['page_id'] if entity_type in Entity.NON_AA else entity_data['account_id']
 
     # Custom audiences specify create & update time as unix timestamps
     if entity_data.get('time_created'):

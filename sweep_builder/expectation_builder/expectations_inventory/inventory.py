@@ -23,7 +23,7 @@ from .entities import (
     campaign_entities_per_ad_account,
     custom_audience_entities_per_ad_account,
     ad_account_entity,
-    page_entity, page_post_entities_per_page, )
+    page_entity, page_post_entities_per_page, comment_entities_per_page_post, )
 
 from .metrics import lifetime, breakdowns
 
@@ -71,6 +71,10 @@ entity_expectation_generator_map[Entity.Page] = list(filter(None, [
     None if jobs_config.ENTITY_P_DISABLED else page_entity,
     None if jobs_config.ENTITY_PP_DISABLED else page_post_entities_per_page,
     sync_expectations_per_page,
+]))
+
+entity_expectation_generator_map[Entity.PagePost] = list(filter(None, [
+    None if jobs_config.ENTITY_CM_DISABLED else comment_entities_per_page_post,
 ]))
 
 entity_expectation_generator_map[Entity.Campaign] = list(filter(None, [

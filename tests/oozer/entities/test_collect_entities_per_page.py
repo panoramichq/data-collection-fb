@@ -1,4 +1,5 @@
 # must be first, as it does event loop patching and other "first" things
+from oozer.entities.collect_entities_iterators import iter_collect_entities_per_page
 from tests.base.testcase import TestCase, mock
 
 from common.enums.entity import Entity
@@ -6,8 +7,7 @@ from common.enums.reporttype import ReportType
 from common.id_tools import generate_universal_id
 from oozer.common.cold_storage.batch_store import ChunkDumpStore
 from oozer.common.job_scope import JobScope
-from oozer.entities.collect_entities_per_page import iter_collect_entities_per_page
-from oozer.entities.collect_entities_per_page import FB_PAGE_MODEL, FB_PAGE_POST_MODEL
+from oozer.common.enum import FB_PAGE_MODEL, FB_PAGE_POST_MODEL
 
 from tests.base import random
 
@@ -58,7 +58,7 @@ class TestCollectEntitiesPerPage(TestCase):
             with mock.patch.object(FB_PAGE_MODEL, get_method_name, return_value=entities_data), \
                  mock.patch.object(ChunkDumpStore, 'store') as store:
 
-                data_received = list(iter_collect_entities_per_page(job_scope, None))
+                list(iter_collect_entities_per_page(job_scope))
 
             assert store.called
             store_args, store_keyword_args = store.call_args
