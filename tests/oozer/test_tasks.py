@@ -7,7 +7,7 @@ from facebook_business.exceptions import FacebookError
 from common.bugsnag import SEVERITY_WARNING, SEVERITY_ERROR
 from common.enums.failure_bucket import FailureBucket
 from oozer.common.enum import ExternalPlatformJobStatus
-from oozer.tasks import reported_task
+from oozer.reporting import reported_task
 
 
 @patch('oozer.tasks.report_job_status_task')

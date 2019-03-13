@@ -12,7 +12,7 @@ from oozer.common.job_scope import JobScope
 from oozer.common.sweep_running_flag import SweepRunningFlag
 from oozer.common.vendor_data import add_vendor_data
 from oozer.entities.feedback_entity_task import feedback_entity_task
-from oozer.tasks import reported_task
+from oozer.reporting import reported_task
 
 app = get_celery_app()
 logger = logging.getLogger(__name__)

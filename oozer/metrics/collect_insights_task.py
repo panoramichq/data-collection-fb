@@ -7,7 +7,7 @@ from oozer.common.job_context import JobContext
 from oozer.common.job_scope import JobScope
 from oozer.common.sweep_running_flag import SweepRunningFlag
 from oozer.common.errors import CollectionError
-from oozer.tasks import reported_task
+from oozer.reporting import reported_task
 from .collect_insights import Insights
 
 logger = logging.getLogger(__name__)

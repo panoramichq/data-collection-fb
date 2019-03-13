@@ -8,7 +8,7 @@ from oozer.common.job_scope import JobScope
 from oozer.common.sweep_running_flag import SweepRunningFlag
 from oozer.entities.collect_entities_per_adaccount import iter_collect_entities_per_adaccount
 from oozer.common.errors import CollectionError
-from oozer.tasks import reported_task
+from oozer.reporting import reported_task
 
 app = get_celery_app()
 logger = logging.getLogger(__name__)
