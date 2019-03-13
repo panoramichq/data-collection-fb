@@ -20,7 +20,7 @@ def iter_prioritized(
     :return: Generator yielding PrioritizationClaim objects
     :rtype: Generator[PrioritizationClaim]
     """
-    _measurement_name_base = __name__ + '.' + iter_prioritized.__name__
+    _measurement_name_base = __name__ + '.' + iter_prioritized.__name__ + '.'
     _measurement_sample_rate = 1
 
     _before_next_expectation = time.time()

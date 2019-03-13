@@ -4,7 +4,6 @@ from common.celeryapp import get_celery_app
 from common.measurement import Measure
 from oozer.common.job_scope import JobScope
 
-
 logger = logging.getLogger(__name__)
 app = get_celery_app()
 
@@ -12,7 +11,7 @@ app = get_celery_app()
 @app.task
 @Measure.timer(__name__, function_name_as_metric=True)
 @Measure.counter(__name__, function_name_as_metric=True, count_once=True)
-def report_job_status_task(stage_status, job_scope):
+def report_job_status_task(stage_status: int, job_scope: JobScope):
     """
     We take job scope to divine basic information about the job itself.
 
@@ -20,10 +19,6 @@ def report_job_status_task(stage_status, job_scope):
 
     And status_context is some sort of dictionary that allows us to divine
     failure contexts
-
-    :param int stage_status:
-    :param JobScope job_scope:
-    :return:
     """
     from .report_job_status import report_job_status
     from pynamodb.exceptions import PutError
