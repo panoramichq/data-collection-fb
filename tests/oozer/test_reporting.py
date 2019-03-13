@@ -10,7 +10,7 @@ from oozer.common.enum import ExternalPlatformJobStatus
 from oozer.reporting import reported_task
 
 
-@patch('oozer.tasks.report_job_status_task')
+@patch('oozer.reporting.report_job_status_task')
 def test_reported_task_on_success(mock_report):
     mock_job_scope = Mock()
 
@@ -29,10 +29,10 @@ def test_reported_task_on_success(mock_report):
     ]
 
 
-@patch('oozer.tasks.PlatformTokenManager.from_job_scope')
-@patch('oozer.tasks.report_job_status_task')
-@patch('oozer.tasks.BugSnagContextData.notify')
-@patch('oozer.tasks.FacebookApiErrorInspector.get_status_and_bucket')
+@patch('oozer.reporting.PlatformTokenManager.from_job_scope')
+@patch('oozer.reporting.report_job_status_task')
+@patch('oozer.reporting.BugSnagContextData.notify')
+@patch('oozer.reporting.FacebookApiErrorInspector.get_status_and_bucket')
 def test_reported_task_on_failure_facebook_error(mock_get_status_and_bucket, mock_notify, mock_report, mock_from_job_scope):
     exc = FacebookError('test')
     mock_job_scope = Mock(token='token')
@@ -64,9 +64,9 @@ def test_reported_task_on_failure_facebook_error(mock_get_status_and_bucket, moc
     )
 
 
-@patch('oozer.tasks.PlatformTokenManager.from_job_scope')
-@patch('oozer.tasks.report_job_status_task')
-@patch('oozer.tasks.BugSnagContextData.notify')
+@patch('oozer.reporting.PlatformTokenManager.from_job_scope')
+@patch('oozer.reporting.report_job_status_task')
+@patch('oozer.reporting.BugSnagContextData.notify')
 def test_reported_task_on_failure_generic_error(mock_notify, mock_report, mock_from_job_scope):
     exc = Exception('test')
     mock_job_scope = Mock(token='token')
