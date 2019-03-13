@@ -3,7 +3,6 @@ from celery.signals import setup_logging
 
 from config import celery as celery_config
 from config.build import BUILD_ID
-from common.configure_logging import configure_logging
 from common.bugsnag import configure_bugsnag
 
 
