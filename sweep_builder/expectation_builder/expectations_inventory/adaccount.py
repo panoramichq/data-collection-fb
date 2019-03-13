@@ -26,19 +26,17 @@ def ad_accounts_per_scope(reality_claim: RealityClaim) -> Generator[ExpectationC
 
     yield ExpectationClaim(
         reality_claim.to_dict(),
-        job_signatures=[
-            JobSignature.bind(
-                generate_id(
-                    namespace=config.application.UNIVERSAL_ID_SYSTEM_NAMESPACE,
-                    # Note absence of value for AdAccount
-                    # This is "all AA per scope X" job.
-                    entity_id=reality_claim.entity_id,
-                    entity_type=reality_claim.entity_type,
-                    report_type=ReportType.import_accounts,
-                    report_variant=Entity.AdAccount,
-                )
+        normative_job_signature=JobSignature(
+            generate_id(
+                namespace=config.application.UNIVERSAL_ID_SYSTEM_NAMESPACE,
+                # Note absence of value for AdAccount
+                # This is "all AA per scope X" job.
+                entity_id=reality_claim.entity_id,
+                entity_type=reality_claim.entity_type,
+                report_type=ReportType.import_accounts,
+                report_variant=Entity.AdAccount,
             )
-        ],
+        ),
     )
 
 
@@ -56,14 +54,12 @@ def sync_expectations_per_ad_account(reality_claim: RealityClaim) -> Generator[E
 
     yield ExpectationClaim(
         reality_claim.to_dict(),
-        job_signatures=[
-            JobSignature.bind(
-                generate_id(
-                    ad_account_id=reality_claim.ad_account_id,
-                    entity_id=reality_claim.ad_account_id,
-                    entity_type=reality_claim.entity_type,
-                    report_type=ReportType.sync_expectations,
-                )
+        normative_job_signature=JobSignature(
+            generate_id(
+                ad_account_id=reality_claim.ad_account_id,
+                entity_id=reality_claim.ad_account_id,
+                entity_type=reality_claim.entity_type,
+                report_type=ReportType.sync_expectations,
             )
-        ],
+        ),
     )

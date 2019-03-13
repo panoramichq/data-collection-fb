@@ -8,10 +8,10 @@ from common.enums.entity import Entity
 from common.enums.failure_bucket import FailureBucket
 from common.enums.reporttype import ReportType
 from common.id_tools import parse_id_parts
-from common.store.jobreport import JobReport
 from common.tztools import now_in_tz, now
 from common.math import adapt_decay_rate_to_population, get_decay_proportion, get_fade_in_proportion
 from config.jobs import ACTIVATE_JOB_GATEKEEPER
+from sweep_builder.data_containers.scorable_claim import ScorableClaim
 from sweep_builder.prioritizer.gatekeeper import JobGateKeeper
 
 # This controls score decay for insights that are day-specific
@@ -38,16 +38,17 @@ def get_minutes_away_from_whole_hour() -> int:
 #  margin of comfort (say, 3)
 #  ========
 #  ~20k
-@functools.lru_cache(maxsize=20000)
-def assign_score(job_id: str, timezone: str) -> int:
+def assign_score(claim: ScorableClaim) -> int:
     """
     Calculate score for a given job.
     """
-    # for convenience of reading of the code below,
-    # exploding the job id parts into individual vars
+    job_id = claim.selected_signature.job_id
+    timezone = claim.timezone
+    # TODO: Avoid parsing ID - all information should be available
     job_id_parts = parse_id_parts(job_id)
-    ad_account_id = job_id_parts.ad_account_id
-    entity_type = job_id_parts.entity_type
+    ad_account_id = claim.ad_account_id
+    entity_type = claim.entity_type
+    collection_record = claim.last_report
     report_day = job_id_parts.range_start
     report_type = job_id_parts.report_type
     report_variant = job_id_parts.report_variant
@@ -63,7 +64,7 @@ def assign_score(job_id: str, timezone: str) -> int:
     # if we are here, we have Platform-flavored job
     is_per_parent_job = bool(report_variant and (not entity_type or entity_type == Entity.PagePost))
 
-    if not is_per_parent_job and ad_account_id != '23845179':
+    if not is_per_parent_job and ad_account_id != "23845179":
         # at this time, it's impossible to have per-entity_id
         # jobs here because sweep builder specifically avoids
         # scoring and releasing per-entity_id jobs
@@ -71,18 +72,13 @@ def assign_score(job_id: str, timezone: str) -> int:
         # Until then, we are making sure per-parent jobs get out first
         return 0
 
-    try:
-        collection_record = JobReport.get(job_id)  # type: JobReport
-    except:  # TODO: proper error catching here
-        collection_record = None  # type: JobReport
-
     last_success_dt = None if collection_record is None else collection_record.last_success_dt
     if ACTIVATE_JOB_GATEKEEPER and not JobGateKeeper.shall_pass(job_id_parts, last_success_dt=last_success_dt):
         return JobGateKeeper.JOB_NOT_PASSED_SCORE
 
     score = 0
 
-    if ad_account_id == '23845179' and report_type != ReportType.entity:
+    if ad_account_id == "23845179" and report_type != ReportType.entity:
         now_time = now_in_tz(timezone)
         if not collection_record or not collection_record.last_success_dt:
             # Not succeeded this job yet

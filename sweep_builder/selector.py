@@ -28,22 +28,20 @@ def should_select(signature: JobSignature, report: Optional[JobReport]) -> bool:
 
 def select_signature(claim: ExpectationClaim) -> (JobSignature, JobReport):
     """Select job signature for single expectation claim."""
-    for signature in claim.job_signatures[:-1]:
+    for signature in claim.effective_job_signatures:
         report = _fetch_job_report(signature.job_id)
         if should_select(signature, report):
             return signature, report
 
-    # default to last signature
-    last_signature = claim.job_signatures[-1]
-    last_report = _fetch_job_report(last_signature.job_id)
-    return last_signature, last_report
+    # default to normative signature
+    return claim.normative_job_signature, _fetch_job_report(claim.normative_job_signature.job_id)
 
 
 def iter_select_signature(claims: Iterable[ExpectationClaim]) -> Generator[ScorableClaim, None, None]:
     """Select signature for each expectation claim based on job history."""
+    # TODO: Add measurement calls
     for claim in claims:
         signature, report = select_signature(claim)
-        # TODO: to_dict copying below
         yield ScorableClaim(
             claim.to_dict(),
             selected_signature=signature,

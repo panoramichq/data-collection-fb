@@ -35,10 +35,7 @@ class ScopeJobsExpectationsTests(TestCase):
         assert expectation_claim.entity_id == reality_claim.entity_id
         assert expectation_claim.entity_type == reality_claim.entity_type
 
-        assert len(expectation_claim.job_signatures) == 1
-        job_signature = expectation_claim.job_signatures[0]
-
-        assert job_signature.job_id == generate_id(
+        assert expectation_claim.normative_job_signature.job_id == generate_id(
             namespace=config.application.UNIVERSAL_ID_SYSTEM_NAMESPACE,
             entity_type=Entity.Scope,
             entity_id=entity_id,

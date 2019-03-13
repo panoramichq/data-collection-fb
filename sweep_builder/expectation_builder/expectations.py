@@ -30,7 +30,7 @@ def iter_expectations(reality_claims_iter: Iterable[RealityClaim]) -> Generator[
                 count += 1
 
         Measure.histogram(
-            __name__ + '.iter_expectations.expectations_per_reality_claim',
+            f'{__name__}.{iter_expectations.__name__}.expectations_per_reality_claim',
             tags={'ad_account_id': reality_claim.ad_account_id, 'entity_type': reality_claim.entity_type},
             sample_rate=1,
         )(count)

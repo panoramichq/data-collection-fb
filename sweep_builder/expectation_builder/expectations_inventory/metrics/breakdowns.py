@@ -1,5 +1,4 @@
-import functools
-
+from functools import partial
 from datetime import date, timedelta
 from typing import Generator, List, Tuple
 
@@ -38,19 +37,17 @@ def lifecycle_metrics_per_entity(
 
     yield ExpectationClaim(
         reality_claim.to_dict(),
-        job_signatures=[
-            JobSignature.bind(
-                generate_id(
-                    ad_account_id=reality_claim.ad_account_id,
-                    entity_id=reality_claim.entity_id,
-                    entity_type=reality_claim.entity_type,
-                    report_type=day_breakdown,
-                    report_variant=entity_type,
-                    range_end=range_end,
-                    range_start=range_start,
-                )
+        normative_job_signature=JobSignature(
+            generate_id(
+                ad_account_id=reality_claim.ad_account_id,
+                entity_id=reality_claim.entity_id,
+                entity_type=reality_claim.entity_type,
+                report_type=day_breakdown,
+                report_variant=entity_type,
+                range_end=range_end,
+                range_start=range_start,
             )
-        ],
+        )
     )
 
 
@@ -79,18 +76,16 @@ def daily_metrics_per_entity(
     for day in date_range(range_start, range_end):
         yield ExpectationClaim(
             reality_claim.to_dict(),
-            job_signatures=[
-                JobSignature.bind(
-                    generate_id(
-                        ad_account_id=reality_claim.ad_account_id,
-                        entity_id=reality_claim.entity_id,
-                        entity_type=reality_claim.entity_type,
-                        report_type=day_breakdown,
-                        report_variant=entity_type,
-                        range_start=day,
-                    )
+            normative_job_signature=JobSignature(
+                generate_id(
+                    ad_account_id=reality_claim.ad_account_id,
+                    entity_id=reality_claim.entity_id,
+                    entity_type=reality_claim.entity_type,
+                    report_type=day_breakdown,
+                    report_variant=entity_type,
+                    range_start=day,
                 )
-            ],
+            )
         )
 
 
@@ -140,82 +135,94 @@ def day_metrics_per_entities_under_ad_account(
         return
 
     reality_claim_data = reality_claim.to_dict()
-    _days_cache = set()
+
+    generate_id_func = partial(generate_id, ad_account_id=reality_claim.ad_account_id, report_variant=entity_type)
 
     for child_reality_claim in iter_reality_per_ad_account_claim(reality_claim, entity_types=[entity_type]):
 
         range_start, range_end = _determine_active_date_range_for_claim(child_reality_claim)
         for day in date_range(range_start, range_end):
-
-            if day not in _days_cache:
-                _days_cache.add(day)
-
-                for report_type in report_types:
-                    yield ExpectationClaim(
-                        reality_claim_data,
-                        job_signatures=[
-                            JobSignature.bind(
-                                generate_id(
-                                    range_start=day,
-                                    report_type=report_type,
-                                    ad_account_id=reality_claim.ad_account_id,
-                                    report_variant=entity_type,
-                                )
-                            )
-                        ],
+            generate_id_func = partial(generate_id_func, range_start=day)
+            for report_type in report_types:
+                generate_id_func = partial(generate_id_func, report_type=report_type)
+                normative_job_signature = JobSignature(
+                    job_id_func=partial(
+                        generate_id_func, entity_type=child_reality_claim.entity_type, entity_id=child_reality_claim
                     )
+                )
+                effective_job_signatures = [JobSignature(job_id_func=generate_id_func)]
+
+                if child_reality_claim.campaign_id is not None:
+                    effective_job_signatures.append(
+                        JobSignature(
+                            job_id_func=partial(
+                                generate_id_func,
+                                entity_type=Entity.Campaign,
+                                entity_id=child_reality_claim.campaign_id,
+                            )
+                        )
+                    )
+
+                if child_reality_claim.adset_id is not None:
+                    effective_job_signatures.append(
+                        JobSignature(
+                            job_id_func=partial(
+                                generate_id_func, entity_type=Entity.AdSet, entity_id=child_reality_claim.adset_id
+                            )
+                        )
+                    )
+
+                yield ExpectationClaim(
+                    reality_claim_data,
+                    normative_job_signature=normative_job_signature,
+                    effective_job_signatures=effective_job_signatures,
+                )
 
 
 # per entity permutation (still need per report type)
 
-_lifecycle_metrics_per_ad: ExpectationGeneratorType = functools.partial(lifecycle_metrics_per_entity, Entity.Ad)
+_lifecycle_metrics_per_ad: ExpectationGeneratorType = partial(lifecycle_metrics_per_entity, Entity.Ad)
 
 # per entity generators
 
-day_metrics_per_campaign_per_entity: ExpectationGeneratorType = functools.partial(
+day_metrics_per_campaign_per_entity: ExpectationGeneratorType = partial(
     lifecycle_metrics_per_entity, Entity.Campaign, ReportType.day
 )
 
-hour_metrics_per_campaign_per_entity: ExpectationGeneratorType = functools.partial(
+hour_metrics_per_campaign_per_entity: ExpectationGeneratorType = partial(
     lifecycle_metrics_per_entity, Entity.Campaign, ReportType.day_hour
 )
 
-hour_metrics_per_adset_per_entity: ExpectationGeneratorType = functools.partial(
+hour_metrics_per_adset_per_entity: ExpectationGeneratorType = partial(
     lifecycle_metrics_per_entity, Entity.AdSet, ReportType.day_hour
 )
 
-day_metrics_per_ad_per_entity: ExpectationGeneratorType = functools.partial(_lifecycle_metrics_per_ad, ReportType.day)
+day_metrics_per_ad_per_entity: ExpectationGeneratorType = partial(_lifecycle_metrics_per_ad, ReportType.day)
 
-hour_metrics_per_ad_per_entity: ExpectationGeneratorType = functools.partial(
-    _lifecycle_metrics_per_ad, ReportType.day_hour
-)
+hour_metrics_per_ad_per_entity: ExpectationGeneratorType = partial(_lifecycle_metrics_per_ad, ReportType.day_hour)
 
-day_age_gender_metrics_per_ad_per_entity: ExpectationGeneratorType = functools.partial(
+day_age_gender_metrics_per_ad_per_entity: ExpectationGeneratorType = partial(
     _lifecycle_metrics_per_ad, ReportType.day_age_gender
 )
 
-day_platform_metrics_per_ad_per_entity: ExpectationGeneratorType = functools.partial(
+day_platform_metrics_per_ad_per_entity: ExpectationGeneratorType = partial(
     _lifecycle_metrics_per_ad, ReportType.day_platform
 )
 
-day_dma_metrics_per_ad_per_entity: ExpectationGeneratorType = functools.partial(
-    _lifecycle_metrics_per_ad, ReportType.day_dma
-)
+day_dma_metrics_per_ad_per_entity: ExpectationGeneratorType = partial(_lifecycle_metrics_per_ad, ReportType.day_dma)
 
 # Per C, per report type
 
-hour_metrics_per_campaign_per_parent: ExpectationGeneratorType = functools.partial(
+hour_metrics_per_campaign_per_parent: ExpectationGeneratorType = partial(
     day_metrics_per_entities_under_ad_account, Entity.Campaign, [ReportType.day_hour]
 )
 
 # Per AS, per report type
 
-hour_metrics_per_adset_per_parent: ExpectationGeneratorType = functools.partial(
+hour_metrics_per_adset_per_parent: ExpectationGeneratorType = partial(
     day_metrics_per_entities_under_ad_account, Entity.AdSet, [ReportType.day_hour]
 )
 
 # per Ad, day and sub-day breakdowns
 
-metrics_per_ad_per_ad_account: ExpectationGeneratorType = functools.partial(
-    day_metrics_per_entities_under_ad_account, Entity.Ad
-)
+metrics_per_ad_per_ad_account: ExpectationGeneratorType = partial(day_metrics_per_entities_under_ad_account, Entity.Ad)

@@ -1,7 +1,4 @@
-from typing import List, Iterable, Tuple
-from itertools import zip_longest
-
-from common.job_signature import JobSignature
+from typing import List
 from common.enums.entity import Entity
 from sweep_builder.data_containers.scorable_claim import ScorableClaim
 
@@ -20,10 +17,6 @@ class PrioritizationClaim(ScorableClaim):
     """
     job_scores: List[int] = []
     score: int = None
-
-    @property
-    def score_job_pairs(self) -> Iterable[Tuple[int, JobSignature]]:
-        return zip_longest(self.job_scores, self.job_signatures)
 
     @property
     def is_subject_to_expectation_publication(self):
