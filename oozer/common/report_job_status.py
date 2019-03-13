@@ -115,7 +115,7 @@ def report_job_status(stage_id: int, job_scope: JobScope):
             JobReport.last_failure_dt.set(datetime.utcnow()),
             JobReport.last_failure_stage_id.set(stage_id),
             JobReport.last_failure_sweep_id.set(job_scope.sweep_id),
-            JobReport.fails_in_row + 1,
+            JobReport.fails_in_row.add(1),
             # last_failure_error=?
             _set_or_remove(JobReport.last_failure_bucket, status_bucket),
             _set_or_remove(JobReport.last_partial_running_time, job_scope.running_time),
