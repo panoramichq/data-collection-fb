@@ -62,6 +62,8 @@ class FacebookApiErrorInspector:
     cna throw at us and we're interested in them
     """
 
+    GENERIC_ERROR_CODE = 1
+
     THROTTLING_CODES = {
         (4, None),  # Application request limit reached
         (17, None),  # User request limit reached
@@ -97,7 +99,7 @@ class FacebookApiErrorInspector:
     @property
     def _is_generic_error(self) -> bool:
         """Check if exception is a generic error."""
-        return 1 == self._exception.api_error_code()
+        return self.GENERIC_ERROR_CODE == self._exception.api_error_code()
 
     def _is_exception_code_in_set(self, values) -> bool:
         """
