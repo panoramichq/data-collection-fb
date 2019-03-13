@@ -22,6 +22,8 @@ class RealityClaim:
     entity_type: str = None
 
     ad_account_id: str = None
+    campaign_id: str = None
+    adset_id: str = None
 
     tokens: Set[str] = None
 
