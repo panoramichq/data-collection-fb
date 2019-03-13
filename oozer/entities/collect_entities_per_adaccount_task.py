@@ -27,7 +27,7 @@ def collect_entities_per_adaccount_task(job_scope: JobScope, job_context: JobCon
     """
     if not SweepRunningFlag.is_set(job_scope.sweep_id):
         logger.info(f'{job_scope} skipped because sweep {job_scope.sweep_id} is done')
-        return
+        raise ConnectionError(Exception(f'{job_scope} skipped because sweep {job_scope.sweep_id} is done'), 0)
 
     logger.info(f'{job_scope} started')
 

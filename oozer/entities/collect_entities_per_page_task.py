@@ -6,6 +6,7 @@ from common.tokens import PlatformTokenManager
 from oozer.common.job_context import JobContext
 from oozer.common.job_scope import JobScope
 from oozer.common.sweep_running_flag import SweepRunningFlag
+from oozer.reporting import reported_task
 
 from .collect_entities_per_page import iter_collect_entities_per_page
 
@@ -17,6 +18,7 @@ logger = logging.getLogger(__name__)
 @app.task
 @Measure.timer(__name__, function_name_as_metric=True)
 @Measure.counter(__name__, function_name_as_metric=True, count_once=True)
+@reported_task
 def collect_entities_per_page_task(job_scope, job_context):
     """
     Collect all entities data for a given page
@@ -30,7 +32,7 @@ def collect_entities_per_page_task(job_scope, job_context):
         logger.info(
             f'{job_scope} skipped because sweep {job_scope.sweep_id} is done'
         )
-        return
+        raise ConnectionError(Exception(f'{job_scope} skipped because sweep {job_scope.sweep_id} is done'), 0)
 
     logger.info(
         f'{job_scope} started'
@@ -48,7 +50,7 @@ def collect_entities_per_page_task(job_scope, job_context):
     # we don't need the results here,
     # but need to spin the generator to work through entire list of work.
     # Generators are lazy. They don't do anything unless you consume from them
-    for datum in data_iter:
+    for _ in data_iter:
         cnt += 1
         if cnt % 100 == 0:
             logger.info(
@@ -58,3 +60,5 @@ def collect_entities_per_page_task(job_scope, job_context):
     logger.info(
         f'{job_scope} complete a total of {cnt} data points'
     )
+
+    return cnt
