@@ -153,7 +153,8 @@ constant annoyance.
 
 """
 
-from common.memoize import MemoizeMixin
+from common.id_tools import parse_id, generate_id, JobIdParts, fields as job_id_fields
+from common.memoize import MemoizeMixin, memoized_property
 from config import dynamodb as dynamodb_config
 
 from .base import BaseMeta, BaseModel, attributes
@@ -200,14 +201,6 @@ class JobReport(BaseModel, MemoizeMixin):
 
     last_failure_error = attributes.UnicodeAttribute(null=True, attr_name='fmessage')
     last_failure_bucket = attributes.NumberAttribute(null=True, attr_name='fb')
-
-    last_total_running_time = attributes.NumberAttribute(null=True, attr_name='trt')
-    last_total_datapoint_count = attributes.NumberAttribute(null=True, attr_name='tdc')
-
-    last_partial_running_time = attributes.NumberAttribute(null=True, attr_name='prt')
-    last_partial_datapoint_count = attributes.NumberAttribute(null=True, attr_name='pdc')
-
-    fails_in_row = attributes.NumberAttribute(attr_name='fir')
 
 
 def sync_schema(brute_force=False):

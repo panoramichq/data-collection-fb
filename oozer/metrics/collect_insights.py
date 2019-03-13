@@ -5,16 +5,21 @@ from datetime import datetime, date
 from facebook_business.adobjects.abstractcrudobject import AbstractCrudObject
 from facebook_business.adobjects.adreportrun import AdReportRun
 from facebook_business.adobjects.adsinsights import AdsInsights
+from facebook_business.exceptions import FacebookError
 from typing import Callable, Dict
 
 from common.enums.entity import Entity
+from common.enums.failure_bucket import FailureBucket
 from common.enums.reporttype import ReportType
 from common.tokens import PlatformTokenManager
+from common.bugsnag import BugSnagContextData, SEVERITY_WARNING
 from oozer.common.cold_storage import batch_store
-from oozer.common.facebook_api import PlatformApiContext
+from oozer.common.facebook_api import PlatformApiContext, FacebookApiErrorInspector
 from oozer.common.facebook_async_report import FacebookAsyncReportStatus
 from oozer.common.job_context import JobContext
 from oozer.common.job_scope import JobScope
+from oozer.common.report_job_status import ExternalPlatformJobStatus
+from oozer.common.report_job_status_task import report_job_status_task
 from oozer.common.vendor_data import add_vendor_data
 
 from .vendor_data_extractor import report_type_vendor_data_extractor_map
@@ -373,7 +378,7 @@ class Insights:
         return report_tracker.iter_report_data()
 
     @classmethod
-    def iter_collect_insights(cls, job_scope, _):
+    def iter_collect_insights(cls, job_scope, job_context):
         """
         Central, *GENERIC* implementation of insights fetcher task
 
@@ -387,32 +392,93 @@ class Insights:
         :param JobContext job_context: A job context we use for entity checksums
         :rtype: Generator[Dict]
         """
-        if not job_scope.tokens:
-            raise ValueError(f"Job {job_scope.job_id} cannot proceed. No platform tokens provided.")
+        # Report start of work
+        report_job_status_task.delay(ExternalPlatformJobStatus.Start, job_scope)
 
-        token = job_scope.token
-        # We don't use it for getting a token. Something else that calls us does.
-        # However, we use it to report usages of the token we got.
-        token_manager = PlatformTokenManager.from_job_scope(job_scope)
+        try:
+            if not job_scope.tokens:
+                raise ValueError(
+                    f"Job {job_scope.job_id} cannot proceed. No platform tokens provided."
+                )
 
-        scope_parsed = JobScopeParsed(job_scope)
-        data_iter = cls.iter_insights(
-            scope_parsed.report_root_fb_entity,
-            scope_parsed.report_params
-        )
-        with scope_parsed.datum_handler as store:
-            for cnt, datum in enumerate(data_iter):
-                # this computes values for and adds _oprm data object
-                # to each datum that passes through us.
-                scope_parsed.augment_with_vendor_data(datum)
+            token = job_scope.token
+            # We don't use it for getting a token. Something else that calls us does.
+            # However, we use it to report usages of the token we got.
+            token_manager = PlatformTokenManager.from_job_scope(job_scope)
 
-                store(datum)
-                yield datum
+        except Exception as ex:
+            BugSnagContextData.notify(ex, job_scope=job_scope)
 
-                if cnt % 1000 == 0:
-                    # default paging size for entities per parent
-                    # is typically around 25. So, each 1000 results
-                    # means about 40 hits to FB
-                    token_manager.report_usage(token, 40)
+            # This is a generic failure, which does not help us at all, so, we just
+            # report it and bail
+            report_job_status_task.delay(
+                ExternalPlatformJobStatus.GenericError, job_scope
+            )
+            raise
 
-        token_manager.report_usage(token)
+        try:
+            scope_parsed = JobScopeParsed(job_scope)
+            data_iter = cls.iter_insights(
+                scope_parsed.report_root_fb_entity,
+                scope_parsed.report_params
+            )
+            with scope_parsed.datum_handler as store:
+                cnt = 0
+                for datum in data_iter:
+
+                    # this computes values for and adds _oprm data object
+                    # to each datum that passes through us.
+                    scope_parsed.augment_with_vendor_data(datum)
+
+                    store(datum)
+                    yield datum
+                    cnt += 1
+
+                    if cnt % 1000 == 0:
+                        report_job_status_task(
+                            ExternalPlatformJobStatus.DataFetched, job_scope
+                        )
+                        # default paging size for entities per parent
+                        # is typically around 25. So, each 1000 results
+                        # means about 40 hits to FB
+                        token_manager.report_usage(token, 40)
+
+            report_job_status_task(
+                ExternalPlatformJobStatus.Done, job_scope
+            )
+            token_manager.report_usage(token)
+
+        except FacebookError as e:
+            BugSnagContextData.notify(e, severity=SEVERITY_WARNING, job_scope=job_scope)
+            # Build ourselves the error inspector
+            inspector = FacebookApiErrorInspector(e)
+
+            # Is this a throttling error?
+            if inspector.is_throttling_exception():
+                failure_status = ExternalPlatformJobStatus.ThrottlingError
+                failure_bucket = FailureBucket.Throttling
+
+            # Did we ask for too much data?
+            elif inspector.is_too_large_data_exception():
+                failure_status = ExternalPlatformJobStatus.TooMuchData
+                failure_bucket = FailureBucket.TooLarge
+
+            # It's something else which we don't understand
+            else:
+                failure_status = ExternalPlatformJobStatus.GenericPlatformError
+                failure_bucket = FailureBucket.Other
+
+            report_job_status_task.delay(failure_status, job_scope)
+            token_manager.report_usage_per_failure_bucket(token, failure_bucket)
+            raise
+
+        except Exception as ex:
+            BugSnagContextData.notify(ex, job_scope=job_scope)
+
+            # This is a generic failure, which does not help us at all, so, we just
+            # report it and bail
+            report_job_status_task.delay(
+                ExternalPlatformJobStatus.GenericError, job_scope
+            )
+            token_manager.report_usage_per_failure_bucket(token, FailureBucket.Other)
+            raise

@@ -5,7 +5,7 @@ from tests.base.testcase import TestCase, integration
 from datetime import datetime
 
 from oozer.common.job_scope import JobScope
-from oozer.entities.collect_adaccount import collect_adaccount_task
+from oozer.entities.collect_adaccount import collect_adaccount
 
 from common.enums.entity import Entity
 from config.facebook import TOKEN, AD_ACCOUNT
@@ -27,7 +27,7 @@ class TestingAdAccountCollectionPipeline(TestCase):
             sweep_id='1'
         )
 
-        aa_data = collect_adaccount_task(job_scope, None)
+        aa_data = collect_adaccount(job_scope, None)
         aa_data_keys = aa_data.keys()
 
         assert aa_data

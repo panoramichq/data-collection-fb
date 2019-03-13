@@ -1,5 +1,6 @@
 import logging
 
+from collections import defaultdict
 from pynamodb.exceptions import PutError
 
 from common.measurement import Measure
