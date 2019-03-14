@@ -99,6 +99,9 @@ class EntityBaseMixin:
     """
     Use this mixin for describing Facebook entity existence tables
     """
+    # Note that each Entity is keyed by, effectively, a compound key: ad_account_id+entity_id
+    # This allows us to issue queries like "Get all objects per ad_account_id" rather quickly
+    ad_account_id = attributes.UnicodeAttribute(hash_key=True, attr_name='aaid')
 
     # Primary Keys
 
@@ -129,12 +132,6 @@ class EntityBaseMixin:
     }
 
 
-class AdEntityBaseMixin(EntityBaseMixin):
-    # Note that each Entity is keyed by, effectively, a compound key: ad_account_id+entity_id
-    # This allows us to issue queries like "Get all objects per ad_account_id" rather quickly
-    ad_account_id = attributes.UnicodeAttribute(hash_key=True, attr_name='aaid')
-
-
 class PageEntityBaseMixin:
     page_id = attributes.UnicodeAttribute(hash_key=True, attr_name='pid')
 
@@ -156,7 +153,7 @@ class EntityBaseMeta(BaseMeta):
     write_capacity_units = 10
 
 
-class CampaignEntity(AdEntityBaseMixin, BaseModel):
+class CampaignEntity(EntityBaseMixin, BaseModel):
     """
     Represents a single facebook campaign entity
     """
@@ -165,7 +162,7 @@ class CampaignEntity(AdEntityBaseMixin, BaseModel):
     entity_type = Entity.Campaign
 
 
-class AdsetEntity(AdEntityBaseMixin, BaseModel):
+class AdsetEntity(EntityBaseMixin, BaseModel):
     """
     Represent a single facebook adset entity
     """
@@ -174,7 +171,7 @@ class AdsetEntity(AdEntityBaseMixin, BaseModel):
     entity_type = Entity.AdSet
 
 
-class AdEntity(AdEntityBaseMixin, BaseModel):
+class AdEntity(EntityBaseMixin, BaseModel):
     """
     Represents a single facebook ad entity
     """
@@ -183,7 +180,7 @@ class AdEntity(AdEntityBaseMixin, BaseModel):
     entity_type = Entity.Ad
 
 
-class AdCreativeEntity(AdEntityBaseMixin, BaseModel):
+class AdCreativeEntity(EntityBaseMixin, BaseModel):
     """
     Represents a single facebook ad creative entity
     """
@@ -194,7 +191,7 @@ class AdCreativeEntity(AdEntityBaseMixin, BaseModel):
     _default_bol = True
 
 
-class AdVideoEntity(AdEntityBaseMixin, BaseModel):
+class AdVideoEntity(EntityBaseMixin, BaseModel):
     """
     Represents a single facebook ad creative entity
     """
@@ -205,7 +202,7 @@ class AdVideoEntity(AdEntityBaseMixin, BaseModel):
     _default_bol = True
 
 
-class CustomAudienceEntity(AdEntityBaseMixin, BaseModel):
+class CustomAudienceEntity(EntityBaseMixin, BaseModel):
     """
     Represents a single facebook ad creative entity
     """
