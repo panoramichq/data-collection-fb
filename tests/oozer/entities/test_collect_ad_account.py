@@ -36,7 +36,7 @@ class TestCollectAdAccount(TestCase):
         )
 
         with self.assertRaises(ValueError) as ex_trap:
-            collect_adaccount(job_scope, None)
+            collect_adaccount(job_scope)
 
         assert 'Report level' in str(ex_trap.exception)
 
@@ -52,7 +52,7 @@ class TestCollectAdAccount(TestCase):
         )
 
         with self.assertRaises(ValueError) as ex_trap:
-            collect_adaccount(job_scope, None)
+            collect_adaccount(job_scope)
 
         assert 'token' in str(ex_trap.exception)
 
@@ -85,7 +85,7 @@ class TestCollectAdAccount(TestCase):
 
         with mock.patch.object(FB_ADACCOUNT_MODEL, 'remote_read', return_value=account_data), \
             mock.patch.object(NormalStore, 'store') as store:
-            collect_adaccount(job_scope, None)
+            collect_adaccount(job_scope)
 
         assert store.called_with(account_data), 'Data should be stored with the cold store module'
 

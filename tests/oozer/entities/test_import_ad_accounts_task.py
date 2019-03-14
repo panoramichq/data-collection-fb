@@ -98,7 +98,6 @@ class TestAdAccountImportTask(TestCase):
 
         assert aa_upsert.call_count == 2
 
-
         active_account_upsert_args = (
             (self.scope_id, active_ad_account_id),
             {

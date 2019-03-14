@@ -25,9 +25,6 @@ logger = logging.getLogger(__name__)
 def import_ad_accounts_task(job_scope: JobScope, _):
     """
     Collect all facebook ad accounts that are active in the console api
-
-    :param JobScope job_scope: The dict representation of JobScope
-    :param JobContext job_context:
     """
     try:
         assert job_scope.entity_type == Entity.Scope
@@ -38,7 +35,7 @@ def import_ad_accounts_task(job_scope: JobScope, _):
         report_job_status_task.delay(JobStatus.GenericError, job_scope)
         raise
 
-    _import_entities_from_console('ad_account', job_scope)
+    _import_entities_from_console(Entity.AdAccount, job_scope)
 
 
 @app.task
@@ -47,9 +44,6 @@ def import_ad_accounts_task(job_scope: JobScope, _):
 def import_pages_task(job_scope: JobScope, _):
     """
     Collect all facebook ad accounts that are active in the console api
-
-    :param JobScope job_scope: The dict representation of JobScope
-    :param JobContext job_context:
     """
     try:
         assert job_scope.entity_type == Entity.Scope
@@ -60,7 +54,7 @@ def import_pages_task(job_scope: JobScope, _):
         report_job_status_task.delay(JobStatus.GenericError, job_scope)
         raise
 
-    _import_entities_from_console('page', job_scope)
+    _import_entities_from_console(Entity.Page, job_scope)
 
 
 def _get_good_token(job_scope: JobScope):

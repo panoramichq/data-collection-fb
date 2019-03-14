@@ -17,9 +17,9 @@ from oozer.common.job_context import JobContext
 from oozer.common.job_scope import JobScope
 from oozer.common.vendor_data import add_vendor_data
 
-from .constants import ENUM_LEVEL_MAP, REPORT_TYPE_FB_BREAKDOWN_ENUM, \
-    DEFAULT_REPORT_FIELDS, PAGE_METRICS, POST_METRICS
-from .vendor_data_extractor import report_type_vendor_data_extractor_map
+from oozer.metrics.constants import ENUM_LEVEL_MAP, REPORT_TYPE_FB_BREAKDOWN_ENUM, \
+    DEFAULT_REPORT_FIELDS
+from oozer.metrics.vendor_data_extractor import report_type_vendor_data_extractor_map
 
 
 def _convert_and_validate_date_format(dt):
