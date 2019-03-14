@@ -31,7 +31,7 @@ class Entity:
         CustomAudience,
     }
 
-    ENTITIES_NON_AA = {
+    NON_AA = {
         Page,
         PagePost,
         Comment,
