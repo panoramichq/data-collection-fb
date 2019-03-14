@@ -87,7 +87,7 @@ def entities_per_page_post(entity_type: str, reality_claim: RealityClaim) -> Gen
     :rtype: Generator[ExpectationClaim]
     """
 
-    assert entity_type in Entity.ALL
+    assert entity_type in Entity. ENTITIES_NON_AA
 
     yield ExpectationClaim(
         reality_claim.to_dict(),
