@@ -1,6 +1,7 @@
-from typing import List
+from typing import List, Type, Any, Dict
 
 from facebook_business.adobjects.adaccount import AdAccount
+from facebook_business.adobjects.comment import Comment
 from facebook_business.api import FacebookAdsApi, FacebookSession
 from facebook_business.adobjects import abstractcrudobject
 from facebook_business.adobjects.campaign import Campaign
@@ -10,6 +11,8 @@ from facebook_business.adobjects.adcreative import AdCreative
 from facebook_business.adobjects.advideo import AdVideo
 from facebook_business.adobjects.customaudience import CustomAudience
 from facebook_business.exceptions import FacebookRequestError
+from facebook_business.adobjects.page import Page
+from facebook_business.adobjects.pagepost import PagePost
 
 from common.enums.failure_bucket import FailureBucket
 from oozer.common.enum import to_fb_model, ExternalPlatformJobStatus
@@ -131,7 +134,6 @@ class FacebookApiErrorInspector:
         """
         Checks whether given Facebook Exception is of throttling type
 
-        :param FacebookRequestError exception: The Facebook Exception
         :return bool: If True, the exception is of type throttling
         """
         return self._is_exception_code_in_set(self.THROTTLING_CODES)
@@ -141,7 +143,6 @@ class FacebookApiErrorInspector:
         Checks whether given Facebook Exception is of a type that says "you are
         asking me to do / calculate too much"
 
-        :param FacebookRequestError exception: The Facebook Exception
         :return bool: If True, the exception is of type "too much data"
         """
         return self._is_exception_code_in_set(self.TOO_MUCH_DATA_CODES) or (
@@ -224,7 +225,7 @@ _default_fields_map = {
         'bid_amount',
         'bid_info',
         'billing_event',
-        'budget_remaining',  #TODO: Temp enable. Migrate Console away from use.
+        'budget_remaining',  # TODO: Temp enable. Migrate Console away from use.
         # 'campaign',
         'campaign_id',
         # 'campaign_spec',
@@ -258,7 +259,8 @@ _default_fields_map = {
         # 'source_adset_id',
         'start_time',
         'status',
-        'targeting',  # Yes we need it, but beware! https://drive.google.com/drive/folders/1R01e7WiilzKDPYTKpVnUXQQyIUldFmCK
+        # Yes we need it, but beware! https://drive.google.com/drive/folders/1R01e7WiilzKDPYTKpVnUXQQyIUldFmCK
+        'targeting',
         # 'time_based_ad_rotation_id_blocks',
         # 'time_based_ad_rotation_intervals',
         'updated_time',
@@ -410,33 +412,256 @@ _default_fields_map = {
         # 'prefill',
         # 'product_set_id',
 
-        # These fields are not part of the oficial api docs
+        # These fields are not part of the official api docs
         # 'associated_audience_id',
         # 'exclusions',
         # 'inclusions',
         # 'parent_audience_id',
         # 'tags',
+    ]),
+    Page: collapse_fields_children([
+        'about',
+        'ad_campaign',
+        'affiliation',
+        'app_id',
+        'app_links',
+        'artists_we_like',
+        'attire',
+        'awards',
+        'band_interests',
+        'band_members',
+        'best_page',
+        'bio',
+        'birthday',
+        'booking_agent',
+        'built',
+        'business',
+        'can_checkin',
+        'can_post',
+        'category',
+        'category_list',
+        'checkins',
+        'company_overview',
+        'connected_instagram_account',
+        'contact_address',
+        'context',
+        # 'copyright_attribution_insights',  # A page access token is required to request this resource
+        # 'copyright_whitelisted_ig_partners',  # A page access token is required to request this resource
+        'country_page_likes',
+        'cover',
+        'culinary_team',
+        'current_location',
+
+        'description',
+        'description_html',
+        'directed_by',
+        'display_subtext',
+        'displayed_message_response_time',
+        'emails',
+        'engagement',
+        'fan_count',
+        'featured_video',
+        'features',
+        'food_styles',
+        'founded',
+        'general_info',
+        'general_manager',
+        'genre',
+        'global_brand_page_name',
+        'global_brand_root_id',
+        'has_whatsapp_number',
+        'has_added_app',
+        'hometown',
+        'hours',
+        'id',
+        'impressum',
+        'influences',
+        'instagram_business_account',
+        'is_always_open',
+        'is_chain',
+        'is_community_page',
+        'is_eligible_for_branded_content',
+        'is_messenger_platform_bot',
+        # requires special permissions (error msg ""The Facebook Page XXXX is not signed up for Instant Articles.")
+        # 'instant_articles_review_status',
+        'is_messenger_bot_get_started_enabled',
+        'is_owned',
+        'is_permanently_closed',
+        'is_published',
+        'is_unclaimed',
+        'is_verified',
+        'is_webhooks_subscribed',
+        'keywords',
+        'location',
+        'link',
+        'members',
+        'messenger_ads_default_icebreakers',
+        'messenger_ads_default_page_welcome_message',
+        'messenger_ads_default_quick_replies',
+        'messenger_ads_quick_replies_type',
+        'mission',
+        'mpg',
+        'name',
+        'name_with_location_descriptor',
+        'network',
+        'new_like_count',
+        'offer_eligible',
+        'overall_star_rating',
+        'page_token',
+        'parent_page',
+        'parking',
+        'payment_options',
+        'personal_info',
+        'personal_interests',
+        'pharma_safety_info',
+        'phone',
+        'place_type',
+        'plot_outline',
+        # 'preferred_audience',  # Error msg "Param account_linking_token is required"
+        'press_contact',
+        'price_range',
+        'produced_by',
+        'products',
+        'promotion_eligible',
+        'promotion_ineligible_reason',
+        'public_transit',
+        'rating_count',
+        # 'recipient',  # Error message "(#100) Param account_linking_token is required"
+        'record_label',
+        'release_date',
+        'restaurant_services',
+        'restaurant_specialties',
+        'talking_about_count',
+        'schedule',
+        'screenplay_by',
+        'season',
+        'single_line_address',
+        'starring',
+        'start_info',
+        # 'store_code',  # Error message "(#200) The parent page should be whitelisted for store codes."
+        'store_location_descriptor',
+        'store_number',
+        'studio',
+        'supports_instant_articles',
+        'username',
+        'unread_message_count',
+        'verification_status',
+        'unread_notif_count',
+        'unseen_message_count',
+        'voip_info',
+        'website',
+        'were_here_count',
+        'whatsapp_number',
+        'written_by',
+    ]),
+    PagePost: collapse_fields_children([
+        'id',
+        'admin_creator',
+        'allowed_advertising_objectives',
+        'application',
+        'backdated_time',
+        'call_to_action',
+        # 'can_reply_privately',  # requires READ_PAGE_MAILBOXES or PAGES_MESSAGING permission
+        'caption',
+        'child_attachments',
+        'comments_mirroring_domain',
+        'coordinates',
+        'created_time',
+        'description',
+        'event',
+        'expanded_height',
+        'expanded_width',
+        'feed_targeting',
+        'from',
+        'full_picture',
+        'height',
+        'icon',
+        'instagram_eligibility',
+        'is_app_share',
+        'is_expired',
+        'is_hidden',
+        'is_instagram_eligible',
+        'is_popular',
+        'is_published',
+        'is_spherical',
+        'link',
+        'message',
+        'message_tags',
+        'multi_share_end_card',
+        'multi_share_optimized',
+        'name',
+        'object_id',
+        'parent_id',
+        'permalink_url',
+        'picture',
+        'place',
+        'privacy',
+        'promotable_id',
+        'promotion_status',
+        'properties',
+        'scheduled_publish_time',
+        'shares',
+        'source',
+        'status_type',
+        'story',
+        'story_tags',
+        'subscribed',
+        'target',
+        'targeting',
+        'timeline_visibility',
+        'type',
+        'updated_time',        
+        'via',
+        'video_buying_eligibility',
+        'width',
+    ]),
+    Comment: collapse_fields_children([
+        'application',
+        'attachment',
+        'can_comment',
+        # 'can_hide',  # Error message: "(#210) A page access token is required to request this resource."
+        'can_like',
+        'can_remove',
+        # 'can_reply_privately',
+        'comment_count',
+        'created_time',
+        'from',
+        'id',
+
+        'is_hidden',
+        'is_private',
+        'like_count',
+        'live_broadcast_timestamp',
+
+        'message',
+        'message_tags',
+        'object',
+        'parent',
+        'parent_id',
+        'permalink_url',
+        # Error message: "(#200) The page does not have READ_PAGE_MAILBOXES or PAGES_MESSAGING permission."
+        # 'private_reply_conversation',
+        'user_likes',
     ])
 }
 
 
-def get_default_fields(Model):
-    # type: (Model) -> List[str]
+def get_default_fields(model_klazz: Type['Model']) -> List[str]:
     """
     Obtain default fields for a given entity type. Note that the entity
     class must come from the Facebook SDK
 
-    :param Model:
+    :param model_klazz:
     :rtype: List[str] of fields
     """
-    assert issubclass(Model, abstractcrudobject.AbstractCrudObject)
+    assert issubclass(model_klazz, abstractcrudobject.AbstractCrudObject)
 
-    if Model in _default_fields_map:
-        return _default_fields_map[Model]
+    if model_klazz in _default_fields_map:
+        return _default_fields_map[model_klazz]
 
     return [
-        getattr(Model.Field, field_name)
-        for field_name in dir(Model.Field)
+        getattr(model_klazz.Field, field_name)
+        for field_name in dir(model_klazz.Field)
         if not field_name.startswith('__')
     ]
 
@@ -455,22 +680,39 @@ def get_default_fields(Model):
 _default_page_size = {
     Campaign: 400,
     AdSet: 200,  # this is super heavy object mostly because of Targeting spec. Keep it smallish
-    Ad: 400
+    Ad: 400,
+    Comment: 250,
 }
 
-def get_default_page_size(Model):
-    # type: (Model) -> List[str]
+
+def get_default_page_size(model_klazz: Type['Model']) -> int:
     """
     Default paging size on FB API is too small for large collections
     It's usually some 25 items. We page through a lot of stuff, hence this fn.
 
-    :param Model:
+    :param model_klazz:
     :rtype: List[str] of fields
     """
-    assert issubclass(Model, abstractcrudobject.AbstractCrudObject)
+    assert issubclass(model_klazz, abstractcrudobject.AbstractCrudObject)
 
-    return _default_page_size.get(Model)
+    return _default_page_size.get(model_klazz, 100)
 
+
+_default_additional_params = {
+    Comment: {
+        'filter': 'stream',
+    }
+}
+
+
+def get_additional_params(model_klazz: Type['Model']) -> Dict[str, Any]:
+    """
+    By default, we dont need additional params to FB API requests. But in some instances (i.e. fetching Comments),
+    adding parameters makes fetching data simpler
+    """
+    assert issubclass(model_klazz, abstractcrudobject.AbstractCrudObject)
+
+    return _default_additional_params.get(model_klazz, {})
 
 # By default ARCHIVED is filtered out
 # Here we repeat all possible status values we get by default
@@ -521,8 +763,7 @@ _default_fetch_statuses = {
 }
 
 
-def get_default_status(Model):
-    # type: (Model) -> List[str]
+def get_default_status(model_klazz: Type['Model']) -> List[str]:
     """
     Each Entity Level has its own set of possible valid status values
     acceptable as filtering parameters for "get all per parent AA" calls.
@@ -531,8 +772,8 @@ def get_default_status(Model):
     from all calls by repeating all possible fetch-able effective status values
     per that FB Entity Level, including Archived
 
-    :param Model:
+    :param model_klazz:
     :rtype: List[str] of fields
     """
-    assert issubclass(Model, abstractcrudobject.AbstractCrudObject)
-    return _default_fetch_statuses.get(Model)
+    assert issubclass(model_klazz, abstractcrudobject.AbstractCrudObject)
+    return _default_fetch_statuses.get(model_klazz)

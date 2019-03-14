@@ -1,14 +1,14 @@
-from typing import Generator
+from typing import Generator, List
 
 from common.enums.entity import Entity
 from sweep_builder.data_containers.reality_claim import RealityClaim
+from sweep_builder.reality_inferrer.pages import iter_active_pages_per_scope
 
 from .adaccounts import iter_scopes, iter_active_ad_accounts_per_scope
-from .entities import iter_entities_per_ad_account_id
+from .entities import iter_entities_per_ad_account_id, iter_entities_per_page_id
 
 
-def iter_reality_base():
-    # type: () -> Generator[RealityClaim]
+def iter_reality_base() -> Generator[RealityClaim, None, None]:
     """
     A generator yielding instances of RealityClaim object, filled
     with data about some entity (one of Scope, AdAccount)
@@ -61,9 +61,19 @@ def iter_reality_base():
                 tokens=scope_record.platform_tokens
             )
 
+        for page in iter_active_pages_per_scope(scope_record.scope):
+            yield RealityClaim(
+                ad_account_id=page.page_id,
+                entity_id=page.page_id,
+                entity_type=Entity.Page,
+                tokens=scope_record.platform_tokens
+            )
 
-def iter_reality_per_ad_account_claim(ad_account_claim, entity_types=None):
-    # type: (RealityClaim) -> Generator[RealityClaim]
+
+def iter_reality_per_ad_account_claim(
+    ad_account_claim: RealityClaim,
+    entity_types: List[str] = None,
+) -> Generator[RealityClaim, None, None]:
     """
     A generator yielding instances of RealityClaim object, filled
     with data about some entity (one of Campaign, AdSet, Ad)
@@ -86,4 +96,30 @@ def iter_reality_per_ad_account_claim(ad_account_claim, entity_types=None):
             entity_data,
             timezone=ad_account_claim.timezone,
             tokens=ad_account_claim.tokens
+        )
+
+
+def iter_reality_per_page_claim(
+    page_claim: RealityClaim,
+    entity_types: List[str] = None,
+) -> Generator[RealityClaim, None, None]:
+    """
+    A generator yielding instances of RealityClaim object, filled
+    with data about some entity (one of Campaign, AdSet, Ad)
+
+    These claims represent our knowledge about the what exists.
+
+    Some consuming code will match these claims of existence to tasks
+    we are expected to perform for these objects.
+
+    :param RealityClaim page_claim: A RealityClaim instance representing existence of Page
+    :param List[Entity] entity_types: If truthy, limits the reality iterator to those types of entities only.
+    :return: Generator yielding RealityClaim objects pertaining to various levels of entities
+    :rtype: Generator[RealityClaim]
+    """
+
+    for entity_data in iter_entities_per_page_id(page_claim.entity_id, page_entity_types=entity_types):
+        yield RealityClaim(
+            entity_data,
+            tokens=page_claim.tokens
         )

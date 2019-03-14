@@ -10,8 +10,9 @@ from sweep_builder.prioritizer.assign_score import assign_score
 LAST = -1
 
 
-def iter_prioritized(expectations_iter):
-    # type: (Generator[ExpectationClaim]) -> Generator[PrioritizationClaim]
+def iter_prioritized(
+    expectations_iter: Generator[ExpectationClaim, None, None],
+) -> Generator[PrioritizationClaim, None, None]:
     """
 
     :param expectations_iter: generator yielding ExpectationClaim objects

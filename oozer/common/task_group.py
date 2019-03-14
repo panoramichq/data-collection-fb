@@ -6,13 +6,10 @@ import time
 import ujson as json
 import uuid
 
-from collections import namedtuple, OrderedDict
 from contextlib import AbstractContextManager
-from typing import Generator, Tuple, List, NewType, Union, Optional
+from typing import Tuple, Union, Optional
 
-from common.bugsnag import BugSnagContextData
 from common.connect.redis import get_redis
-from common.id_tools import parse_id_parts
 
 
 logger = logging.getLogger(__name__)

@@ -1,5 +1,5 @@
 # must be first, as it does event loop patching and other "first" things
-from oozer.entities.collect_entities_iterators import iter_collect_entities_per_adaccount
+from oozer.entities.collect_entities_iterators import iter_collect_entities_per_page_post
 from tests.base.testcase import TestCase, mock
 
 from common.enums.entity import Entity
@@ -7,20 +7,12 @@ from common.enums.reporttype import ReportType
 from common.id_tools import generate_universal_id
 from oozer.common.cold_storage.batch_store import ChunkDumpStore
 from oozer.common.job_scope import JobScope
-from oozer.common.enum import (
-    FB_AD_VIDEO_MODEL,
-    FB_AD_CREATIVE_MODEL,
-    FB_AD_MODEL,
-    FB_ADSET_MODEL,
-    FB_CAMPAIGN_MODEL,
-    FB_ADACCOUNT_MODEL,
-    FB_CUSTOM_AUDIENCE_MODEL,
-)
+from oozer.common.enum import FB_COMMENT_MODEL, FB_PAGE_POST_MODEL
 
 from tests.base import random
 
 
-class TestCollectEntitiesPerAdAccount(TestCase):
+class TestCollectEntitiesPerPagePost(TestCase):
 
     def setUp(self):
         super().setUp()
@@ -28,42 +20,26 @@ class TestCollectEntitiesPerAdAccount(TestCase):
         self.scope_id = random.gen_string_id()
         self.ad_account_id = random.gen_string_id()
 
-    def test_correct_vendor_data_inserted_into_cold_store_payload_campaigns(self):
+    def test_correct_vendor_data_inserted_into_cold_store_payload_comments(self):
 
-        entity_types = [
-            Entity.Campaign,
-            Entity.AdSet,
-            Entity.Ad,
-            Entity.AdCreative,
-            Entity.AdVideo,
-            Entity.CustomAudience,
-        ]
+        entity_types = [Entity.Comment]
         fb_model_map = {
-            Entity.Campaign: FB_CAMPAIGN_MODEL,
-            Entity.AdSet: FB_ADSET_MODEL,
-            Entity.Ad: FB_AD_MODEL,
-            Entity.AdCreative: FB_AD_CREATIVE_MODEL,
-            Entity.AdVideo: FB_AD_VIDEO_MODEL,
-            Entity.CustomAudience: FB_CUSTOM_AUDIENCE_MODEL,
+            Entity.Comment: FB_COMMENT_MODEL
         }
         get_all_method_map = {
-            Entity.Campaign: 'get_campaigns',
-            Entity.AdSet: 'get_ad_sets',
-            Entity.Ad: 'get_ads',
-            Entity.AdCreative: 'get_ad_creatives',
-            Entity.AdVideo: 'get_ad_videos',
-            Entity.CustomAudience: 'get_custom_audiences',
+            Entity.Comment: 'get_comments'
         }
 
         for entity_type in entity_types:
 
             fbid = random.gen_string_id()
-            FB_MODEL = fb_model_map[entity_type]
+            fb_model_klass = fb_model_map[entity_type]
             get_method_name = get_all_method_map[entity_type]
 
             job_scope = JobScope(
                 sweep_id=self.sweep_id,
                 ad_account_id=self.ad_account_id,
+                entity_id=self.ad_account_id,
                 report_type=ReportType.entity,
                 report_variant=entity_type,
                 tokens=['blah']
@@ -76,20 +52,14 @@ class TestCollectEntitiesPerAdAccount(TestCase):
                 entity_type=entity_type
             )
 
-            fb_data = FB_MODEL(fbid=fbid)
-
-            if entity_type == Entity.AdVideo:
-                # Ad videos normally don't have account_id
-                # but we augment it with it
-                fb_data['account_id'] = self.ad_account_id
-            else:
-                fb_data[FB_MODEL.Field.account_id] = self.ad_account_id
+            fb_data = fb_model_klass(fbid=fbid)
+            fb_data['account_id'] = '0'
 
             entities_data = [fb_data]
-            with mock.patch.object(FB_ADACCOUNT_MODEL, get_method_name, return_value=entities_data), \
-                 mock.patch.object(ChunkDumpStore, 'store') as store:
+            with mock.patch.object(FB_PAGE_POST_MODEL, get_method_name, return_value=entities_data), \
+              mock.patch.object(ChunkDumpStore, 'store') as store:
 
-                list(iter_collect_entities_per_adaccount(job_scope))
+                list(iter_collect_entities_per_page_post(job_scope))
 
             assert store.called
             store_args, store_keyword_args = store.call_args

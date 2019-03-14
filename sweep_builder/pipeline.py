@@ -1,6 +1,6 @@
 import logging
 
-from typing import Generator
+from typing import Generator, Union, Iterable
 
 from sweep_builder.data_containers.reality_claim import RealityClaim
 from .data_containers.prioritization_claim import PrioritizationClaim
@@ -12,8 +12,10 @@ from .expectation_builder.expectations import iter_expectations
 logger = logging.getLogger(__name__)
 
 
-def iter_pipeline(sweep_id, reality_claims_iter):
-    # type: (str, Generator[RealityClaim]) -> Generator[PrioritizationClaim]
+def iter_pipeline(
+    sweep_id: str,
+    reality_claims_iter: Union[Generator[RealityClaim, None, None], Iterable[RealityClaim]],
+) -> Generator[PrioritizationClaim, None, None]:
     """
     Convenience method. Packs together multiple layers
     of code that unpack RealityClaim into expectations,

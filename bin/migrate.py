@@ -39,5 +39,6 @@ def do_it_all():
             timezone=AD_ACCOUNT_TIME_ZONE
         )
 
+
 if __name__ == '__main__':
     do_it_all()

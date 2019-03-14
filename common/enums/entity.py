@@ -14,10 +14,14 @@ class Entity:
     AdVideo = 'AV'
     CustomAudience = 'CA'
 
+    Page = 'P'
+    PagePost = 'PP'
+    Comment = 'CM'
+
     # FIXME: split entities into general (C,AS,A) - insights enabled
     # FIXME: and into "entity only" - other (no insights fetched)
 
-    ALL = {
+    AA_SCOPED = {
         AdAccount,
         Campaign,
         AdSet,
@@ -25,5 +29,12 @@ class Entity:
         AdCreative,
         AdVideo,
         CustomAudience,
-        Scope
     }
+
+    NON_AA_SCOPED = {
+        Page,
+        PagePost,
+        Comment,
+    }
+
+    ALL = AA_SCOPED.union({Scope}, NON_AA_SCOPED)

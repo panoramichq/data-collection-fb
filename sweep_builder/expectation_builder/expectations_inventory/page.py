@@ -15,10 +15,10 @@ from sweep_builder.data_containers.reality_claim import RealityClaim
 logger = logging.getLogger(__name__)
 
 
-def ad_accounts_per_scope(reality_claim):
+def pages_per_scope(reality_claim):
     # type: (RealityClaim) -> Generator[ExpectationClaim]
     """
-    Generates "fetch AAs active entity metadata per given scope" job ID
+    Generates "fetch Pages active entity metadata per given scope" job ID
 
     To be used by Scope-level RealityClaim / ExpectationClaim.
 
@@ -38,19 +38,19 @@ def ad_accounts_per_scope(reality_claim):
             JobSignature.bind(
                 generate_id(
                     namespace=config.application.UNIVERSAL_ID_SYSTEM_NAMESPACE,
-                    # Note absence of value for AdAccount
-                    # This is "all AA per scope X" job.
+                    # Note absence of value for Page
+                    # This is "all Pages per scope X" job.
                     entity_id=reality_claim.entity_id,
                     entity_type=reality_claim.entity_type,
-                    report_type=ReportType.import_accounts,
-                    report_variant=Entity.AdAccount
+                    report_type=ReportType.import_pages,
+                    report_variant=Entity.Page
                 )
             )
         ]
     )
 
 
-def sync_expectations_per_ad_account(reality_claim):
+def sync_expectations_per_page(reality_claim):
     # type: (RealityClaim) -> Generator[ExpectationClaim]
     """
     Generates "Communicate all calculated expectation Job IDs to Cold Store" job ID
@@ -62,10 +62,10 @@ def sync_expectations_per_ad_account(reality_claim):
     """
 
     if not reality_claim.ad_account_id:
-        ValueError("AdAccountID value is missing")
+        ValueError("PageID value is missing")
 
-    if reality_claim.entity_type != Entity.AdAccount:
-        ValueError("Only AdAccount-level expectations may generate this job signature")
+    if reality_claim.entity_type != Entity.Page:
+        ValueError("Only Page-level expectations may generate this job signature")
 
     yield ExpectationClaim(
         reality_claim.to_dict(),

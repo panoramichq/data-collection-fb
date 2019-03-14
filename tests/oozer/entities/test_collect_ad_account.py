@@ -10,9 +10,8 @@ from tests.base import random
 from datetime import datetime
 
 from oozer.common.cold_storage.batch_store import NormalStore
-from oozer.common.enum import JobStatus, FB_ADACCOUNT_MODEL
+from oozer.common.enum import FB_ADACCOUNT_MODEL
 from oozer.common.job_scope import JobScope
-from oozer.common.report_job_status_task import report_job_status_task
 from common.enums.entity import Entity
 from oozer.entities.collect_adaccount import collect_adaccount
 
@@ -37,7 +36,7 @@ class TestCollectAdAccount(TestCase):
         )
 
         with self.assertRaises(ValueError) as ex_trap:
-            collect_adaccount(job_scope, None)
+            collect_adaccount(job_scope)
 
         assert 'Report level' in str(ex_trap.exception)
 
@@ -53,7 +52,7 @@ class TestCollectAdAccount(TestCase):
         )
 
         with self.assertRaises(ValueError) as ex_trap:
-            collect_adaccount(job_scope, None)
+            collect_adaccount(job_scope)
 
         assert 'token' in str(ex_trap.exception)
 
@@ -86,7 +85,7 @@ class TestCollectAdAccount(TestCase):
 
         with mock.patch.object(FB_ADACCOUNT_MODEL, 'remote_read', return_value=account_data), \
             mock.patch.object(NormalStore, 'store') as store:
-            collect_adaccount(job_scope, None)
+            collect_adaccount(job_scope)
 
         assert store.called_with(account_data), 'Data should be stored with the cold store module'
 

@@ -4,8 +4,7 @@ require these reports and to report task implementations effectively fulfilling
 the normative report requirement.
 """
 import functools
-
-from typing import Dict, List, Generator
+from typing import Dict, List, Generator, Callable, Optional
 
 from config import jobs as jobs_config
 from common.enums.entity import Entity
@@ -13,22 +12,9 @@ from common.enums.reporttype import ReportType
 from sweep_builder.data_containers.reality_claim import RealityClaim
 from sweep_builder.data_containers.expectation_claim import ExpectationClaim
 from sweep_builder.expectation_builder.expectations_inventory.metrics.breakdowns import metrics_per_ad_per_ad_account
-
-
-# map of source / trigger entity type to
-# a list of generator functions each of which, given RealityClaim instance
-# generate one or more ExpectationClaim objects
-entity_expectation_generator_map = {}  # type: Dict[str, List[(RealityClaim) -> Generator[ExpectationClaim]]]
-
+from sweep_builder.expectation_builder.expectations_inventory.page import pages_per_scope, sync_expectations_per_page
 
 from .adaccount import ad_accounts_per_scope, sync_expectations_per_ad_account
-
-
-entity_expectation_generator_map[Entity.Scope] = list(filter(None,[
-    None if jobs_config.AD_ACCOUNT_IMPORT_DISABLED else ad_accounts_per_scope,
-]))
-
-
 from .entities import (
     ad_creative_entities_per_ad_account,
     ad_entities_per_ad_account,
@@ -36,10 +22,23 @@ from .entities import (
     adset_entities_per_ad_account,
     campaign_entities_per_ad_account,
     custom_audience_entities_per_ad_account,
-    ad_account_entity
-)
+    ad_account_entity,
+    page_entity, page_post_entities_per_page, comment_entities_per_page_post, )
 
 from .metrics import lifetime, breakdowns
+
+# map of source / trigger entity type to
+# a list of generator functions each of which, given RealityClaim instance
+# generate one or more ExpectationClaim objects
+entity_expectation_generator_map: Dict[str, List[
+    Optional[Callable[[RealityClaim], Generator[ExpectationClaim, None, None]]]
+]] = {}
+
+
+entity_expectation_generator_map[Entity.Scope] = list(filter(None, [
+    None if jobs_config.AD_ACCOUNT_IMPORT_DISABLED else ad_accounts_per_scope,
+    None if jobs_config.PAGES_IMPORT_DISABLED else pages_per_scope,
+]))
 
 # mental note:
 # entities per AA data collection hook is as "normative" task on AA,
@@ -65,9 +64,18 @@ entity_expectation_generator_map[Entity.AdAccount] = list(filter(None, [
         None if jobs_config.INSIGHTS_DMA_A_DISABLED else ReportType.day_dma,
         None if jobs_config.INSIGHTS_PLATFORM_A_DISABLED else ReportType.day_platform,
     ]))),
-    sync_expectations_per_ad_account
+    sync_expectations_per_ad_account,
 ]))
 
+entity_expectation_generator_map[Entity.Page] = list(filter(None, [
+    None if jobs_config.ENTITY_P_DISABLED else page_entity,
+    None if jobs_config.ENTITY_PP_DISABLED else page_post_entities_per_page,
+    sync_expectations_per_page,
+]))
+
+entity_expectation_generator_map[Entity.PagePost] = list(filter(None, [
+    None if jobs_config.ENTITY_CM_DISABLED else comment_entities_per_page_post,
+]))
 
 entity_expectation_generator_map[Entity.Campaign] = list(filter(None, [
     None if jobs_config.INSIGHTS_LIFETIME_C_DISABLED else lifetime.lifetime_metrics_per_campaign,

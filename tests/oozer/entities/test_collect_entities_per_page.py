@@ -1,5 +1,5 @@
 # must be first, as it does event loop patching and other "first" things
-from oozer.entities.collect_entities_iterators import iter_collect_entities_per_adaccount
+from oozer.entities.collect_entities_iterators import iter_collect_entities_per_page
 from tests.base.testcase import TestCase, mock
 
 from common.enums.entity import Entity
@@ -7,20 +7,12 @@ from common.enums.reporttype import ReportType
 from common.id_tools import generate_universal_id
 from oozer.common.cold_storage.batch_store import ChunkDumpStore
 from oozer.common.job_scope import JobScope
-from oozer.common.enum import (
-    FB_AD_VIDEO_MODEL,
-    FB_AD_CREATIVE_MODEL,
-    FB_AD_MODEL,
-    FB_ADSET_MODEL,
-    FB_CAMPAIGN_MODEL,
-    FB_ADACCOUNT_MODEL,
-    FB_CUSTOM_AUDIENCE_MODEL,
-)
+from oozer.common.enum import FB_PAGE_MODEL, FB_PAGE_POST_MODEL
 
 from tests.base import random
 
 
-class TestCollectEntitiesPerAdAccount(TestCase):
+class TestCollectEntitiesPerPage(TestCase):
 
     def setUp(self):
         super().setUp()
@@ -28,31 +20,14 @@ class TestCollectEntitiesPerAdAccount(TestCase):
         self.scope_id = random.gen_string_id()
         self.ad_account_id = random.gen_string_id()
 
-    def test_correct_vendor_data_inserted_into_cold_store_payload_campaigns(self):
+    def test_correct_vendor_data_inserted_into_cold_store_payload_posts(self):
 
-        entity_types = [
-            Entity.Campaign,
-            Entity.AdSet,
-            Entity.Ad,
-            Entity.AdCreative,
-            Entity.AdVideo,
-            Entity.CustomAudience,
-        ]
+        entity_types = [Entity.PagePost]
         fb_model_map = {
-            Entity.Campaign: FB_CAMPAIGN_MODEL,
-            Entity.AdSet: FB_ADSET_MODEL,
-            Entity.Ad: FB_AD_MODEL,
-            Entity.AdCreative: FB_AD_CREATIVE_MODEL,
-            Entity.AdVideo: FB_AD_VIDEO_MODEL,
-            Entity.CustomAudience: FB_CUSTOM_AUDIENCE_MODEL,
+            Entity.PagePost: FB_PAGE_POST_MODEL
         }
         get_all_method_map = {
-            Entity.Campaign: 'get_campaigns',
-            Entity.AdSet: 'get_ad_sets',
-            Entity.Ad: 'get_ads',
-            Entity.AdCreative: 'get_ad_creatives',
-            Entity.AdVideo: 'get_ad_videos',
-            Entity.CustomAudience: 'get_custom_audiences',
+            Entity.PagePost: 'get_posts'
         }
 
         for entity_type in entity_types:
@@ -77,19 +52,13 @@ class TestCollectEntitiesPerAdAccount(TestCase):
             )
 
             fb_data = FB_MODEL(fbid=fbid)
-
-            if entity_type == Entity.AdVideo:
-                # Ad videos normally don't have account_id
-                # but we augment it with it
-                fb_data['account_id'] = self.ad_account_id
-            else:
-                fb_data[FB_MODEL.Field.account_id] = self.ad_account_id
+            fb_data['account_id']='0'
 
             entities_data = [fb_data]
-            with mock.patch.object(FB_ADACCOUNT_MODEL, get_method_name, return_value=entities_data), \
+            with mock.patch.object(FB_PAGE_MODEL, get_method_name, return_value=entities_data), \
                  mock.patch.object(ChunkDumpStore, 'store') as store:
 
-                list(iter_collect_entities_per_adaccount(job_scope))
+                list(iter_collect_entities_per_page(job_scope))
 
             assert store.called
             store_args, store_keyword_args = store.call_args

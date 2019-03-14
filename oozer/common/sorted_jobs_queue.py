@@ -166,11 +166,11 @@ class _JobsReader:
                 }
 
                 job_id, score = job_id_score_pair
+
                 yield job_id.decode('utf8'), score
 
             # + 1, because zrange and zrevrange are *inclusive*
             start += step + 1
-
             job_id_score_pairs = redis.zrevrange(key, start, start+step, withscores=True)
 
     def read_job_scope_data(self, job_id, max_cache_size=4000):

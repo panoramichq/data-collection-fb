@@ -72,11 +72,11 @@ def assign_score(job_id, timezone):
         return 1000
 
     # if we are here, we have Platform-flavored job
-    is_per_parent_job = bool(not entity_type and report_variant)
+    is_per_parent_job = bool(report_variant and (not entity_type or entity_type == Entity.PagePost))
 
     if not is_per_parent_job and ad_account_id != '23845179':
         # at this time, it's impossible to have per-entity_id
-        # jobs here becase sweep builder specifically avoids
+        # jobs here because sweep builder specifically avoids
         # scoring and releasing per-entity_id jobs
         # TODO: when we get per-entity_id jobs back, do some scoring for these
         # Until then, we are making sure per-parent jobs get out first
@@ -166,7 +166,7 @@ def assign_score(job_id, timezone):
                 score += 5
 
     else:
-        if entity_type == Entity.AdAccount:
+        if entity_type in [Entity.AdAccount, Entity.Page]:
             # This is an ad account sync job, let's rank it a bit higher as
             # these updates ar quite important
             score += 100

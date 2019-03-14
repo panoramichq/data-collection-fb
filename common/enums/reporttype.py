@@ -36,6 +36,8 @@ class ReportType:
     # given scope, import AdAccounts (as associated data) from scope
     import_accounts = 'import_accounts'
 
+    import_pages = 'import_pages'
+
     # Part of "done-ness" calculation system
     # used to wrap bundles of persisted expectations to Cold Store
     sync_expectations = 'sync_expectations'
@@ -46,6 +48,7 @@ class ReportType:
 
     MUST_RUN_EVERY_SWEEP = {
         import_accounts,
+        import_pages,
         sync_expectations,
         sync_status
     }

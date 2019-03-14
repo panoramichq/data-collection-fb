@@ -31,6 +31,10 @@ entity_type_model_map = {
     Entity.CustomAudience: entities.CustomAudienceEntity,
 }
 
+page_entity_type_model_map = {
+    Entity.PagePost: entities.PagePostEntity
+}
+
 
 def iter_entities_per_ad_account_id(ad_account_id, fields=None, entity_types=None):
     """
@@ -71,6 +75,47 @@ def iter_entities_per_ad_account_id(ad_account_id, fields=None, entity_types=Non
             for record in EntityModel.query(ad_account_id):
                 cnt += 1
                 yield record.to_dict(fields=fields, skip_null=True)
+                if cnt % _step == 0:
+                    cntr += _step
+
+            if cnt % _step:
+                cntr += cnt % _step
+
+
+def iter_entities_per_page_id(page_id, fields=None, page_entity_types=None):
+    """
+    :return: A generator of yielding data for all children of given Page
+    :rtype: Generator[Dict]
+    """
+
+    if not page_entity_types:
+        page_entity_models = page_entity_type_model_map.values()
+    else:
+        page_entity_models = [
+            page_entity_type_model_map[entity_type]
+            for entity_type in page_entity_types
+        ]
+
+    _step = 1000
+
+    for EntityModel in page_entity_models:
+        cnt = 0
+
+        with Measure.counter(
+            __name__ + '.entities_per_page_id',
+            tags=dict(
+                entity_id=page_id,
+                entity_type=EntityModel.entity_type
+            )
+        ) as cntr:
+
+            for record in EntityModel.query(page_id):
+                cnt += 1
+                record_dict = record.to_dict(fields=fields, skip_null=True)
+                # this is unfortunate, but we need to change page_id to ad_account_id
+                record_dict['ad_account_id'] = record_dict['page_id']
+                del record_dict['page_id']
+                yield record_dict
                 if cnt % _step == 0:
                     cntr += _step
 
