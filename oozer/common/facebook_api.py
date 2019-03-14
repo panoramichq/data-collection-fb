@@ -685,7 +685,7 @@ _default_page_size = {
 }
 
 
-def get_default_page_size(model_klazz: Type['Model']) -> List[str]:
+def get_default_page_size(model_klazz: Type['Model']) -> int:
     """
     Default paging size on FB API is too small for large collections
     It's usually some 25 items. We page through a lot of stuff, hence this fn.

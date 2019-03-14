@@ -21,7 +21,7 @@ def _extract_token_entity_type_parent_entity(
     parent_entity_id_key: str,
 ) -> Tuple[str, str, Any]:
     """
-        Returned values here are token, entity_type and initialized parent entity from Facebook SDK
+    Returned values here are token, entity_type and initialized parent entity from Facebook SDK
     """
     if job_scope.report_variant not in allowed_entity_types:
         raise ValueError(
@@ -51,7 +51,7 @@ def _iterate_native_entities_per_parent(
     page_size: int = None,
 ) -> Generator:
     """
-        Generic getter for entities from the parent's edge from FB API
+    Generic getter for entities from the parent's edge from FB API
     """
 
     if entity_type not in allowed_entity_types:

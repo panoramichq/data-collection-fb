@@ -101,7 +101,7 @@ def collect_page(job_scope: JobScope, _job_context: JobContext):
 @reported_task
 def collect_pages_from_business_task(job_scope: JobScope, job_context: JobContext) -> int:
     """
-        This task should import pages from FB using Business API. At the moment, it is not used anywhere.
+    This task should import pages from FB using Business API. At the moment, it is not used anywhere.
     """
 
     if not SweepRunningFlag.is_set(job_scope.sweep_id):
