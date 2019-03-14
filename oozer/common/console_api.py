@@ -7,7 +7,7 @@ from config.operam_console_api import URL
 class ConsoleApi:
 
     @staticmethod
-    def _fetch_platform_type_from_api(platform_type: str, token: str, params: Any):
+    def _fetch_parent_entity(platform_type: str, token: str, params: Any):
         response = requests.get(
             f'{URL}/api/projects/platform-accounts',
             headers={'x-auth-token': token},
@@ -20,8 +20,8 @@ class ConsoleApi:
 
     @staticmethod
     def get_accounts(token: str, **params: Any):
-        return ConsoleApi._fetch_platform_type_from_api('facebook', token, params)
+        return ConsoleApi._fetch_parent_entity('facebook', token, params)
 
     @staticmethod
     def get_pages(token: str, **params: Any):
-        return ConsoleApi._fetch_platform_type_from_api('facebook_page', token, params)
+        return ConsoleApi._fetch_parent_entity('facebook_page', token, params)

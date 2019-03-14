@@ -62,7 +62,7 @@ def entities_per_page(entity_type: str, reality_claim: RealityClaim) -> Generato
     :rtype: Generator[ExpectationClaim]
     """
 
-    assert entity_type in Entity.ENTITIES_NON_AA
+    assert entity_type in Entity.NON_AA_SCOPED
 
     yield ExpectationClaim(
         reality_claim.to_dict(),
@@ -87,7 +87,7 @@ def entities_per_page_post(entity_type: str, reality_claim: RealityClaim) -> Gen
     :rtype: Generator[ExpectationClaim]
     """
 
-    assert entity_type in Entity. ENTITIES_NON_AA
+    assert entity_type in Entity.NON_AA_SCOPED
 
     yield ExpectationClaim(
         reality_claim.to_dict(),

@@ -14,8 +14,8 @@ logger = logging.getLogger(__name__)
 
 def iter_pipeline(
     sweep_id: str,
-    reality_claims_iter: Union[Generator[RealityClaim], Iterable[RealityClaim]],
-) -> Generator[PrioritizationClaim]:
+    reality_claims_iter: Union[Generator[RealityClaim, None, None], Iterable[RealityClaim]],
+) -> Generator[PrioritizationClaim, None, None]:
     """
     Convenience method. Packs together multiple layers
     of code that unpack RealityClaim into expectations,

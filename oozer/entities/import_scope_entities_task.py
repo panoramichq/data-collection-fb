@@ -10,7 +10,6 @@ from common.store.entities import AdAccountEntity, PageEntity
 from common.tokens import PlatformTokenManager
 from oozer.common.console_api import ConsoleApi
 from oozer.common.enum import JobStatus
-from oozer.common.job_context import JobContext
 from oozer.common.job_scope import JobScope
 from oozer.common.report_job_status_task import report_job_status_task
 
