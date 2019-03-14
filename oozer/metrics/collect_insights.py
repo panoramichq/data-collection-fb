@@ -121,16 +121,6 @@ class JobScopeParsed:
                 f"Report type {job_scope.report_type} does not have a mapped Platform-side breakdown value."
             )
 
-        # This is for page and post insights
-        if entity_type == Entity.Page:
-            self.report_params.update(
-                metric=PAGE_METRICS
-            )
-        elif entity_type == Entity.PagePost:
-            self.report_params.update(
-                metric=POST_METRICS
-            )
-
         # Indicates that datum returned in a per-parent report is by itself
         # naturally mapped to some single normative job ,
         # meaning each element can be stored separately

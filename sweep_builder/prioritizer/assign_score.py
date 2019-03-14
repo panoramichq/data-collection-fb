@@ -76,7 +76,7 @@ def assign_score(job_id, timezone):
 
     if not is_per_parent_job and ad_account_id != '23845179':
         # at this time, it's impossible to have per-entity_id
-        # jobs here becase sweep builder specifically avoids
+        # jobs here because sweep builder specifically avoids
         # scoring and releasing per-entity_id jobs
         # TODO: when we get per-entity_id jobs back, do some scoring for these
         # Until then, we are making sure per-parent jobs get out first

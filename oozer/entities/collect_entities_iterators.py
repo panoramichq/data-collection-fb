@@ -114,7 +114,7 @@ def iter_native_entities_per_adaccount(
     }
 
     return _iterate_native_entities_per_parent(
-        Entity.ALL,
+        Entity.ENTITIES_AA,
         getter_method_map,
         entity_type,
         fields,
@@ -173,7 +173,7 @@ def iter_collect_entities_per_adaccount(job_scope: JobScope):
 
     token, entity_type, root_fb_entity = _extract_token_entity_type_parent_entity(
         job_scope,
-        Entity.ALL,
+        Entity.ENTITIES_AA,
         Entity.AdAccount,
         'ad_account_id',
     )

@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 @app.task
 @Measure.timer(__name__, function_name_as_metric=True)
 @Measure.counter(__name__, function_name_as_metric=True, count_once=True)
-def import_ad_accounts_task(job_scope, _):
+def import_ad_accounts_task(job_scope: JobScope, _):
     """
     Collect all facebook ad accounts that are active in the console api
 
@@ -44,7 +44,7 @@ def import_ad_accounts_task(job_scope, _):
 @app.task
 @Measure.timer(__name__, function_name_as_metric=True)
 @Measure.counter(__name__, function_name_as_metric=True, count_once=True)
-def import_pages_task(job_scope, _):
+def import_pages_task(job_scope: JobScope, _):
     """
     Collect all facebook ad accounts that are active in the console api
 
@@ -76,13 +76,13 @@ def _get_good_token(job_scope: JobScope):
         )
 
 
-def _import_entities_from_console(entity_type, job_scope):
+def _import_entities_from_console(entity_type: str, job_scope: JobScope):
     # TODO: Rethink registration of these.
     # effectively, even though we store scopes in DB, unless they are added
     # to code below, they don't exist. Seems kinda silly
     entity_type_map = {
-        'ad_account': (ConsoleApi.get_accounts, AdAccountEntity),
-        'page': (ConsoleApi.get_pages, PageEntity),
+        Entity.AdAccount: (ConsoleApi.get_accounts, AdAccountEntity),
+        Entity.Page: (ConsoleApi.get_pages, PageEntity),
     }
 
     report_job_status_task.delay(JobStatus.Start, job_scope)

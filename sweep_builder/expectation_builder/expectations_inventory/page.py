@@ -38,8 +38,8 @@ def pages_per_scope(reality_claim):
             JobSignature.bind(
                 generate_id(
                     namespace=config.application.UNIVERSAL_ID_SYSTEM_NAMESPACE,
-                    # Note absence of value for AdAccount
-                    # This is "all AA per scope X" job.
+                    # Note absence of value for Page
+                    # This is "all Pages per scope X" job.
                     entity_id=reality_claim.entity_id,
                     entity_type=reality_claim.entity_type,
                     report_type=ReportType.import_pages,
@@ -62,7 +62,7 @@ def sync_expectations_per_page(reality_claim):
     """
 
     if not reality_claim.ad_account_id:
-        ValueError("AdAccountID value is missing")
+        ValueError("PageID value is missing")
 
     if reality_claim.entity_type != Entity.Page:
         ValueError("Only Page-level expectations may generate this job signature")

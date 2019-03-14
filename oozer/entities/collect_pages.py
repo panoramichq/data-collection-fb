@@ -10,6 +10,7 @@ from common.id_tools import generate_universal_id
 from common.measurement import Measure
 from common.tokens import PlatformTokenManager
 from oozer.common.enum import ExternalPlatformJobStatus
+from oozer.common.errors import CollectionError
 from oozer.common.facebook_api import (
     PlatformApiContext,
     get_default_fields
@@ -107,7 +108,7 @@ def collect_pages_from_business_task(job_scope: JobScope, job_context: JobContex
         logger.info(
             f'{job_scope} skipped because sweep {job_scope.sweep_id} is done'
         )
-        raise ConnectionError(Exception(f'{job_scope} skipped because sweep {job_scope.sweep_id} is done'), 0)
+        raise CollectionError(Exception(f'{job_scope} skipped because sweep {job_scope.sweep_id} is done'), 0)
 
     logger.info(
         f'{job_scope} started'

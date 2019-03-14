@@ -19,13 +19,13 @@ logger = logging.getLogger(__name__)
 app = get_celery_app()
 
 
-def collect_entities_per_iterator(
+def collect_entities_from_iterator(
     job_scope: JobScope,
-    iter_data: Generator[object, None, None],
+    entity_iterator: Generator[object, None, None],
 ) -> int:
     if not SweepRunningFlag.is_set(job_scope.sweep_id):
         logger.info(f'{job_scope} skipped because sweep {job_scope.sweep_id} is done')
-        raise ConnectionError(Exception(f'{job_scope} skipped because sweep {job_scope.sweep_id} is done'), 0)
+        raise CollectionError(Exception(f'{job_scope} skipped because sweep {job_scope.sweep_id} is done'), 0)
 
     logger.info(f'{job_scope} started')
 
@@ -36,7 +36,7 @@ def collect_entities_per_iterator(
 
     cnt = 0
     try:
-        for cnt, datum in enumerate(iter_data):
+        for cnt, datum in enumerate(entity_iterator):
             if cnt % 100 == 0:
                 logger.info(f'{job_scope} processed {cnt} data points so far')
     except Exception as e:
@@ -54,7 +54,7 @@ def collect_entities_per_adaccount_task(job_scope: JobScope, _: JobContext):
     """
     Collect all entities data for a given adaccount
     """
-    return collect_entities_per_iterator(
+    return collect_entities_from_iterator(
         job_scope,
         iter_collect_entities_per_adaccount(job_scope),
     )
@@ -68,7 +68,7 @@ def collect_entities_per_page_task(job_scope: JobScope, _: JobContext):
     """
     Collect all entities data for a given page
     """
-    return collect_entities_per_iterator(
+    return collect_entities_from_iterator(
         job_scope,
         iter_collect_entities_per_page(job_scope),
     )
@@ -82,7 +82,7 @@ def collect_entities_per_page_post_task(job_scope: JobScope, _: JobContext):
     """
     Collect all entities data for a given page
     """
-    return collect_entities_per_iterator(
+    return collect_entities_from_iterator(
         job_scope,
         iter_collect_entities_per_page_post(job_scope),
     )

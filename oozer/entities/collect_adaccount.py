@@ -6,6 +6,7 @@ from common.id_tools import generate_universal_id
 from common.measurement import Measure
 from common.tokens import PlatformTokenManager
 from oozer.common.cold_storage.batch_store import NormalStore
+from oozer.common.errors import CollectionError
 from oozer.common.facebook_api import PlatformApiContext, get_default_fields
 from oozer.common.job_context import JobContext
 from oozer.common.job_scope import JobScope
@@ -22,10 +23,10 @@ logger = logging.getLogger(__name__)
 @Measure.timer(__name__, function_name_as_metric=True)
 @Measure.counter(__name__, function_name_as_metric=True, count_once=True)
 @reported_task
-def collect_adaccount_task(job_scope: JobScope, job_context: JobContext):
+def collect_adaccount_task(job_scope: JobScope, _: JobContext):
     if not SweepRunningFlag.is_set(job_scope.sweep_id):
         logger.info(f'{job_scope} skipped because sweep {job_scope.sweep_id} is done')
-        raise ConnectionError(Exception(f'{job_scope} skipped because sweep {job_scope.sweep_id} is done'), 0)
+        raise CollectionError(Exception(f'{job_scope} skipped because sweep {job_scope.sweep_id} is done'), 0)
 
     logger.info(f'{job_scope} started')
 
@@ -34,10 +35,10 @@ def collect_adaccount_task(job_scope: JobScope, job_context: JobContext):
         if good_token is not None:
             job_scope.tokens = [good_token]
 
-    collect_adaccount(job_scope, job_context)
+    collect_adaccount(job_scope)
 
 
-def collect_adaccount(job_scope: JobScope, job_context: JobContext):
+def collect_adaccount(job_scope: JobScope):
     """
     Collects ad account data for a AA specific JobScope definition.
     :param JobScope job_scope: The JobScope as we get it from the task itself

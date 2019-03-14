@@ -35,7 +35,17 @@ class Entity:
         Comment,
     }
 
-    NON_AA = {
+    ENTITIES_AA = {
+        AdAccount,
+        Campaign,
+        AdSet,
+        Ad,
+        AdCreative,
+        AdVideo,
+        CustomAudience,
+    }
+
+    ENTITIES_NON_AA = {
         Page,
         PagePost,
         Comment,
