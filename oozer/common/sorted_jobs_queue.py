@@ -18,7 +18,6 @@ class NotSet:
 
 
 class _JobsWriter:
-    _JOBS_READER_BATCH_SIZE = 200
 
     def __init__(self, sorted_jobs_queue_interface, batch_size=30):
         """
