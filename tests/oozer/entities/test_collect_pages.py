@@ -4,12 +4,14 @@ from datetime import datetime
 from facebook_business.adobjects.business import Business
 from facebook_business.adobjects.page import Page
 from facebook_business.api import FacebookRequest
+
+from oozer.common.sweep_running_flag import SweepRunningFlag
 from tests.base import random
 from tests.base.testcase import TestCase, mock
 from oozer.common.enum import JobStatus
 from oozer.common.job_scope import JobScope
 from oozer.common.report_job_status_task import report_job_status_task
-from oozer.entities.collect_pages import collect_pages_from_business
+from oozer.entities.collect_pages import collect_pages_from_business_task
 
 
 class TestCollectPages(TestCase):
@@ -28,14 +30,15 @@ class TestCollectPages(TestCase):
             sweep_id='1'
         )
 
-        with mock.patch.object(report_job_status_task, 'delay') as status_task, \
-            self.assertRaises(ValueError) as ex_trap:
-            collect_pages_from_business(job_scope, None)
+        with SweepRunningFlag(job_scope.sweep_id):
+            with mock.patch.object(report_job_status_task, 'delay') as status_task, \
+              self.assertRaises(ValueError) as ex_trap:
+                collect_pages_from_business_task(job_scope, None)
 
-        assert 'Report level' in str(ex_trap.exception)
-        assert status_task.called
-        parameters, _ = status_task.call_args
-        assert (JobStatus.GenericError, job_scope) == parameters, 'Must report status correctly on failure'
+            assert 'Report level' in str(ex_trap.exception)
+            assert status_task.called
+            parameters, _ = status_task.call_args
+            assert (JobStatus.GenericError, job_scope) == parameters, 'Must report status correctly on failure'
 
     def test_fails_without_a_token(self):
         job_scope = JobScope(
@@ -46,15 +49,16 @@ class TestCollectPages(TestCase):
             sweep_id='1'
         )
 
-        with mock.patch.object(report_job_status_task, 'delay') as status_task, \
-            self.assertRaises(ValueError) as ex_trap:
-            collect_pages_from_business(job_scope, None)
+        with SweepRunningFlag(job_scope.sweep_id):
+            with mock.patch.object(report_job_status_task, 'delay') as status_task, \
+              self.assertRaises(ValueError) as ex_trap:
+                collect_pages_from_business_task(job_scope, None)
 
-        assert 'token' in str(ex_trap.exception)
-        assert status_task.called
+            assert 'token' in str(ex_trap.exception)
+            assert status_task.called
 
-        status_task_args, _ = status_task.call_args
-        assert (JobStatus.GenericError, job_scope) == status_task_args, 'Must report status correctly on failure'
+            status_task_args, _ = status_task.call_args
+            assert (JobStatus.GenericError, job_scope) == status_task_args, 'Must report status correctly on failure'
 
     def test_runs_correctly(self):
         biz_id_1 = random.gen_string_id()
@@ -89,17 +93,18 @@ class TestCollectPages(TestCase):
             tokens=['token']
         )
 
-        with mock.patch.object(FacebookRequest, 'execute', return_value=businesses) as gp, \
-            mock.patch.object(Business, 'get_client_pages', return_value=client_pages), \
-            mock.patch.object(Business, 'get_owned_pages', return_value=owned_pages), \
-            mock.patch.object(report_job_status_task, 'delay') as status_task:
+        with SweepRunningFlag(job_scope.sweep_id):
+            with mock.patch.object(FacebookRequest, 'execute', return_value=businesses) as gp, \
+              mock.patch.object(Business, 'get_client_pages', return_value=client_pages), \
+              mock.patch.object(Business, 'get_owned_pages', return_value=owned_pages), \
+              mock.patch.object(report_job_status_task, 'delay') as status_task:
 
-            collect_pages_from_business(job_scope, None)
+                collect_pages_from_business_task(job_scope, None)
 
-        assert gp.called
+            assert gp.called
 
-        assert status_task.called
-        # it was called many times, but we care about the last time only
-        pp, kk = status_task.call_args
-        assert not kk
-        assert pp == (JobStatus.Done, job_scope)
+            assert status_task.called
+            # it was called many times, but we care about the last time only
+            pp, kk = status_task.call_args
+            assert not kk
+            assert pp == (JobStatus.Done, job_scope)
