@@ -482,7 +482,7 @@ _default_fields_map = {
         'is_community_page',
         'is_eligible_for_branded_content',
         'is_messenger_platform_bot',
-        # requires special mermissions (error msg ""The Facebook Page XXXX is not signed up for Instant Articles.")
+        # requires special permissions (error msg ""The Facebook Page XXXX is not signed up for Instant Articles.")
         # 'instant_articles_review_status',
         'is_messenger_bot_get_started_enabled',
         'is_owned',
