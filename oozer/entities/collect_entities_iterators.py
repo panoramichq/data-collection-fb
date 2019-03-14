@@ -7,7 +7,8 @@ from oozer.common.cold_storage import ChunkDumpStore
 from oozer.common.enum import ENUM_VALUE_FB_MODEL_MAP, FB_ADACCOUNT_MODEL, FB_CAMPAIGN_MODEL, FB_ADSET_MODEL, \
     FB_AD_MODEL, FB_AD_CREATIVE_MODEL, FB_AD_VIDEO_MODEL, FB_CUSTOM_AUDIENCE_MODEL, FB_PAGE_MODEL, FB_PAGE_POST_MODEL, \
     FB_COMMENT_MODEL
-from oozer.common.facebook_api import get_default_fields, get_default_page_size, PlatformApiContext
+from oozer.common.facebook_api import get_default_fields, get_default_page_size, PlatformApiContext, \
+    get_additional_params
 from oozer.common.job_scope import JobScope
 from oozer.common.vendor_data import add_vendor_data
 from oozer.entities.feedback_entity_task import feedback_entity_task
@@ -66,8 +67,10 @@ def _iterate_native_entities_per_parent(
 
     fields_to_fetch = fields or get_default_fields(fb_model_klass)
     page_size = page_size or get_default_page_size(fb_model_klass)
+    additional_params = get_additional_params(fb_model_klass)
     params = {
         'summary': False,
+        **additional_params,
     }
 
     if page_size:
@@ -323,8 +326,8 @@ def iter_collect_entities_per_page_post(job_scope: JobScope):
 
             if cnt % 1000 == 0:
                 # default paging size for entities per parent
-                # is typically around 100. So, each 100 results
-                # means about 10 hits to FB
-                token_manager.report_usage(token, 10)
+                # is typically around 250. So, each 250 results
+                # means about 4 hits to FB
+                token_manager.report_usage(token, 4)
 
     token_manager.report_usage(token)

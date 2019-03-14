@@ -1,4 +1,4 @@
-from typing import List, Type
+from typing import List, Type, Any, Dict
 
 from facebook_business.adobjects.adaccount import AdAccount
 from facebook_business.adobjects.comment import Comment
@@ -134,7 +134,6 @@ class FacebookApiErrorInspector:
         """
         Checks whether given Facebook Exception is of throttling type
 
-        :param FacebookRequestError exception: The Facebook Exception
         :return bool: If True, the exception is of type throttling
         """
         return self._is_exception_code_in_set(self.THROTTLING_CODES)
@@ -144,7 +143,6 @@ class FacebookApiErrorInspector:
         Checks whether given Facebook Exception is of a type that says "you are
         asking me to do / calculate too much"
 
-        :param FacebookRequestError exception: The Facebook Exception
         :return bool: If True, the exception is of type "too much data"
         """
         return self._is_exception_code_in_set(self.TOO_MUCH_DATA_CODES) or (
@@ -227,7 +225,7 @@ _default_fields_map = {
         'bid_amount',
         'bid_info',
         'billing_event',
-        'budget_remaining',  #TODO: Temp enable. Migrate Console away from use.
+        'budget_remaining',  # TODO: Temp enable. Migrate Console away from use.
         # 'campaign',
         'campaign_id',
         # 'campaign_spec',
@@ -261,7 +259,8 @@ _default_fields_map = {
         # 'source_adset_id',
         'start_time',
         'status',
-        'targeting',  # Yes we need it, but beware! https://drive.google.com/drive/folders/1R01e7WiilzKDPYTKpVnUXQQyIUldFmCK
+        # Yes we need it, but beware! https://drive.google.com/drive/folders/1R01e7WiilzKDPYTKpVnUXQQyIUldFmCK
+        'targeting',
         # 'time_based_ad_rotation_id_blocks',
         # 'time_based_ad_rotation_intervals',
         'updated_time',
@@ -681,7 +680,8 @@ def get_default_fields(model_klazz: Type['Model']) -> List[str]:
 _default_page_size = {
     Campaign: 400,
     AdSet: 200,  # this is super heavy object mostly because of Targeting spec. Keep it smallish
-    Ad: 400
+    Ad: 400,
+    Comment: 250,
 }
 
 
@@ -697,6 +697,22 @@ def get_default_page_size(model_klazz: Type['Model']) -> List[str]:
 
     return _default_page_size.get(model_klazz, 100)
 
+
+_default_additional_params = {
+    Comment: {
+        'filter': 'stream',
+    }
+}
+
+
+def get_additional_params(model_klazz: Type['Model']) -> Dict[str, Any]:
+    """
+    By default, we dont need additional params to FB API requests. But in some instances (i.e. fetching Comments),
+    adding parameters makes fetching data simpler
+    """
+    assert issubclass(model_klazz, abstractcrudobject.AbstractCrudObject)
+
+    return _default_additional_params.get(model_klazz, {})
 
 # By default ARCHIVED is filtered out
 # Here we repeat all possible status values we get by default

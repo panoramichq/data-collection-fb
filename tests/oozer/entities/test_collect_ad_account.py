@@ -10,9 +10,8 @@ from tests.base import random
 from datetime import datetime
 
 from oozer.common.cold_storage.batch_store import NormalStore
-from oozer.common.enum import JobStatus, FB_ADACCOUNT_MODEL
+from oozer.common.enum import FB_ADACCOUNT_MODEL
 from oozer.common.job_scope import JobScope
-from oozer.common.report_job_status_task import report_job_status_task
 from common.enums.entity import Entity
 from oozer.entities.collect_adaccount import collect_adaccount
 
