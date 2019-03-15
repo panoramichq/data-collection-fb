@@ -220,7 +220,11 @@ workflows:
                 - master
                 - production
       - run_flake8
+          requires:
+            - build_image
       - run_black
+          requires:
+            - build_image
 
       # - hold_for_deploy_staging:
       #     type: approval

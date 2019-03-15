@@ -186,25 +186,6 @@ class JobScopeParsed:
 
 
 class Insights:
-    """
-    You might be wondering why this is a class.
-    What's the point of attaching static methods to it?
-
-    Ease of testing.
-
-    It's a pain to mock out calls to iter_insights if it was a module
-    function, because it's already imported and is baked into some calling
-    code in iter_collect_insights by reference.
-
-    With it being a static child of this class, mocking becomes simple:
-
-    with mock.patch.object(Insights, 'iter_insights', return_value=[{}]):
-       Insights.iter_collect_insights(blah) # will use our mock
-
-    No need to fight the import chain or patch modules in clever ways.
-    This is all about moving faster through code, where faster test creation is at premium.
-    """  # noqa
-
     @staticmethod
     def iter_insights(fb_entity: Any, report_params: Dict[str, Any]) -> Generator[Dict[str, Any], None, None]:
         """
