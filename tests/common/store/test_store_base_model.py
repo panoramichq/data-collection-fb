@@ -1,10 +1,8 @@
-# must be first, as it does event loop patching and other "first" things
-from pynamodb import attributes
-
+# must be first, as it does event loop patching and other "first" thing
 from tests.base.testcase import TestCase
-
-from common.store.base import BaseMeta, BaseModel
 from tests.base import random
+from pynamodb import attributes
+from common.store.base import BaseMeta, BaseModel
 
 
 class BaseModelTests(TestCase):

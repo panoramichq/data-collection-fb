@@ -168,6 +168,7 @@ class AdsetEntity(EntityBaseMixin, BaseModel):
     Meta = EntityBaseMeta(dynamodb_config.ADSET_ENTITY_TABLE)
 
     entity_type = Entity.AdSet
+    campaign_id = attributes.UnicodeAttribute(null=True, attr_name='cid')
 
 
 class AdEntity(EntityBaseMixin, BaseModel):
@@ -178,6 +179,8 @@ class AdEntity(EntityBaseMixin, BaseModel):
     Meta = EntityBaseMeta(dynamodb_config.AD_ENTITY_TABLE)
 
     entity_type = Entity.Ad
+    campaign_id = attributes.UnicodeAttribute(null=True, attr_name='cid')
+    adset_id = attributes.UnicodeAttribute(null=True, attr_name='asid')
 
 
 class AdCreativeEntity(EntityBaseMixin, BaseModel):
