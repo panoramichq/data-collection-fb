@@ -43,7 +43,6 @@ def collect_adaccount(job_scope: JobScope) -> Dict[str, Any]:
     """
     Collects ad account data for a AA specific JobScope definition.
     :param JobScope job_scope: The JobScope as we get it from the task itself
-    :param JobContext job_context: A job context we use for entity checksums (not used at the moment)
     """
     if job_scope.report_variant != Entity.AdAccount:
         raise ValueError(f"Report level {job_scope.report_variant} specified is not: {Entity.AdAccount}")
@@ -69,16 +68,12 @@ def collect_adaccount(job_scope: JobScope) -> Dict[str, Any]:
 
         token_manager.report_usage(token)
 
-        job_scope_base = dict(
+        job_scope_base = {
             # Duplicate the job_scope data to avoid mutating it
-            **job_scope.to_dict()
-        )
-        job_scope_base.update(
-            # Augment the job specific job scope fields so that it represents a single ad account
-            # for the universal id construction
-            entity_type=Entity.AdAccount,
-            report_variant=None,
-        )
+            **job_scope.to_dict(),
+            'entity_type': Entity.AdAccount,
+            'report_variant': None,
+        }
 
         augmented_ad_account_data = add_vendor_data(
             # Augment the data returned from the remote API with our vendor data

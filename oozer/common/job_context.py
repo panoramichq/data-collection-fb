@@ -33,5 +33,5 @@ class JobContext:
     """
 
     def __init__(self):
-        self.entity_checksums = dict()
-        self.normative_tasks = list()
+        self.entity_checksums = {}
+        self.normative_tasks = []

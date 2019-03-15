@@ -57,7 +57,7 @@ def iter_entities_per_ad_account_id(
 
         with Measure.counter(
             __name__ + '.entities_per_ad_account_id',
-            tags=dict(ad_account_id=ad_account_id, entity_type=EntityModel.entity_type),
+            tags={'ad_account_id': ad_account_id, 'entity_type': EntityModel.entity_type},
         ) as cntr:
 
             for record in EntityModel.query(ad_account_id):

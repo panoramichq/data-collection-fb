@@ -1,7 +1,9 @@
 # must be first, as it does event loop patching and other "first" things
+from pynamodb import attributes
+
 from tests.base.testcase import TestCase
 
-from common.store.base import BaseMeta, BaseModel, attributes
+from common.store.base import BaseMeta, BaseModel
 from tests.base import random
 
 

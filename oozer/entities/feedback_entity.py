@@ -97,7 +97,7 @@ def _upsert_regular_entity(entity_data: Dict[str, Any], entity_type: str, entity
 
     eol = _parse_fb_datetime(entity_data.get('updated_time')) if _is_eol else None
 
-    upsert_data = dict(hash=entity_hash_pair[0], hash_fields=entity_hash_pair[1])
+    upsert_data = {'hash': entity_hash_pair[0], 'hash_fields': entity_hash_pair[1]}
 
     # Note on Model.attr | value use:
     # This is a way to express "set if does not exist" logic

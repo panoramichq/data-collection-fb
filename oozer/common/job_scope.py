@@ -1,5 +1,5 @@
-from datetime import datetime
-from typing import List
+from datetime import datetime, date
+from typing import List, Union
 
 from common.id_tools import generate_id
 from common.util import convert_class_with_props_to_str
@@ -26,8 +26,8 @@ class JobScope:
     report_type: str = None
     report_variant: str = None
 
-    range_start: datetime = None
-    range_end: datetime = None
+    range_start: Union[datetime, date] = None
+    range_end: Union[datetime, date] = None
 
     tokens: List[str] = None
 

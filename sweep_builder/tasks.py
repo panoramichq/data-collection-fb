@@ -58,7 +58,7 @@ def build_sweep_slice_per_ad_account_task(sweep_id: str, ad_account_reality_clai
         for claim in iter_pipeline(sweep_id, reality_claims_iter):
             Measure.timing(
                 _measurement_name_base + 'next_persisted',
-                tags=dict(entity_type=claim.entity_type, **_measurement_tags),
+                tags={'entity_type': claim.entity_type, **_measurement_tags},
                 sample_rate=0.01,
             )((time.time() - _before_fetch) * 1000)
             cnt += 1
@@ -93,7 +93,7 @@ def build_sweep_slice_per_page(sweep_id: str, page_reality_claim: RealityClaim, 
         for claim in iter_pipeline(sweep_id, reality_claims_iter):
             Measure.timing(
                 _measurement_name_base + 'next_persisted',
-                tags=dict(entity_type=claim.entity_type, **_measurement_tags),
+                tags={'entity_type': claim.entity_type, **_measurement_tags},
                 sample_rate=0.01,
             )((time.time() - _before_fetch) * 1000)
             cnt += 1

@@ -34,17 +34,17 @@ def _report_job_done_to_cold_store(job_scope: JobScope):
     )
 
     cold_storage.store(
-        dict(
-            job_id=job_scope.job_id,
-            account_id=job_scope.ad_account_id,
-            entity_type=job_scope.entity_type,
-            entity_id=job_scope.entity_id,
-            report_type=job_scope.report_type,
-            report_variant=job_scope.report_variant,
-            range_start=_to_date_string_if_set(job_scope.range_start),
-            range_end=_to_date_string_if_set(job_scope.range_end),
-            platform_namespace=job_scope.namespace,
-        ),
+        {
+            'job_id': job_scope.job_id,
+            'account_id': job_scope.ad_account_id,
+            'entity_type': job_scope.entity_type,
+            'entity_id': job_scope.entity_id,
+            'report_type': job_scope.report_type,
+            'report_variant': job_scope.report_variant,
+            'range_start': _to_date_string_if_set(job_scope.range_start),
+            'range_end': _to_date_string_if_set(job_scope.range_end),
+            'platform_namespace': job_scope.namespace,
+        },
         reporting_job_scope,
     )
 

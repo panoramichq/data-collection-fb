@@ -29,9 +29,12 @@ class JobExpectationsWriter:
         self._redis_client = get_redis()
 
     def add(self, job_id: str, ad_account_id: str, entity_id: str):
-        key_template_data = dict(
-            sweep_id=self.sweep_id, job_id=job_id, ad_account_id=ad_account_id, entity_id=entity_id
-        )
+        key_template_data = {
+            'sweep_id': self.sweep_id,
+            'job_id': job_id,
+            'ad_account_id': ad_account_id,
+            'entity_id': entity_id,
+        }
 
         if ad_account_id not in self._aa_cache:
             self._aa_cache.add(ad_account_id)
