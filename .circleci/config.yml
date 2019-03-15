@@ -219,10 +219,10 @@ workflows:
               only:
                 - master
                 - production
-      - run_flake8
+      - run_flake8:
           requires:
             - build_image
-      - run_black
+      - run_black:
           requires:
             - build_image
 
