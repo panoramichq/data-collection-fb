@@ -114,20 +114,21 @@ jobs:
           aws configure set default.region $AWS_REGION
           aws ssm put-parameter --overwrite --name "data-collection-fb-${SSM_PARAM_SUFFIX}" --type "String" --value ${IMAGE_NAME}
 
-    run_flake8:
-        docker:
-            - image: circleci/python:3.6-jessie-node
-        steps:
-            - checkout
-            - run: sudo pip install -r requirements.dev.txt
-            - run: flake8 --filename=*.py
-    run_yapf:
-        docker:
-        - image: circleci/python:3.6-jessie-node
-        steps:
-        - checkout
-        - run: sudo pip install -r requirements.dev.txt
-        - run: yapf . --recursive --diff
+  run_flake8:
+    docker:
+    - image: circleci/python:3.6-jessie-node
+    steps:
+    - checkout
+    - run: sudo pip install -r requirements.dev.txt
+    - run: flake8 --filename=*.py
+
+  run_yapf:
+    docker:
+    - image: circleci/python:3.6-jessie-node
+    steps:
+    - checkout
+    - run: sudo pip install -r requirements.dev.txt
+    - run: yapf . --recursive --diff
 
   run_tests:
     machine:
