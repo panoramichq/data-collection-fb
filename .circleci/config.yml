@@ -128,7 +128,7 @@ jobs:
     steps:
     - checkout
     - run: sudo pip install -r requirements.dev.txt
-    - run: make black-check
+    - run: black --skip-string-normalization --diff --line-length 120 --target-version py36 .
 
   run_tests:
     machine:
@@ -219,12 +219,8 @@ workflows:
               only:
                 - master
                 - production
-      - run_flake8:
-          requires:
-            - build_image
-      - run_black:
-          requires:
-            - build_image
+      - run_flake8
+      - run_black
 
       # - hold_for_deploy_staging:
       #     type: approval
