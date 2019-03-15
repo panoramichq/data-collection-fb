@@ -39,12 +39,10 @@ def entities_per_ad_account(entity_type: str, reality_claim: RealityClaim) -> Ge
         job_signatures=[
             JobSignature.bind(
                 generate_id(
-                    ad_account_id=reality_claim.ad_account_id,
-                    report_type=ReportType.entity,
-                    report_variant=entity_type
+                    ad_account_id=reality_claim.ad_account_id, report_type=ReportType.entity, report_variant=entity_type
                 )
             )
-        ]
+        ],
     )
 
 
@@ -59,12 +57,10 @@ def entities_per_page(entity_type: str, reality_claim: RealityClaim) -> Generato
         job_signatures=[
             JobSignature.bind(
                 generate_id(
-                    ad_account_id=reality_claim.ad_account_id,
-                    report_type=ReportType.entity,
-                    report_variant=entity_type
+                    ad_account_id=reality_claim.ad_account_id, report_type=ReportType.entity, report_variant=entity_type
                 )
             )
-        ]
+        ],
     )
 
 
@@ -85,13 +81,12 @@ def entities_per_page_post(entity_type: str, reality_claim: RealityClaim) -> Gen
                     entity_id=reality_claim.entity_id,
                 )
             )
-        ]
+        ],
     )
 
 
 def page_entity(reality_claim: RealityClaim) -> Generator[ExpectationClaim, None, None]:
-    assert reality_claim.entity_type == Entity.Page, \
-        'Page expectation should be triggered only by page reality claims'
+    assert reality_claim.entity_type == Entity.Page, 'Page expectation should be triggered only by page reality claims'
 
     yield ExpectationClaim(
         reality_claim.to_dict(),
@@ -101,16 +96,17 @@ def page_entity(reality_claim: RealityClaim) -> Generator[ExpectationClaim, None
                     ad_account_id=reality_claim.ad_account_id,
                     entity_id=reality_claim.entity_id,
                     report_type=ReportType.entity,
-                    report_variant=Entity.Page
+                    report_variant=Entity.Page,
                 )
             )
-        ]
+        ],
     )
 
 
 def ad_account_entity(reality_claim: RealityClaim) -> Generator[ExpectationClaim, None, None]:
-    assert reality_claim.entity_type == Entity.AdAccount, \
-        'Ad account expectation should be triggered only by ad account reality claims'
+    assert (
+        reality_claim.entity_type == Entity.AdAccount
+    ), 'Ad account expectation should be triggered only by ad account reality claims'
 
     yield ExpectationClaim(
         reality_claim.to_dict(),
@@ -120,10 +116,10 @@ def ad_account_entity(reality_claim: RealityClaim) -> Generator[ExpectationClaim
                     ad_account_id=reality_claim.ad_account_id,
                     entity_id=reality_claim.entity_id,
                     report_type=ReportType.entity,
-                    report_variant=Entity.AdAccount
+                    report_variant=Entity.AdAccount,
                 )
             )
-        ]
+        ],
     )
 
 

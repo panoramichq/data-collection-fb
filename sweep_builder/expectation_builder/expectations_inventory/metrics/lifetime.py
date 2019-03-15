@@ -13,8 +13,7 @@ from sweep_builder.types import ExpectationGeneratorType
 
 
 def lifetime_metrics_per_entity(
-    entity_type: str,
-    reality_claim: RealityClaim,
+    entity_type: str, reality_claim: RealityClaim
 ) -> Generator[ExpectationClaim, None, None]:
     if not reality_claim.timezone:
         # For metrics, reality claim must have timezone.
@@ -43,11 +42,11 @@ def lifetime_metrics_per_entity(
                     generate_id(
                         ad_account_id=reality_claim.ad_account_id,
                         report_type=ReportType.lifetime,
-                        report_variant=entity_type
+                        report_variant=entity_type,
                     ),
-                    normative_job_id=normative_job_id
-                )
-            ]
+                    normative_job_id=normative_job_id,
+                ),
+            ],
         )
 
 

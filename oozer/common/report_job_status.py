@@ -44,7 +44,8 @@ def _report_job_done_to_cold_store(job_scope: JobScope):
             range_start=_to_date_string_if_set(job_scope.range_start),
             range_end=_to_date_string_if_set(job_scope.range_end),
             platform_namespace=job_scope.namespace,
-        ), reporting_job_scope
+        ),
+        reporting_job_scope,
     )
 
 

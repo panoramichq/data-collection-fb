@@ -13,4 +13,5 @@ INSIGHTS_MAX_POLLING_INTERVAL = 16
 INSIGHTS_MIN_POLLING_INTERVAL = 0.5
 
 from common.updatefromenv import update_from_env
+
 update_from_env(__name__)

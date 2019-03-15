@@ -35,10 +35,10 @@ def pages_per_scope(reality_claim: RealityClaim) -> Generator[ExpectationClaim, 
                     entity_id=reality_claim.entity_id,
                     entity_type=reality_claim.entity_type,
                     report_type=ReportType.import_pages,
-                    report_variant=Entity.Page
+                    report_variant=Entity.Page,
                 )
             )
-        ]
+        ],
     )
 
 
@@ -62,8 +62,8 @@ def sync_expectations_per_page(reality_claim: RealityClaim) -> Generator[Expecta
                     ad_account_id=reality_claim.ad_account_id,
                     entity_id=reality_claim.ad_account_id,
                     entity_type=reality_claim.entity_type,
-                    report_type=ReportType.sync_expectations
+                    report_type=ReportType.sync_expectations,
                 )
             )
-        ]
+        ],
     )

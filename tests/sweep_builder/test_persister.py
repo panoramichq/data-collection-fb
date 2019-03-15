@@ -23,9 +23,7 @@ class PersisterSavesJobScopeData(TestCase):
         ad_account_id = random.gen_string_id()
 
         job_id = generate_id(
-            ad_account_id=ad_account_id,
-            report_type=ReportType.lifetime,
-            report_variant=Entity.Campaign,
+            ad_account_id=ad_account_id, report_type=ReportType.lifetime, report_variant=Entity.Campaign
         )
 
         prioritized_iter = [
@@ -40,18 +38,19 @@ class PersisterSavesJobScopeData(TestCase):
                     # auxiliary data blob for saving on Data Flower.
                     # We don't have to do that there.
                     # It can be pre-computed and placed on the JobSignature
-                    JobSignature.bind(job_id
-                                      # Here
-                                      # As it takes args, kwargs
-                                      # that we can package into Data Flower
-                                      )
+                    JobSignature.bind(
+                        job_id
+                        # Here
+                        # As it takes args, kwargs
+                        # that we can package into Data Flower
+                    )
                     # TODO: contemplate moving auxiliary data formation to
                     #       place where JobSignatures are generated and use that
                     #       data for Data Flower (as it was originally intended
                     #       but not implemented because saving each job's data
                     #       individually to Data Flower was too slow)
                 ],
-                job_scores=[100]
+                job_scores=[100],
             )
         ]
 
@@ -77,10 +76,10 @@ class PersisterSavesJobScopeData(TestCase):
                 dict(
                     # comes from Persister code
                     # manually peeled off *Claim and injected into Data Flower
-                    ad_account_timezone_name='Europe/London',
+                    ad_account_timezone_name='Europe/London'
                 ),
-                100
-            ),
+                100,
+            )
         ]
 
         assert jobs_queued_actual == jobs_queued_should_be

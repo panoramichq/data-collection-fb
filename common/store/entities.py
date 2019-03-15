@@ -19,6 +19,7 @@ class AdAccountEntity(ConsoleEntityMixin, BaseModel):
     """
     Represents a single facebook ad account entity
     """
+
     Meta = BaseMeta(dynamodb_config.AD_ACCOUNT_ENTITY_TABLE)
 
     _additional_fields = {'entity_type'}
@@ -62,6 +63,7 @@ class AdAccountEntity(ConsoleEntityMixin, BaseModel):
     @memoized_property
     def scope_model(self):
         from common.store.scope import AssetScope
+
         return AssetScope.get(self.scope)
 
     def to_fb_sdk_ad_account(self, api=None):
@@ -89,7 +91,7 @@ class AdAccountEntity(ConsoleEntityMixin, BaseModel):
             job_scope.entity_id,  # scope ID
             entity['ad_account_id'],
             is_active=entity.get('active', True),
-            updated_by_sweep_id=job_scope.sweep_id
+            updated_by_sweep_id=job_scope.sweep_id,
         )
 
 
@@ -97,6 +99,7 @@ class EntityBaseMixin:
     """
     Use this mixin for describing Facebook entity existence tables
     """
+
     # Note that each Entity is keyed by, effectively, a compound key: ad_account_id+entity_id
     # This allows us to issue queries like "Get all objects per ad_account_id" rather quickly
     ad_account_id = attributes.UnicodeAttribute(hash_key=True, attr_name='aaid')
@@ -151,6 +154,7 @@ class CampaignEntity(EntityBaseMixin, BaseModel):
     """
     Represents a single facebook campaign entity
     """
+
     Meta = EntityBaseMeta(dynamodb_config.CAMPAIGN_ENTITY_TABLE)
 
     entity_type = Entity.Campaign
@@ -160,6 +164,7 @@ class AdsetEntity(EntityBaseMixin, BaseModel):
     """
     Represent a single facebook adset entity
     """
+
     Meta = EntityBaseMeta(dynamodb_config.ADSET_ENTITY_TABLE)
 
     entity_type = Entity.AdSet
@@ -169,6 +174,7 @@ class AdEntity(EntityBaseMixin, BaseModel):
     """
     Represents a single facebook ad entity
     """
+
     Meta = EntityBaseMeta(dynamodb_config.AD_ENTITY_TABLE)
 
     entity_type = Entity.Ad
@@ -239,7 +245,7 @@ class PageEntity(ConsoleEntityMixin, BaseModel):
             job_scope.entity_id,  # scope ID
             entity['ad_account_id'],
             is_active=entity.get('active', True),
-            updated_by_sweep_id=job_scope.sweep_id
+            updated_by_sweep_id=job_scope.sweep_id,
         )
 
 

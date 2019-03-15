@@ -18,16 +18,9 @@ from oozer.sync_expectations_task import sync_expectations_task
 # We don't blow up, just warn when JobID does not resolve to
 # a handler. So, watch warnings and don't forget to add handler here.
 entity_report_handler_map = {
-    ReportType.sync_expectations: {
-        Entity.AdAccount: sync_expectations_task,
-        Entity.Page: sync_expectations_task,
-    },
-    ReportType.import_accounts: {
-        Entity.Scope: import_ad_accounts_task,
-    },
-    ReportType.import_pages: {
-        Entity.Scope: import_pages_task,
-    },
+    ReportType.sync_expectations: {Entity.AdAccount: sync_expectations_task, Entity.Page: sync_expectations_task},
+    ReportType.import_accounts: {Entity.Scope: import_ad_accounts_task},
+    ReportType.import_pages: {Entity.Scope: import_pages_task},
     ReportType.entity: {
         Entity.AdAccount: collect_adaccount_task,
         Entity.Campaign: collect_entities_per_adaccount_task,
@@ -50,14 +43,12 @@ entity_report_handler_map = {
     ReportType.day: {
         Entity.Ad: collect_insights_task,
         Entity.Campaign: collect_insights_task,
-
         # Entity.Page: collect_insights_task,
         # Entity.PagePost: collect_insights_task
     },
     ReportType.day_age_gender: {
         Entity.Ad: collect_insights_task,
         Entity.Campaign: collect_insights_task,
-
         # Entity.Page: collect_insights_task,
         # Entity.PagePost: collect_insights_task
     },
@@ -65,7 +56,6 @@ entity_report_handler_map = {
         Entity.Ad: collect_insights_task,
         Entity.AdSet: collect_insights_task,
         Entity.Campaign: collect_insights_task,
-
         # Entity.Page: collect_insights_task,
         # Entity.PagePost: collect_insights_task
     },
@@ -73,17 +63,15 @@ entity_report_handler_map = {
         Entity.Campaign: collect_insights_task,
         Entity.AdSet: collect_insights_task,
         Entity.Ad: collect_insights_task,
-
         # Entity.Page: collect_insights_task,
         # Entity.PagePost: collect_insights_task
     },
     ReportType.day_platform: {
         Entity.Ad: collect_insights_task,
         Entity.Campaign: collect_insights_task,
-
         # Entity.Page: collect_insights_task,
         # Entity.PagePost: collect_insights_task
-    }
+    },
 }
 
 
@@ -94,5 +82,6 @@ def resolve_job_scope_to_celery_task(job_scope: JobScope):
 
     Returns None if no handler for such JobScope is registered
     """
-    return entity_report_handler_map.get(job_scope.report_type,
-                                         {}).get(job_scope.entity_type or job_scope.report_variant)
+    return entity_report_handler_map.get(job_scope.report_type, {}).get(
+        job_scope.entity_type or job_scope.report_variant
+    )

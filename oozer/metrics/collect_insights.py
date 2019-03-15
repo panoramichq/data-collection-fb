@@ -15,8 +15,7 @@ from oozer.common.facebook_async_report import FacebookAsyncReportStatus
 from oozer.common.job_scope import JobScope
 from oozer.common.vendor_data import add_vendor_data
 
-from oozer.metrics.constants import ENUM_LEVEL_MAP, REPORT_TYPE_FB_BREAKDOWN_ENUM, \
-    DEFAULT_REPORT_FIELDS
+from oozer.metrics.constants import ENUM_LEVEL_MAP, REPORT_TYPE_FB_BREAKDOWN_ENUM, DEFAULT_REPORT_FIELDS
 from oozer.metrics.vendor_data_extractor import report_type_vendor_data_extractor_map
 
 
@@ -46,14 +45,13 @@ class JobScopeParsed:
     def __init__(self, job_scope: JobScope):
         if job_scope.report_type not in ReportType.ALL_METRICS:
             raise ValueError(
-                f"Report type {job_scope.report_type} specified is not one of supported values: " +
-                ReportType.ALL_METRICS
+                f"Report type {job_scope.report_type} specified is not one of supported values: "
+                + ReportType.ALL_METRICS
             )
         # cool. we are in the right place...
 
         self.report_params = {
-            'fields':
-            DEFAULT_REPORT_FIELDS,
+            'fields': DEFAULT_REPORT_FIELDS,
             'action_attribution_windows': [
                 # Default 'value' cannot be removed. It's always 1d_view PLUS 28d_click
                 # but, our customers, especially Fandango, like just clicks
@@ -66,7 +64,7 @@ class JobScopeParsed:
                 AdsInsights.ActionAttributionWindows.value_1d_click,  # nice to have for Fandango
                 # AdsInsights.ActionAttributionWindows.value_7d_click,  # nobody cared to ask for it
                 AdsInsights.ActionAttributionWindows.value_28d_click,  # requirement for Fandango
-            ]
+            ],
         }
 
         # Next is (a) vs (b) - abstraction level determination
@@ -98,7 +96,7 @@ class JobScopeParsed:
                     # No value for job_scope.range_end means 1-day report for range_start day
                     'until': _convert_and_validate_date_format(job_scope.range_end or job_scope.range_start),
                 },
-                breakdowns=REPORT_TYPE_FB_BREAKDOWN_ENUM[job_scope.report_type]
+                breakdowns=REPORT_TYPE_FB_BREAKDOWN_ENUM[job_scope.report_type],
             )
         else:
             raise ValueError(
@@ -121,17 +119,21 @@ class JobScopeParsed:
         # single normative ID.
         is_whole_report_bundle_write = (
             # must be one of those per-day reports
-            job_scope.report_type in ReportType.ALL_DAY_BREAKDOWNS and
+            job_scope.report_type in ReportType.ALL_DAY_BREAKDOWNS
+            and
             # except for DMA-based data, as these can be very long,
             # - 10s of thousands of records per day
-            not job_scope.report_type == ReportType.day_dma and
+            not job_scope.report_type == ReportType.day_dma
+            and
             # and the report is per single entity ID
-            job_scope.entity_id and not job_scope.report_variant and
+            job_scope.entity_id
+            and not job_scope.report_variant
+            and
             # and report is for a single calendar day
             # ReportType.ALL_DAY_BREAKDOWNS means there must be a non-Null
             # value in time_range, but we check anyway
-            self.report_params['time_range']['since'] and
-            self.report_params['time_range']['since'] == self.report_params['time_range']['until']
+            self.report_params['time_range']['since']
+            and self.report_params['time_range']['since'] == self.report_params['time_range']['until']
         )
 
         # a more complex variant of whole_report_bundle_write

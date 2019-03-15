@@ -34,9 +34,7 @@ page_entity_type_model_map = {Entity.PagePost: entities.PagePostEntity}
 
 
 def iter_entities_per_ad_account_id(
-    ad_account_id: str,
-    fields: List[str] = None,
-    entity_types: List[str] = None,
+    ad_account_id: str, fields: List[str] = None, entity_types: List[str] = None
 ) -> Generator[Dict[str, Any], None, None]:
     # occasionally it's important to pass through
     # we are not overriding the values, but must pass some value
@@ -59,7 +57,7 @@ def iter_entities_per_ad_account_id(
 
         with Measure.counter(
             __name__ + '.entities_per_ad_account_id',
-            tags=dict(ad_account_id=ad_account_id, entity_type=EntityModel.entity_type)
+            tags=dict(ad_account_id=ad_account_id, entity_type=EntityModel.entity_type),
         ) as cntr:
 
             for record in EntityModel.query(ad_account_id):
@@ -73,9 +71,7 @@ def iter_entities_per_ad_account_id(
 
 
 def iter_entities_per_page_id(
-    page_id: str,
-    fields: List[str] = None,
-    page_entity_types: List[str] = None,
+    page_id: str, fields: List[str] = None, page_entity_types: List[str] = None
 ) -> Generator[Dict[str, Any], None, None]:
     if not page_entity_types:
         page_entity_models = page_entity_type_model_map.values()

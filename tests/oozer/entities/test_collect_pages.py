@@ -25,9 +25,9 @@ class TestCollectPages(TestCase):
             tokens=['blah'], report_time=datetime.utcnow(), report_type='entity', report_variant=None, sweep_id='1'
         )
 
-        with SweepRunningFlag(job_scope.sweep_id), \
-            mock.patch.object(report_job_status_task, 'delay') as status_task, \
-                self.assertRaises(ValueError) as ex_trap:
+        with SweepRunningFlag(job_scope.sweep_id), mock.patch.object(
+            report_job_status_task, 'delay'
+        ) as status_task, self.assertRaises(ValueError) as ex_trap:
             collect_pages_from_business_task(job_scope, None)
 
             assert 'Report level' in str(ex_trap.exception)
@@ -37,16 +37,12 @@ class TestCollectPages(TestCase):
 
     def test_fails_without_a_token(self):
         job_scope = JobScope(
-            tokens=[None],
-            report_time=datetime.utcnow(),
-            report_type='entity',
-            report_variant=Entity.Page,
-            sweep_id='1'
+            tokens=[None], report_time=datetime.utcnow(), report_type='entity', report_variant=Entity.Page, sweep_id='1'
         )
 
-        with SweepRunningFlag(job_scope.sweep_id), \
-            mock.patch.object(report_job_status_task, 'delay') as status_task, \
-                self.assertRaises(ValueError) as ex_trap:
+        with SweepRunningFlag(job_scope.sweep_id), mock.patch.object(
+            report_job_status_task, 'delay'
+        ) as status_task, self.assertRaises(ValueError) as ex_trap:
             collect_pages_from_business_task(job_scope, None)
 
             assert 'token' in str(ex_trap.exception)
@@ -76,14 +72,16 @@ class TestCollectPages(TestCase):
             entity_id=self.scope_id,
             report_type=ReportType.import_pages,
             report_variant=Entity.Page,
-            tokens=['token']
+            tokens=['token'],
         )
 
-        with SweepRunningFlag(job_scope.sweep_id), \
-            mock.patch.object(FacebookRequest, 'execute', return_value=businesses) as gp, \
-            mock.patch.object(Business, 'get_client_pages', return_value=client_pages), \
-            mock.patch.object(Business, 'get_owned_pages', return_value=owned_pages), \
-                mock.patch.object(report_job_status_task, 'delay') as status_task:
+        with SweepRunningFlag(job_scope.sweep_id), mock.patch.object(
+            FacebookRequest, 'execute', return_value=businesses
+        ) as gp, mock.patch.object(Business, 'get_client_pages', return_value=client_pages), mock.patch.object(
+            Business, 'get_owned_pages', return_value=owned_pages
+        ), mock.patch.object(
+            report_job_status_task, 'delay'
+        ) as status_task:
             collect_pages_from_business_task(job_scope, None)
 
             assert gp.called

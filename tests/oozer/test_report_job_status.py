@@ -24,7 +24,7 @@ class TestJobDoneReporter(TestCase):
             ad_account_id=random.gen_string_id(),
             report_type=ReportType.day_hour,
             report_variant=Entity.Ad,
-            range_start=now()
+            range_start=now(),
         )
 
         with mock.patch.object(cold_storage, 'store') as store:
@@ -47,7 +47,7 @@ class TestJobDoneReporter(TestCase):
             'report_variant': Entity.Ad,
             'range_start': range_start_should_be,
             'range_end': None,
-            'platform_namespace': JobScope.namespace  # default platform value
+            'platform_namespace': JobScope.namespace,  # default platform value
         }
 
         assert job_scope_reported.sweep_id == job_scope.sweep_id

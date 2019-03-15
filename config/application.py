@@ -21,4 +21,5 @@ See https://operam.atlassian.net/wiki/spaces/EN/pages/160596078/Universal+IDs
 """
 
 from common.updatefromenv import update_from_env
+
 update_from_env(__name__)

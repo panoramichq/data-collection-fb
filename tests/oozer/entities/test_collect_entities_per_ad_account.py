@@ -65,14 +65,11 @@ class TestCollectEntitiesPerAdAccount(TestCase):
                 ad_account_id=self.ad_account_id,
                 report_type=ReportType.entity,
                 report_variant=entity_type,
-                tokens=['blah']
+                tokens=['blah'],
             )
 
             universal_id_should_be = generate_universal_id(
-                ad_account_id=self.ad_account_id,
-                report_type=ReportType.entity,
-                entity_id=fbid,
-                entity_type=entity_type
+                ad_account_id=self.ad_account_id, report_type=ReportType.entity, entity_id=fbid, entity_type=entity_type
             )
 
             fb_data = FB_MODEL(fbid=fbid)
@@ -85,8 +82,9 @@ class TestCollectEntitiesPerAdAccount(TestCase):
                 fb_data[FB_MODEL.Field.account_id] = self.ad_account_id
 
             entities_data = [fb_data]
-            with mock.patch.object(FB_ADACCOUNT_MODEL, get_method_name, return_value=entities_data), \
-                    mock.patch.object(ChunkDumpStore, 'store') as store:
+            with mock.patch.object(FB_ADACCOUNT_MODEL, get_method_name, return_value=entities_data), mock.patch.object(
+                ChunkDumpStore, 'store'
+            ) as store:
 
                 list(iter_collect_entities_per_adaccount(job_scope))
 
@@ -99,9 +97,9 @@ class TestCollectEntitiesPerAdAccount(TestCase):
 
             vendor_data_key = '__oprm'
 
-            assert vendor_data_key in data_actual and type(
-                data_actual[vendor_data_key]
-            ) == dict, 'Special vendor key is present in the returned data'
+            assert (
+                vendor_data_key in data_actual and type(data_actual[vendor_data_key]) == dict
+            ), 'Special vendor key is present in the returned data'
             assert data_actual[vendor_data_key] == {
                 'id': universal_id_should_be
             }, 'Vendor data is set with the right universal id'

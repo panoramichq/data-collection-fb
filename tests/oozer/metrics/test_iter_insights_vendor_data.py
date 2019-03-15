@@ -67,7 +67,7 @@ class VendorDataUniversalIdExtraction(TestCase):
                 vendor_data_extractor._from_hour_segmented_entity,
                 # in summer London is 1 hour ahead of UTC.
                 # so it's useful for testing easy offset from UTC
-                'Europe/London'
+                'Europe/London',
             )
 
             input_data = {
@@ -112,7 +112,7 @@ class VendorDataUniversalIdExtraction(TestCase):
                 #  2018-06-02T00:00:00
                 range_start='2018-06-01T23:00:00',
                 entity_type=entity_type,
-                entity_id='SomeID'
+                entity_id='SomeID',
             )
 
     def test_day_level_data(self):
@@ -297,7 +297,7 @@ class VendorDataUniversalIdExtraction(TestCase):
                 "dma": "Some Long-running Value (spaces+parens)",  # <-------
                 "impressions": "2",
                 "reach": "2",
-                "spend": "0.01"
+                "spend": "0.01",
             }
 
             vendor_data = vendor_data_extractor._from_dma_segmented_entity(
@@ -356,11 +356,12 @@ class VendorDataInjectionTests(TestCase):
                 ad_account_id=self.ad_account_id,
                 report_type=ReportType.lifetime,
                 report_variant=entity_type,
-                tokens=['blah']
+                tokens=['blah'],
             )
 
-            with mock.patch.object(collect_insights.Insights, 'iter_insights', return_value=[input_data]), \
-                    mock.patch.object(ChunkDumpStore, 'store') as store:
+            with mock.patch.object(
+                collect_insights.Insights, 'iter_insights', return_value=[input_data]
+            ), mock.patch.object(ChunkDumpStore, 'store') as store:
 
                 gg = collect_insights.Insights.iter_collect_insights(job_scope, None)
                 cnt = 0
@@ -377,8 +378,8 @@ class VendorDataInjectionTests(TestCase):
                     '__oprm': {
                         'id': f'oprm|m|fb|{self.ad_account_id}|{entity_type}|SomeID|lifetime',
                         'entity_id': 'SomeID',
-                        'entity_type': entity_type
-                    }
+                        'entity_type': entity_type,
+                    },
                 },
             )
 
@@ -412,11 +413,12 @@ class VendorDataInjectionTests(TestCase):
                 range_start="2018-06-02",
                 report_type=ReportType.day_hour,
                 report_variant=entity_type,
-                tokens=['blah']
+                tokens=['blah'],
             )
 
-            with mock.patch.object(collect_insights.Insights, 'iter_insights', return_value=[input_data]), \
-                    mock.patch.object(ChunkDumpStore, 'store') as store:
+            with mock.patch.object(
+                collect_insights.Insights, 'iter_insights', return_value=[input_data]
+            ), mock.patch.object(ChunkDumpStore, 'store') as store:
 
                 gg = collect_insights.Insights.iter_collect_insights(job_scope, None)
                 cnt = 0
@@ -434,7 +436,7 @@ class VendorDataInjectionTests(TestCase):
                         'id': f'oprm|m|fb|{self.ad_account_id}|{entity_type}|SomeID|dayhour||2018-06-01T23',
                         'range_start': '2018-06-01T23:00:00',  # note it's UTC
                         'entity_id': 'SomeID',
-                        'entity_type': entity_type
+                        'entity_type': entity_type,
                     },
                     "ctr": "0",
                     "date_start": "2018-06-02",  # making sure this is summer so it's +1 hour vs UTC
@@ -479,11 +481,12 @@ class VendorDataInjectionTests(TestCase):
                 range_start="2018-06-02",
                 report_type=ReportType.day_age_gender,
                 report_variant=entity_type,
-                tokens=['blah']
+                tokens=['blah'],
             )
 
-            with mock.patch.object(collect_insights.Insights, 'iter_insights', return_value=[input_data]), \
-                    mock.patch.object(ChunkDumpStore, 'store') as store:
+            with mock.patch.object(
+                collect_insights.Insights, 'iter_insights', return_value=[input_data]
+            ), mock.patch.object(ChunkDumpStore, 'store') as store:
 
                 gg = collect_insights.Insights.iter_collect_insights(job_scope, None)
                 cnt = 0
@@ -498,11 +501,11 @@ class VendorDataInjectionTests(TestCase):
                 {
                     entity_id_attr_name_map[entity_type]: 'SomeID',
                     '__oprm': {
-                        'id':
-                        f'oprm|m|fb|{self.ad_account_id}|{entity_type}|SomeID|dayagegender||2018-06-02||18-24|female',
+                        'id': f'oprm|m|fb|{self.ad_account_id}|{entity_type}|SomeID|'
+                        + 'dayagegender||2018-06-02||18-24|female',
                         'range_start': '2018-06-02',  # note it's In AA time zone
                         'entity_id': 'SomeID',
-                        'entity_type': entity_type
+                        'entity_type': entity_type,
                     },
                     "date_start": "2018-06-02",
                     "date_stop": "2018-06-02",
@@ -538,7 +541,7 @@ class VendorDataInjectionTests(TestCase):
                 "dma": "Some Long-running Value (spaces+parens)",  # <-------
                 "impressions": "2",
                 "reach": "2",
-                "spend": "0.01"
+                "spend": "0.01",
             }
 
             job_scope = JobScope(
@@ -551,11 +554,12 @@ class VendorDataInjectionTests(TestCase):
                 range_start="2018-06-02",
                 report_type=ReportType.day_dma,
                 report_variant=entity_type,
-                tokens=['blah']
+                tokens=['blah'],
             )
 
-            with mock.patch.object(collect_insights.Insights, 'iter_insights', return_value=[input_data]), \
-                    mock.patch.object(ChunkDumpStore, 'store') as store:
+            with mock.patch.object(
+                collect_insights.Insights, 'iter_insights', return_value=[input_data]
+            ), mock.patch.object(ChunkDumpStore, 'store') as store:
 
                 gg = collect_insights.Insights.iter_collect_insights(job_scope, None)
                 cnt = 0
@@ -570,11 +574,11 @@ class VendorDataInjectionTests(TestCase):
                 {
                     entity_id_attr_name_map[entity_type]: 'SomeID',
                     '__oprm': {
-                        'id': f'oprm|m|fb|{self.ad_account_id}|{entity_type}|SomeID|daydma||2018-06-02|' +
-                        '|Some+Long-running+Value+%28spaces%2Bparens%29',
+                        'id': f'oprm|m|fb|{self.ad_account_id}|{entity_type}|SomeID|daydma||2018-06-02|'
+                        + '|Some+Long-running+Value+%28spaces%2Bparens%29',
                         'range_start': '2018-06-02',  # note it's In AA time zone
                         'entity_id': 'SomeID',
-                        'entity_type': entity_type
+                        'entity_type': entity_type,
                     },
                     "clicks": "0",
                     "cpc": "0",
@@ -585,7 +589,7 @@ class VendorDataInjectionTests(TestCase):
                     "dma": "Some Long-running Value (spaces+parens)",  # <-------
                     "impressions": "2",
                     "reach": "2",
-                    "spend": "0.01"
+                    "spend": "0.01",
                 },
             )
 
@@ -621,11 +625,12 @@ class VendorDataInjectionTests(TestCase):
                 range_start="2018-06-02",
                 report_type=ReportType.day_platform,
                 report_variant=entity_type,
-                tokens=['blah']
+                tokens=['blah'],
             )
 
-            with mock.patch.object(collect_insights.Insights, 'iter_insights', return_value=[input_data]), \
-                    mock.patch.object(ChunkDumpStore, 'store') as store:
+            with mock.patch.object(
+                collect_insights.Insights, 'iter_insights', return_value=[input_data]
+            ), mock.patch.object(ChunkDumpStore, 'store') as store:
 
                 gg = collect_insights.Insights.iter_collect_insights(job_scope, None)
                 cnt = 0
@@ -640,11 +645,11 @@ class VendorDataInjectionTests(TestCase):
                 {
                     entity_id_attr_name_map[entity_type]: 'SomeID',
                     '__oprm': {
-                        'id':
-                        f'oprm|m|fb|{self.ad_account_id}|{entity_type}|SomeID|dayplatform||2018-06-02||facebook|feed',
+                        'id': f'oprm|m|fb|{self.ad_account_id}|{entity_type}|SomeID'
+                        + '|dayplatform||2018-06-02||facebook|feed',
                         'range_start': '2018-06-02',  # note it's In AA time zone
                         'entity_id': 'SomeID',
-                        'entity_type': entity_type
+                        'entity_type': entity_type,
                     },
                     "date_start": "2018-06-02",
                     "date_stop": "2018-06-02",

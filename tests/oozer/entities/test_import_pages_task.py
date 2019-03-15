@@ -30,9 +30,9 @@ class TestPageImportTask(TestCase):
             # Not passing tokens here
         )
 
-        with mock.patch.object(report_job_status_task, 'delay') as status_task, \
-            mock.patch.object(PlatformTokenManager, 'get_best_token', return_value=None) as get_best_token, \
-                self.assertRaises(ValueError) as ex_trap:
+        with mock.patch.object(report_job_status_task, 'delay') as status_task, mock.patch.object(
+            PlatformTokenManager, 'get_best_token', return_value=None
+        ) as get_best_token, self.assertRaises(ValueError) as ex_trap:
 
             # and code that falls back on PlatformTokenManager.get_best_token() gets nothing.
 
@@ -61,12 +61,12 @@ class TestPageImportTask(TestCase):
             entity_id=self.scope_id,
             report_type=ReportType.import_accounts,
             report_variant=Entity.Page,
-            tokens=['token']
+            tokens=['token'],
         )
 
-        with mock.patch.object(ConsoleApi, 'get_pages', return_value=pages) as gp, \
-            mock.patch.object(PageEntity, 'upsert') as page_upsert, \
-                mock.patch.object(report_job_status_task, 'delay') as status_task:
+        with mock.patch.object(ConsoleApi, 'get_pages', return_value=pages) as gp, mock.patch.object(
+            PageEntity, 'upsert'
+        ) as page_upsert, mock.patch.object(report_job_status_task, 'delay') as status_task:
 
             import_pages_task(job_scope, None)
 

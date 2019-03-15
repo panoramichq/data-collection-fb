@@ -11,6 +11,7 @@ class BaseMeta:
     Base Meta class used for configuring PynamoDB models
     Used to centralize setting of defaults
     """
+
     host: str = dynamodb_config.HOST
 
     table_name: str = None
@@ -134,8 +135,7 @@ class BaseModel(Model):
         (but in human-readable attribute names, not the native / short DB-side names)
         """
         if not fields:
-            fields = self._fields or \
-                set(self._attributes.keys()) | (self._additional_fields or set())
+            fields = self._fields or set(self._attributes.keys()) | (self._additional_fields or set())
 
         # TODO: this is inefficient (getattr twice) when skip_null=True. Rethink
         return {field: getattr(self, field) for field in fields if not skip_null or getattr(self, field) is not None}

@@ -19,8 +19,9 @@ def _to_date_string_if_set(v):
 
 
 def sync_expectations(job_scope: JobScope):
-    assert job_scope.report_type == ReportType.sync_expectations, \
-        'Only sync_expectations report type is processed by this task'
+    assert (
+        job_scope.report_type == ReportType.sync_expectations
+    ), 'Only sync_expectations report type is processed by this task'
 
     if job_scope.ad_account_id:
         # this is per AA task. No need to iterate over all

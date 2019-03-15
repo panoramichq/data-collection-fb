@@ -62,7 +62,7 @@ class _JobsWriter:
             # since we do a batch, there is no particular reason to
             # provide a value for deterministic key shart. Random it is.
             self.sorted_jobs_queue_interface.get_queue_key(),
-            *args
+            *args,
         )
         self.cnt += len(self.batch)
         self.batch.clear()
@@ -78,8 +78,7 @@ class _JobsWriter:
         if job_id_parts.ad_account_id not in self.processed_job_scope_data_ad_account_ids:
             self.processed_job_scope_data_ad_account_ids.add(job_id_parts.ad_account_id)
             self.redis_client.set(
-                self.sorted_jobs_queue_interface.get_payload_key(job_id_parts.ad_account_id),
-                json.dumps(job_scope_data)
+                self.sorted_jobs_queue_interface.get_payload_key(job_id_parts.ad_account_id), json.dumps(job_scope_data)
             )
 
     def add_to_queue(self, job_id, score, **job_scope_data):
@@ -228,8 +227,8 @@ class _JobsReader:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         logger.info(
-            f"#{self.sorted_jobs_queue_interface.sweep_id}: " +
-            f"Redis SortedSet Task Reader read a total of {self.cnt} tasks"
+            f"#{self.sorted_jobs_queue_interface.sweep_id}: "
+            + f"Redis SortedSet Task Reader read a total of {self.cnt} tasks"
         )
 
 
@@ -286,9 +285,7 @@ class SortedJobsQueue:
 
     def get_queue_keys_range(self) -> List[str]:
         # still same 10 shards
-        return [
-            self.get_queue_key(shard_id=i) for i in range(0, 10)  # last arg is exclusive not inclusive
-        ]
+        return [self.get_queue_key(shard_id=i) for i in range(0, 10)]  # last arg is exclusive not inclusive
 
     def get_queue_length(self) -> int:
         cnt = 0

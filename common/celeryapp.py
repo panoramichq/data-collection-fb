@@ -5,13 +5,7 @@ from config import celery as celery_config
 from config.build import BUILD_ID
 from common.bugsnag import configure_bugsnag
 
-MODULES_WITH_TASKS = [
-    'oozer',
-    'oozer.common',
-    'oozer.entities',
-    'oozer.metrics',
-    'sweep_builder',
-]
+MODULES_WITH_TASKS = ['oozer', 'oozer.common', 'oozer.entities', 'oozer.metrics', 'sweep_builder']
 
 
 class RoutingKey:
@@ -108,7 +102,7 @@ def get_celery_app(celery_config=celery_config):
 
         _celery_app.conf.task_default_queue = pad_with_build_id(RoutingKey.default)
         _celery_app.conf.task_default_routing_key = RoutingKey.default
-        _celery_app.conf.task_routes = (route_task, )
+        _celery_app.conf.task_routes = (route_task,)
 
         # Enable Bugsnag exception tracking
         configure_bugsnag()

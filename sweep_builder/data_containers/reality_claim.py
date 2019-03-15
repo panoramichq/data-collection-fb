@@ -14,6 +14,7 @@ class RealityClaim:
     (Used to avoid the need to change all functions in the stack if you need
     to add more data to context from the very bottom of the stack. Just extend this object.)
     """
+
     # entity_id may be same value as ad_account_id for AdAccount types (for consistency of interface)
     # entity_id value may actually be scope ID for claims of Scope's existence
 

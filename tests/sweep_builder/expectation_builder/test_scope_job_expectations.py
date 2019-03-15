@@ -43,5 +43,5 @@ class ScopeJobsExpectationsTests(TestCase):
             entity_type=Entity.Scope,
             entity_id=entity_id,
             report_type=ReportType.import_accounts,
-            report_variant=Entity.AdAccount
+            report_variant=Entity.AdAccount,
         )

@@ -36,7 +36,7 @@ def configure_bugsnag():
         api_key=API_KEY,
         project_root=os.path.abspath(os.path.join(os.path.dirname(__file__), '..')),
         app_version=BUILD_ID,
-        release_stage=ENVIRONMENT
+        release_stage=ENVIRONMENT,
     )
 
     # register a handler to capture celery errors
@@ -49,8 +49,9 @@ class _JSONEncoder(json.JSONEncoder):
             return super().default(o)
         except:
             try:
-                pickle_repr = 'data:application/python-pickle;base64,' + base64.b64encode(pickle.dumps(o)
-                                                                                          ).decode('ascii')
+                pickle_repr = 'data:application/python-pickle;base64,' + base64.b64encode(pickle.dumps(o)).decode(
+                    'ascii'
+                )
                 if isinstance(o, BaseModel):
                     return pickle_repr
                 return repr(o) + ';' + pickle_repr

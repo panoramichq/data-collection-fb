@@ -47,9 +47,9 @@ def run_sweep_and_sleep(sweep_id: str = None):
     delay_next_sweep_start_by = run_sweep(sweep_id=sweep_id)
     _measurement_name_base = __name__ + '.run_sweep_and_sleep.'  # <- function name. adjust if changed
     _measurement_tags = dict(sweep_id=sweep_id)
-    Measure.gauge(
-        _measurement_name_base + 'delay_next_sweep_start_by', tags=_measurement_tags
-    )(int(delay_next_sweep_start_by))
+    Measure.gauge(_measurement_name_base + 'delay_next_sweep_start_by', tags=_measurement_tags)(
+        int(delay_next_sweep_start_by)
+    )
     logger.info(f"Done with main sweep run. Waiting for {delay_next_sweep_start_by} seconds before quitting")
     time.sleep(delay_next_sweep_start_by)
 

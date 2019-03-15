@@ -173,19 +173,19 @@ flake8:
 .PHONY: flake8
 
 
-yapf:
+black:
 	docker run \
 		-v $(PWD):$(WORKDIR) \
 		--rm $(IMAGE_NAME_FULL):latest \
-	    /bin/bash -c "yapf . --recursive -i"
+	    /bin/bash -c "black --skip-string-normalization --line-length 120 --target-version py36 ."
 
-.PHONY: yapf
+.PHONY: black
 
 
-yapf-check:
+black-check:
 	docker run \
 		-v $(PWD):$(WORKDIR) \
 		--rm $(IMAGE_NAME_FULL):latest \
-	    /bin/bash -c "yapf . --recursive --diff"
+	    /bin/bash -c "black --skip-string-normalization --diff --line-length 120 --target-version py36 ."
 
-.PHONY: yapf-check
+.PHONY: black-check

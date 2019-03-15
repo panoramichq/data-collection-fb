@@ -13,10 +13,7 @@ class BaseMeasureTestCase(TestCase):
             host='localhost',
             port=measurement.STATSD_PORT,
             # prefix=application.NAME,
-            default_tags={
-                'build_id': build.BUILD_ID,
-                'commit_id': build.COMMIT_ID,
-            }
+            default_tags={'build_id': build.BUILD_ID, 'commit_id': build.COMMIT_ID},
         )
 
     def _construct_measure(self, mtype, subtype, *args, **kwargs):
@@ -157,7 +154,7 @@ class TestAutotimingMeasurements(BaseMeasureTestCase):
         now_values = [
             entropy + 0,  # start time
             entropy + 1.5,  # first .elapsed call time
-            entropy + 2.75  # exit - end time
+            entropy + 2.75,  # exit - end time
         ]
         with mock.patch.object(TimerMeasuringPrimitive, '_get_now_in_seconds', side_effect=now_values):
 
@@ -183,7 +180,7 @@ class TestAutotimingMeasurements(BaseMeasureTestCase):
         now_values = [
             entropy + 0,  # start time
             entropy + 1.5,  # first .elapsed call time
-            entropy + 2.75  # exit - end time
+            entropy + 2.75,  # exit - end time
         ]
         with mock.patch.object(TimerMeasuringPrimitive, '_get_now_in_seconds', side_effect=now_values):
 

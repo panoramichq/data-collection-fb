@@ -83,10 +83,7 @@ class TestUploadToS3(TestCase):
         Check we have stored the expected metadata
         """
         test_data = self._fake_data_factory()
-        ctx = JobScope(
-            ad_account_id=test_data[Campaign.Field.account_id],
-            report_type=ReportType.entity,
-        )
+        ctx = JobScope(ad_account_id=test_data[Campaign.Field.account_id], report_type=ReportType.entity)
 
         run_start = datetime.utcnow()
 
@@ -104,7 +101,7 @@ class TestUploadToS3(TestCase):
         dt = datetime.strptime(
             extracted_at,
             # '2018-03-10T02:31:44.874854+00:00'
-            '%Y-%m-%dT%H:%M:%S.%f+00:00'
+            '%Y-%m-%dT%H:%M:%S.%f+00:00',
         )
         # some number of microseconds must have passed,
         # so testing in the range.
@@ -117,7 +114,7 @@ class TestUploadToS3(TestCase):
             'platform': 'fb',
             'ad_account_id': ctx.ad_account_id,
             'report_type': ReportType.entity,
-            'platform_api_version': 'v3.1'
+            'platform_api_version': 'v3.1',
         }
 
 
@@ -133,8 +130,9 @@ class TestingS3KeyGeneration(TestCase):
         )
 
         now_dt = datetime(2000, 1, 2, 3, 4, 5)
-        with mock.patch.object(common.tztools, 'now', return_value=now_dt) as now_mocked, \
-                mock.patch.object(uuid, 'uuid4', return_value='UUID-HERE'):
+        with mock.patch.object(common.tztools, 'now', return_value=now_dt) as now_mocked, mock.patch.object(
+            uuid, 'uuid4', return_value='UUID-HERE'
+        ):
 
             storage_key = cold_storage.store({'data': 'yeah!'}, job_scope)
 
@@ -143,9 +141,16 @@ class TestingS3KeyGeneration(TestCase):
         prefix = xxhash.xxh64(job_scope.ad_account_id).hexdigest()[:6]
 
         expected_key = (
-            f'fb/' + f'{prefix}-{job_scope.ad_account_id}/' + f'{job_scope.report_type}/' + f'{now_dt.strftime("%Y")}/'
-            + f'{now_dt.strftime("%m")}/' + f'{now_dt.strftime("%d")}/' + f'{now_dt.strftime("%Y-%m-%dT%H:%M:%SZ")}-' +
-            f'{job_scope.job_id}-' + f'UUID-HERE' + f'.json'
+            f'fb/'
+            + f'{prefix}-{job_scope.ad_account_id}/'
+            + f'{job_scope.report_type}/'
+            + f'{now_dt.strftime("%Y")}/'
+            + f'{now_dt.strftime("%m")}/'
+            + f'{now_dt.strftime("%d")}/'
+            + f'{now_dt.strftime("%Y-%m-%dT%H:%M:%SZ")}-'
+            + f'{job_scope.job_id}-'
+            + f'UUID-HERE'
+            + f'.json'
         )
 
         assert storage_key == expected_key
@@ -160,14 +165,15 @@ class TestingS3KeyGeneration(TestCase):
             ad_account_id=gen_string_id(),
             report_type=ReportType.day_platform,
             report_variant=Entity.Campaign,
-            range_start='blah-blah'
+            range_start='blah-blah',
         )
 
         # even though range_start is provided ^ above, it's not date-like and we
         # should be ok with that and just fall back to datetime.utcnow()
         now_dt = datetime(2000, 1, 2, 3, 4, 5)
-        with mock.patch.object(common.tztools, 'now', return_value=now_dt) as now_mocked, \
-                mock.patch.object(uuid, 'uuid4', return_value='UUID-HERE'):
+        with mock.patch.object(common.tztools, 'now', return_value=now_dt) as now_mocked, mock.patch.object(
+            uuid, 'uuid4', return_value='UUID-HERE'
+        ):
 
             storage_key = cold_storage.store({'data': 'yeah!'}, job_scope)
 
@@ -176,9 +182,16 @@ class TestingS3KeyGeneration(TestCase):
         prefix = xxhash.xxh64(job_scope.ad_account_id).hexdigest()[:6]
 
         expected_key = (
-            f'fb/' + f'{prefix}-{job_scope.ad_account_id}/' + f'{job_scope.report_type}/' + f'{now_dt.strftime("%Y")}/'
-            + f'{now_dt.strftime("%m")}/' + f'{now_dt.strftime("%d")}/' + f'{now_dt.strftime("%Y-%m-%dT%H:%M:%SZ")}-' +
-            f'{job_scope.job_id}-' + f'UUID-HERE' + f'.json'
+            f'fb/'
+            + f'{prefix}-{job_scope.ad_account_id}/'
+            + f'{job_scope.report_type}/'
+            + f'{now_dt.strftime("%Y")}/'
+            + f'{now_dt.strftime("%m")}/'
+            + f'{now_dt.strftime("%d")}/'
+            + f'{now_dt.strftime("%Y-%m-%dT%H:%M:%SZ")}-'
+            + f'{job_scope.job_id}-'
+            + f'UUID-HERE'
+            + f'.json'
         )
 
         assert storage_key == expected_key
@@ -192,7 +205,7 @@ class TestingS3KeyGeneration(TestCase):
             ad_account_id=gen_string_id(),
             report_type=ReportType.day_platform,
             report_variant=Entity.Ad,
-            range_start=date(2000, 1, 2)
+            range_start=date(2000, 1, 2),
         )
 
         dt_should_be = datetime(2000, 1, 2, 0, 0, 0)
@@ -201,9 +214,16 @@ class TestingS3KeyGeneration(TestCase):
 
         prefix = xxhash.xxh64(job_scope.ad_account_id).hexdigest()[:6]
         expected_key = (
-            f'fb/' + f'{prefix}-{job_scope.ad_account_id}/' + f'{job_scope.report_type}/' +
-            f'{dt_should_be.strftime("%Y")}/' + f'{dt_should_be.strftime("%m")}/' + f'{dt_should_be.strftime("%d")}/' +
-            f'{dt_should_be.strftime("%Y-%m-%dT%H:%M:%SZ")}-' + f'{job_scope.job_id}-' + f'UUID-HERE' + f'.json'
+            f'fb/'
+            + f'{prefix}-{job_scope.ad_account_id}/'
+            + f'{job_scope.report_type}/'
+            + f'{dt_should_be.strftime("%Y")}/'
+            + f'{dt_should_be.strftime("%m")}/'
+            + f'{dt_should_be.strftime("%d")}/'
+            + f'{dt_should_be.strftime("%Y-%m-%dT%H:%M:%SZ")}-'
+            + f'{job_scope.job_id}-'
+            + f'UUID-HERE'
+            + f'.json'
         )
 
         assert storage_key == expected_key
@@ -217,7 +237,7 @@ class TestingS3KeyGeneration(TestCase):
             ad_account_id=gen_string_id(),
             report_type=ReportType.day_platform,
             report_variant=Entity.Ad,
-            range_start=date(2000, 1, 2)
+            range_start=date(2000, 1, 2),
         )
 
         chunk_marker = 7
@@ -228,10 +248,17 @@ class TestingS3KeyGeneration(TestCase):
 
         prefix = xxhash.xxh64(job_scope.ad_account_id).hexdigest()[:6]
         expected_key = (
-            f'fb/' + f'{prefix}-{job_scope.ad_account_id}/' + f'{job_scope.report_type}/' +
-            f'{dt_should_be.strftime("%Y")}/' + f'{dt_should_be.strftime("%m")}/' + f'{dt_should_be.strftime("%d")}/' +
-            f'{dt_should_be.strftime("%Y-%m-%dT%H:%M:%SZ")}-' + f'{job_scope.job_id}-' + f'{chunk_marker}-' +
-            f'UUID-HERE' + f'.json'
+            f'fb/'
+            + f'{prefix}-{job_scope.ad_account_id}/'
+            + f'{job_scope.report_type}/'
+            + f'{dt_should_be.strftime("%Y")}/'
+            + f'{dt_should_be.strftime("%m")}/'
+            + f'{dt_should_be.strftime("%d")}/'
+            + f'{dt_should_be.strftime("%Y-%m-%dT%H:%M:%SZ")}-'
+            + f'{job_scope.job_id}-'
+            + f'{chunk_marker}-'
+            + f'UUID-HERE'
+            + f'.json'
         )
 
         assert storage_key == expected_key

@@ -138,10 +138,7 @@ class MeasuringPrimitive(ContextDecorator):
         value = value or self._default_value
 
         logger.debug(f"Submitting metric: {self._metric}")
-        final_tags = {
-            **self._extracted_tags,
-            **self._tags,
-        }
+        final_tags = {**self._extracted_tags, **self._tags}
         self._statsd_func(self._metric, value, _dict_as_statsd_tags(final_tags), self._sample_rate)
 
     def __call__(self, argument):
@@ -221,8 +218,7 @@ class TimerMeasuringPrimitive(MeasuringPrimitive):
         """
 
         if not callable(argument):
-            msg = "You cannot use timer measurement directly, use either" \
-                  " with a context manager or a decorator"
+            msg = "You cannot use timer measurement directly, use either" " with a context manager or a decorator"
             raise RuntimeError(msg)
 
         return super().__call__(self._wrap_callable(argument))
@@ -323,8 +319,7 @@ class CounterMeasuringPrimitive(MeasuringPrimitive):
         """
 
         if not callable(argument):
-            msg = "You cannot use counter measurement directly, use either" \
-                  " with a context manager or a decorator"
+            msg = "You cannot use counter measurement directly, use either" " with a context manager or a decorator"
             raise RuntimeError(msg)
 
         return super().__call__(self._wrap_callable(argument, self._wrapper_hook))
@@ -390,6 +385,7 @@ class MeasureWrapper:
     def my_method(blah, measuring_context):
         measuring_context(value)
     """
+
     _statsd = None
 
     # Statsd primitives
@@ -408,11 +404,7 @@ class MeasureWrapper:
     timer = None  # type: TimerMeasuringPrimitive
 
     def __init__(
-        self,
-        host: str = 'localhost',
-        port: int = 8125,
-        prefix: str = None,
-        default_tags: Dict[str, Any] = None,
+        self, host: str = 'localhost', port: int = 8125, prefix: str = None, default_tags: Dict[str, Any] = None
     ):
         """
         This is a wrapper that does primarily this:
@@ -435,12 +427,12 @@ class MeasureWrapper:
         self.increment = self._wrap_measurement_method(
             self._statsd.increment,
             default_value=1,
-            prefix=self._join_with_prefix(config.measurement.PREFIX_COUNTER, prefix)
+            prefix=self._join_with_prefix(config.measurement.PREFIX_COUNTER, prefix),
         )
         self.decrement = self._wrap_measurement_method(
             self._statsd.decrement,
             default_value=1,
-            prefix=self._join_with_prefix(config.measurement.PREFIX_COUNTER, prefix)
+            prefix=self._join_with_prefix(config.measurement.PREFIX_COUNTER, prefix),
         )
         self.gauge = self._wrap_measurement_method(
             self._statsd.gauge, prefix=self._join_with_prefix(config.measurement.PREFIX_GAUGE, prefix)
@@ -461,13 +453,13 @@ class MeasureWrapper:
         self.timer = self._wrap_measurement_method(
             self._statsd.timing,
             prefix=self._join_with_prefix(config.measurement.PREFIX_TIMING, prefix),
-            wrapper=TimerMeasuringPrimitive
+            wrapper=TimerMeasuringPrimitive,
         )
 
         self.counter = self._wrap_measurement_method(
             self._statsd.increment,
             prefix=self._join_with_prefix(config.measurement.PREFIX_COUNTER, prefix),
-            wrapper=CounterMeasuringPrimitive
+            wrapper=CounterMeasuringPrimitive,
         )
 
     def _wrap_measurement_method(self, func, prefix, default_value=None, wrapper=None):
@@ -507,5 +499,5 @@ Measure = MeasureWrapper(
         'build_id': config.build.BUILD_ID,
         'commit_id': config.build.COMMIT_ID,
         'environment': config.application.ENVIRONMENT,
-    }
+    },
 )

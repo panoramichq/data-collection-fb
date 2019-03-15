@@ -27,7 +27,7 @@ def _from_non_segmented_entity(data: Dict[str, Any], entity_type: str = None, **
     return {
         'id': generate_universal_id(entity_id=entity_id, entity_type=entity_type, **kwargs),
         'entity_id': entity_id,
-        'entity_type': entity_type
+        'entity_type': entity_type,
     }
 
 
@@ -66,28 +66,21 @@ def _from_day_segmented_entity(data: Dict[str, Any], entity_type: str = None, **
 
     # The rest of data is in kwargs
     return {
-        'id':
-        generate_universal_id(
+        'id': generate_universal_id(
             fields=universal_id_fields,
             entity_id=entity_id,
             entity_type=entity_type,
             range_start=data[_date_start],
-            **kwargs
+            **kwargs,
         ),
-        'range_start':
-        data[_date_start],
-        'entity_id':
-        entity_id,
-        'entity_type':
-        entity_type
+        'range_start': data[_date_start],
+        'entity_id': entity_id,
+        'entity_type': entity_type,
     }
 
 
 def _from_hour_segmented_entity(
-    timezone_name: str,
-    data: Dict[str, Any],
-    entity_type: str = None,
-    **kwargs,
+    timezone_name: str, data: Dict[str, Any], entity_type: str = None, **kwargs
 ) -> Dict[str, str]:
     """
     Generates Universal record ID from data that is
@@ -124,7 +117,7 @@ def _from_hour_segmented_entity(
         # in Facebook's original data.
         'range_start': dt_as_utc.strftime('%Y-%m-%dT%H:%M:%S'),
         'entity_id': entity_id,
-        'entity_type': entity_type
+        'entity_type': entity_type,
     }
 
 
@@ -155,22 +148,18 @@ def _from_age_gender_segmented_entity(data: Dict[str, Any], entity_type: str = N
 
     # The rest of data is in kwargs
     return {
-        'id':
-        generate_universal_id(
+        'id': generate_universal_id(
             fields=universal_id_fields + ['age', 'gender'],
             entity_id=entity_id,
             entity_type=entity_type,
             range_start=data[_date_start],
             age=data['age'],
             gender=data['gender'],
-            **kwargs
+            **kwargs,
         ),
-        'range_start':
-        data[_date_start],
-        'entity_id':
-        entity_id,
-        'entity_type':
-        entity_type
+        'range_start': data[_date_start],
+        'entity_id': entity_id,
+        'entity_type': entity_type,
     }
 
 
@@ -199,22 +188,18 @@ def _from_platform_segmented_entity(data: Dict[str, Any], entity_type: str = Non
 
     # The rest of data is in kwargs
     return {
-        'id':
-        generate_universal_id(
+        'id': generate_universal_id(
             fields=universal_id_fields + ['publisher_platform', 'platform_position'],
             entity_id=entity_id,
             entity_type=entity_type,
             range_start=data[_date_start],
             publisher_platform=data['publisher_platform'],
             platform_position=data['platform_position'],
-            **kwargs
+            **kwargs,
         ),
-        'range_start':
-        data[_date_start],
-        'entity_id':
-        entity_id,
-        'entity_type':
-        entity_type
+        'range_start': data[_date_start],
+        'entity_id': entity_id,
+        'entity_type': entity_type,
     }
 
 
@@ -249,38 +234,28 @@ def _from_dma_segmented_entity(data: Dict[str, Any], entity_type: str = None, **
 
     # The rest of data is in kwargs
     return {
-        'id':
-        generate_universal_id(
+        'id': generate_universal_id(
             fields=universal_id_fields + ['dma'],
             entity_id=entity_id,
             entity_type=entity_type,
             range_start=data[_date_start],
             dma=data['dma'],  # generate_universal_id URL-encodes values. Sleep well.
-            **kwargs
+            **kwargs,
         ),
-        'range_start':
-        data[_date_start],
-        'entity_id':
-        entity_id,
-        'entity_type':
-        entity_type
+        'range_start': data[_date_start],
+        'entity_id': entity_id,
+        'entity_type': entity_type,
     }
 
 
 report_type_vendor_data_extractor_map = {
-    ReportType.day:
-    _from_day_segmented_entity,
-    ReportType.day_age_gender:
-    _from_age_gender_segmented_entity,
-    ReportType.day_dma:
-    _from_dma_segmented_entity,
+    ReportType.day: _from_day_segmented_entity,
+    ReportType.day_age_gender: _from_age_gender_segmented_entity,
+    ReportType.day_dma: _from_dma_segmented_entity,
     # Hour handler is special. Needs Timezone name as first arg
     # It will be handled specially by code that matches report types
     # to vendor ID handlers
-    ReportType.day_hour:
-    _from_hour_segmented_entity,
-    ReportType.day_platform:
-    _from_platform_segmented_entity,
-    ReportType.lifetime:
-    _from_non_segmented_entity,
+    ReportType.day_hour: _from_hour_segmented_entity,
+    ReportType.day_platform: _from_platform_segmented_entity,
+    ReportType.lifetime: _from_non_segmented_entity,
 }

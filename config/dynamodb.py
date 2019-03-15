@@ -20,4 +20,5 @@ TOKEN_TABLE = 'PlatformToken'
 JOB_REPORT_TABLE = 'JobReport'
 
 from common.updatefromenv import update_from_env
+
 update_from_env(__name__)

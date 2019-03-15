@@ -16,15 +16,9 @@ logger = logging.getLogger(__name__)
 
 
 def extract_tags_for_build_sweep_slice(
-    sweep_id: str,
-    ad_account_reality_claim: RealityClaim,
-    *args,
-    **kwargs,
+    sweep_id: str, ad_account_reality_claim: RealityClaim, *args, **kwargs
 ) -> Dict[str, str]:
-    return {
-        'sweep_id': sweep_id,
-        'ad_account_id': ad_account_reality_claim.ad_account_id,
-    }
+    return {'sweep_id': sweep_id, 'ad_account_id': ad_account_reality_claim.ad_account_id}
 
 
 @app.task(routing_key=RoutingKey.longrunning)
@@ -40,7 +34,7 @@ def echo(message: str = 'This is Long-Running queue'):
     __name__,
     function_name_as_metric=True,
     count_once=True,
-    extract_tags_from_arguments=extract_tags_for_build_sweep_slice
+    extract_tags_from_arguments=extract_tags_for_build_sweep_slice,
 )
 def build_sweep_slice_per_ad_account_task(sweep_id: str, ad_account_reality_claim: RealityClaim, task_id: str = None):
     from sweep_builder.pipeline import iter_pipeline
@@ -49,17 +43,13 @@ def build_sweep_slice_per_ad_account_task(sweep_id: str, ad_account_reality_clai
     with TaskGroup.task_context(task_id):
 
         _measurement_name_base = __name__ + '.' + build_sweep_slice_per_ad_account_task.__name__ + '.'
-        _measurement_tags = {
-            'sweep_id': sweep_id,
-            'ad_account_id': ad_account_reality_claim.ad_account_id,
-        }
+        _measurement_tags = {'sweep_id': sweep_id, 'ad_account_id': ad_account_reality_claim.ad_account_id}
 
         reality_claims_iter = itertools.chain(
             [ad_account_reality_claim],
             iter_reality_per_ad_account_claim(
-                ad_account_reality_claim,
-                entity_types=[Entity.Campaign, Entity.AdSet, Entity.Ad],
-            )
+                ad_account_reality_claim, entity_types=[Entity.Campaign, Entity.AdSet, Entity.Ad]
+            ),
         )
         cnt = 0
 
@@ -69,7 +59,7 @@ def build_sweep_slice_per_ad_account_task(sweep_id: str, ad_account_reality_clai
             Measure.timing(
                 _measurement_name_base + 'next_persisted',
                 tags=dict(entity_type=claim.entity_type, **_measurement_tags),
-                sample_rate=0.01
+                sample_rate=0.01,
             )((time.time() - _before_fetch) * 1000)
             cnt += 1
 
@@ -93,10 +83,7 @@ def build_sweep_slice_per_page(sweep_id: str, page_reality_claim: RealityClaim, 
     with TaskGroup.task_context(task_id):
 
         _measurement_name_base = __name__ + '.' + build_sweep_slice_per_page.__name__ + '.'
-        _measurement_tags = {
-            'sweep_id': sweep_id,
-            'page_id': page_reality_claim.entity_id,
-        }
+        _measurement_tags = {'sweep_id': sweep_id, 'page_id': page_reality_claim.entity_id}
 
         reality_claims_iter = itertools.chain([page_reality_claim], iter_reality_per_page_claim(page_reality_claim))
         cnt = 0
@@ -107,7 +94,7 @@ def build_sweep_slice_per_page(sweep_id: str, page_reality_claim: RealityClaim, 
             Measure.timing(
                 _measurement_name_base + 'next_persisted',
                 tags=dict(entity_type=claim.entity_type, **_measurement_tags),
-                sample_rate=0.01
+                sample_rate=0.01,
             )((time.time() - _before_fetch) * 1000)
             cnt += 1
 
@@ -129,9 +116,7 @@ def build_sweep(sweep_id: str):
     from sweep_builder.reality_inferrer.reality import iter_reality_base
 
     _measurement_name_base = __name__ + '.' + build_sweep.__name__ + '.'
-    _measurement_tags = {
-        'sweep_id': sweep_id,
-    }
+    _measurement_tags = {'sweep_id': sweep_id}
 
     # In the jobs persister we purposefully avoid persisting
     # anything besides the Job ID. This means that things like tokens
@@ -176,10 +161,7 @@ def build_sweep(sweep_id: str):
                     )
                 )
             elif reality_claim.entity_type == Entity.Page:
-                delayed_tasks.append(build_sweep_slice_per_page.si(
-                    sweep_id,
-                    reality_claim,
-                ))
+                delayed_tasks.append(build_sweep_slice_per_page.si(sweep_id, reality_claim))
             else:
                 cnt = 1
                 _step = 1000

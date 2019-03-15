@@ -10,10 +10,7 @@ class ConsoleApi:
         response = requests.get(
             f'{URL}/api/projects/platform-accounts',
             headers={'x-auth-token': token},
-            params={
-                'platform': platform_type,
-                **params
-            }
+            params={'platform': platform_type, **params},
         )
 
         # Raise for 4xx and 5xx codes for now

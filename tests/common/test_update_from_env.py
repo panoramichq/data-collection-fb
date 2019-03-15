@@ -23,8 +23,7 @@ class TestingUpdateFromEnv(TestCase):
         """
         )
 
-        with patch.object(os, 'environ', fake_environ), \
-                FakeModule('config.a.b', module_code) as module:
+        with patch.object(os, 'environ', fake_environ), FakeModule('config.a.b', module_code) as module:
 
             assert module.VAR_A == 'OVERRIDDEN'
             assert module.VAR_B == 2

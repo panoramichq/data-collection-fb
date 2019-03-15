@@ -21,7 +21,7 @@ class TestEntityHasher(TestCase):
             report_id="some_id",
             sweep_id='12',
             report_variant=Entity.Campaign,
-            tokens=[TOKEN]
+            tokens=[TOKEN],
         )
 
     def _manufacture_test_entity(self):

@@ -18,6 +18,10 @@ ignore = E265,
          O102,
          # line break before binary operator
          W503,
+         # line break before binary operator
+         P103,
+         # E203 whitespace before ':'
+         E203,
 statistics = True
 exclude = .git,
           __pycache__

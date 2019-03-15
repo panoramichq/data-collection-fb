@@ -2,8 +2,10 @@
 
 # Patches must be imported and ran first
 from common.patch import patch_event_loop
+
 patch_event_loop()
 from common.facebook.patch import patch_facebook_sdk
+
 patch_facebook_sdk()
 
 import pkgutil

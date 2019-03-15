@@ -13,8 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 def iter_pipeline(
-    sweep_id: str,
-    reality_claims_iter: Union[Generator[RealityClaim, None, None], Iterable[RealityClaim]],
+    sweep_id: str, reality_claims_iter: Union[Generator[RealityClaim, None, None], Iterable[RealityClaim]]
 ) -> Generator[PrioritizationClaim, None, None]:
     """
     Convenience method. Packs together multiple layers

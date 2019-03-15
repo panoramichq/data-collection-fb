@@ -56,7 +56,7 @@ class TestingIdGenerationTools(TestCase):
                 '',  # Range end
                 'hocus',
                 '',  # None
-                'pocus'
+                'pocus',
             ]
         )
 
@@ -82,7 +82,7 @@ class TestingIdGenerationTools(TestCase):
                 '',  # Range end
                 'hocus',
                 '',  # None
-                'pocus'
+                'pocus',
             ]
         )
 
@@ -259,9 +259,10 @@ class TestingIdParsingTools(TestCase):
 
     def test_fields_default(self):
 
-        id_data_actual = id_tools.parse_id(D.join([NS, '123'])
-                                           # fields=['a', 'b', 'c']
-                                           )
+        id_data_actual = id_tools.parse_id(
+            D.join([NS, '123'])
+            # fields=['a', 'b', 'c']
+        )
 
         id_data_should_be = dict(
             namespace=NS,
@@ -271,7 +272,7 @@ class TestingIdParsingTools(TestCase):
             range_end=None,
             range_start=None,
             report_type=None,
-            report_variant=None
+            report_variant=None,
         )
 
         assert id_data_actual == id_data_should_be

@@ -10,3 +10,4 @@ pytest
 freezegun
 flake8
 yapf
+black

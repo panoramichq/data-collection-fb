@@ -40,7 +40,7 @@ def iter_reality_base() -> Generator[RealityClaim, None, None]:
             # as indicator that we don't need to sync it it (in dev, possibly in prod)
             # TODO: maybe be more explicit and register actual jobs as strings in a collection
             #       of jobs to run per scope on Scope DB record in some field.
-            tokens=set(token for token in [scope_record.scope_api_token] if token)
+            tokens=set(token for token in [scope_record.scope_api_token] if token),
         )
 
         # For all the ad accounts we already know are attached to the scope
@@ -56,7 +56,7 @@ def iter_reality_base() -> Generator[RealityClaim, None, None]:
                 entity_id=ad_account.ad_account_id,
                 entity_type=Entity.AdAccount,
                 timezone=ad_account.timezone,
-                tokens=scope_record.platform_tokens
+                tokens=scope_record.platform_tokens,
             )
 
         for page in iter_active_pages_per_scope(scope_record.scope):
@@ -64,13 +64,12 @@ def iter_reality_base() -> Generator[RealityClaim, None, None]:
                 ad_account_id=page.page_id,
                 entity_id=page.page_id,
                 entity_type=Entity.Page,
-                tokens=scope_record.platform_tokens
+                tokens=scope_record.platform_tokens,
             )
 
 
 def iter_reality_per_ad_account_claim(
-    ad_account_claim: RealityClaim,
-    entity_types: List[str] = None,
+    ad_account_claim: RealityClaim, entity_types: List[str] = None
 ) -> Generator[RealityClaim, None, None]:
     """
     A generator yielding instances of RealityClaim object, filled
@@ -92,8 +91,7 @@ def iter_reality_per_ad_account_claim(
 
 
 def iter_reality_per_page_claim(
-    page_claim: RealityClaim,
-    entity_types: List[str] = None,
+    page_claim: RealityClaim, entity_types: List[str] = None
 ) -> Generator[RealityClaim, None, None]:
     """
     A generator yielding instances of RealityClaim object, filled

@@ -18,7 +18,8 @@ def test_shall_pass_range_end_less_than_three_days_ago_returns_true():
 
 
 @pytest.mark.parametrize(
-    ['range_start_delta', 'last_success_delta', 'expected'], [
+    ['range_start_delta', 'last_success_delta', 'expected'],
+    [
         (timedelta(days=6), timedelta(hours=2), True),
         (timedelta(days=6), timedelta(hours=0.5), False),
         (timedelta(days=13), timedelta(hours=6), True),
@@ -29,7 +30,7 @@ def test_shall_pass_range_end_less_than_three_days_ago_returns_true():
         (timedelta(days=89), timedelta(hours=24 * 3 - 1), False),
         (timedelta(days=91), timedelta(hours=24 * 7 + 1), True),
         (timedelta(days=91), timedelta(hours=24 * 7 - 1), False),
-    ]
+    ],
 )
 def test_shall_pass_range_end_less_than_seven_days_true(range_start_delta, last_success_delta, expected):
     """Check range_start now - delta and last_success now - delta returns expected."""
@@ -38,12 +39,7 @@ def test_shall_pass_range_end_less_than_seven_days_true(range_start_delta, last_
     assert expected == JobGateKeeper.shall_pass(parts, now() - last_success_delta)
 
 
-@pytest.mark.parametrize(
-    ['last_success_delta', 'expected'], [
-        (timedelta(hours=7), True),
-        (timedelta(hours=5), False),
-    ]
-)
+@pytest.mark.parametrize(['last_success_delta', 'expected'], [(timedelta(hours=7), True), (timedelta(hours=5), False)])
 def test_shall_pass_lifetime_report_type(last_success_delta, expected):
     """Check behaviour for lifetime report type"""
     parts = Mock(range_start=None, range_end=None, report_type=ReportType.lifetime)
@@ -51,12 +47,7 @@ def test_shall_pass_lifetime_report_type(last_success_delta, expected):
     assert expected == JobGateKeeper.shall_pass(parts, now() - last_success_delta)
 
 
-@pytest.mark.parametrize(
-    ['last_success_delta', 'expected'], [
-        (timedelta(hours=3), True),
-        (timedelta(hours=1), False),
-    ]
-)
+@pytest.mark.parametrize(['last_success_delta', 'expected'], [(timedelta(hours=3), True), (timedelta(hours=1), False)])
 def test_shall_pass_entity_report_type(last_success_delta, expected):
     """Check behaviour for entity report type"""
     parts = Mock(range_start=None, range_end=None, report_type=ReportType.entity)

@@ -65,7 +65,7 @@ class TestEntityFeedback(TestCase):
                 entity_id=eid,
                 created_time="2000-01-2T03:04:05-0800",
                 configured_status='ARCHIVED',
-                updated_time='2001-01-2T03:04:05-0800'
+                updated_time='2001-01-2T03:04:05-0800',
             )
         )
 
@@ -80,7 +80,7 @@ class TestEntityFeedback(TestCase):
             'bol': datetime(2000, 1, 2, 11, 4, 5, tzinfo=timezone.utc),
             'eol': datetime(2001, 1, 2, 11, 4, 5, tzinfo=timezone.utc),
             'hash': 'e_hash',
-            'hash_fields': 'f_hash'
+            'hash_fields': 'f_hash',
         }
 
         # Now testing retention of the original BOL, EOL values
@@ -93,7 +93,7 @@ class TestEntityFeedback(TestCase):
                 entity_id=eid,
                 created_time="1980-01-2T03:04:05-0800",  # <- earlier date
                 configured_status='ARCHIVED',
-                updated_time=datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S%z')  # <- later date
+                updated_time=datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S%z'),  # <- later date
             )
         )
 
@@ -108,7 +108,7 @@ class TestEntityFeedback(TestCase):
             'bol': datetime(2000, 1, 2, 11, 4, 5, tzinfo=timezone.utc),  # <- original value
             'eol': datetime(2001, 1, 2, 11, 4, 5, tzinfo=timezone.utc),  # <- original value
             'hash': 'e_hash',
-            'hash_fields': 'f_hash'
+            'hash_fields': 'f_hash',
         }
 
     def test_bol_translation(self):
@@ -139,7 +139,7 @@ class TestEntityFeedback(TestCase):
             'bol': datetime(2018, 4, 6, 21, 11, 10, tzinfo=timezone.utc),
             'eol': None,
             'hash': 'e_hash',
-            'hash_fields': 'f_hash'
+            'hash_fields': 'f_hash',
         }
 
     @freeze_time()
@@ -171,7 +171,7 @@ class TestEntityFeedback(TestCase):
             'bol': datetime.now(timezone.utc),
             'eol': None,
             'hash': 'e_hash',
-            'hash_fields': 'f_hash'
+            'hash_fields': 'f_hash',
         }
 
     def test_all_upserted(self):
@@ -211,7 +211,7 @@ class TestEntityFeedback(TestCase):
                     'bol': record.bol,
                     'eol': None,
                     'hash': 'e_hash',
-                    'hash_fields': 'f_hash'
+                    'hash_fields': 'f_hash',
                 }
             else:
                 assert record.to_dict() == {
@@ -221,5 +221,5 @@ class TestEntityFeedback(TestCase):
                     'bol': None,
                     'eol': None,
                     'hash': 'e_hash',
-                    'hash_fields': 'f_hash'
+                    'hash_fields': 'f_hash',
                 }

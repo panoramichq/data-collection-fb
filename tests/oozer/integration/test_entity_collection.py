@@ -115,7 +115,7 @@ class TestingEntityCollectionPipeline(TestCase):
             report_time=datetime.utcnow(),
             report_type='entity',
             report_variant=Entity.Campaign,
-            sweep_id='1'
+            sweep_id='1',
         )
 
         data_iter = iter_collect_entities_per_adaccount(job_scope)
@@ -137,7 +137,7 @@ class TestingEntityCollectionPipeline(TestCase):
             report_time=datetime.utcnow(),
             report_type='entity',
             report_variant=Entity.AdCreative,
-            sweep_id='1'
+            sweep_id='1',
         )
 
         data_iter = iter_collect_entities_per_adaccount(job_scope)
@@ -159,7 +159,7 @@ class TestingEntityCollectionPipeline(TestCase):
             report_time=datetime.utcnow(),
             report_type='entity',
             report_variant=Entity.AdVideo,
-            sweep_id='1'
+            sweep_id='1',
         )
 
         data_iter = iter_collect_entities_per_adaccount(job_scope)
@@ -180,7 +180,7 @@ class TestingEntityCollectionPipeline(TestCase):
             report_time=datetime.utcnow(),
             report_type='entity',
             report_variant=Entity.CustomAudience,
-            sweep_id='1'
+            sweep_id='1',
         )
 
         data_iter = iter_collect_entities_per_adaccount(job_scope)
@@ -201,7 +201,7 @@ class TestingEntityCollectionPipeline(TestCase):
             report_time=datetime.utcnow(),
             report_type='entity',
             report_variant=Entity.PagePost,
-            sweep_id='1'
+            sweep_id='1',
         )
 
         data_iter = iter_collect_entities_per_page(job_scope)

@@ -52,8 +52,9 @@ def collect_adaccount(job_scope: JobScope) -> Dict[str, Any]:
     if not token:
         raise ValueError(f"Job {job_scope.job_id} cannot proceed. No platform tokens provided.")
 
-    assert job_scope.ad_account_id == job_scope.entity_id, \
-        f'This is an ad account entity job, account_id should be equal to entity_id'
+    assert (
+        job_scope.ad_account_id == job_scope.entity_id
+    ), f'This is an ad account entity job, account_id should be equal to entity_id'
 
     # Used to report token usage by this job
     token_manager = PlatformTokenManager.from_job_scope(job_scope)
@@ -70,7 +71,7 @@ def collect_adaccount(job_scope: JobScope) -> Dict[str, Any]:
 
         job_scope_base = dict(
             # Duplicate the job_scope data to avoid mutating it
-            **job_scope.to_dict(),
+            **job_scope.to_dict()
         )
         job_scope_base.update(
             # Augment the job specific job scope fields so that it represents a single ad account
@@ -82,7 +83,7 @@ def collect_adaccount(job_scope: JobScope) -> Dict[str, Any]:
         augmented_ad_account_data = add_vendor_data(
             # Augment the data returned from the remote API with our vendor data
             ad_account_data_dict,
-            id=generate_universal_id(**job_scope_base)
+            id=generate_universal_id(**job_scope_base),
         )
         feedback_entity_task.delay(ad_account_data_dict, job_scope.report_variant, [None, None])
         store = NormalStore(job_scope)

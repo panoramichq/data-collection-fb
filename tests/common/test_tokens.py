@@ -88,7 +88,7 @@ class TestingTokenManager(TestCase):
         assert token_manager.queue_key == key_gen(asset_scope=scope_id, sweep_id=sweep_id)
 
         # non-Scope-centered jobs must result in 'fb'-centered key for token storage
-        job_scope = JobScope(sweep_id=sweep_id, )
+        job_scope = JobScope(sweep_id=sweep_id)
         token_manager = PlatformTokenManager.from_job_scope(job_scope)
         assert token_manager.queue_key == key_gen(asset_scope=JobScope.namespace, sweep_id=sweep_id)
 
@@ -103,9 +103,7 @@ class TestingTokenManager(TestCase):
         scope_record = AssetScope()
         scope_record.scope = scope_id
         scope_record.scope_api_token = console_token
-        scope_record.set_cache(platform_tokens={
-            platform_token,
-        })
+        scope_record.set_cache(platform_tokens={platform_token})
 
         PlatformTokenManager.populate_from_scope_entity(scope_record, sweep_id)
 

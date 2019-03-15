@@ -67,16 +67,13 @@ class FacebookApiErrorInspector:
     List of known codes (subcodes) where FB starts throttling us
     """
 
-    TOO_MUCH_DATA_CODES = {(100, 1487534)  # Too big a report
-                           }
+    TOO_MUCH_DATA_CODES = {(100, 1487534)}  # Too big a report
     """
     List of known codes (subcodes) where FB complains about us asking for too
     much data
     """
 
-    TOO_MUCH_DATA_MESSAGES = {
-        "Please reduce the amount of data you're asking for, then retry your request",
-    }
+    TOO_MUCH_DATA_MESSAGES = {"Please reduce the amount of data you're asking for, then retry your request"}
 
     _exception = None
 
@@ -133,9 +130,9 @@ class FacebookApiErrorInspector:
 
         :return bool: If True, the exception is of type "too much data"
         """
-        return self._is_exception_code_in_set(
-            self.TOO_MUCH_DATA_CODES
-        ) or (self._is_generic_error and self._is_exception_message_in_set(self.TOO_MUCH_DATA_MESSAGES))
+        return self._is_exception_code_in_set(self.TOO_MUCH_DATA_CODES) or (
+            self._is_generic_error and self._is_exception_message_in_set(self.TOO_MUCH_DATA_MESSAGES)
+        )
 
     def get_status_and_bucket(self) -> (int, int):
         """Extract status and bucket from inspected exception."""
@@ -158,8 +155,7 @@ class FacebookApiErrorInspector:
 
 
 _default_fields_map = {
-    AdAccount:
-    collapse_fields_children(
+    AdAccount: collapse_fields_children(
         [
             'id',
             'account_id',
@@ -180,8 +176,7 @@ _default_fields_map = {
             'timezone_offset_hours_utc',
         ]
     ),
-    Campaign:
-    collapse_fields_children(
+    Campaign: collapse_fields_children(
         [
             'account_id',
             'adlabels',
@@ -208,11 +203,10 @@ _default_fields_map = {
             'start_time',
             'status',
             'stop_time',
-            'updated_time'
+            'updated_time',
         ]
     ),
-    AdSet:
-    collapse_fields_children(
+    AdSet: collapse_fields_children(
         [
             'account_id',
             # 'adlabels',
@@ -263,8 +257,7 @@ _default_fields_map = {
             # 'use_new_app_click'
         ]
     ),
-    Ad:
-    collapse_fields_children(
+    Ad: collapse_fields_children(
         [
             'account_id',
             # 'ad_review_feedback', <----- !!!!!!!!!
@@ -298,11 +291,10 @@ _default_fields_map = {
             'source_ad_id',
             'status',
             'tracking_specs',  # <----- !!!!!!!!!
-            'updated_time'
+            'updated_time',
         ]
     ),
-    AdCreative:
-    collapse_fields_children(
+    AdCreative: collapse_fields_children(
         [
             'id',
             'account_id',
@@ -340,8 +332,7 @@ _default_fields_map = {
             'video_id',
         ]
     ),
-    AdVideo:
-    collapse_fields_children(
+    AdVideo: collapse_fields_children(
         [
             'id',
             'ad_breaks',
@@ -376,8 +367,7 @@ _default_fields_map = {
             'updated_time',
         ]
     ),
-    CustomAudience:
-    collapse_fields_children(
+    CustomAudience: collapse_fields_children(
         [
             'id',
             'account_id',
@@ -401,7 +391,6 @@ _default_fields_map = {
             'time_content_updated',
             'time_created',
             'time_updated',
-
             # These are Create/Update only fields
             # 'allowed_domains',
             # 'claim_objective',
@@ -411,7 +400,6 @@ _default_fields_map = {
             # 'origin_audience_id',
             # 'prefill',
             # 'product_set_id',
-
             # These fields are not part of the official api docs
             # 'associated_audience_id',
             # 'exclusions',
@@ -420,8 +408,7 @@ _default_fields_map = {
             # 'tags',
         ]
     ),
-    Page:
-    collapse_fields_children(
+    Page: collapse_fields_children(
         [
             'about',
             'ad_campaign',
@@ -557,8 +544,7 @@ _default_fields_map = {
             'written_by',
         ]
     ),
-    PagePost:
-    collapse_fields_children(
+    PagePost: collapse_fields_children(
         [
             'id',
             'admin_creator',
@@ -621,8 +607,7 @@ _default_fields_map = {
             'width',
         ]
     ),
-    Comment:
-    collapse_fields_children(
+    Comment: collapse_fields_children(
         [
             'application',
             'attachment',
@@ -649,7 +634,7 @@ _default_fields_map = {
             # 'private_reply_conversation',
             'user_likes',
         ]
-    )
+    ),
 }
 
 
@@ -699,11 +684,7 @@ def get_default_page_size(model_klass: Type['Model']) -> int:
     return _default_page_size.get(model_klass, 100)
 
 
-_default_additional_params = {
-    Comment: {
-        'filter': 'stream',
-    }
-}
+_default_additional_params = {Comment: {'filter': 'stream'}}
 
 
 def get_additional_params(model_klass: Type['Model']) -> Dict[str, Any]:
@@ -761,7 +742,7 @@ _default_fetch_statuses = {
         'PENDING_BILLING_INFO',
         'PENDING_REVIEW',
         'PREAPPROVED',
-    ]
+    ],
 }
 
 

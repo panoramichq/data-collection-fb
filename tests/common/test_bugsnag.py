@@ -30,9 +30,9 @@ class TestingSafeEncoder(TestCase):
 
         data = bugsnag._make_data_safe_for_serialization({'a': instance})
         assert data == {
-            'a':
-            repr(instance) + ';data:application/python-pickle;base64,' +
-            'gANjdGVzdHMuY29tbW9uLnRlc3RfYnVnc25hZwpHbG9iYWxCbGFoRm9yVGVzdHMKcQApgXEBLg=='
+            'a': repr(instance)
+            + ';data:application/python-pickle;base64,'
+            + 'gANjdGVzdHMuY29tbW9uLnRlc3RfYnVnc25hZwpHbG9iYWxCbGFoRm9yVGVzdHMKcQApgXEBLg=='
         }
 
     def test_some_non_jsonable_and_non_pickleable_instance(self):

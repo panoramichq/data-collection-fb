@@ -43,9 +43,7 @@ class FacebookAsyncReportStatus:
         pass
 
     PENDING_STATE = {'Job Not Started', 'Job Started', 'Job Running'}
-    SUCCEEDED_STATE = {
-        'Job Completed',
-    }
+    SUCCEEDED_STATE = {'Job Completed'}
     FAILED_STATE = {'Job Failed', 'Job Skipped'}
     COMPLETED_STATE = SUCCEEDED_STATE | FAILED_STATE
     BACKOFF_MAX_REFRESH_COUNT = 10

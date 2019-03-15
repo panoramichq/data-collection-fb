@@ -31,12 +31,7 @@ def iter_tasks(sweep_id: str) -> Generator[Tuple[CeleryTask, JobScope, JobContex
         for job_id, job_scope_additional_data, score in jobs_iter:
 
             job_id_parts = parse_id(job_id)  # type: dict
-            job_scope = JobScope(
-                job_scope_additional_data,
-                job_id_parts,
-                sweep_id=sweep_id,
-                score=score,
-            )
+            job_scope = JobScope(job_scope_additional_data, job_id_parts, sweep_id=sweep_id, score=score)
 
             celery_task = resolve_job_scope_to_celery_task(job_scope)
 
@@ -54,9 +49,7 @@ def iter_tasks(sweep_id: str) -> Generator[Tuple[CeleryTask, JobScope, JobContex
 
 
 def create_decay_function(
-    n: float,
-    t: float,
-    z: float = looper_config.DECAY_FN_START_MULTIPLIER,
+    n: float, t: float, z: float = looper_config.DECAY_FN_START_MULTIPLIER
 ) -> Callable[[float], Union[float, int]]:
     """
     A function that crates a linear decay function y = F(x), where a *smooth* rationing
@@ -292,7 +285,7 @@ class SweepStatusTracker:
             FailureBucket.Other: 0,
             FailureBucket.Throttling: 0,
             FailureBucket.TooLarge: 0,
-            FailureBucket.WorkingOnIt: 0
+            FailureBucket.WorkingOnIt: 0,
         }
 
         # Now the proportion of successes, failure
@@ -325,8 +318,7 @@ class SweepStatusTracker:
         #   They are representative of "very recent" tail of sweep.
         pulse = Pulse(
             Total=sum(aggregate_data.values()),
-            **{name: result.get(enum_value, 0)
-               for name, enum_value in FailureBucket.attr_name_enum_value_map.items()}
+            **{name: result.get(enum_value, 0) for name, enum_value in FailureBucket.attr_name_enum_value_map.items()},
         )
 
         return pulse
@@ -335,10 +327,7 @@ class SweepStatusTracker:
 @Measure.timer(__name__, function_name_as_metric=True)
 @Measure.counter(__name__, function_name_as_metric=True, count_once=True)
 def run_tasks(
-    sweep_id: str,
-    limit: int = None,
-    time_slices: int = looper_config.FB_THROTTLING_WINDOW,
-    time_slice_length: int = 1,
+    sweep_id: str, limit: int = None, time_slices: int = looper_config.FB_THROTTLING_WINDOW, time_slice_length: int = 1
 ):
     """
     Oozes tasks gradually into Celery workers queue, accounting for total number of tasks
@@ -393,8 +382,9 @@ def run_tasks(
 
     tasks_iter = task_iter_score_gate(tasks_iter)
 
-    with TaskOozer(n, time_slices, time_slice_length, z) as ooze_task, \
-            Measure.counter(_measurement_name_base + 'oozed', tags=_measurement_tags) as cntr:
+    with TaskOozer(n, time_slices, time_slice_length, z) as ooze_task, Measure.counter(
+        _measurement_name_base + 'oozed', tags=_measurement_tags
+    ) as cntr:
 
         next_pulse_review_second = time.time() + _pulse_refresh_interval
 
@@ -443,8 +433,8 @@ def run_tasks(
                         # failures across the board
                         # return cnt, pulse
                         logger.info(
-                            "Breaking early in 2nd quarter time, due to too many failures of any kind " +
-                            "(more than 10 percent)"
+                            "Breaking early in 2nd quarter time, due to too many failures of any kind "
+                            + "(more than 10 percent)"
                         )
                         break
                     if pulse.Throttling > 0.40:  # percent
@@ -577,10 +567,7 @@ def run_tasks(
         should_be_done_by = start_of_run_seconds + max_normal_running_time_seconds
         dont_even_look_at_clock_until_done_cnt = cnt
 
-    really_really_kill_it_by = max(
-        should_be_done_by,
-        start_of_run_seconds + 60 * 30  # half hour
-    )
+    really_really_kill_it_by = max(should_be_done_by, start_of_run_seconds + 60 * 30)  # half hour
 
     def its_time_to_quit(pulse: Pulse) -> bool:
         # must have anything at all done

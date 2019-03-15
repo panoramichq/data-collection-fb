@@ -122,13 +122,13 @@ jobs:
     - run: sudo pip install -r requirements.dev.txt
     - run: flake8 --filename=*.py
 
-  run_yapf:
+  run_black:
     docker:
     - image: circleci/python:3.6-jessie-node
     steps:
     - checkout
     - run: sudo pip install -r requirements.dev.txt
-    - run: yapf . --recursive --diff
+    - run: make black-check
 
   run_tests:
     machine:
@@ -220,7 +220,7 @@ workflows:
                 - master
                 - production
       - run_flake8
-      - run_yapf
+      - run_black
 
       # - hold_for_deploy_staging:
       #     type: approval

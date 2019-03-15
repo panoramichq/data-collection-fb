@@ -26,7 +26,7 @@ class TestLooperReportTypeInventoryResolution(TestCase):
             range_start=None,
             range_end=None,
             tokens=None,
-            is_derivative=False
+            is_derivative=False,
         )
         base_data.update(data)
 
@@ -44,7 +44,12 @@ class TestLooperReportTypeInventoryResolution(TestCase):
     def test_entity_report_types_entities_per_aa(self):
 
         entity_types = [
-            Entity.Campaign, Entity.AdSet, Entity.Ad, Entity.AdCreative, Entity.AdVideo, Entity.CustomAudience
+            Entity.Campaign,
+            Entity.AdSet,
+            Entity.Ad,
+            Entity.AdCreative,
+            Entity.AdVideo,
+            Entity.CustomAudience,
         ]
         report_type = ReportType.entity
 
@@ -85,9 +90,7 @@ class TestLooperReportTypeInventoryResolution(TestCase):
     def test_entity_report_types_lifetime_insights(self):
 
         entity_types = [Entity.Campaign, Entity.AdSet, Entity.Ad]
-        report_types = [
-            ReportType.lifetime,
-        ]
+        report_types = [ReportType.lifetime]
 
         for entity_type in entity_types:
 
@@ -102,9 +105,7 @@ class TestLooperReportTypeInventoryResolution(TestCase):
     def test_scope_refresh_job_handlers_registration(self):
 
         entity_types = [Entity.Scope]
-        report_types = [
-            ReportType.import_accounts,
-        ]
+        report_types = [ReportType.import_accounts]
 
         for entity_type in entity_types:
 
@@ -119,9 +120,7 @@ class TestLooperReportTypeInventoryResolution(TestCase):
     def test_sync_expectations_job_handler_registration(self):
 
         entity_types = [Entity.AdAccount]
-        report_types = [
-            ReportType.sync_expectations,
-        ]
+        report_types = [ReportType.sync_expectations]
 
         for entity_type in entity_types:
 

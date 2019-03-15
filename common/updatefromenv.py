@@ -47,13 +47,16 @@ def update_from_env(module_path: str, config_root_module: str = 'config', env_va
     # `api.config.` config_module_prefix value should NOT work.
     #  as that allows values in some other module (not that one calling
     #  this code) to be updated by accident
-    if affected_module_path_parts[:len(config_root_module_path_prefix_parts)] != config_root_module_path_prefix_parts:
+    if affected_module_path_parts[: len(config_root_module_path_prefix_parts)] != config_root_module_path_prefix_parts:
         raise ValueError(f'Module "{module_path}" is outside of config module "{config_root_module}" tree.')
 
-    env_var_prefix_with_full_module_path = '_'.join(
-        [env_var_prefix.strip('_').upper()] +
-        [part.upper() for part in affected_module_path_parts[len(config_root_module_path_prefix_parts):]]
-    ) + '_'
+    env_var_prefix_with_full_module_path = (
+        '_'.join(
+            [env_var_prefix.strip('_').upper()]
+            + [part.upper() for part in affected_module_path_parts[len(config_root_module_path_prefix_parts) :]]
+        )
+        + '_'
+    )
 
     env_var_prefix_len = len(env_var_prefix_with_full_module_path)
     env_vars_found = [
@@ -93,8 +96,9 @@ def update_from_env(module_path: str, config_root_module: str = 'config', env_va
                 if ExistingValueType is bool:
                     value = False if value in falsy_bool_as_string else value
                 setattr(
-                    config_module, key_variant,
-                    value if ExistingValueType in no_conversion else ExistingValueType(value)
+                    config_module,
+                    key_variant,
+                    value if ExistingValueType in no_conversion else ExistingValueType(value),
                 )
                 # note that ExistingValueType(value) does not work for complex value types like lists
                 # no, if we run into that problem, will need to rethink this.

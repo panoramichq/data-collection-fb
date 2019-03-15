@@ -88,6 +88,7 @@ def now_in_tz(timezone_name: str) -> datetime:
     :return" a Timezone-aware datetime instance representing "now" in that tz
     """
     from datetime import datetime
+
     return dt_to_other_timezone(datetime.utcnow(), timezone_name)
 
 
@@ -110,6 +111,7 @@ def dt_to_timestamp(dt: datetime) -> int:
     assert dt.tzinfo is not None  # don't do any guessing. Demand tz-aware dt.
 
     import calendar
+
     return calendar.timegm(dt.utctimetuple())
 
 

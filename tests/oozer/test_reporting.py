@@ -38,10 +38,7 @@ def test_reported_task_on_failure_facebook_error(
 ):
     exc = FacebookError('test')
     mock_job_scope = Mock(token='token')
-    mock_get_status_and_bucket.return_value = (
-        ExternalPlatformJobStatus.ThrottlingError,
-        FailureBucket.Throttling,
-    )
+    mock_get_status_and_bucket.return_value = (ExternalPlatformJobStatus.ThrottlingError, FailureBucket.Throttling)
 
     @reported_task
     def test_task(*_, **__):

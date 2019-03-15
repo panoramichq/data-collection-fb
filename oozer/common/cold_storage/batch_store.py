@@ -85,7 +85,7 @@ class NaturallyNormativeChildStore(BaseStoreHandler):
             Entity.AdAccount: AdsInsights.Field.account_id,
             Entity.Campaign: AdsInsights.Field.campaign_id,
             Entity.AdSet: AdsInsights.Field.adset_id,
-            Entity.Ad: AdsInsights.Field.ad_id
+            Entity.Ad: AdsInsights.Field.ad_id,
         }[normative_entity_type]
 
     def store(self, datum):

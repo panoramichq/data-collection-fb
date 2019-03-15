@@ -11,8 +11,10 @@ class JobsQueueTests(TestCase):
         group_id = task_group.group_id
 
         all_task_ids = (
-            task_group.generate_task_id(), task_group.generate_task_id(), task_group.generate_task_id(),
-            task_group.generate_task_id()
+            task_group.generate_task_id(),
+            task_group.generate_task_id(),
+            task_group.generate_task_id(),
+            task_group.generate_task_id(),
         )
 
         # checking basic signature of the task_id and it's shard key component

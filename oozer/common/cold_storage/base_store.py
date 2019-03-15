@@ -22,6 +22,7 @@ import xxhash
 import io
 import logging
 import uuid
+
 # ujson is faster for massive amounts of small data units
 # which is actually the pattern we have - yielding small datum per normative
 # task or small batches of small datums.
@@ -72,17 +73,19 @@ def _job_scope_to_storage_key(job_scope: JobScope, chunk_marker: Optional[int] =
         # long import line to allow mocking of call to now() in tests.
         report_datetime = common.tztools.now()
 
-    key = f'{job_scope.namespace}/' \
-          f'{prefix}-{job_scope.ad_account_id}/' \
-          f'{job_scope.report_type}/' \
-          f'{report_datetime.strftime("%Y")}/' \
-          f'{report_datetime.strftime("%m")}/' \
-          f'{report_datetime.strftime("%d")}/' \
-          f'{report_datetime.strftime("%Y-%m-%dT%H:%M:%SZ")}-' \
-          f'{job_scope.job_id}-' \
-          f'{str(chunk_marker)+"-" if chunk_marker else ""}' \
-          f'{uuid.uuid4()}' \
-          f'.json'
+    key = (
+        f'{job_scope.namespace}/'
+        f'{prefix}-{job_scope.ad_account_id}/'
+        f'{job_scope.report_type}/'
+        f'{report_datetime.strftime("%Y")}/'
+        f'{report_datetime.strftime("%m")}/'
+        f'{report_datetime.strftime("%d")}/'
+        f'{report_datetime.strftime("%Y-%m-%dT%H:%M:%SZ")}-'
+        f'{job_scope.job_id}-'
+        f'{str(chunk_marker)+"-" if chunk_marker else ""}'
+        f'{uuid.uuid4()}'
+        f'.json'
+    )
 
     return key
 

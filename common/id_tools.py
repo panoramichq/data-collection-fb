@@ -25,10 +25,7 @@ fields = [
     "range_end",
 ]
 
-universal_id_fields = [
-    'component_vendor',
-    'component_id',
-] + fields
+universal_id_fields = ['component_vendor', 'component_id'] + fields
 
 JobIdParts = namedtuple('JobIdParts', fields)
 
@@ -123,16 +120,15 @@ def generate_id(fields: List[str] = fields, trailing_parts: List[str] = None, **
 
     # per Universal ID spec, we must URL+Plus encode all parts
     # https://operam.atlassian.net/wiki/spaces/EN/pages/160596078/Universal+IDs
-    converters = {
-        'range_start': _id_parts_datetime_converter,
-    }
+    converters = {'range_start': _id_parts_datetime_converter}
 
     # If range_end specified, convert as date
     if parts.get('range_end'):
         converters['range_end'] = _id_parts_datetime_converter
 
-    parts = [converters.get(field, _id_parts_default_converter)(base_parts.get(field))
-             for field in fields] + [_id_parts_default_converter(part) for part in trailing_parts or []]
+    parts = [converters.get(field, _id_parts_default_converter)(base_parts.get(field)) for field in fields] + [
+        _id_parts_default_converter(part) for part in trailing_parts or []
+    ]
 
     return ID_DELIMITER.join([quote_plus(part) for part in parts]).strip(ID_DELIMITER)
 
@@ -153,7 +149,7 @@ _datetime_part_parser_input_len_formats_map = {
     len('####-##-##'): '%Y-%m-%d',
     len('####-##-##T##'): '%Y-%m-%dT%H',
     len('####-##-##T##:##'): '%Y-%m-%dT%H:%M',
-    len('####-##-##T##:##:##'): '%Y-%m-%dT%H:%M:%S'
+    len('####-##-##T##:##:##'): '%Y-%m-%dT%H:%M:%S',
 }
 
 
@@ -174,10 +170,7 @@ def _datetime_part_parser(v):
     return v
 
 
-_field_part_parsers_map = {
-    'range_start': _datetime_part_parser,
-    'range_end': _datetime_part_parser,
-}
+_field_part_parsers_map = {'range_start': _datetime_part_parser, 'range_end': _datetime_part_parser}
 
 
 def parse_id(id_str: str, fields: List[str] = fields) -> Dict[str, Any]:

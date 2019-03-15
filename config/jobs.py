@@ -64,6 +64,7 @@ INSIGHTS_ALL_SEGMENTED_DISABLED = False
 
 # here we allow external env vars to influence above values...
 from common.updatefromenv import update_from_env
+
 update_from_env(__name__)
 
 # and here we post-process the values, by applying group

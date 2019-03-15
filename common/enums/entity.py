@@ -21,20 +21,8 @@ class Entity:
     # FIXME: split entities into general (C,AS,A) - insights enabled
     # FIXME: and into "entity only" - other (no insights fetched)
 
-    AA_SCOPED = {
-        AdAccount,
-        Campaign,
-        AdSet,
-        Ad,
-        AdCreative,
-        AdVideo,
-        CustomAudience,
-    }
+    AA_SCOPED = {AdAccount, Campaign, AdSet, Ad, AdCreative, AdVideo, CustomAudience}
 
-    NON_AA_SCOPED = {
-        Page,
-        PagePost,
-        Comment,
-    }
+    NON_AA_SCOPED = {Page, PagePost, Comment}
 
     ALL = AA_SCOPED.union({Scope}, NON_AA_SCOPED)

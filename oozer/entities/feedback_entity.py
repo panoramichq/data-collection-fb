@@ -90,18 +90,14 @@ def _upsert_regular_entity(entity_data: Dict[str, Any], entity_type: str, entity
     # We guess that last update is a safe bet to treat as "it was turned off then" datetime
     # Thus speculatively deriving EOL from the last update if "irreversible death" is detected
     # We cast this to a string to avoid any issues with entity types using "status" as a dict
-    _is_eol = str(
-        entity_data.get('configured_status') or entity_data.get('effective_status') or entity_data.get('status')
-    ) in _eol_status
-
-    eol = _parse_fb_datetime(entity_data.get('updated_time')) \
-        if _is_eol \
-        else None
-
-    upsert_data = dict(
-        hash=entity_hash_pair[0],
-        hash_fields=entity_hash_pair[1],
+    _is_eol = (
+        str(entity_data.get('configured_status') or entity_data.get('effective_status') or entity_data.get('status'))
+        in _eol_status
     )
+
+    eol = _parse_fb_datetime(entity_data.get('updated_time')) if _is_eol else None
+
+    upsert_data = dict(hash=entity_hash_pair[0], hash_fields=entity_hash_pair[1])
 
     # Note on Model.attr | value use:
     # This is a way to express "set if does not exist" logic

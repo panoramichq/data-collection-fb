@@ -15,6 +15,7 @@ class PrioritizationClaim(ExpectationClaim):
     (Used to avoid the need to change all functions in the stack if you need
     to add more data to context from the very bottom of the stack. Just extend this object.)
     """
+
     # structure matching job_signatures on underlying class
     # here score for each element in original list is matched in
     # position in job_scores list.

@@ -15,9 +15,7 @@ from sweep_builder.types import ExpectationGeneratorType
 
 
 def lifecycle_metrics_per_entity(
-    entity_type: str,
-    day_breakdown: str,
-    reality_claim: RealityClaim,
+    entity_type: str, day_breakdown: str, reality_claim: RealityClaim
 ) -> Generator[ExpectationClaim, None, None]:
     """
     Create one expectation for whole lifecycle of entity.
@@ -51,15 +49,13 @@ def lifecycle_metrics_per_entity(
                     range_end=range_end,
                     range_start=range_start,
                 )
-            ),
-        ]
+            )
+        ],
     )
 
 
 def daily_metrics_per_entity(
-    entity_type: str,
-    day_breakdown: str,
-    reality_claim: RealityClaim,
+    entity_type: str, day_breakdown: str, reality_claim: RealityClaim
 ) -> Generator[ExpectationClaim, None, None]:
     """
     Create expectations for every day in lifecycle of entity.
@@ -93,8 +89,8 @@ def daily_metrics_per_entity(
                         report_variant=entity_type,
                         range_start=day,
                     )
-                ),
-            ]
+                )
+            ],
         )
 
 
@@ -125,9 +121,7 @@ def _determine_active_date_range_for_claim(reality_claim: RealityClaim) -> Tuple
 
 
 def day_metrics_per_entities_under_ad_account(
-    entity_type: str,
-    report_types: List[str],
-    reality_claim: RealityClaim,
+    entity_type: str, report_types: List[str], reality_claim: RealityClaim
 ) -> Generator[ExpectationClaim, None, None]:
     """
     Given an instance of Reality Claim that refers AdAccount object,
@@ -168,7 +162,7 @@ def day_metrics_per_entities_under_ad_account(
                                     report_variant=entity_type,
                                 )
                             )
-                        ]
+                        ],
                     )
 
 
@@ -179,67 +173,49 @@ _lifecycle_metrics_per_ad: ExpectationGeneratorType = functools.partial(lifecycl
 # per entity generators
 
 day_metrics_per_campaign_per_entity: ExpectationGeneratorType = functools.partial(
-    lifecycle_metrics_per_entity,
-    Entity.Campaign,
-    ReportType.day,
+    lifecycle_metrics_per_entity, Entity.Campaign, ReportType.day
 )
 
 hour_metrics_per_campaign_per_entity: ExpectationGeneratorType = functools.partial(
-    lifecycle_metrics_per_entity,
-    Entity.Campaign,
-    ReportType.day_hour,
+    lifecycle_metrics_per_entity, Entity.Campaign, ReportType.day_hour
 )
 
 hour_metrics_per_adset_per_entity: ExpectationGeneratorType = functools.partial(
-    lifecycle_metrics_per_entity,
-    Entity.AdSet,
-    ReportType.day_hour,
+    lifecycle_metrics_per_entity, Entity.AdSet, ReportType.day_hour
 )
 
-day_metrics_per_ad_per_entity: ExpectationGeneratorType = functools.partial(
-    _lifecycle_metrics_per_ad,
-    ReportType.day,
-)
+day_metrics_per_ad_per_entity: ExpectationGeneratorType = functools.partial(_lifecycle_metrics_per_ad, ReportType.day)
 
 hour_metrics_per_ad_per_entity: ExpectationGeneratorType = functools.partial(
-    _lifecycle_metrics_per_ad,
-    ReportType.day_hour,
+    _lifecycle_metrics_per_ad, ReportType.day_hour
 )
 
 day_age_gender_metrics_per_ad_per_entity: ExpectationGeneratorType = functools.partial(
-    _lifecycle_metrics_per_ad,
-    ReportType.day_age_gender,
+    _lifecycle_metrics_per_ad, ReportType.day_age_gender
 )
 
 day_platform_metrics_per_ad_per_entity: ExpectationGeneratorType = functools.partial(
-    _lifecycle_metrics_per_ad,
-    ReportType.day_platform,
+    _lifecycle_metrics_per_ad, ReportType.day_platform
 )
 
 day_dma_metrics_per_ad_per_entity: ExpectationGeneratorType = functools.partial(
-    _lifecycle_metrics_per_ad,
-    ReportType.day_dma,
+    _lifecycle_metrics_per_ad, ReportType.day_dma
 )
 
 # Per C, per report type
 
 hour_metrics_per_campaign_per_parent: ExpectationGeneratorType = functools.partial(
-    day_metrics_per_entities_under_ad_account,
-    Entity.Campaign,
-    [ReportType.day_hour],
+    day_metrics_per_entities_under_ad_account, Entity.Campaign, [ReportType.day_hour]
 )
 
 # Per AS, per report type
 
 hour_metrics_per_adset_per_parent: ExpectationGeneratorType = functools.partial(
-    day_metrics_per_entities_under_ad_account,
-    Entity.AdSet,
-    [ReportType.day_hour],
+    day_metrics_per_entities_under_ad_account, Entity.AdSet, [ReportType.day_hour]
 )
 
 # per Ad, day and sub-day breakdowns
 
 metrics_per_ad_per_ad_account: ExpectationGeneratorType = functools.partial(
-    day_metrics_per_entities_under_ad_account,
-    Entity.Ad,
+    day_metrics_per_entities_under_ad_account, Entity.Ad
 )

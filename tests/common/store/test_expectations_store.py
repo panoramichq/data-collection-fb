@@ -23,11 +23,7 @@ class JobExpectationsStoreTests(TestCase):
 
                     all_job_ids_should_be.add(job_id)
 
-                    add_expectation(
-                        job_id,
-                        ad_account_id,
-                        None  # we don't care about entity ID at this time.
-                    )
+                    add_expectation(job_id, ad_account_id, None)  # we don't care about entity ID at this time.
 
         all_job_ids_actual = list(iter_expectations(sweep_id))
 

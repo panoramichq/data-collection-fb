@@ -112,5 +112,5 @@ class ExternalPlatformJobStatus(JobStatus):
         TooMuchData: FailureBucket.TooLarge,
         ThrottlingError: FailureBucket.Throttling,
         GenericPlatformError: FailureBucket.Other,
-        JobStatus.GenericError: FailureBucket.Other
+        JobStatus.GenericError: FailureBucket.Other,
     }

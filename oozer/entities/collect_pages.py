@@ -11,7 +11,7 @@ from common.measurement import Measure
 from common.tokens import PlatformTokenManager
 from oozer.common.enum import ExternalPlatformJobStatus
 from oozer.common.errors import CollectionError
-from oozer.common.facebook_api import (PlatformApiContext, get_default_fields)
+from oozer.common.facebook_api import PlatformApiContext, get_default_fields
 from oozer.common.cold_storage.batch_store import NormalStore
 from oozer.common.job_context import JobContext
 from oozer.common.job_scope import JobScope
@@ -66,11 +66,7 @@ def collect_page(job_scope: JobScope, _job_context: JobContext):
         token_manager.report_usage(token, 2)
 
         record_id_data = job_scope.to_dict()
-        record_id_data.update(
-            entity_type=Entity.Page,
-            entity_id=job_scope.entity_id,
-            report_variant=None,
-        )
+        record_id_data.update(entity_type=Entity.Page, entity_id=job_scope.entity_id, report_variant=None)
         entity_data = page_fetched.export_all_data()
         entity_data = add_vendor_data(entity_data, id=generate_universal_id(**record_id_data))
         store = NormalStore(job_scope)
@@ -126,16 +122,13 @@ def collect_pages_from_business(job_scope: JobScope, _job_context: JobContext) -
     entity_type = Entity.Page
 
     record_id_base_data = job_scope.to_dict()
-    record_id_base_data.update(
-        entity_type=entity_type,
-        report_variant=None,
-    )
+    record_id_base_data.update(entity_type=entity_type, report_variant=None)
 
     cnt = 0
     for biz in businesses:
         client_pages = list(biz.get_client_pages(fields=get_default_fields(Page)))
         owned_pages = list(biz.get_owned_pages(fields=get_default_fields(Page)))
-        pages_list = (client_pages + owned_pages)
+        pages_list = client_pages + owned_pages
 
         for page_inst in pages_list:
 

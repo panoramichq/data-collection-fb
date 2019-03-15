@@ -31,10 +31,7 @@ def feedback_entity_task(entity_data: Dict[str, Any], entity_type: str, entity_h
         if 'ProvisionedThroughputExceededException' in ex_str:
             Measure.counter(
                 feedback_entity_task.__name__ + '.throughput_exceptions',
-                tags={
-                    'entity_type': entity_type,
-                    'ad_account_id': entity_data['account_id']
-                }
+                tags={'entity_type': entity_type, 'ad_account_id': entity_data['account_id']},
             ).increment()
             logger.warning(ex_str)
         else:

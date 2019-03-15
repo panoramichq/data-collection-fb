@@ -39,24 +39,18 @@ class JobsWriterTests(TestCase):
         jobs_queued_should_be = [
             (
                 generate_id(ad_account_id='AAID', report_type=ReportType.entity, report_variant=Entity.AdSet),
-                {
-                    'timezone': 'Europe/London'
-                },
-                30.0  # <-----
+                {'timezone': 'Europe/London'},
+                30.0,  # <-----
             ),
             (
                 generate_id(ad_account_id='AAID', report_type=ReportType.entity, report_variant=Entity.Campaign),
-                {
-                    'timezone': 'Europe/London'
-                },
-                20.0  # <-----
+                {'timezone': 'Europe/London'},
+                20.0,  # <-----
             ),
             (
                 generate_id(ad_account_id='AAID', report_type=ReportType.entity, report_variant=Entity.Ad),
-                {
-                    'timezone': 'Europe/London'
-                },
-                10.0  # <-----
+                {'timezone': 'Europe/London'},
+                10.0,  # <-----
             ),
         ]
 
@@ -75,9 +69,11 @@ class JobsWriterTests(TestCase):
                     ad_account_id='AAID',
                     entity_id=str(bogus_score),
                     report_type=ReportType.entity,
-                    report_variant=Entity.Campaign
-                ), bogus_score
-            ) for bogus_score in range(0, jobs_to_generate)
+                    report_variant=Entity.Campaign,
+                ),
+                bogus_score,
+            )
+            for bogus_score in range(0, jobs_to_generate)
         ]
 
         with SortedJobsQueue(self.sweep_id).JobsWriter() as add_to_queue:

@@ -27,8 +27,7 @@ def should_persist(job_score: int) -> bool:
 
 
 def iter_persist_prioritized(
-    sweep_id: str,
-    prioritized_iter: Generator[PrioritizationClaim, None, None],
+    sweep_id: str, prioritized_iter: Generator[PrioritizationClaim, None, None]
 ) -> Generator[PrioritizationClaim, None, None]:
     """
     Persist prioritized jobs and pass-through context objects for inspection
@@ -37,8 +36,9 @@ def iter_persist_prioritized(
     # for same jobID when given objects rely on same JobID
     # for collection.
 
-    with SortedJobsQueue(sweep_id).JobsWriter() as add_to_queue, \
-            JobExpectationsWriter(sweep_id, cache_max_size=200000) as expectation_add:
+    with SortedJobsQueue(sweep_id).JobsWriter() as add_to_queue, JobExpectationsWriter(
+        sweep_id, cache_max_size=200000
+    ) as expectation_add:
 
         _measurement_name_base = __name__ + '.' + iter_persist_prioritized.__name__
         _measurement_sample_rate = 1
@@ -56,7 +56,7 @@ def iter_persist_prioritized(
             Measure.timing(
                 _measurement_name_base + 'next_prioritized',
                 tags=_measurement_tags,
-                sample_rate=_measurement_sample_rate
+                sample_rate=_measurement_sample_rate,
             )((time.time() - _before_next_prioritized) * 1000)
 
             # Approaches to Job queueing:
@@ -176,8 +176,9 @@ def iter_persist_prioritized(
             # This is our cheap way of ensuring that we are dealing
             # with platform-bound job that we need to report our expectations for
             is_subject_to_expectation_publication = (
-                prioritization_claim.ad_account_id is not None and prioritization_claim.entity_id is not None and
-                prioritization_claim.entity_type in subject_to_expectation_publication
+                prioritization_claim.ad_account_id is not None
+                and prioritization_claim.entity_id is not None
+                and prioritization_claim.entity_type in subject_to_expectation_publication
             )
 
             if is_subject_to_expectation_publication:
@@ -192,7 +193,7 @@ def iter_persist_prioritized(
                     with Measure.timer(
                         _measurement_name_base + 'expectation_add',
                         tags=_measurement_tags,
-                        sample_rate=_measurement_sample_rate
+                        sample_rate=_measurement_sample_rate,
                     ):
                         expectation_add(
                             job_id_effective, prioritization_claim.ad_account_id, prioritization_claim.entity_id
@@ -211,8 +212,5 @@ def iter_persist_prioritized(
         if skipped_jobs:
             _measurement_name = _measurement_name_base + '.gatekeeper_stop_jobs'
             for ad_account_id in skipped_jobs:
-                measurement_tags = {
-                    'sweep_id': sweep_id,
-                    'ad_account_id': ad_account_id,
-                }
+                measurement_tags = {'sweep_id': sweep_id, 'ad_account_id': ad_account_id}
                 Measure.gauge(_measurement_name, tags=measurement_tags)(skipped_jobs[ad_account_id])

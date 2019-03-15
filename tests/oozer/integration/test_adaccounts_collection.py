@@ -23,7 +23,7 @@ class TestingAdAccountCollectionPipeline(TestCase):
             report_time=datetime.utcnow(),
             report_type='entity',
             report_variant=Entity.AdAccount,
-            sweep_id='1'
+            sweep_id='1',
         )
 
         aa_data = collect_adaccount_task(job_scope, None)

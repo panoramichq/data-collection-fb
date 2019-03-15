@@ -57,7 +57,7 @@ class BaseModelTests(TestCase):
             primary_id=pid,
             secondary_id=sid,
             data='primary data',  # <------- .update call picks up data that was already in DB
-            more_data='more data'
+            more_data='more data',
         )
 
         # and just in case, fresh get
@@ -77,11 +77,7 @@ class BaseModelTests(TestCase):
 
         # record does not exist
 
-        self.Model.upsert(
-            pid,
-            sid,
-            data=self.Model.data | 'primary data'  # if_not_exists change expression
-        )
+        self.Model.upsert(pid, sid, data=self.Model.data | 'primary data')  # if_not_exists change expression
         m = self.Model.get(pid, sid)
         assert m.to_dict() == dict(primary_id=pid, secondary_id=sid, data='primary data', more_data=None)
 
@@ -92,14 +88,11 @@ class BaseModelTests(TestCase):
             pid,
             sid,
             data=self.Model.data | 'primary data overwrite NOT',  # if_not_exists change expression
-            more_data=self.Model.more_data | 'more data'
+            more_data=self.Model.more_data | 'more data',
         )
         m = self.Model.get(pid, sid)
         assert m.to_dict() == dict(
-            primary_id=pid,
-            secondary_id=sid,
-            data='primary data',  # <-- still original
-            more_data='more data'
+            primary_id=pid, secondary_id=sid, data='primary data', more_data='more data'  # <-- still original
         )
 
 
@@ -129,17 +122,14 @@ class BaseModelToDictFieldsTests(TestCase):
         record = TestModel(pid, sid, data='value')
 
         assert record.to_dict() == dict(
-            primary_id=pid,
-            secondary_id=sid,
-            data='value',
-            record_type='SUPER_RECORD'  # <--- note static attribute
+            primary_id=pid, secondary_id=sid, data='value', record_type='SUPER_RECORD'  # <--- note static attribute
         )
 
         assert record.to_dict(fields=['data', 'record_type']) == dict(
             # primary_id=pid,
             # secondary_id=sid,
             data='value',
-            record_type='SUPER_RECORD'  # <--- note static attribute
+            record_type='SUPER_RECORD',  # <--- note static attribute
         )
 
         with self.assertRaises(AttributeError) as ex:
@@ -177,12 +167,12 @@ class BaseModelToDictFieldsTests(TestCase):
             # primary_id=pid,
             secondary_id=sid,
             # data='value',
-            record_type='SUPER_RECORD'  # <--- note static attribute
+            record_type='SUPER_RECORD',  # <--- note static attribute
         )
 
         assert record.to_dict(fields=['data', 'record_type']) == dict(
             # primary_id=pid,
             # secondary_id=sid,
             data='value',
-            record_type='SUPER_RECORD'  # <--- note static attribute
+            record_type='SUPER_RECORD',  # <--- note static attribute
         )

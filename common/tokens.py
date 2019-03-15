@@ -9,12 +9,10 @@ from oozer.common.job_scope import JobScope
 failure_bucket_count_map = {
     # this is the only one that is really deriving any "clever" value from TokenManager
     # this effectively pushes out the use of this token a bit
-    FailureBucket.Throttling:
-    200,
+    FailureBucket.Throttling: 200,
     # If we are getting to "too large" territory, there is a chance
     # that we are hitting costly APIs and our counter will hit throttling soon
-    FailureBucket.TooLarge:
-    5,
+    FailureBucket.TooLarge: 5,
 }
 
 
@@ -108,7 +106,7 @@ class PlatformTokenManager:
             # that may contain characters not allowed to be in variable names.
             # So, keeping them as positional str args instead
             # Combined list must be a sequence of key, score, key2, score2, ...
-            *(arg for token in tokens for arg in [token, 0])
+            *(arg for token in tokens for arg in [token, 0]),
         )
 
     def remove(self, *tokens):
