@@ -107,10 +107,6 @@ def _upsert_regular_entity(entity_data: Dict[str, Any], entity_type: str, entity
     if adset_id is not None:
         upsert_data['adset_id'] = adset_id
 
-    ad_id = entity_data.get('ad_id')
-    if ad_id is not None:
-        upsert_data['ad_id'] = ad_id
-
     # Note on Model.attr | value use:
     # This is a way to express "set if does not exist" logic
     # https://pynamodb.readthedocs.io/en/latest/updates.html#update-expressions
