@@ -1,3 +1,5 @@
+# flake8: noqa: E722
+
 # arguments here are new-style (lower-case) Celery config arguments.
 # do NOT rename them without checking
 # http://docs.celeryproject.org/en/latest/userguide/configuration.html#new-lowercase-settings

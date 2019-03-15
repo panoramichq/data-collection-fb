@@ -14,7 +14,6 @@ from tests.base import random
 
 
 class PersisterSavesJobScopeData(TestCase):
-
     def test_persister_saves_job_scope_auxiliary_data_to_data_flower(self):
         # There is a need to save some context data that does not fit on JobIS
         # Persister should store that on the Data Flower.
@@ -41,12 +40,11 @@ class PersisterSavesJobScopeData(TestCase):
                     # auxiliary data blob for saving on Data Flower.
                     # We don't have to do that there.
                     # It can be pre-computed and placed on the JobSignature
-                    JobSignature.bind(
-                        job_id
-                        # Here
-                        # As it takes args, kwargs
-                        # that we can package into Data Flower
-                    )
+                    JobSignature.bind(job_id
+                                      # Here
+                                      # As it takes args, kwargs
+                                      # that we can package into Data Flower
+                                      )
                     # TODO: contemplate moving auxiliary data formation to
                     #       place where JobSignatures are generated and use that
                     #       data for Data Flower (as it was originally intended
@@ -57,10 +55,7 @@ class PersisterSavesJobScopeData(TestCase):
             )
         ]
 
-        persisted = persister.iter_persist_prioritized(
-            sweep_id,
-            prioritized_iter
-        )
+        persisted = persister.iter_persist_prioritized(sweep_id, prioritized_iter)
         cnt = 0
         for item in persisted:
             cnt += 1
@@ -73,9 +68,7 @@ class PersisterSavesJobScopeData(TestCase):
         jobs_queued_actual = []
         with SortedJobsQueue(sweep_id).JobsReader() as jobs_iter:
             for job_id, job_scope_data, score in jobs_iter:
-                jobs_queued_actual.append(
-                    (job_id, job_scope_data, score)
-                )
+                jobs_queued_actual.append((job_id, job_scope_data, score))
 
         jobs_queued_should_be = [
             (

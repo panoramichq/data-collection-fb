@@ -1,9 +1,8 @@
-from . import (
+from common.store import (
     entities,
     jobreport,
     scope,
 )
-
 
 modules_with_models = [
     entities,
@@ -12,7 +11,7 @@ modules_with_models = [
 ]
 
 
-def sync_schema(brute_force=False):
+def sync_schema(brute_force: bool = False):
     """
     In order to push fidelity and maintenance of table "migrations"
     closer to the code where the models are migrated, this is where

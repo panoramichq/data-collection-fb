@@ -2,12 +2,10 @@
 
 from decorator import decorate
 
-
 MEMOIZE_CACHE_PROPERTY_NAME = '_memoized'
 
 
 class MemoizeMixin(object):
-
     def clear_cache(self, **kwargs):
         """
         Allows to clear all or part of memoize cache on the object
@@ -55,12 +53,7 @@ class MemoizeMixin(object):
             o.clear_cache()
             o._memoized
             # Output: {}
-
-
-        :param dict kwargs:
-        :return: Instance of self for pass-through convenience
-        """
-
+        """  # noqa
         cache = getattr(self, MEMOIZE_CACHE_PROPERTY_NAME, {})
         if kwargs:
             # Only some properties are to be removed from cache
@@ -72,7 +65,7 @@ class MemoizeMixin(object):
         for key in keys:
             cache.pop(key, None)
 
-        return self # for ease of chaining
+        return self  # for ease of chaining
 
     def set_cache(self, **kwargs):
         """
@@ -104,15 +97,12 @@ class MemoizeMixin(object):
 
             o.property_a
             # Output: 'precached value A'
-
-        :param kwargs:
-        :return:
         """
         cache = getattr(self, MEMOIZE_CACHE_PROPERTY_NAME, {})
         setattr(self, MEMOIZE_CACHE_PROPERTY_NAME, cache)
         cache.update(kwargs)
 
-        return self # for ease of chaining
+        return self  # for ease of chaining
 
 
 def _memoized_property(f, self, *args):
@@ -165,9 +155,6 @@ def memoized_property(f):
         # allows you to pre-pop memoize cache on the object and returns self:
         o = O().set_cache(property_a='value', some_other_prop='another value')
 
-
-    :param callable f:
-    :return: Same callable but with memoize cache object stuck on it
     """
 
     return decorate(f, _memoized_property)

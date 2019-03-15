@@ -1,3 +1,5 @@
+# flake8: noqa: E722
+
 API_KEY = None
 """
 The API key corresponding to our project

@@ -33,7 +33,9 @@ def test_reported_task_on_success(mock_report):
 @patch('oozer.reporting.report_job_status_task')
 @patch('oozer.reporting.BugSnagContextData.notify')
 @patch('oozer.reporting.FacebookApiErrorInspector.get_status_and_bucket')
-def test_reported_task_on_failure_facebook_error(mock_get_status_and_bucket, mock_notify, mock_report, mock_from_job_scope):
+def test_reported_task_on_failure_facebook_error(
+    mock_get_status_and_bucket, mock_notify, mock_report, mock_from_job_scope
+):
     exc = FacebookError('test')
     mock_job_scope = Mock(token='token')
     mock_get_status_and_bucket.return_value = (
@@ -59,8 +61,7 @@ def test_reported_task_on_failure_facebook_error(mock_get_status_and_bucket, moc
 
     mock_notify.assert_called_once_with(exc, job_scope=mock_job_scope, severity=SEVERITY_WARNING)
     mock_from_job_scope.return_value.report_usage_per_failure_bucket.assert_called_once_with(
-        'token',
-        FailureBucket.Throttling
+        'token', FailureBucket.Throttling
     )
 
 
@@ -89,6 +90,5 @@ def test_reported_task_on_failure_generic_error(mock_notify, mock_report, mock_f
 
     mock_notify.assert_called_once_with(exc, job_scope=mock_job_scope, severity=SEVERITY_ERROR)
     mock_from_job_scope.return_value.report_usage_per_failure_bucket.assert_called_once_with(
-        'token',
-        FailureBucket.Other
+        'token', FailureBucket.Other
     )

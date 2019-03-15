@@ -1,11 +1,12 @@
 from typing import Any
 
+from pynamodb import attributes
+
+from common.store.base import BaseMeta, BaseModel
 from common.enums.entity import Entity
 from common.memoize import memoized_property
 from config import dynamodb as dynamodb_config
 from oozer.common.job_scope import JobScope
-
-from .base import BaseMeta, BaseModel, attributes
 
 
 class ConsoleEntityMixin:
@@ -20,9 +21,7 @@ class AdAccountEntity(ConsoleEntityMixin, BaseModel):
     """
     Meta = BaseMeta(dynamodb_config.AD_ACCOUNT_ENTITY_TABLE)
 
-    _additional_fields = {
-        'entity_type'
-    }
+    _additional_fields = {'entity_type'}
 
     # scope is an ephemeral scoping element
     # Imagine "operam business manager system user" being one of the scope's values.
@@ -62,7 +61,7 @@ class AdAccountEntity(ConsoleEntityMixin, BaseModel):
     @property
     @memoized_property
     def scope_model(self):
-        from .scope import AssetScope
+        from common.store.scope import AssetScope
         return AssetScope.get(self.scope)
 
     def to_fb_sdk_ad_account(self, api=None):
@@ -70,8 +69,7 @@ class AdAccountEntity(ConsoleEntityMixin, BaseModel):
         Returns an instance of Facebook Ads SDK AdAccount model
         with ID matching this DB model's ID
 
-        :param facebook_business.api.FacebookAdsApi api: FB Ads SDK Api instance with token baked in.
-        :rtype: facebook_business.adobjects.adaccount.AdAccount
+        :param api: FB Ads SDK Api instance with token baked in.
         """
         from facebook_business.api import FacebookAdsApi, FacebookSession
         from facebook_business.adobjects.adaccount import AdAccount
@@ -127,9 +125,7 @@ class EntityBaseMixin:
     _default_bol = False
 
     entity_type = None  # will be overridden in subclass
-    _additional_fields = {
-        'entity_type'
-    }
+    _additional_fields = {'entity_type'}
 
 
 class PageEntityBaseMixin:
@@ -141,9 +137,7 @@ class PageEntityBaseMixin:
     hash_fields = attributes.UnicodeAttribute(null=True, attr_name='hf')  # Could be binary
 
     entity_type = None  # will be overridden in subclass
-    _additional_fields = {
-        'entity_type'
-    }
+    _additional_fields = {'entity_type'}
 
 
 class EntityBaseMeta(BaseMeta):
@@ -236,9 +230,7 @@ class PageEntity(ConsoleEntityMixin, BaseModel):
 
     entity_type = Entity.Page
 
-    _additional_fields = {
-        'entity_type'
-    }
+    _additional_fields = {'entity_type'}
     _default_bol = True
 
     @classmethod

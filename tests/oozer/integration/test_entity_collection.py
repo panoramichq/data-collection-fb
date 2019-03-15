@@ -16,16 +16,12 @@ from oozer.common.facebook_api import PlatformApiContext
 
 @integration('facebook')
 class TestingEntityCollection(TestCase):
-
     def test_fetch_all_campaigns(self):
 
         with PlatformApiContext(TOKEN) as ctx:
             ad_account = ctx.to_fb_model(AD_ACCOUNT, Entity.AdAccount)
 
-            entities = iter_native_entities_per_adaccount(
-                ad_account,
-                Entity.Campaign
-            )
+            entities = iter_native_entities_per_adaccount(ad_account, Entity.Campaign)
             cnt = 0
             for _ in entities:
                 cnt += 1
@@ -38,10 +34,7 @@ class TestingEntityCollection(TestCase):
         with PlatformApiContext(TOKEN) as ctx:
             ad_account = ctx.to_fb_model(AD_ACCOUNT, Entity.AdAccount)
 
-            entities = iter_native_entities_per_adaccount(
-                ad_account,
-                Entity.AdSet
-            )
+            entities = iter_native_entities_per_adaccount(ad_account, Entity.AdSet)
             cnt = 0
             for _ in entities:
                 cnt += 1
@@ -54,10 +47,7 @@ class TestingEntityCollection(TestCase):
         with PlatformApiContext(TOKEN) as ctx:
             ad_account = ctx.to_fb_model(AD_ACCOUNT, Entity.AdAccount)
 
-            entities = iter_native_entities_per_adaccount(
-                ad_account,
-                Entity.Ad
-            )
+            entities = iter_native_entities_per_adaccount(ad_account, Entity.Ad)
             cnt = 0
             for _ in entities:
                 cnt += 1
@@ -69,10 +59,7 @@ class TestingEntityCollection(TestCase):
         with PlatformApiContext(TOKEN) as ctx:
             ad_account = ctx.to_fb_model(AD_ACCOUNT, Entity.AdAccount)
 
-            entities = iter_native_entities_per_adaccount(
-                ad_account,
-                Entity.AdCreative
-            )
+            entities = iter_native_entities_per_adaccount(ad_account, Entity.AdCreative)
             cnt = 0
             for _ in entities:
                 cnt += 1
@@ -84,10 +71,7 @@ class TestingEntityCollection(TestCase):
         with PlatformApiContext(TOKEN) as ctx:
             ad_account = ctx.to_fb_model(AD_ACCOUNT, Entity.AdAccount)
 
-            entities = iter_native_entities_per_adaccount(
-                ad_account,
-                Entity.AdVideo
-            )
+            entities = iter_native_entities_per_adaccount(ad_account, Entity.AdVideo)
             cnt = 0
             for entity in entities:
                 assert entity['account_id'] == AD_ACCOUNT  # This tests if we're augmenting correctly
@@ -99,10 +83,7 @@ class TestingEntityCollection(TestCase):
     def test_fetch_all_custom_audiences(self):
         with PlatformApiContext(TOKEN) as ctx:
             ad_account = ctx.to_fb_model(AD_ACCOUNT, Entity.AdAccount)
-            entities = iter_native_entities_per_adaccount(
-                ad_account,
-                Entity.CustomAudience
-            )
+            entities = iter_native_entities_per_adaccount(ad_account, Entity.CustomAudience)
             cnt = 0
 
             for _ in entities:
@@ -114,10 +95,7 @@ class TestingEntityCollection(TestCase):
     def test_fetch_all_page_posts(self):
         with PlatformApiContext(TOKEN) as ctx:
             page = ctx.to_fb_model(PAGE, Entity.Page)
-            entities = iter_native_entities_per_page(
-                page,
-                Entity.PagePost
-            )
+            entities = iter_native_entities_per_page(page, Entity.PagePost)
             cnt = 0
 
             for _ in entities:
@@ -140,9 +118,7 @@ class TestingEntityCollectionPipeline(TestCase):
             sweep_id='1'
         )
 
-        data_iter = iter_collect_entities_per_adaccount(
-            job_scope
-        )
+        data_iter = iter_collect_entities_per_adaccount(job_scope)
 
         cnt = 0
         for _ in data_iter:
@@ -164,9 +140,7 @@ class TestingEntityCollectionPipeline(TestCase):
             sweep_id='1'
         )
 
-        data_iter = iter_collect_entities_per_adaccount(
-            job_scope
-        )
+        data_iter = iter_collect_entities_per_adaccount(job_scope)
 
         cnt = 0
         for _ in data_iter:
@@ -188,9 +162,7 @@ class TestingEntityCollectionPipeline(TestCase):
             sweep_id='1'
         )
 
-        data_iter = iter_collect_entities_per_adaccount(
-            job_scope
-        )
+        data_iter = iter_collect_entities_per_adaccount(job_scope)
 
         cnt = 0
         for _ in data_iter:
@@ -211,9 +183,7 @@ class TestingEntityCollectionPipeline(TestCase):
             sweep_id='1'
         )
 
-        data_iter = iter_collect_entities_per_adaccount(
-            job_scope
-        )
+        data_iter = iter_collect_entities_per_adaccount(job_scope)
 
         cnt = 0
         for _ in data_iter:
@@ -234,9 +204,7 @@ class TestingEntityCollectionPipeline(TestCase):
             sweep_id='1'
         )
 
-        data_iter = iter_collect_entities_per_page(
-            job_scope
-        )
+        data_iter = iter_collect_entities_per_page(job_scope)
 
         cnt = 0
         for _ in data_iter:

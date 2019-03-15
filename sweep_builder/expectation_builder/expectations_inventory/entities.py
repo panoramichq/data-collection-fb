@@ -14,12 +14,7 @@ from sweep_builder.types import ExpectationGeneratorType
 def entities_per_ad_account(entity_type: str, reality_claim: RealityClaim) -> Generator[ExpectationClaim, None, None]:
     """
     Generates "fetch EntityType entities metadata per given AA" job call sig
-
-    :param str entity_type: One of Entity enum values
-    :param RealityClaim reality_claim:
-    :rtype: Generator[ExpectationClaim]
     """
-
     # Mental Note:
     # This job signature generator is designed to be parked
     # *under AdAccount job signatures generators inventory*
@@ -56,12 +51,7 @@ def entities_per_ad_account(entity_type: str, reality_claim: RealityClaim) -> Ge
 def entities_per_page(entity_type: str, reality_claim: RealityClaim) -> Generator[ExpectationClaim, None, None]:
     """
     Generates "fetch EntityType entities metadata per given Page" job call sig
-
-    :param str entity_type: One of Entity enum values
-    :param RealityClaim reality_claim:
-    :rtype: Generator[ExpectationClaim]
     """
-
     assert entity_type in Entity.NON_AA_SCOPED
 
     yield ExpectationClaim(
@@ -81,12 +71,7 @@ def entities_per_page(entity_type: str, reality_claim: RealityClaim) -> Generato
 def entities_per_page_post(entity_type: str, reality_claim: RealityClaim) -> Generator[ExpectationClaim, None, None]:
     """
     Generates "fetch EntityType entities metadata per given Page" job call sig
-
-    :param str entity_type: One of Entity enum values
-    :param RealityClaim reality_claim:
-    :rtype: Generator[ExpectationClaim]
     """
-
     assert entity_type in Entity.NON_AA_SCOPED
 
     yield ExpectationClaim(
@@ -142,47 +127,24 @@ def ad_account_entity(reality_claim: RealityClaim) -> Generator[ExpectationClaim
     )
 
 
-ad_account: ExpectationGeneratorType = functools.partial(
-    entities_per_ad_account,
-    Entity.AdAccount
-)
+ad_account: ExpectationGeneratorType = functools.partial(entities_per_ad_account, Entity.AdAccount)
 
-campaign_entities_per_ad_account: ExpectationGeneratorType = functools.partial(
-    entities_per_ad_account,
-    Entity.Campaign
-)
+campaign_entities_per_ad_account: ExpectationGeneratorType = functools.partial(entities_per_ad_account, Entity.Campaign)
 
-adset_entities_per_ad_account: ExpectationGeneratorType = functools.partial(
-    entities_per_ad_account,
-    Entity.AdSet
-)
+adset_entities_per_ad_account: ExpectationGeneratorType = functools.partial(entities_per_ad_account, Entity.AdSet)
 
-ad_entities_per_ad_account: ExpectationGeneratorType = functools.partial(
-    entities_per_ad_account,
-    Entity.Ad
-)
+ad_entities_per_ad_account: ExpectationGeneratorType = functools.partial(entities_per_ad_account, Entity.Ad)
 
 ad_creative_entities_per_ad_account: ExpectationGeneratorType = functools.partial(
-    entities_per_ad_account,
-    Entity.AdCreative
+    entities_per_ad_account, Entity.AdCreative
 )
 
-ad_video_entities_per_ad_account: ExpectationGeneratorType = functools.partial(
-    entities_per_ad_account,
-    Entity.AdVideo
-)
+ad_video_entities_per_ad_account: ExpectationGeneratorType = functools.partial(entities_per_ad_account, Entity.AdVideo)
 
 custom_audience_entities_per_ad_account: ExpectationGeneratorType = functools.partial(
-    entities_per_ad_account,
-    Entity.CustomAudience
+    entities_per_ad_account, Entity.CustomAudience
 )
 
-page_post_entities_per_page: ExpectationGeneratorType = functools.partial(
-    entities_per_page,
-    Entity.PagePost
-)
+page_post_entities_per_page: ExpectationGeneratorType = functools.partial(entities_per_page, Entity.PagePost)
 
-comment_entities_per_page_post: ExpectationGeneratorType = functools.partial(
-    entities_per_page_post,
-    Entity.Comment
-)
+comment_entities_per_page_post: ExpectationGeneratorType = functools.partial(entities_per_page_post, Entity.Comment)

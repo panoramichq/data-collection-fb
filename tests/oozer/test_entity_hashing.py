@@ -13,7 +13,6 @@ from oozer.entities.entity_hash import EntityHash, _checksum_entity
 
 
 class TestEntityHasher(TestCase):
-
     def _manufacture_job_scope(self):
         return job_scope.JobScope(
             ad_account_id=AD_ACCOUNT,
@@ -33,33 +32,18 @@ class TestEntityHasher(TestCase):
         return c
 
     def test_hash_calculation(self):
-        checksum = _checksum_entity(
-            self._manufacture_test_entity()
-        )
+        checksum = _checksum_entity(self._manufacture_test_entity())
 
-        assert checksum == EntityHash(
-            data='e92f1414ef60429f',
-            fields='0d96d28039c4c9b8'
-        )
+        assert checksum == EntityHash(data='e92f1414ef60429f', fields='0d96d28039c4c9b8')
 
     def test_field_selection(self):
         entity = self._manufacture_test_entity()
-        checksum = _checksum_entity(
-            entity, ['account_id', 'buying_type']
-        )
+        checksum = _checksum_entity(entity, ['account_id', 'buying_type'])
 
-        assert checksum == EntityHash(
-            data='298161fe360af3f3',
-            fields='1558fc6663140a4e'
-        )
+        assert checksum == EntityHash(data='298161fe360af3f3', fields='1558fc6663140a4e')
 
         # Check changing of value not selected does not break anything
         entity['objective'] = 'POST_ENGAGEMENT'
-        checksum = _checksum_entity(
-            entity, ['account_id', 'buying_type']
-        )
+        checksum = _checksum_entity(entity, ['account_id', 'buying_type'])
 
-        assert checksum == EntityHash(
-            data='298161fe360af3f3',
-            fields='1558fc6663140a4e'
-        )
+        assert checksum == EntityHash(data='298161fe360af3f3', fields='1558fc6663140a4e')

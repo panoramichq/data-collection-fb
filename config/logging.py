@@ -1,3 +1,5 @@
+# flake8: noqa: E722
+
 import logging
 
 LEVEL = 'INFO'

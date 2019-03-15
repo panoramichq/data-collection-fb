@@ -15,7 +15,6 @@ from tests.base import random
 
 
 class TestAdAccountImportTask(TestCase):
-
     def setUp(self):
         super().setUp()
         self.sweep_id = random.gen_string_id()
@@ -37,10 +36,9 @@ class TestAdAccountImportTask(TestCase):
 
         with mock.patch.object(report_job_status_task, 'delay') as status_task, \
             mock.patch.object(PlatformTokenManager, 'get_best_token', return_value=None) as get_best_token, \
-            self.assertRaises(ValueError) as ex_trap:
+                self.assertRaises(ValueError) as ex_trap:
 
             # and code that falls back on PlatformTokenManager.get_best_token() gets nothing.
-
             import_ad_accounts_task(job_scope, None)
 
         # so, it must complain specifically about tokens
@@ -52,10 +50,7 @@ class TestAdAccountImportTask(TestCase):
         assert status_task.called
         aa, kk = status_task.call_args
         assert not kk
-        assert aa == (
-            JobStatus.GenericError,
-            job_scope
-        )
+        assert aa == (JobStatus.GenericError, job_scope)
 
     def test_aa_import(self):
 
@@ -84,7 +79,7 @@ class TestAdAccountImportTask(TestCase):
 
         with mock.patch.object(ConsoleApi, 'get_accounts', return_value=accounts) as gaa, \
             mock.patch.object(AdAccountEntity, 'upsert') as aa_upsert, \
-            mock.patch.object(report_job_status_task, 'delay') as status_task:
+                mock.patch.object(report_job_status_task, 'delay') as status_task:
 
             import_ad_accounts_task(job_scope, None)
 
@@ -99,16 +94,14 @@ class TestAdAccountImportTask(TestCase):
         assert aa_upsert.call_count == 2
 
         active_account_upsert_args = (
-            (self.scope_id, active_ad_account_id),
-            {
+            (self.scope_id, active_ad_account_id), {
                 'is_active': True,
                 'updated_by_sweep_id': self.sweep_id
             }
         )
 
         inactive_account_upsert_args = (
-            (self.scope_id, inactive_ad_account_id),
-            {
+            (self.scope_id, inactive_ad_account_id), {
                 'is_active': False,
                 'updated_by_sweep_id': self.sweep_id
             }
@@ -146,7 +139,7 @@ class TestAdAccountImportTask(TestCase):
 
         with mock.patch.object(ConsoleApi, 'get_pages', return_value=pages) as gp, \
             mock.patch.object(PageEntity, 'upsert') as pg_upsert, \
-            mock.patch.object(report_job_status_task, 'delay') as status_task:
+                mock.patch.object(report_job_status_task, 'delay') as status_task:
 
             import_pages_task(job_scope, None)
 
@@ -161,16 +154,14 @@ class TestAdAccountImportTask(TestCase):
         assert pg_upsert.call_count == 2
 
         active_page_upsert_args = (
-            (self.scope_id, active_page_id),
-            {
+            (self.scope_id, active_page_id), {
                 'is_active': True,
                 'updated_by_sweep_id': self.sweep_id
             }
         )
 
         inactive_account_upsert_args = (
-            (self.scope_id, inactive_page_id),
-            {
+            (self.scope_id, inactive_page_id), {
                 'is_active': False,
                 'updated_by_sweep_id': self.sweep_id
             }
@@ -180,7 +171,6 @@ class TestAdAccountImportTask(TestCase):
 
         assert args1 == active_page_upsert_args
         assert args2 == inactive_account_upsert_args
-
 
     def test__get_entities_to_import(self):
         accounts = [

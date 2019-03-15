@@ -1,3 +1,4 @@
+# flake8: noqa: E722
 """
 Module contains switches governing what jobs are to be *disabled*
 from providing expectations. The job code itself is not disabled,

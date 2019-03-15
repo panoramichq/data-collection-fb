@@ -17,7 +17,6 @@ from oozer.entities.collect_adaccount import collect_adaccount
 
 
 class TestCollectAdAccount(TestCase):
-
     def setUp(self):
         super().setUp()
         self.sweep_id = random.gen_string_id()
@@ -75,16 +74,14 @@ class TestCollectAdAccount(TestCase):
             entity_type=Entity.AdAccount
         )
 
-        account_data = AdAccount(
-            fbid=account_id,
-        )
+        account_data = AdAccount(fbid=account_id, )
         # Did not find a better way how to set this data on the inner AbstractCrudObject.
         timezone = 'Europe/Prague'
         account_data._data['timezone_name'] = timezone
         account_data._data['account_id'] = account_id
 
         with mock.patch.object(FB_ADACCOUNT_MODEL, 'remote_read', return_value=account_data), \
-            mock.patch.object(NormalStore, 'store') as store:
+                mock.patch.object(NormalStore, 'store') as store:
             collect_adaccount(job_scope)
 
         assert store.called_with(account_data), 'Data should be stored with the cold store module'
@@ -103,7 +100,8 @@ class TestCollectAdAccount(TestCase):
         assert ad_account_dynamo.ad_account_id == account_id
 
         assert vendor_data_key in data_actual and type(
-            data_actual[vendor_data_key]) == dict, 'Special vendor key is present in the returned data'
+            data_actual[vendor_data_key]
+        ) == dict, 'Special vendor key is present in the returned data'
         assert data_actual[vendor_data_key] == {
             'id': universal_id_should_be
         }, 'Vendor data is set with the right universal id'

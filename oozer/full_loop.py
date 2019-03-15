@@ -24,18 +24,18 @@ from sweep_builder.tasks import build_sweep
 logger = logging.getLogger(__name__)
 
 
-def generate_sweep_id():
+def generate_sweep_id() -> str:
     return datetime.utcnow().strftime('%Y%m%d%H%M%S')
 
 
-def run_sweep(sweep_id=None):
+def run_sweep(sweep_id: str = None) -> int:
     sweep_id = sweep_id or generate_sweep_id()
     build_sweep(sweep_id)
     delay_next_sweep_start_by = run_sweep_looper_suggest_restart_time(sweep_id)
     return delay_next_sweep_start_by
 
 
-def run_sweep_and_sleep(sweep_id=None):
+def run_sweep_and_sleep(sweep_id: str = None):
     """
     Like run_sweep but actually sleeps for suggested amount of time before quitting.
 
@@ -43,17 +43,13 @@ def run_sweep_and_sleep(sweep_id=None):
     This is a crude way to spacing out the sweep runs. Alternative would be to
     turn runner back into a Celery task and use Celery timed delay API for recursive
     self-scheduling.
-
-    :param sweep_id:
-    :return:
     """
-
     delay_next_sweep_start_by = run_sweep(sweep_id=sweep_id)
     _measurement_name_base = __name__ + '.run_sweep_and_sleep.'  # <- function name. adjust if changed
-    _measurement_tags = dict(
-        sweep_id=sweep_id
-    )
-    Measure.gauge(_measurement_name_base + 'delay_next_sweep_start_by', tags=_measurement_tags)(int(delay_next_sweep_start_by))
+    _measurement_tags = dict(sweep_id=sweep_id)
+    Measure.gauge(
+        _measurement_name_base + 'delay_next_sweep_start_by', tags=_measurement_tags
+    )(int(delay_next_sweep_start_by))
     logger.info(f"Done with main sweep run. Waiting for {delay_next_sweep_start_by} seconds before quitting")
     time.sleep(delay_next_sweep_start_by)
 

@@ -1,3 +1,5 @@
+# flake8: noqa: E722
+
 TOKEN = None
 URL = 'https://console.operam.com'
 

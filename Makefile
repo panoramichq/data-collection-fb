@@ -162,3 +162,30 @@ requirements-compile:
 	    /bin/bash -c "pip-compile requirements.base.src && \
 	    			  pip-compile requirements.src && \
 	    			  pip-compile requirements.dev.src"
+
+
+flake8:
+	docker run \
+		-v $(PWD):$(WORKDIR) \
+		--rm $(IMAGE_NAME_FULL):latest \
+	    /bin/bash -c "flake8 --filename=*.py"
+
+.PHONY: flake8
+
+
+yapf:
+	docker run \
+		-v $(PWD):$(WORKDIR) \
+		--rm $(IMAGE_NAME_FULL):latest \
+	    /bin/bash -c "yapf . --recursive -i"
+
+.PHONY: yapf
+
+
+yapf-check:
+	docker run \
+		-v $(PWD):$(WORKDIR) \
+		--rm $(IMAGE_NAME_FULL):latest \
+	    /bin/bash -c "yapf . --recursive --diff"
+
+.PHONY: yapf-check

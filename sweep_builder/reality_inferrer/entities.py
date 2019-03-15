@@ -15,12 +15,11 @@ Here we base our understanding of the world based on scraps of data
 these workers already collected some time before.
 """
 
-from typing import Generator
+from typing import Generator, List, Any, Dict
 
 from common.enums.entity import Entity
 from common.store import entities
 from common.measurement import Measure
-
 
 entity_type_model_map = {
     Entity.Campaign: entities.CampaignEntity,
@@ -31,17 +30,14 @@ entity_type_model_map = {
     Entity.CustomAudience: entities.CustomAudienceEntity,
 }
 
-page_entity_type_model_map = {
-    Entity.PagePost: entities.PagePostEntity
-}
+page_entity_type_model_map = {Entity.PagePost: entities.PagePostEntity}
 
 
-def iter_entities_per_ad_account_id(ad_account_id, fields=None, entity_types=None):
-    """
-    :return: A generator of yielding data for all children of given AdAccounts
-    :rtype: Generator[Dict]
-    """
-
+def iter_entities_per_ad_account_id(
+    ad_account_id: str,
+    fields: List[str] = None,
+    entity_types: List[str] = None,
+) -> Generator[Dict[str, Any], None, None]:
     # occasionally it's important to pass through
     # we are not overriding the values, but must pass some value
     # state in entity_models
@@ -54,10 +50,7 @@ def iter_entities_per_ad_account_id(ad_account_id, fields=None, entity_types=Non
         # intentionally leaving this logic brittle
         # this function is linked to types "statically"
         # and is not expected to hide misses in the map.
-        entity_models = [
-            entity_type_model_map[entity_type]
-            for entity_type in entity_types
-        ]
+        entity_models = [entity_type_model_map[entity_type] for entity_type in entity_types]
 
     _step = 1000
 
@@ -66,10 +59,7 @@ def iter_entities_per_ad_account_id(ad_account_id, fields=None, entity_types=Non
 
         with Measure.counter(
             __name__ + '.entities_per_ad_account_id',
-            tags=dict(
-                ad_account_id=ad_account_id,
-                entity_type=EntityModel.entity_type
-            )
+            tags=dict(ad_account_id=ad_account_id, entity_type=EntityModel.entity_type)
         ) as cntr:
 
             for record in EntityModel.query(ad_account_id):
@@ -82,19 +72,15 @@ def iter_entities_per_ad_account_id(ad_account_id, fields=None, entity_types=Non
                 cntr += cnt % _step
 
 
-def iter_entities_per_page_id(page_id, fields=None, page_entity_types=None):
-    """
-    :return: A generator of yielding data for all children of given Page
-    :rtype: Generator[Dict]
-    """
-
+def iter_entities_per_page_id(
+    page_id: str,
+    fields: List[str] = None,
+    page_entity_types: List[str] = None,
+) -> Generator[Dict[str, Any], None, None]:
     if not page_entity_types:
         page_entity_models = page_entity_type_model_map.values()
     else:
-        page_entity_models = [
-            page_entity_type_model_map[entity_type]
-            for entity_type in page_entity_types
-        ]
+        page_entity_models = [page_entity_type_model_map[entity_type] for entity_type in page_entity_types]
 
     _step = 1000
 
@@ -102,11 +88,7 @@ def iter_entities_per_page_id(page_id, fields=None, page_entity_types=None):
         cnt = 0
 
         with Measure.counter(
-            __name__ + '.entities_per_page_id',
-            tags=dict(
-                entity_id=page_id,
-                entity_type=EntityModel.entity_type
-            )
+            __name__ + '.entities_per_page_id', tags=dict(entity_id=page_id, entity_type=EntityModel.entity_type)
         ) as cntr:
 
             for record in EntityModel.query(page_id):

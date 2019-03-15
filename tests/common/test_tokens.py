@@ -1,5 +1,5 @@
 # must be first, as it does event loop patching and other "first" things
-from tests.base.testcase import TestCase, mock
+from tests.base.testcase import TestCase
 
 from common.enums.entity import Entity
 from common.enums.failure_bucket import FailureBucket
@@ -10,7 +10,6 @@ from tests.base.random import gen_string_id
 
 
 class TestingTokenManager(TestCase):
-
     def setUp(self):
         super().setUp()
         self.sweep_id = gen_string_id()  # <-- generates random ID for each test run
@@ -56,7 +55,7 @@ class TestingTokenManager(TestCase):
         assert token_manager.get_token_count() == 3
 
         # Used the first token
-        token_manager.report_usage_per_failure_bucket(first_token, FailureBucket.Throttling) # most penalized
+        token_manager.report_usage_per_failure_bucket(first_token, FailureBucket.Throttling)  # most penalized
         token_manager.report_usage_per_failure_bucket(third_token, FailureBucket.TooLarge)  # somewhat heavily penalized
         token_manager.report_usage_per_failure_bucket(second_token, 'blah')  # gets default 1 use
 
@@ -84,26 +83,14 @@ class TestingTokenManager(TestCase):
         scope_id = gen_string_id()
 
         # Scope-centered jobs must result in scope-centered key for token storage
-        job_scope = JobScope(
-            sweep_id = sweep_id,
-            entity_type = Entity.Scope,
-            entity_id = scope_id
-        )
+        job_scope = JobScope(sweep_id=sweep_id, entity_type=Entity.Scope, entity_id=scope_id)
         token_manager = PlatformTokenManager.from_job_scope(job_scope)
-        assert token_manager.queue_key == key_gen(
-            asset_scope=scope_id,
-            sweep_id=sweep_id
-        )
+        assert token_manager.queue_key == key_gen(asset_scope=scope_id, sweep_id=sweep_id)
 
         # non-Scope-centered jobs must result in 'fb'-centered key for token storage
-        job_scope = JobScope(
-            sweep_id = sweep_id,
-        )
+        job_scope = JobScope(sweep_id=sweep_id, )
         token_manager = PlatformTokenManager.from_job_scope(job_scope)
-        assert token_manager.queue_key == key_gen(
-            asset_scope=JobScope.namespace,
-            sweep_id=sweep_id
-        )
+        assert token_manager.queue_key == key_gen(asset_scope=JobScope.namespace, sweep_id=sweep_id)
 
     def test_populate_from_scope_record(self):
 
@@ -115,23 +102,21 @@ class TestingTokenManager(TestCase):
 
         scope_record = AssetScope()
         scope_record.scope = scope_id
-        scope_record.scope_api_token=console_token
-        scope_record.set_cache(platform_tokens={platform_token,})
+        scope_record.scope_api_token = console_token
+        scope_record.set_cache(platform_tokens={
+            platform_token,
+        })
 
         PlatformTokenManager.populate_from_scope_entity(scope_record, sweep_id)
 
         # now let's make sure we see those tokens:
 
         # Scope-centered jobs must result in scope-centered key for token storage
-        job_scope = JobScope(
-            sweep_id = sweep_id,
-            entity_type = Entity.Scope,
-            entity_id = scope_id
-        )
+        job_scope = JobScope(sweep_id=sweep_id, entity_type=Entity.Scope, entity_id=scope_id)
         assert console_token == PlatformTokenManager.from_job_scope(job_scope).get_best_token()
 
         job_scope = JobScope(
-            sweep_id = sweep_id,
+            sweep_id=sweep_id,
             # uses .namespace default value as 2nd value in redis key. no need to set here.
         )
         assert platform_token == PlatformTokenManager.from_job_scope(job_scope).get_best_token()

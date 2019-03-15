@@ -26,7 +26,7 @@ DAYS_BACK_DECAY_RATE = adapt_decay_rate_to_population(365 * 2)
 MINUTES_AWAY_FROM_WHOLE_HOUR_DECAY_RATE = adapt_decay_rate_to_population(30)
 
 
-def get_minutes_away_from_whole_hour():
+def get_minutes_away_from_whole_hour() -> int:
     minute = now().minute
     if minute > 30:
         minute = 60 - minute
@@ -43,17 +43,10 @@ def get_minutes_away_from_whole_hour():
 #  ========
 #  ~20k
 @functools.lru_cache(maxsize=20000)
-def assign_score(job_id, timezone):
-    # type: (str, str) -> int
+def assign_score(job_id: str, timezone: str) -> int:
     """
     Calculate score for a given job.
-
-    :param str job_id:
-    :param str timezone:
-    :return: score
-    :rtype: int
     """
-
     # for convenience of reading of the code below,
     # exploding the job id parts into individual vars
     job_id_parts = parse_id_parts(job_id)
@@ -124,8 +117,8 @@ def assign_score(job_id, timezone):
                 # TODO: decay this based on time here, instead of below, maybe...
                 score += 10
             elif (
-                collection_record.last_success_dt and collection_record.last_failure_dt
-                and collection_record.last_success_dt > collection_record.last_failure_dt
+                collection_record.last_success_dt and collection_record.last_failure_dt and
+                collection_record.last_success_dt > collection_record.last_failure_dt
             ):
                 # Some history of recent success, but also record of failures,
                 # meaning next time we schedule this one, it may error our

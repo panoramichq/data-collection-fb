@@ -1,3 +1,5 @@
+# flake8: noqa: E722
+
 BUILD_ID = 'latest'
 COMMIT_ID = None
 

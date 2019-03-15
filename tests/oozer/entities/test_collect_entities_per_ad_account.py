@@ -21,7 +21,6 @@ from tests.base import random
 
 
 class TestCollectEntitiesPerAdAccount(TestCase):
-
     def setUp(self):
         super().setUp()
         self.sweep_id = random.gen_string_id()
@@ -87,7 +86,7 @@ class TestCollectEntitiesPerAdAccount(TestCase):
 
             entities_data = [fb_data]
             with mock.patch.object(FB_ADACCOUNT_MODEL, get_method_name, return_value=entities_data), \
-                 mock.patch.object(ChunkDumpStore, 'store') as store:
+                    mock.patch.object(ChunkDumpStore, 'store') as store:
 
                 list(iter_collect_entities_per_adaccount(job_scope))
 
@@ -100,7 +99,9 @@ class TestCollectEntitiesPerAdAccount(TestCase):
 
             vendor_data_key = '__oprm'
 
-            assert vendor_data_key in data_actual and type(data_actual[vendor_data_key]) == dict, 'Special vendor key is present in the returned data'
+            assert vendor_data_key in data_actual and type(
+                data_actual[vendor_data_key]
+            ) == dict, 'Special vendor key is present in the returned data'
             assert data_actual[vendor_data_key] == {
                 'id': universal_id_should_be
             }, 'Vendor data is set with the right universal id'

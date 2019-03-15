@@ -31,14 +31,10 @@ def _extract_token_entity_type_parent_entity(
     entity_type = job_scope.report_variant
     token = job_scope.token
     if not token:
-        raise ValueError(
-            f"Job {job_scope.job_id} cannot proceed. No platform tokens provided."
-        )
+        raise ValueError(f"Job {job_scope.job_id} cannot proceed. No platform tokens provided.")
 
     with PlatformApiContext(token) as fb_ctx:
-        root_fb_entity = fb_ctx.to_fb_model(
-            job_scope[parent_entity_id_key], parent_entity_type
-        )
+        root_fb_entity = fb_ctx.to_fb_model(job_scope[parent_entity_id_key], parent_entity_type)
 
     return token, entity_type, root_fb_entity
 
@@ -53,7 +49,6 @@ def _iterate_native_entities_per_parent(
     """
     Generic getter for entities from the parent's edge from FB API
     """
-
     if entity_type not in allowed_entity_types:
         raise ValueError(
             f'Value of "entity_type" argument must be one of {allowed_entity_types}, '
@@ -76,10 +71,7 @@ def _iterate_native_entities_per_parent(
     if page_size:
         params['limit'] = page_size
 
-    yield from getter_method(
-        fields=fields_to_fetch,
-        params=params
-    )
+    yield from getter_method(fields=fields_to_fetch, params=params)
 
 
 def iter_native_entities_per_adaccount(
@@ -87,17 +79,17 @@ def iter_native_entities_per_adaccount(
     entity_type: str,
     fields: List[str] = None,
     page_size: int = None,
-) -> Generator[Union[
-    FB_CAMPAIGN_MODEL,
-    FB_ADSET_MODEL,
-    FB_AD_MODEL,
-    FB_AD_CREATIVE_MODEL,
-    FB_AD_VIDEO_MODEL,
-    FB_CUSTOM_AUDIENCE_MODEL,
-], None, None]:
+) -> Generator[Union[FB_CAMPAIGN_MODEL,
+                     FB_ADSET_MODEL,
+                     FB_AD_MODEL,
+                     FB_AD_CREATIVE_MODEL,
+                     FB_AD_VIDEO_MODEL,
+                     FB_CUSTOM_AUDIENCE_MODEL,
+                     ], None, None]:
     """
     Generic getter for entities from the AdAccount edge
     """
+
     def get_augmented_account_ad_videos(fields, params):
         parsed_account_id = ad_account['id'].split('_')[1]  # Parse act_12345678
         for ad_video in ad_account.get_ad_videos(fields=fields, params=params):
@@ -166,11 +158,10 @@ def iter_native_entities_per_page_post(
     )
 
 
-def iter_collect_entities_per_adaccount(job_scope: JobScope):
+def iter_collect_entities_per_adaccount(job_scope: JobScope) -> Generator[Dict[str, Any], None, None]:
     """
     Collects an arbitrary entity for an ad account
     """
-
     token, entity_type, root_fb_entity = _extract_token_entity_type_parent_entity(
         job_scope,
         Entity.AA_SCOPED,
@@ -178,10 +169,7 @@ def iter_collect_entities_per_adaccount(job_scope: JobScope):
         'ad_account_id',
     )
 
-    entities = iter_native_entities_per_adaccount(
-        root_fb_entity,
-        entity_type
-    )
+    entities = iter_native_entities_per_adaccount(root_fb_entity, entity_type)
 
     record_id_base_data = job_scope.to_dict()
     record_id_base_data.update(
@@ -222,11 +210,10 @@ def iter_collect_entities_per_adaccount(job_scope: JobScope):
     token_manager.report_usage(token)
 
 
-def iter_collect_entities_per_page(job_scope: JobScope):
+def iter_collect_entities_per_page(job_scope: JobScope) -> Generator[Dict[str, Any], None, None]:
     """
     Collects an arbitrary entity for a page
     """
-
     token, entity_type, root_fb_entity = _extract_token_entity_type_parent_entity(
         job_scope,
         [Entity.PagePost],
@@ -234,10 +221,7 @@ def iter_collect_entities_per_page(job_scope: JobScope):
         'ad_account_id',
     )
 
-    entities = iter_native_entities_per_page(
-        root_fb_entity,
-        entity_type
-    )
+    entities = iter_native_entities_per_page(root_fb_entity, entity_type)
 
     record_id_base_data = job_scope.to_dict()
     record_id_base_data.update(
@@ -251,11 +235,7 @@ def iter_collect_entities_per_page(job_scope: JobScope):
         for entity in entities:
             entity_data = entity.export_all_data()
             entity_data = add_vendor_data(
-                entity_data,
-                id=generate_universal_id(
-                    entity_id=entity_data.get('id'),
-                    **record_id_base_data
-                )
+                entity_data, id=generate_universal_id(entity_id=entity_data.get('id'), **record_id_base_data)
             )
             entity_data['page_id'] = job_scope.ad_account_id
 
@@ -278,11 +258,10 @@ def iter_collect_entities_per_page(job_scope: JobScope):
     token_manager.report_usage(token)
 
 
-def iter_collect_entities_per_page_post(job_scope: JobScope):
+def iter_collect_entities_per_page_post(job_scope: JobScope) -> Generator[Dict[str, Any], None, None]:
     """
     Collects an arbitrary entity for a page post
     """
-
     token, entity_type, root_fb_entity = _extract_token_entity_type_parent_entity(
         job_scope,
         [Entity.Comment],
@@ -290,10 +269,7 @@ def iter_collect_entities_per_page_post(job_scope: JobScope):
         'entity_id',
     )
 
-    entities = iter_native_entities_per_page_post(
-        root_fb_entity,
-        entity_type
-    )
+    entities = iter_native_entities_per_page_post(root_fb_entity, entity_type)
 
     record_id_base_data = job_scope.to_dict()
     record_id_base_data.update(
@@ -308,11 +284,7 @@ def iter_collect_entities_per_page_post(job_scope: JobScope):
         for entity in entities:
             entity_data = entity.export_all_data()
             entity_data = add_vendor_data(
-                entity_data,
-                id=generate_universal_id(
-                    entity_id=entity_data.get('id'),
-                    **record_id_base_data
-                )
+                entity_data, id=generate_universal_id(entity_id=entity_data.get('id'), **record_id_base_data)
             )
             entity_data['page_id'] = job_scope.ad_account_id
             entity_data['post_id'] = job_scope.entity_id

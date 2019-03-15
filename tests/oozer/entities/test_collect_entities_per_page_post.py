@@ -13,7 +13,6 @@ from tests.base import random
 
 
 class TestCollectEntitiesPerPagePost(TestCase):
-
     def setUp(self):
         super().setUp()
         self.sweep_id = random.gen_string_id()
@@ -23,12 +22,8 @@ class TestCollectEntitiesPerPagePost(TestCase):
     def test_correct_vendor_data_inserted_into_cold_store_payload_comments(self):
 
         entity_types = [Entity.Comment]
-        fb_model_map = {
-            Entity.Comment: FB_COMMENT_MODEL
-        }
-        get_all_method_map = {
-            Entity.Comment: 'get_comments'
-        }
+        fb_model_map = {Entity.Comment: FB_COMMENT_MODEL}
+        get_all_method_map = {Entity.Comment: 'get_comments'}
 
         for entity_type in entity_types:
 
@@ -57,7 +52,7 @@ class TestCollectEntitiesPerPagePost(TestCase):
 
             entities_data = [fb_data]
             with mock.patch.object(FB_PAGE_POST_MODEL, get_method_name, return_value=entities_data), \
-              mock.patch.object(ChunkDumpStore, 'store') as store:
+                    mock.patch.object(ChunkDumpStore, 'store') as store:
 
                 list(iter_collect_entities_per_page_post(job_scope))
 
@@ -70,7 +65,9 @@ class TestCollectEntitiesPerPagePost(TestCase):
 
             vendor_data_key = '__oprm'
 
-            assert vendor_data_key in data_actual and type(data_actual[vendor_data_key]) == dict, 'Special vendor key is present in the returned data'
+            assert vendor_data_key in data_actual and type(
+                data_actual[vendor_data_key]
+            ) == dict, 'Special vendor key is present in the returned data'
             assert data_actual[vendor_data_key] == {
                 'id': universal_id_should_be
             }, 'Vendor data is set with the right universal id'

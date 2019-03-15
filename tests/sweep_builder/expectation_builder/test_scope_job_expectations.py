@@ -1,5 +1,5 @@
 # must be first, as it does event loop patching and other "first" things
-from tests.base.testcase import TestCase, skip, mock
+from tests.base.testcase import TestCase
 
 import config.application
 
@@ -12,14 +12,9 @@ from tests.base.random import gen_string_id
 
 
 class ScopeJobsExpectationsTests(TestCase):
-
     def test_aa_import_expectation_not_generated_on_nontoken(self):
 
-        reality_claim = RealityClaim(
-            entity_type=Entity.Scope,
-            entity_id=gen_string_id(),
-            tokens=[]
-        )
+        reality_claim = RealityClaim(entity_type=Entity.Scope, entity_id=gen_string_id(), tokens=[])
 
         results = list(iter_expectations([reality_claim]))
 
@@ -29,11 +24,7 @@ class ScopeJobsExpectationsTests(TestCase):
 
         entity_id = gen_string_id()
 
-        reality_claim = RealityClaim(
-            entity_type=Entity.Scope,
-            entity_id=entity_id,
-            tokens=['blah']
-        )
+        reality_claim = RealityClaim(entity_type=Entity.Scope, entity_id=entity_id, tokens=['blah'])
 
         results = list(iter_expectations([reality_claim]))
 

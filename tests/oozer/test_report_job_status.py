@@ -28,9 +28,7 @@ class TestJobDoneReporter(TestCase):
         )
 
         with mock.patch.object(cold_storage, 'store') as store:
-            report_job_status._report_job_done_to_cold_store(
-                job_scope
-            )
+            report_job_status._report_job_done_to_cold_store(job_scope)
 
         assert store.called
         aa, kk = store.call_args

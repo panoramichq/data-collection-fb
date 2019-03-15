@@ -9,7 +9,6 @@ from facebook_business.adobjects.customaudience import CustomAudience
 from facebook_business.adobjects.page import Page
 from facebook_business.adobjects.pagepost import PagePost
 
-
 ENTITY_TYPE_MODEL_MAP = {
     Entity.Ad: Ad,
     Entity.AdAccount: AdAccount,
@@ -22,8 +21,4 @@ ENTITY_TYPE_MODEL_MAP = {
     Entity.PagePost: PagePost,
 }
 
-
-MODEL_ENTITY_TYPE_MAP = {
-    value: key
-    for key, value in ENTITY_TYPE_MODEL_MAP.items()
-}
+MODEL_ENTITY_TYPE_MAP = {value: key for key, value in ENTITY_TYPE_MODEL_MAP.items()}

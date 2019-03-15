@@ -1,3 +1,4 @@
+# flake8: noqa: E722
 """
 Centralized entry point mostly designed for hiding the intricacies of
 setting up Celery worker and presenting it all as simple command
@@ -27,7 +28,6 @@ import sys
 from common.configure_logging import configure_logging
 configure_logging()
 
-
 from common.celeryapp import RoutingKey, get_celery_app, pad_with_build_id
 
 
@@ -50,11 +50,7 @@ class StarterWorkerType:
     sweep_no_wait = 'sweep_no_wait'
     sweeps_loop = 'sweeps_loop'
 
-    ALL = {
-        sweep,
-        sweep_no_wait,
-        sweeps_loop
-    }
+    ALL = {sweep, sweep_no_wait, sweeps_loop}
 
 
 def process_celery_worker_command(command_line_values):
@@ -94,7 +90,8 @@ def process_celery_worker_command(command_line_values):
         # items added to the "high priority" line get to
         # worker sooner because there are very few competitors in that line.
         # The other line may have thousands more tasks.
-        '--queues', ','.join([pad_with_build_id(routing_key) for routing_key in RoutingKey.ALL])
+        '--queues',
+        ','.join([pad_with_build_id(routing_key) for routing_key in RoutingKey.ALL])
         # '--queues', pad_with_build_id(command_line_values.worker_type)
     ]
     celery_app.worker_main(celery_worker_args)
@@ -152,6 +149,7 @@ def process_start_command(command_line_values):
     # OptParser complains about that first, so, here we only get the ones
     # we declare in opt parser config as supported options.
 
+
 commands = {
     'flower': process_celery_flower_command,
     'start': process_start_command,
@@ -168,10 +166,7 @@ def parse_args(argv):
     :param list argv:
     :rtype: _CommandLineValues
     """
-    parser = argparse.ArgumentParser(
-        description=__doc__,
-        formatter_class=argparse.RawDescriptionHelpFormatter
-    )
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
 
     subparsers = parser.add_subparsers(
         # choices=commands.keys(),

@@ -5,7 +5,6 @@ from config import celery as celery_config
 from config.build import BUILD_ID
 from common.bugsnag import configure_bugsnag
 
-
 MODULES_WITH_TASKS = [
     'oozer',
     'oozer.common',
@@ -20,10 +19,7 @@ class RoutingKey:
     default = 'default'
     longrunning = 'longrunning'
 
-    ALL = {
-        default,
-        longrunning
-    }
+    ALL = {default, longrunning}
 
 
 class CeleryTask(Task):
@@ -53,7 +49,7 @@ def _alter_logger(*args, **kwargs):
 _celery_app = None
 
 
-def pad_with_build_id(base_name):
+def pad_with_build_id(base_name: str) -> str:
     # because we could share the same instance of Redis for multiple
     # parallel versions of this stack,
     # we need to separate the queues of one stack version from another.
@@ -66,17 +62,13 @@ def get_celery_app(celery_config=celery_config):
     global _celery_app
 
     if not _celery_app:
-        _celery_app = Celery(
-            task_cls=CeleryTask
-        )
+        _celery_app = Celery(task_cls=CeleryTask)
         _celery_app.config_from_object(celery_config)
 
         # These are top-level module names for folders
         # within which we may have files names `tasks.py`
         # that auto-dicsoverer will find and scrape Celery tasks from
-        _celery_app.autodiscover_tasks(
-            MODULES_WITH_TASKS
-        )
+        _celery_app.autodiscover_tasks(MODULES_WITH_TASKS)
 
         # The concurrency used by individual celery process (per our settings)
         # is Gevent-based concurrency, which is very brittle to non-cooperative threads
@@ -109,16 +101,14 @@ def get_celery_app(celery_config=celery_config):
         def route_task(name, args, kwargs, options, task=None, **kw):
             routing_key = options.get('routing_key', RoutingKey.default)
             if routing_key in special_task_routes:
-                return {
-                    'queue': special_task_routes[routing_key]
-                }
+                return {'queue': special_task_routes[routing_key]}
             else:
                 # will result in this task falling into default route and queue
                 return {}
 
         _celery_app.conf.task_default_queue = pad_with_build_id(RoutingKey.default)
         _celery_app.conf.task_default_routing_key = RoutingKey.default
-        _celery_app.conf.task_routes = (route_task,)
+        _celery_app.conf.task_routes = (route_task, )
 
         # Enable Bugsnag exception tracking
         configure_bugsnag()

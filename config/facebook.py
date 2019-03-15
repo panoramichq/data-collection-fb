@@ -1,3 +1,4 @@
+# flake8: noqa: E722
 
 # used only for local dev
 # running bin/migrate.py with these inserts the objects

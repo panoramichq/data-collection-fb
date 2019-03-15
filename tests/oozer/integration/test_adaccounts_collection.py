@@ -14,7 +14,6 @@ from oozer.common.facebook_api import get_default_fields
 
 @integration('facebook')
 class TestingAdAccountCollectionPipeline(TestCase):
-
     def test_fetch_ad_account_pipeline(self):
 
         job_scope = JobScope(
@@ -32,5 +31,5 @@ class TestingAdAccountCollectionPipeline(TestCase):
 
         assert aa_data
 
-        for required_field in  get_default_fields(AdAccount):
+        for required_field in get_default_fields(AdAccount):
             assert required_field in aa_data_keys, f'{required_field} should be in the response from FB'

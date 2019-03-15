@@ -29,9 +29,7 @@ def configure_bugsnag():
     to make sure we are setup correctly from the beginning.
     """
     if not API_KEY:
-        _logger.warning(
-            "Bugsnag API key is not set, cannot configure exception tracking"
-        )
+        _logger.warning("Bugsnag API key is not set, cannot configure exception tracking")
         return
 
     bugsnag.configure(
@@ -51,7 +49,8 @@ class _JSONEncoder(json.JSONEncoder):
             return super().default(o)
         except:
             try:
-                pickle_repr = 'data:application/python-pickle;base64,' + base64.b64encode(pickle.dumps(o)).decode('ascii')
+                pickle_repr = 'data:application/python-pickle;base64,' + base64.b64encode(pickle.dumps(o)
+                                                                                          ).decode('ascii')
                 if isinstance(o, BaseModel):
                     return pickle_repr
                 return repr(o) + ';' + pickle_repr

@@ -10,20 +10,18 @@ from tests.base.fakemodule import FakeModule
 
 
 class TestingUpdateFromEnv(TestCase):
-
     def test_update_from_env(self):
 
-        fake_environ = {
-            'APP_A_B_VAR_A': 'OVERRIDDEN',
-            'APP_A_B_VAR_B': '2'
-        }
+        fake_environ = {'APP_A_B_VAR_A': 'OVERRIDDEN', 'APP_A_B_VAR_B': '2'}
 
-        module_code = dedent("""
+        module_code = dedent(
+            """
         from common.updatefromenv import update_from_env
         VAR_A = "STRING"
         VAR_B = 1
         update_from_env(__name__, 'config', 'APP_')
-        """)
+        """
+        )
 
         with patch.object(os, 'environ', fake_environ), \
                 FakeModule('config.a.b', module_code) as module:

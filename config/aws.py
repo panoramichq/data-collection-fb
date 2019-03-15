@@ -1,3 +1,5 @@
+# flake8: noqa: E722
+
 S3_ENDPOINT = None
 """
 If you need to manually set s3 endpoint, this is the place. This is especially

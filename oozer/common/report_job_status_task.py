@@ -20,13 +20,17 @@ def report_job_status_task(stage_status: int, job_scope: JobScope):
     And status_context is some sort of dictionary that allows us to divine
     failure contexts
     """
-    from .report_job_status import report_job_status
+    from oozer.common.report_job_status import report_job_status
     from pynamodb.exceptions import PutError
 
     try:
         report_job_status(stage_status, job_scope)
     except PutError as ex:
-        # pynamodb.exceptions.PutError: Failed to put item: An error occurred (ProvisionedThroughputExceededException) on request (6P1M2OO24PI2RJ6ALBBSDROE8RVV4KQNSO5AEMVJF66Q9ASUAAJG) on table (1c5595-datacol-APP_DYNAMODB_FB_SWEEP_ENTITY_REPORT_TYPE_TABLE) when calling the PutItem operation: The level of configured provisioned throughput for the table was exceeded. Consider increasing your provisioning level with the UpdateTable API
+        # pynamodb.exceptions.PutError: Failed to put item: An error occurred
+        # (ProvisionedThroughputExceededException) on request (6P1M2OO24PI2RJ6ALBBSDROE8RVV4KQNSO5AEMVJF66Q9ASUAAJG)
+        # on table (1c5595-datacol-APP_DYNAMODB_FB_SWEEP_ENTITY_REPORT_TYPE_TABLE) when calling the PutItem operation:
+        # The level of configured provisioned throughput for the table was exceeded. Consider increasing
+        # your provisioning level with the UpdateTable API
         # a particular noisy type of this error - ProvisionedThroughputExceededException
         # may happen a lot in prod. At some point Write Units on the table
         # will auto-scale and the error will go away.

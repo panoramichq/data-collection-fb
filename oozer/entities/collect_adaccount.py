@@ -1,4 +1,5 @@
 import logging
+from typing import Any, Dict
 
 from common.celeryapp import get_celery_app
 from common.enums.entity import Entity
@@ -38,12 +39,11 @@ def collect_adaccount_task(job_scope: JobScope, _: JobContext):
     collect_adaccount(job_scope)
 
 
-def collect_adaccount(job_scope: JobScope):
+def collect_adaccount(job_scope: JobScope) -> Dict[str, Any]:
     """
     Collects ad account data for a AA specific JobScope definition.
     :param JobScope job_scope: The JobScope as we get it from the task itself
     :param JobContext job_context: A job context we use for entity checksums (not used at the moment)
-    :rtype: Dict
     """
     if job_scope.report_variant != Entity.AdAccount:
         raise ValueError(f"Report level {job_scope.report_variant} specified is not: {Entity.AdAccount}")
@@ -52,16 +52,14 @@ def collect_adaccount(job_scope: JobScope):
     if not token:
         raise ValueError(f"Job {job_scope.job_id} cannot proceed. No platform tokens provided.")
 
-    assert job_scope.ad_account_id == job_scope.entity_id, f'This is an ad account entity job, account_id should be equal to entity_id'
+    assert job_scope.ad_account_id == job_scope.entity_id, \
+        f'This is an ad account entity job, account_id should be equal to entity_id'
 
     # Used to report token usage by this job
     token_manager = PlatformTokenManager.from_job_scope(job_scope)
 
     with PlatformApiContext(token) as fb_ctx:
-        ad_account = fb_ctx.to_fb_model(
-            job_scope.ad_account_id,
-            Entity.AdAccount
-        )
+        ad_account = fb_ctx.to_fb_model(job_scope.ad_account_id, Entity.AdAccount)
 
         fields = get_default_fields(ad_account.__class__)
 
@@ -84,9 +82,7 @@ def collect_adaccount(job_scope: JobScope):
         augmented_ad_account_data = add_vendor_data(
             # Augment the data returned from the remote API with our vendor data
             ad_account_data_dict,
-            id=generate_universal_id(
-                **job_scope_base
-            )
+            id=generate_universal_id(**job_scope_base)
         )
         feedback_entity_task.delay(ad_account_data_dict, job_scope.report_variant, [None, None])
         store = NormalStore(job_scope)

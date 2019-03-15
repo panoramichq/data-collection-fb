@@ -11,25 +11,17 @@ from common.job_signature import JobSignature
 from sweep_builder.data_containers.expectation_claim import ExpectationClaim
 from sweep_builder.data_containers.reality_claim import RealityClaim
 
-
 logger = logging.getLogger(__name__)
 
 
-def ad_accounts_per_scope(reality_claim):
-    # type: (RealityClaim) -> Generator[ExpectationClaim]
+def ad_accounts_per_scope(reality_claim: RealityClaim) -> Generator[ExpectationClaim, None, None]:
     """
     Generates "fetch AAs active entity metadata per given scope" job ID
 
     To be used by Scope-level RealityClaim / ExpectationClaim.
-
-    :param RealityClaim reality_claim:
-    :rtype: Generator[ExpectationClaim]
     """
-
     if not reality_claim.tokens:
-        logger.warning(
-            f"Tokens for Scope '{reality_claim.entity_id}' are missing. Skipping all work for this scope."
-        )
+        logger.warning(f"Tokens for Scope '{reality_claim.entity_id}' are missing. Skipping all work for this scope.")
         return
 
     yield ExpectationClaim(
@@ -50,17 +42,12 @@ def ad_accounts_per_scope(reality_claim):
     )
 
 
-def sync_expectations_per_ad_account(reality_claim):
-    # type: (RealityClaim) -> Generator[ExpectationClaim]
+def sync_expectations_per_ad_account(reality_claim: RealityClaim) -> Generator[ExpectationClaim, None, None]:
     """
     Generates "Communicate all calculated expectation Job IDs to Cold Store" job ID
 
     To be used by Scope-level RealityClaim / ExpectationClaim.
-
-    :param RealityClaim reality_claim:
-    :rtype: Generator[ExpectationClaim]
     """
-
     if not reality_claim.ad_account_id:
         ValueError("AdAccountID value is missing")
 

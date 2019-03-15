@@ -15,7 +15,6 @@ from oozer.entities.collect_pages import collect_pages_from_business_task
 
 
 class TestCollectPages(TestCase):
-
     def setUp(self):
         super().setUp()
         self.sweep_id = random.gen_string_id()
@@ -23,17 +22,13 @@ class TestCollectPages(TestCase):
 
     def test_fails_with_wrong_report_variant(self):
         job_scope = JobScope(
-            tokens=['blah'],
-            report_time=datetime.utcnow(),
-            report_type='entity',
-            report_variant=None,
-            sweep_id='1'
+            tokens=['blah'], report_time=datetime.utcnow(), report_type='entity', report_variant=None, sweep_id='1'
         )
 
-        with SweepRunningFlag(job_scope.sweep_id):
-            with mock.patch.object(report_job_status_task, 'delay') as status_task, \
-              self.assertRaises(ValueError) as ex_trap:
-                collect_pages_from_business_task(job_scope, None)
+        with SweepRunningFlag(job_scope.sweep_id), \
+            mock.patch.object(report_job_status_task, 'delay') as status_task, \
+                self.assertRaises(ValueError) as ex_trap:
+            collect_pages_from_business_task(job_scope, None)
 
             assert 'Report level' in str(ex_trap.exception)
             assert status_task.called
@@ -49,10 +44,10 @@ class TestCollectPages(TestCase):
             sweep_id='1'
         )
 
-        with SweepRunningFlag(job_scope.sweep_id):
-            with mock.patch.object(report_job_status_task, 'delay') as status_task, \
-              self.assertRaises(ValueError) as ex_trap:
-                collect_pages_from_business_task(job_scope, None)
+        with SweepRunningFlag(job_scope.sweep_id), \
+            mock.patch.object(report_job_status_task, 'delay') as status_task, \
+                self.assertRaises(ValueError) as ex_trap:
+            collect_pages_from_business_task(job_scope, None)
 
             assert 'token' in str(ex_trap.exception)
             assert status_task.called
@@ -68,20 +63,11 @@ class TestCollectPages(TestCase):
         page_id_3 = random.gen_string_id()
         page_id_4 = random.gen_string_id()
 
-        businesses = [
-            Business(fbid=biz_id_1),
-            Business(fbid=biz_id_2)
-        ]
+        businesses = [Business(fbid=biz_id_1), Business(fbid=biz_id_2)]
 
-        client_pages = [
-            Page(fbid=page_id_1),
-            Page(fbid=page_id_2)
-        ]
+        client_pages = [Page(fbid=page_id_1), Page(fbid=page_id_2)]
 
-        owned_pages = [
-            Page(fbid=page_id_3),
-            Page(fbid=page_id_4)
-        ]
+        owned_pages = [Page(fbid=page_id_3), Page(fbid=page_id_4)]
 
         job_scope = JobScope(
             ad_account_id='0',
@@ -93,13 +79,12 @@ class TestCollectPages(TestCase):
             tokens=['token']
         )
 
-        with SweepRunningFlag(job_scope.sweep_id):
-            with mock.patch.object(FacebookRequest, 'execute', return_value=businesses) as gp, \
-              mock.patch.object(Business, 'get_client_pages', return_value=client_pages), \
-              mock.patch.object(Business, 'get_owned_pages', return_value=owned_pages), \
-              mock.patch.object(report_job_status_task, 'delay') as status_task:
-
-                collect_pages_from_business_task(job_scope, None)
+        with SweepRunningFlag(job_scope.sweep_id), \
+            mock.patch.object(FacebookRequest, 'execute', return_value=businesses) as gp, \
+            mock.patch.object(Business, 'get_client_pages', return_value=client_pages), \
+            mock.patch.object(Business, 'get_owned_pages', return_value=owned_pages), \
+                mock.patch.object(report_job_status_task, 'delay') as status_task:
+            collect_pages_from_business_task(job_scope, None)
 
             assert gp.called
 

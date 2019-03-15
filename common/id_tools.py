@@ -6,14 +6,13 @@ are giving to actionable items in the system back and forth.
 from collections import namedtuple
 from datetime import date, datetime
 from itertools import zip_longest
+from typing import List, Any, Dict
 from urllib.parse import quote_plus, unquote_plus
 
 import config.application
 
-
 NAMESPACE = 'fb'
 ID_DELIMITER = '|'
-
 
 fields = [
     "namespace",
@@ -26,17 +25,16 @@ fields = [
     "range_end",
 ]
 
-
 universal_id_fields = [
     'component_vendor',
     'component_id',
 ] + fields
 
-
 JobIdParts = namedtuple('JobIdParts', fields)
 
 
-_id_parts_default_converter = lambda v: '' if v is None else v
+def _id_parts_default_converter(v):
+    return '' if v is None else v
 
 
 def _id_parts_datetime_converter(v):
@@ -71,11 +69,7 @@ def _id_parts_datetime_converter(v):
     return _id_parts_default_converter(v)
 
 
-def generate_id(
-    fields=fields,
-    trailing_parts=None,
-    **parts
-):
+def generate_id(fields: List[str] = fields, trailing_parts: List[str] = None, **parts) -> str:
     """
     Generate a string that uniquely identifies an entity, a report type, a job
     Output is compatible with Universal ID spec's component_scoped_id format
@@ -113,18 +107,18 @@ def generate_id(
     preserving its place in the fields order. However, trailing delimiters are stripped
 
     """
-    base_parts = dict(
-        ad_account_id=None,
-        entity_type=None,
-        entity_id=None,
-        report_type=None,
-        report_variant=None,
-        range_start=None,
-        range_end=None,
-        namespace=NAMESPACE,
-        component_vendor=config.application.UNIVERSAL_ID_COMPONENT_VENDOR,
-        component_id=config.application.UNIVERSAL_ID_COMPONENT,
-    )
+    base_parts = {
+        'ad_account_id': None,
+        'entity_type': None,
+        'entity_id': None,
+        'report_type': None,
+        'report_variant': None,
+        'range_start': None,
+        'range_end': None,
+        'namespace': NAMESPACE,
+        'component_vendor': config.application.UNIVERSAL_ID_COMPONENT_VENDOR,
+        'component_id': config.application.UNIVERSAL_ID_COMPONENT,
+    }
     base_parts.update(parts)
 
     # per Universal ID spec, we must URL+Plus encode all parts
@@ -137,35 +131,22 @@ def generate_id(
     if parts.get('range_end'):
         converters['range_end'] = _id_parts_datetime_converter
 
-    parts = [
-        converters.get(
-            field,
-            _id_parts_default_converter
-        )(
-            base_parts.get(field)
-        )
-        for field in fields
-    ] + [
-        _id_parts_default_converter(part)
-        for part in trailing_parts or []
-    ]
+    parts = [converters.get(field, _id_parts_default_converter)(base_parts.get(field))
+             for field in fields] + [_id_parts_default_converter(part) for part in trailing_parts or []]
 
-    return ID_DELIMITER.join([
-        quote_plus(part)
-        for part in parts
-    ]).strip(ID_DELIMITER)
+    return ID_DELIMITER.join([quote_plus(part) for part in parts]).strip(ID_DELIMITER)
 
 
-def generate_universal_id(
-    fields=universal_id_fields,
-    trailing_parts=None,
-    **parts
-):
+def generate_universal_id(fields: List[str] = universal_id_fields, trailing_parts: List[str] = None, **parts) -> str:
     return generate_id(fields=fields, trailing_parts=trailing_parts, **parts)
 
 
-_base_part_parser = lambda v: unquote_plus(v) if v else None
-_default_part_parser = lambda v: v
+def _base_part_parser(v):
+    return unquote_plus(v) if v else None
+
+
+def _default_part_parser(v):
+    return v
 
 
 _datetime_part_parser_input_len_formats_map = {
@@ -187,7 +168,7 @@ def _datetime_part_parser(v):
                     return datetime.strptime(v, format_string).date()
                 else:
                     return datetime.strptime(v, format_string)
-            except (ValueError, TypeError): # the rest should throw
+            except (ValueError, TypeError):  # the rest should throw
                 pass
 
     return v
@@ -199,7 +180,7 @@ _field_part_parsers_map = {
 }
 
 
-def parse_id(id_str, fields=fields):
+def parse_id(id_str: str, fields: List[str] = fields) -> Dict[str, Any]:
     """
     This parser is for Job IDs - things that have prescribed number and order of parts
 
@@ -216,12 +197,7 @@ def parse_id(id_str, fields=fields):
 
     To parse Universal IDs with this, feed a specific list of fields to this function
     and hope for the best.
-
-    :param id_str:
-    :param list fields:
-    :return:
     """
-
     id_parts = id_str.split(ID_DELIMITER)
 
     if len(fields) < len(id_parts):
@@ -243,16 +219,12 @@ def parse_id(id_str, fields=fields):
     }
 
 
-def parse_id_parts(job_id):
-    # type: (str) -> JobIdParts
+def parse_id_parts(job_id: str) -> JobIdParts:
     """
     Very specific parser that returns a particular type - JobIdParts with
     very specific list of attributes. Used mostly for easing introspectation
     while working with parsed job_ids
 
     Relies on default list of `fields` that corresponds to frozen schema for job_id formation.
-
-    :param job_id:
-    :return:
     """
     return JobIdParts(**parse_id(job_id))

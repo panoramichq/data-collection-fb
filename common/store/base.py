@@ -1,10 +1,7 @@
-from typing import Optional
+from typing import List, Set, Any, Dict
 
 from queue import deque
 from pynamodb.models import Model, BatchWrite as _BatchWrite
-from pynamodb import attributes
-from pynamodb.expressions.update import Action as PynamoDBAction
-
 
 from config import dynamodb as dynamodb_config
 
@@ -14,22 +11,20 @@ class BaseMeta:
     Base Meta class used for configuring PynamoDB models
     Used to centralize setting of defaults
     """
+    host: str = dynamodb_config.HOST
 
-    host = dynamodb_config.HOST
+    table_name: str = None
 
-    table_name = None
-
-    read_capacity_units = 1
-    write_capacity_units = 1
+    read_capacity_units: int = 1
+    write_capacity_units: int = 1
 
     def __init__(self, table_name, **kwargs):
         self.__dict__.update(kwargs)
-        self.table_name = table_name
+        self.table_name: str = table_name
 
 
 def _convert_to_pynamodb_expression(cls, value, attr_name):
     # https://pynamodb.readthedocs.io/en/latest/updates.html#update-expressions
-
     if value is None:
         # instead of writing Null to DB, removing the value
         # This fixes a number of attribute types (like UTCDateTime)
@@ -40,12 +35,11 @@ def _convert_to_pynamodb_expression(cls, value, attr_name):
 
 
 class BatchWrite(_BatchWrite):
-
     def __init__(self, model, auto_commit=True, key_cache_size=500):
         super().__init__(model, auto_commit=auto_commit)
-        self._key_cache = set()
+        self._key_cache: Set[str] = set()
         self._key_cache_order = deque()
-        self._key_cache_remaining = key_cache_size
+        self._key_cache_remaining: int = key_cache_size
 
     def upsert_deduped(self, *primary_keys, **data):
         """
@@ -55,10 +49,6 @@ class BatchWrite(_BatchWrite):
         Only first record is let out, but because
         the key cache is finite, same key may be considered "first"
         if it repeats outside of cache size recycle.
-
-        :param primary_keys:
-        :param data:
-        :return:
         """
         if primary_keys in self._key_cache:
             return
@@ -82,17 +72,8 @@ class BatchWrite(_BatchWrite):
 
         Not really an update, since entire model is overwritten,
         but, luckily, quietly whether it exists or not.
-
-        :param primary_keys:
-        :param data:
-        :return:
         """
-        self.save(
-            self.model(
-                *primary_keys,
-                **data
-            )
-        )
+        self.save(self.model(*primary_keys, **data))
 
 
 class BaseModel(Model):
@@ -112,26 +93,19 @@ class BaseModel(Model):
         by communicating the data in simple dict format of attr_name: value.
 
         Default operation for each attribute is SET
-
-        :param primary_keys:
-        :param data:
-        :return: Some DynamoDB update query goobledy-gook. Borderline useless to us.
         """
         # TODO: Implement Batch support https://pynamodb.readthedocs.io/en/latest/batch.html#batch-writes
         # (in prod, we will rarely use it, but it's useful in testing)
 
         model = cls(*primary_keys)
 
-        actions = [
-            _convert_to_pynamodb_expression(cls, value, attr_name)
-            for attr_name, value in data.items()
-        ]
+        actions = [_convert_to_pynamodb_expression(cls, value, attr_name) for attr_name, value in data.items()]
 
         model.update(actions=actions)
         return model
 
     @classmethod
-    def batch_write(cls, auto_commit=True):
+    def batch_write(cls, auto_commit: bool = True):
         """
         Returns a context manager for a batch operation'
 
@@ -147,41 +121,28 @@ class BaseModel(Model):
     # on the model as getter / property or static attributes like type enums
     # Contents of this set add to the self._attributes.keys() set of
     # attribute names specific to the model.
-    _additional_fields = None  # type: Optional[set]
+    _additional_fields: Set[str] = None
 
     # If set, this becomes the full default list of attributes
     # we export from the model in .to_dict call.
     # If set, this overrides (makes useless) value of _additional_fields
-    _fields = None  # type: Optional[set]
+    _fields: Set[str] = None
 
-    def to_dict(self, fields=None, skip_null=False):
+    def to_dict(self, fields: List[str] = None, skip_null: bool = False):
         """
         Converts model into underlying data
         (but in human-readable attribute names, not the native / short DB-side names)
-
-        If fields attribute
-
-        :param fields: (Optional) list of attributes to extract.
-            If None, default attributes are extracted.
-        :type fields: list or set
-        :rtype: dict
         """
         if not fields:
             fields = self._fields or \
                 set(self._attributes.keys()) | (self._additional_fields or set())
 
         # TODO: this is inefficient (getattr twice) when skip_null=True. Rethink
-        return {
-            field: getattr(self, field)
-            for field in fields
-            if not skip_null or getattr(self, field) is not None
-        }
+        return {field: getattr(self, field) for field in fields if not skip_null or getattr(self, field) is not None}
 
     @classmethod
-    def from_dict(cls, data):
+    def from_dict(cls, data: Dict[str, Any]) -> 'BaseModel':
         """
         It's here just for symmetry of API
-        :param dict data:
-        :rtype: cls
         """
         return cls(**data)

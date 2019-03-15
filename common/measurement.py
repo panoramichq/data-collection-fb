@@ -2,6 +2,7 @@ import functools
 from contextlib import ContextDecorator
 from time import time
 import logging
+from typing import Dict, Any
 
 from datadog.dogstatsd import DogStatsd
 
@@ -12,12 +13,9 @@ import config.build
 logger = logging.getLogger(__name__)
 
 
-def _dict_as_statsd_tags(tags):
+def _dict_as_statsd_tags(tags: Dict[str, Any]):
     """
     Reformat tags to somethign statsd understands
-
-    :param dict tags: Tags in dictionary form
-    :return list:
     """
     return [f'{tag}:{tag_value}' for tag, tag_value in tags.items()]
 
@@ -71,25 +69,19 @@ class MeasuringPrimitive(ContextDecorator):
     def __init__(
         self,
         # Auto bound methods
-        measure_function, prefix, default_value,
+        measure_function,
+        prefix,
+        default_value,
         # Actual invocation related methods
-        metric, tags=None, sample_rate=1,
+        metric,
+        tags=None,
+        sample_rate=1,
         # Binding options and so on
-        bind=None, function_name_as_metric=False,
+        bind=None,
+        function_name_as_metric=False,
         extract_tags_from_arguments=None,
     ):
-        """
 
-        :param measure_function:
-        :param prefix:
-        :param default_value:
-        :param metric:
-        :param tags:
-        :param sample_rate:
-        :param bind: String indicating the name of kwarg to inject into wrapped function
-        :param function_name_as_metric:
-        :param extract_tags_from_arguments: extracts tag from wrappee's arguments
-        """
         self._statsd_func = measure_function
         self._default_value = default_value
 
@@ -124,7 +116,6 @@ class MeasuringPrimitive(ContextDecorator):
         :param callable hook: If supplied, will be called as part of the wrapper
             The optionality is given the fact it is encouraged to use this
             wrapper everywhere for clarity
-        :return:
         """
 
         @functools.wraps(func)
@@ -170,12 +161,7 @@ class MeasuringPrimitive(ContextDecorator):
 
             # Optionally bind the Measure to the function
             if self._bind:
-                argument = functools.partial(
-                    argument,
-                    **{
-                        'measure' if self._bind is True else self._bind : self
-                    }
-                )
+                argument = functools.partial(argument, **{'measure' if self._bind is True else self._bind: self})
 
             # Optionally append callable name as metric name
             if self._function_name_as_metric:
@@ -199,27 +185,26 @@ class TimerMeasuringPrimitive(MeasuringPrimitive):
     You cannot call this Measure directly (as that would make no sense really)
     """
 
-    _start = None
+    _start: float = None
     """
     The time that elapsed during the runtime of this measurement
     """
 
-    _stop = None
+    _stop: float = None
     """
     Stop time, if available
     """
 
     @staticmethod
-    def _get_now_in_seconds():
+    def _get_now_in_seconds() -> float:
         """
         Factored out for ease of testing
         :return: Now in seconds (with decimals expressing sub-second time)
-        :rtype: float
         """
         return time()
 
     @property
-    def elapsed(self):
+    def elapsed(self) -> float:
         # Either we're still in flight, or this timer has been stopped
         stop_time = self._stop or self._get_now_in_seconds()
 
@@ -270,15 +255,15 @@ class CounterMeasuringPrimitive(MeasuringPrimitive):
     Convenience += and -= operators are also available
     """
 
-    _total_value = 0
+    _total_value: int = 0
     """
     A running tally on the value. The value is here just to have a finger on it
     if needed, but this is not what is sent to statsd really, and *may* span
-    over several statsd flushes, so this is value will *not* necessarily 
-    correspond to what you will see in measurement charts  
+    over several statsd flushes, so this is value will *not* necessarily
+    correspond to what you will see in measurement charts
     """
 
-    _count_once = False
+    _count_once: bool = False
     """
     If this is set to true, the counter will ensure that the counter will be
     always set to 1 at the beginning (you may increment it further if you wish)
@@ -293,31 +278,31 @@ class CounterMeasuringPrimitive(MeasuringPrimitive):
         self._count_once = count_once
 
     @property
-    def total_value(self):
+    def total_value(self) -> int:
         return self._total_value
 
-    def increment(self, by_how_much=1):
+    def increment(self, by_how_much: int = 1):
         """
         Just send along the value
         """
         self._total_value += by_how_much
         self._measure(by_how_much)
 
-    def decrement(self, by_how_much=1):
+    def decrement(self, by_how_much: int = 1):
         """
         Inverts the value to negative
         """
         self._total_value -= by_how_much
         self._measure(-by_how_much)
 
-    def __iadd__(self, other):
+    def __iadd__(self, other: int):
         """
         For use like measurement+=10
         """
         self.increment(other)
         return self
 
-    def __isub__(self, other):
+    def __isub__(self, other: int):
         """
         For use like measurement-=10
         """
@@ -405,7 +390,6 @@ class MeasureWrapper:
     def my_method(blah, measuring_context):
         measuring_context(value)
     """
-
     _statsd = None
 
     # Statsd primitives
@@ -420,11 +404,15 @@ class MeasureWrapper:
     # TODO: include them too? Will be easy
 
     # Our own little bit more interesting measuring primitives
-    counter = None     # type: CounterMeasuringPrimitive
+    counter = None  # type: CounterMeasuringPrimitive
     timer = None  # type: TimerMeasuringPrimitive
 
     def __init__(
-        self, host='localhost', port=8125, prefix=None, default_tags=None
+        self,
+        host: str = 'localhost',
+        port: int = 8125,
+        prefix: str = None,
+        default_tags: Dict[str, Any] = None,
     ):
         """
         This is a wrapper that does primarily this:
@@ -435,44 +423,38 @@ class MeasureWrapper:
         -
 
 
-        :param string host: Host of the statsd server
-        :param int port: Port of the statsd server
-        :param string prefix: Default prefix to add to all metrics
-        :param dict|None default_tags: Default tags to add to all metrics
+        :param host: Host of the statsd server
+        :param port: Port of the statsd server
+        :param prefix: Default prefix to add to all metrics
+        :param default_tags: Default tags to add to all metrics
         """
         # Setup stats connection
-        self._statsd = DogStatsd(
-            host=host,
-            port=port,
-            constant_tags=_dict_as_statsd_tags(default_tags)
-        )
+        self._statsd = DogStatsd(host=host, port=port, constant_tags=_dict_as_statsd_tags(default_tags))
 
         # Add measurement methods
         self.increment = self._wrap_measurement_method(
-            self._statsd.increment, default_value=1,
+            self._statsd.increment,
+            default_value=1,
             prefix=self._join_with_prefix(config.measurement.PREFIX_COUNTER, prefix)
         )
         self.decrement = self._wrap_measurement_method(
-            self._statsd.decrement, default_value=1,
+            self._statsd.decrement,
+            default_value=1,
             prefix=self._join_with_prefix(config.measurement.PREFIX_COUNTER, prefix)
         )
         self.gauge = self._wrap_measurement_method(
-            self._statsd.gauge,
-            prefix=self._join_with_prefix(config.measurement.PREFIX_GAUGE, prefix)
+            self._statsd.gauge, prefix=self._join_with_prefix(config.measurement.PREFIX_GAUGE, prefix)
         )
 
         self.histogram = self._wrap_measurement_method(
-            self._statsd.histogram,
-            prefix=self._join_with_prefix(config.measurement.PREFIX_HISTOGRAM, prefix)
+            self._statsd.histogram, prefix=self._join_with_prefix(config.measurement.PREFIX_HISTOGRAM, prefix)
         )
 
         self.timing = self._wrap_measurement_method(
-            self._statsd.timing,
-            prefix=self._join_with_prefix(config.measurement.PREFIX_TIMING, prefix)
+            self._statsd.timing, prefix=self._join_with_prefix(config.measurement.PREFIX_TIMING, prefix)
         )
         self.set = self._wrap_measurement_method(
-            self._statsd.set,
-            prefix=self._join_with_prefix(config.measurement.PREFIX_SET, prefix)
+            self._statsd.set, prefix=self._join_with_prefix(config.measurement.PREFIX_SET, prefix)
         )
 
         # Our own augmented measurement primitives
@@ -488,9 +470,7 @@ class MeasureWrapper:
             wrapper=CounterMeasuringPrimitive
         )
 
-    def _wrap_measurement_method(
-        self, func, prefix, default_value=None, wrapper=None
-    ):
+    def _wrap_measurement_method(self, func, prefix, default_value=None, wrapper=None):
         """
         We need to wrap the singular measurement function with our
         MeasuringPrimitive (or a subclass thereof) class, so that we can support
@@ -506,9 +486,7 @@ class MeasureWrapper:
         :return function: The partial to be called on the MeasuringPrimitive
             constructor
         """
-        return functools.partial(
-            wrapper or MeasuringPrimitive, func, prefix, default_value
-        )
+        return functools.partial(wrapper or MeasuringPrimitive, func, prefix, default_value)
 
     def _join_with_prefix(self, value_prefix, global_prefix):
         """
