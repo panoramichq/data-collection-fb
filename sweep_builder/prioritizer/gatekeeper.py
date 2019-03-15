@@ -51,5 +51,5 @@ class JobGateKeeper:
             return JobGateKeeper._every_x_hours(minutes_since_success, 24 * 7)
 
     @staticmethod
-    def _every_x_hours(minutes_since_success, x_hours):
+    def _every_x_hours(minutes_since_success: float, x_hours: int) -> bool:
         return minutes_since_success > 60 * x_hours

@@ -1,4 +1,5 @@
 from datetime import datetime, date
+from typing import List, Union
 
 from common.id_tools import generate_id
 from common.util import convert_class_with_props_to_str
@@ -11,28 +12,28 @@ class JobScope:
     """
 
     # System information
-    sweep_id = None
+    sweep_id: str = None
 
     # Job ID components parsed
-    namespace = 'fb'  # used for generating Job IDs from this data
+    namespace: str = 'fb'  # used for generating Job IDs from this data
 
-    ad_account_id = None  # type: str or None
-    ad_account_timezone_name = None  # type: str or None
+    ad_account_id: str = None
+    ad_account_timezone_name: str = None
 
-    entity_id = None  # type: str or None
-    entity_type = None  # type: str or None
+    entity_id: str = None
+    entity_type: str = None
 
-    report_type = None  # type: str
-    report_variant = None  # type: str or None
+    report_type: str = None
+    report_variant: str = None
 
-    range_start = None  # type: str or datetime or date or None
-    range_end = None  # type: str or datetime or date or None
+    range_start: Union[datetime, date] = None
+    range_end: Union[datetime, date] = None
 
-    tokens = None  # type: list
+    tokens: List[str] = None
 
-    score = None  # type: int
-    running_time = None  # type: int
-    datapoint_count = None  # type: int
+    score: int = None
+    running_time: int = None
+    datapoint_count: int = None
 
     # Indicates that this is a synthetically created instance of JobScope
     # (likely by the worker code to indicate some sub-level of work done)
@@ -41,7 +42,7 @@ class JobScope:
     # the jobs status stream and makes decisions about when to quit the cycle.
     # Successful derivative JobScope objects will be ignored by that part of the system
     # as if it counted them, the "successful" count would be greatly exaggerated
-    is_derivative = False
+    is_derivative: bool = False
 
     def __init__(self, *args, **kwargs):
         self.update(*args, **kwargs)
@@ -66,18 +67,14 @@ class JobScope:
         self.__dict__.update(kwargs)
 
     @property
-    def token(self):
+    def token(self) -> str:
         return self.tokens[0] if self.tokens else None
 
     def to_dict(self):
-        return {
-            k:v
-            for k, v in self.__dict__.items()
-            if v is not None
-        }
+        return {k: v for k, v in self.__dict__.items() if v is not None}
 
     @property
-    def job_id(self):
+    def job_id(self) -> str:
         return generate_id(
             ad_account_id=self.ad_account_id,
             entity_type=self.entity_type,

@@ -5,8 +5,7 @@ from typing import Match
 def convert_class_with_props_to_str(class_instance):
     new_dict = {
         key: class_instance.__dict__[key]
-        for key
-        in class_instance.__dict__
+        for key in class_instance.__dict__
         if key[:2] != '__' and not callable(class_instance.__dict__[key])
     }
 
@@ -25,5 +24,5 @@ def redact_access_token_from_str(value: str) -> str:
 
 def redact_access_token(e: Exception) -> Exception:
     """Remove access token from exception message."""
-    e.args = redact_access_token_from_str(str(e.args[0])),
+    e.args = (redact_access_token_from_str(str(e.args[0])),)
     return e

@@ -1,9 +1,7 @@
 import gevent
 import gevent.pool
 import logging
-import random
 import time
-import ujson as json
 import uuid
 
 from contextlib import AbstractContextManager
@@ -11,9 +9,7 @@ from typing import Tuple, Union, Optional
 
 from common.connect.redis import get_redis
 
-
 logger = logging.getLogger(__name__)
-
 
 TaskID = Tuple[str, str]
 
@@ -23,9 +19,8 @@ class NotSet:
 
 
 class TaskContext(AbstractContextManager):
-
     def __init__(self, task_id: Optional[TaskID]):
-        self.task_id = task_id
+        self.task_id: Optional[TaskID] = task_id
 
     def report_active(self):
         if self.task_id:
@@ -35,7 +30,7 @@ class TaskContext(AbstractContextManager):
         if self.task_id:
             TaskGroup.report_task_done(self.task_id)
 
-    def __enter__(self):
+    def __enter__(self) -> 'TaskContext':
         self.report_active()
         return self
 
@@ -73,19 +68,15 @@ class TaskGroup:
 
     _key_suffix = '_tasks_group'
 
-    def __init__(self, group_id=None, number_of_shards=10):
-        self._last_task_key = 0
-        self.number_of_shards = number_of_shards
-        self.group_id = group_id or str(uuid.uuid4())
+    def __init__(self, group_id: str = None, number_of_shards: Optional[int] = 10):
+        self._last_task_key: int = 0
+        self.number_of_shards: int = number_of_shards
+        self.group_id: str = group_id or str(uuid.uuid4())
 
     def __repr__(self):
         return f'<TaskGroup {self.group_id}:{self.number_of_shards}>'
 
-    def _get_next_task_key_int(self):
-        """
-        :return: Monotonically-increasing Int
-        :rtype: int
-        """
+    def _get_next_task_key_int(self) -> int:
         self._last_task_key = task_key = self._last_task_key + 1
         return task_key
 
@@ -94,10 +85,7 @@ class TaskGroup:
 
     def generate_task_id(self) -> TaskID:
         task_key_int = self._get_next_task_key_int()
-        return (
-            self._generate_shard_key(task_key_int % self.number_of_shards),
-            str(task_key_int)
-        )
+        return self._generate_shard_key(task_key_int % self.number_of_shards), str(task_key_int)
 
     @staticmethod
     def report_task_active(task_id: TaskID):
@@ -112,12 +100,11 @@ class TaskGroup:
     def get_remaining_tasks_count(self):
         redis = get_redis()
         counts = gevent.pool.Pool(size=self.number_of_shards).imap_unordered(
-            lambda shard_id: redis.hlen(self._generate_shard_key(shard_id)) or 0,
-            range(self.number_of_shards)
+            lambda shard_id: redis.hlen(self._generate_shard_key(shard_id)) or 0, range(self.number_of_shards)
         )
         return sum(counts)
 
-    def join(self, timeout=0):
+    def join(self, timeout: Optional[int] = 0):
         """
         Approximate equivalent of Gevent's or Celery's `.join()`
         where current thread blocks until all tasks are reported done.
@@ -138,7 +125,7 @@ class TaskGroup:
             remaining_tasks = self.get_remaining_tasks_count()
 
     @staticmethod
-    def task_context(task_id: Optional[TaskID]):
+    def task_context(task_id: Optional[TaskID]) -> 'TaskContext':
         return TaskContext(task_id)
 
     @staticmethod

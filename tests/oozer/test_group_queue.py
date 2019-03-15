@@ -1,13 +1,10 @@
 # must be first, as it does event loop patching and other "first" things
-from tests.base.testcase import TestCase, mock, skip
-
-from tests.base import random
+from tests.base.testcase import TestCase
 
 from oozer.common.task_group import TaskGroup
 
 
 class JobsQueueTests(TestCase):
-
     def test_generate_job_id(self):
         task_group = TaskGroup(number_of_shards=3)
 
@@ -17,7 +14,7 @@ class JobsQueueTests(TestCase):
             task_group.generate_task_id(),
             task_group.generate_task_id(),
             task_group.generate_task_id(),
-            task_group.generate_task_id()
+            task_group.generate_task_id(),
         )
 
         # checking basic signature of the task_id and it's shard key component

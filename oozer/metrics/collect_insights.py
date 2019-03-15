@@ -2,10 +2,9 @@ import functools
 import gevent
 
 from datetime import datetime, date
-from facebook_business.adobjects.abstractcrudobject import AbstractCrudObject
 from facebook_business.adobjects.adreportrun import AdReportRun
 from facebook_business.adobjects.adsinsights import AdsInsights
-from typing import Callable, Dict
+from typing import Callable, Dict, Any, Generator
 
 from common.enums.entity import Entity
 from common.enums.reporttype import ReportType
@@ -13,25 +12,19 @@ from common.tokens import PlatformTokenManager
 from oozer.common.cold_storage import batch_store
 from oozer.common.facebook_api import PlatformApiContext
 from oozer.common.facebook_async_report import FacebookAsyncReportStatus
-from oozer.common.job_context import JobContext
 from oozer.common.job_scope import JobScope
 from oozer.common.vendor_data import add_vendor_data
 
-from oozer.metrics.constants import ENUM_LEVEL_MAP, REPORT_TYPE_FB_BREAKDOWN_ENUM, \
-    DEFAULT_REPORT_FIELDS
+from oozer.metrics.constants import ENUM_LEVEL_MAP, REPORT_TYPE_FB_BREAKDOWN_ENUM, DEFAULT_REPORT_FIELDS
 from oozer.metrics.vendor_data_extractor import report_type_vendor_data_extractor_map
 
 
-def _convert_and_validate_date_format(dt):
+def _convert_and_validate_date_format(dt) -> str:
     """
     Converts incoming values that may represent a date
     into a FB-specific stringified date format
     that is acceptable for the `time_range` report parameter
-
-    :param Union[str,datetime,date] dt:
-    :return: A string of format 'YYYY-MM-DD'
     """
-
     # datetime is actually a subclass of date class
     # but for clarity of what we are doing, will check against
     # both, though only comparing to date is needed
@@ -40,25 +33,20 @@ def _convert_and_validate_date_format(dt):
         try:
             dt = datetime.strptime(dt, '%Y-%m-%d')
         except (ValueError, TypeError):
-            raise ValueError(
-                f"Value '{dt}' cannot be read as 'YYYY-MM-DD' string"
-            )
+            raise ValueError(f"Value '{dt}' cannot be read as 'YYYY-MM-DD' string")
     return dt.strftime('%Y-%m-%d')
 
 
 class JobScopeParsed:
-    report_params = None  # type: dict
-    datum_handler = None  # type: Callable[Dict, None]
-    report_root_fb_entity = None  # type: AbstractCrudObject
+    report_params: Dict[str, Any] = None
+    datum_handler: Callable[[Dict[str, Any]], None] = None
+    report_root_fb_entity = None
 
-    def __init__(self, job_scope):
-        """
-        :param JobScope job_scope:
-        """
-
+    def __init__(self, job_scope: JobScope):
         if job_scope.report_type not in ReportType.ALL_METRICS:
             raise ValueError(
-                f"Report type {job_scope.report_type} specified is not one of supported values: {ReportType.ALL_METRICS}"
+                f"Report type {job_scope.report_type} specified is not one of supported values: "
+                + ReportType.ALL_METRICS
             )
         # cool. we are in the right place...
 
@@ -69,14 +57,14 @@ class JobScopeParsed:
                 # but, our customers, especially Fandango, like just clicks
                 # and at different windows. So, we ask for extra windows for all actions
                 # The move windows we ask the data for, the less reliably it returns
-                # Be super conservative about askijg for more
+                # Be super conservative about asking for more
                 AdsInsights.ActionAttributionWindows.value_1d_view,  # requirement for Fandango
-                # AdsInsights.ActionAttributionWindows.value_7d_view,  # noone cared to ask for it
+                # AdsInsights.ActionAttributionWindows.value_7d_view,  # nobody cared to ask for it
                 AdsInsights.ActionAttributionWindows.value_28d_view,  # nice to have for Fandango
                 AdsInsights.ActionAttributionWindows.value_1d_click,  # nice to have for Fandango
-                # AdsInsights.ActionAttributionWindows.value_7d_click,  # noone cared to ask for it
+                # AdsInsights.ActionAttributionWindows.value_7d_click,  # nobody cared to ask for it
                 AdsInsights.ActionAttributionWindows.value_28d_click,  # requirement for Fandango
-            ]
+            ],
         }
 
         # Next is (a) vs (b) - abstraction level determination
@@ -86,26 +74,20 @@ class JobScopeParsed:
             entity_id = job_scope.ad_account_id
             entity_type = Entity.AdAccount
             entity_type_reporting = job_scope.report_variant
-            self.report_params.update(
-                level=ENUM_LEVEL_MAP[job_scope.report_variant]
-            )
+            self.report_params.update(level=ENUM_LEVEL_MAP[job_scope.report_variant])
         else:
             # direct, per-entity report
             entity_id = job_scope.entity_id
             entity_type = job_scope.entity_type
             entity_type_reporting = job_scope.report_variant
-            self.report_params.update(
-                level=ENUM_LEVEL_MAP[entity_type_reporting]
-            )
+            self.report_params.update(level=ENUM_LEVEL_MAP[entity_type_reporting])
 
         # Now, (c), (d), (e), (f), (g) choices
         # we already checked above that this is one of metrics report types
         # So we know it will be either lifetime or day-with-breakdown type
         # TODO: add fields listings appropriate for each type
         if job_scope.report_type == ReportType.lifetime:
-            self.report_params.update(
-                date_preset=AdsInsights.DatePreset.lifetime
-            )
+            self.report_params.update(date_preset=AdsInsights.DatePreset.lifetime)
         elif job_scope.report_type in REPORT_TYPE_FB_BREAKDOWN_ENUM:  # some day-with-breakdown type
             self.report_params.update(
                 time_increment=1,  # group by calendar day (in AA tz)
@@ -114,7 +96,7 @@ class JobScopeParsed:
                     # No value for job_scope.range_end means 1-day report for range_start day
                     'until': _convert_and_validate_date_format(job_scope.range_end or job_scope.range_start),
                 },
-                breakdowns=REPORT_TYPE_FB_BREAKDOWN_ENUM[job_scope.report_type]
+                breakdowns=REPORT_TYPE_FB_BREAKDOWN_ENUM[job_scope.report_type],
             )
         else:
             raise ValueError(
@@ -128,9 +110,6 @@ class JobScopeParsed:
         # from the datum.
         # This must be accompanied by a transform fn that
         # derives a normative ID from data.
-        is_naturally_normative_child = (
-            job_scope.report_type == ReportType.lifetime
-        )
 
         # special case.
         # when report type is per-specific-single-entity-ID
@@ -141,19 +120,23 @@ class JobScopeParsed:
         is_whole_report_bundle_write = (
             # must be one of those per-day reports
             job_scope.report_type in ReportType.ALL_DAY_BREAKDOWNS
+            and
             # except for DMA-based data, as these can be very long,
             # - 10s of thousands of records per day
-            and not job_scope.report_type == ReportType.day_dma
+            not job_scope.report_type == ReportType.day_dma
+            and
             # and the report is per single entity ID
-            and job_scope.entity_id and not job_scope.report_variant
+            job_scope.entity_id
+            and not job_scope.report_variant
+            and
             # and report is for a single calendar day
             # ReportType.ALL_DAY_BREAKDOWNS means there must be a non-Null
             # value in time_range, but we check anyway
-            and self.report_params['time_range']['since']
+            self.report_params['time_range']['since']
             and self.report_params['time_range']['since'] == self.report_params['time_range']['until']
         )
 
-        # a more complex variont of whole_report_bundle_write
+        # a more complex variant of whole_report_bundle_write
         # where, while we canNOT spool entire report into memory to
         # write it as one bundle, we cannot really write each
         # individual result out either, as there will be a shit-load of them
@@ -161,13 +144,6 @@ class JobScopeParsed:
         # cannot cleanly group the bundles into per-normative-ID bundles,
         # and instead will write under effective ID, but with a suffix
         # indicating the monotonically-increasing chunk number.
-        is_chunk_write = (
-            # must be one of those crap-load of records per-day reports
-            job_scope.report_type in ReportType.ALL_DAY_BREAKDOWNS
-            # but not already covered by clean whole_report_bundle_write bundling
-            # which means it can be a lot of records per report
-            and not is_whole_report_bundle_write
-        )
 
         # Disabled but kept for reference to compare to shorter version immediately below
         # These represent good range of choices for cold store handlers.
@@ -192,9 +168,7 @@ class JobScopeParsed:
             self.datum_handler = batch_store.ChunkDumpStore(job_scope, chunk_size=200)
 
         with PlatformApiContext(job_scope.token) as fb_ctx:
-            self.report_root_fb_entity = fb_ctx.to_fb_model(
-                entity_id, entity_type
-            )
+            self.report_root_fb_entity = fb_ctx.to_fb_model(entity_id, entity_type)
 
         # here we configure code that will augment each datum with  record ID
         vendor_data_extractor = report_type_vendor_data_extractor_map[job_scope.report_type]
@@ -202,52 +176,25 @@ class JobScopeParsed:
             # hour report type's ID extractor function needs extra leading arg - timezone
             vendor_data_extractor = functools.partial(vendor_data_extractor, job_scope.ad_account_timezone_name)
 
-        aux_data = dict(
-            ad_account_id=job_scope.ad_account_id,
-            entity_type=entity_type_reporting,
-            report_type=job_scope.report_type,
-        )
+        aux_data = {
+            'ad_account_id': job_scope.ad_account_id,
+            'entity_type': entity_type_reporting,
+            'report_type': job_scope.report_type,
+        }
 
-        self.augment_with_vendor_data = lambda data: add_vendor_data(
-            data,
-            **vendor_data_extractor(data, **aux_data)
-        )
+        self.augment_with_vendor_data = lambda data: add_vendor_data(data, **vendor_data_extractor(data, **aux_data))
 
 
 class Insights:
-    """
-    You might be wondering why this is a class.
-    What's the point of attaching static methods to it?
-
-    Ease of testing.
-
-    It's a pain to mock out calls to iter_insights if it was a module
-    function, because it's already imported and is baked into some calling
-    code in iter_collect_insights by reference.
-
-    With it being a static child of this class, mocking becomes simple:
-
-    with mock.patch.object(Insights, 'iter_insights', return_value=[{}]):
-       Insights.iter_collect_insights(blah) # will use our mock
-
-    No need to fight the import chain or patch modules in clever ways.
-    This is all about moving faster through code, where faster test creation is
-    at premium.
-    """
-
     @staticmethod
-    def iter_insights(fb_entity, report_params):
+    def iter_insights(fb_entity: Any, report_params: Dict[str, Any]) -> Generator[Dict[str, Any], None, None]:
         """
         Run the actual execution of the insights job
 
-        :param AbstractCrudObject fb_entity: The ads api facebook entity instance
-        :param dict report_params: FB API report params
+        :param fb_entity: The ads api facebook entity instance
+        :param report_params: FB API report params
         """
-
-        report_status_obj = fb_entity.get_insights(
-            params=report_params,
-            is_async=True
-        )  # type: AdReportRun
+        report_status_obj: AdReportRun = fb_entity.get_insights(params=report_params, is_async=True)
 
         report_tracker = FacebookAsyncReportStatus(report_status_obj)
 
@@ -267,7 +214,7 @@ class Insights:
         return report_tracker.iter_report_data()
 
     @classmethod
-    def iter_collect_insights(cls, job_scope, _):
+    def iter_collect_insights(cls, job_scope: JobScope, _):
         """
         Central, *GENERIC* implementation of insights fetcher task
 
@@ -277,9 +224,8 @@ class Insights:
         based on data in the JobScope object and convert that data into
         proper parameters for calling FB
 
-        :param JobScope job_scope: The JobScope as we get it from the task itself
-        :param JobContext job_context: A job context we use for entity checksums
-        :rtype: Generator[Dict]
+        :param job_scope: The JobScope as we get it from the task itself
+        :param _: A job context we use for entity checksums
         """
         if not job_scope.tokens:
             raise ValueError(f"Job {job_scope.job_id} cannot proceed. No platform tokens provided.")
@@ -290,10 +236,7 @@ class Insights:
         token_manager = PlatformTokenManager.from_job_scope(job_scope)
 
         scope_parsed = JobScopeParsed(job_scope)
-        data_iter = cls.iter_insights(
-            scope_parsed.report_root_fb_entity,
-            scope_parsed.report_params
-        )
+        data_iter = cls.iter_insights(scope_parsed.report_root_fb_entity, scope_parsed.report_params)
         with scope_parsed.datum_handler as store:
             for cnt, datum in enumerate(data_iter):
                 # this computes values for and adds _oprm data object

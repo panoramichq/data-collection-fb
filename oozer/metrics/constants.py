@@ -2,7 +2,6 @@ from common.enums.entity import Entity
 from facebook_business.adobjects.adsinsights import AdsInsights
 from common.enums.reporttype import ReportType
 
-
 ENUM_LEVEL_MAP = {
     Entity.AdAccount: AdsInsights.Level.account,
     Entity.Campaign: AdsInsights.Level.campaign,
@@ -12,16 +11,10 @@ ENUM_LEVEL_MAP = {
 
 REPORT_TYPE_FB_BREAKDOWN_ENUM = {
     ReportType.day: None,
-    ReportType.day_age_gender: [
-        AdsInsights.Breakdowns.age,
-        AdsInsights.Breakdowns.gender
-    ],
-    ReportType.day_dma: [ AdsInsights.Breakdowns.dma ],
-    ReportType.day_hour: [ AdsInsights.Breakdowns.hourly_stats_aggregated_by_advertiser_time_zone ],
-    ReportType.day_platform: [
-        AdsInsights.Breakdowns.publisher_platform,
-        AdsInsights.Breakdowns.platform_position
-    ]
+    ReportType.day_age_gender: [AdsInsights.Breakdowns.age, AdsInsights.Breakdowns.gender],
+    ReportType.day_dma: [AdsInsights.Breakdowns.dma],
+    ReportType.day_hour: [AdsInsights.Breakdowns.hourly_stats_aggregated_by_advertiser_time_zone],
+    ReportType.day_platform: [AdsInsights.Breakdowns.publisher_platform, AdsInsights.Breakdowns.platform_position],
 }
 
 DEFAULT_REPORT_FIELDS = [
@@ -29,9 +22,7 @@ DEFAULT_REPORT_FIELDS = [
     AdsInsights.Field.campaign_id,
     AdsInsights.Field.adset_id,
     AdsInsights.Field.ad_id,
-
     # Non-unique
-
     # Essential
     AdsInsights.Field.spend,
     AdsInsights.Field.impressions,
@@ -44,7 +35,6 @@ DEFAULT_REPORT_FIELDS = [
     AdsInsights.Field.video_p100_watched_actions,
     AdsInsights.Field.video_10_sec_watched_actions,
     AdsInsights.Field.video_30_sec_watched_actions,
-
     # Good to have
     AdsInsights.Field.cost_per_action_type,
     AdsInsights.Field.cpm,
@@ -52,10 +42,8 @@ DEFAULT_REPORT_FIELDS = [
     AdsInsights.Field.ctr,
     AdsInsights.Field.cpc,
     AdsInsights.Field.relevance_score,
-
     AdsInsights.Field.video_avg_time_watched_actions,
     AdsInsights.Field.video_avg_percent_watched_actions,
-
     # Not sure
     # AdsInsights.Field.action_values,
     # 'inline_link_clicks',
@@ -79,18 +67,13 @@ DEFAULT_REPORT_FIELDS = [
     # 'video_10_sec_watched_actions',
     # 'video_30_sec_watched_actions',
     # 'website_ctr',
-
-
     # Unique
-
     # Essential
     AdsInsights.Field.unique_actions,
     AdsInsights.Field.reach,
-
     # Good to have
     AdsInsights.Field.frequency,
     AdsInsights.Field.cost_per_unique_action_type,
-
     # Not sure
     # 'cost_per_unique_click',
     # 'total_unique_actions',
@@ -109,7 +92,7 @@ DEFAULT_ATTRIBUTION_WINDOWS = [
     AdsInsights.ActionAttributionWindows.value_1d_click,
     AdsInsights.ActionAttributionWindows.value_7d_click,
     AdsInsights.ActionAttributionWindows.value_28d_click,
-    AdsInsights.ActionAttributionWindows.value_default
+    AdsInsights.ActionAttributionWindows.value_default,
 ]
 
 PAGE_METRICS = [
@@ -253,7 +236,7 @@ PAGE_METRICS = [
     'page_posts_impressions_frequency_distribution',
     'page_daily_video_ad_break_ad_impressions_by_crosspost_status',
     'page_daily_video_ad_break_cpm_by_crosspost_status',
-    'page_daily_video_ad_break_earnings_by_crosspost_status'
+    'page_daily_video_ad_break_earnings_by_crosspost_status',
 ]
 
 POST_METRICS = [
@@ -337,5 +320,5 @@ POST_METRICS = [
     'post_video_view_time_by_country_id',
     'post_video_ad_break_ad_impressions',
     'post_video_ad_break_earnings',
-    'post_video_ad_break_ad_cpm'
+    'post_video_ad_break_ad_cpm',
 ]

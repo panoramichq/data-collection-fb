@@ -13,7 +13,6 @@ from oozer.common.enum import JobStatus
 from oozer.common.job_scope import JobScope
 from oozer.common.report_job_status_task import report_job_status_task
 
-
 app = get_celery_app()
 logger = logging.getLogger(__name__)
 
@@ -64,9 +63,7 @@ def _get_good_token(job_scope: JobScope):
 
     token = job_scope.token
     if not token:
-        raise ValueError(
-            f"Job {job_scope.job_id} cannot proceed. No tokens provided."
-        )
+        raise ValueError(f"Job {job_scope.job_id} cannot proceed. No tokens provided.")
 
 
 def _import_entities_from_console(entity_type: str, job_scope: JobScope):
@@ -113,7 +110,8 @@ def _import_entities_from_console(entity_type: str, job_scope: JobScope):
 
 def _get_entities_to_import(entities, entity_id_key):
     """
-    Fixes issue describe here https://operam.slack.com/archives/GC03M0PB5/p1548841927032100?thread_ts=1548803775.031500&cid=GC03M0PB5
+    Fixes issue describe here
+    https://operam.slack.com/archives/GC03M0PB5/p1548841927032100?thread_ts=1548803775.031500&cid=GC03M0PB5
     """
     grouped_entities = {}
     for entity in entities:

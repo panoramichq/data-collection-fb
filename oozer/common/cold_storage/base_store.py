@@ -15,11 +15,14 @@ Example:
 s3://operam-reports/facebook/2d700d-1629501014003404/fb_insights_campaign_daily/2018/02/08/2018-02-08T11:00:00Z-aef8b404-68c7-41f0-a82b-8f7d529d049c.json  # noqa
 
 """
+from typing import Optional, Dict, Any
+
 import boto3
 import xxhash
 import io
 import logging
 import uuid
+
 # ujson is faster for massive amounts of small data units
 # which is actually the pattern we have - yielding small datum per normative
 # task or small batches of small datums.
@@ -41,7 +44,6 @@ import common.tztools
 
 from oozer.common.job_scope import JobScope
 
-
 logger = logging.getLogger(__name__)
 
 # Ensure we are connected to the right endpoint. This is necessary because of
@@ -50,7 +52,7 @@ _s3 = boto3.resource('s3', endpoint_url=config.aws.S3_ENDPOINT)
 _bucket = _s3.Bucket(config.aws.S3_BUCKET_NAME)
 
 
-def _job_scope_to_storage_key(job_scope, chunk_marker=0):
+def _job_scope_to_storage_key(job_scope: JobScope, chunk_marker: Optional[int] = 0) -> str:
     """
     Puts together the S3 object key we need for given report data. This is
     just a helper function
@@ -71,22 +73,24 @@ def _job_scope_to_storage_key(job_scope, chunk_marker=0):
         # long import line to allow mocking of call to now() in tests.
         report_datetime = common.tztools.now()
 
-    key = f'{job_scope.namespace}/' \
-          f'{prefix}-{job_scope.ad_account_id}/' \
-          f'{job_scope.report_type}/' \
-          f'{report_datetime.strftime("%Y")}/' \
-          f'{report_datetime.strftime("%m")}/' \
-          f'{report_datetime.strftime("%d")}/' \
-          f'{report_datetime.strftime("%Y-%m-%dT%H:%M:%SZ")}-' \
-          f'{job_scope.job_id}-' \
-          f'{str(chunk_marker)+"-" if chunk_marker else ""}' \
-          f'{uuid.uuid4()}' \
-          f'.json'
+    key = (
+        f'{job_scope.namespace}/'
+        f'{prefix}-{job_scope.ad_account_id}/'
+        f'{job_scope.report_type}/'
+        f'{report_datetime.strftime("%Y")}/'
+        f'{report_datetime.strftime("%m")}/'
+        f'{report_datetime.strftime("%d")}/'
+        f'{report_datetime.strftime("%Y-%m-%dT%H:%M:%SZ")}-'
+        f'{job_scope.job_id}-'
+        f'{str(chunk_marker)+"-" if chunk_marker else ""}'
+        f'{uuid.uuid4()}'
+        f'.json'
+    )
 
     return key
 
 
-def _job_scope_to_metadata(job_scope):
+def _job_scope_to_metadata(job_scope: JobScope) -> Dict[str, str]:
     """
     Metadata written to S3 (or any other provider) is a little different from
     data we store on the JobScope. Along with *some* data from JobScope
@@ -141,7 +145,7 @@ def _job_scope_to_metadata(job_scope):
 
 @Measure.timer(__name__, function_name_as_metric=True)
 @Measure.counter(__name__, function_name_as_metric=True, count_once=True)
-def store(data, job_scope, chunk_marker=0):
+def store(data: Any, job_scope: JobScope, chunk_marker: Optional[int] = 0) -> str:
     """
     Adds the item to the current buffer (by JSON dumping it) and Uploads the
     buffer to S3 under a constructed key
@@ -166,9 +170,7 @@ def store(data, job_scope, chunk_marker=0):
         data = [data]
 
     _bucket.put_object(
-        Key=key,
-        Body=json.dumps(data, ensure_ascii=False).encode(),
-        Metadata=_job_scope_to_metadata(job_scope)
+        Key=key, Body=json.dumps(data, ensure_ascii=False).encode(), Metadata=_job_scope_to_metadata(job_scope)
     )
 
     return key
@@ -182,6 +184,4 @@ def load(key):
 
 
 def load_data(key):
-    return json.load(
-        load(key)
-    )
+    return json.load(load(key))

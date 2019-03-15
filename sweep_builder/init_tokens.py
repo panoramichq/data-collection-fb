@@ -62,11 +62,6 @@ def init_tokens(sweep_id):
 
     TODO: Find a better place for it
           as this off-on-the-side band-aid looper code feels redundant since we have a loop already
-
-    :param sweep_id:
-    :return:
     """
     for scope_record in iter_scopes():
-        PlatformTokenManager.populate_from_scope_entity(
-            scope_record, sweep_id
-        )
+        PlatformTokenManager.populate_from_scope_entity(scope_record, sweep_id)

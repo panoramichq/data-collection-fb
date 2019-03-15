@@ -8,7 +8,7 @@ from oozer.common.job_scope import JobScope
 from oozer.common.sweep_running_flag import SweepRunningFlag
 from oozer.common.errors import CollectionError
 from oozer.reporting import reported_task
-from .collect_insights import Insights
+from oozer.metrics.collect_insights import Insights
 
 logger = logging.getLogger(__name__)
 app = get_celery_app()
@@ -18,11 +18,7 @@ app = get_celery_app()
 @Measure.timer(__name__, function_name_as_metric=True)
 @Measure.counter(__name__, function_name_as_metric=True, count_once=True)
 @reported_task
-def collect_insights_task(job_scope, job_context):
-    """
-    :param JobScope job_scope:
-    :param JobContext job_context:
-    """
+def collect_insights_task(job_scope: JobScope, job_context: JobContext):
     if not SweepRunningFlag.is_set(job_scope.sweep_id):
         logger.info(f'{job_scope} skipped because sweep {job_scope.sweep_id} is done')
         return

@@ -1,11 +1,12 @@
-from datetime import datetime, date
+from datetime import datetime
+from typing import Dict, Any
+
 from facebook_business.adobjects.adsinsights import AdsInsights
 
 from common.enums.entity import Entity
 from common.enums.reporttype import ReportType
 from common.id_tools import generate_universal_id, universal_id_fields
 from common.tztools import dt_to_other_timezone
-
 
 _entity_type_id_field_map = {
     Entity.Campaign: AdsInsights.Field.campaign_id,
@@ -14,26 +15,19 @@ _entity_type_id_field_map = {
 }
 
 
-def _from_non_segmented_entity(data, entity_type=None, **kwargs):
+def _from_non_segmented_entity(data: Dict[str, Any], entity_type: str = None, **kwargs) -> Dict[str, str]:
     """
     Generates Universal record ID from data that is
     differentiated only by entity ID
-
-    :param entity_type:
-    :return:
     """
     assert entity_type
 
     entity_id = data[_entity_type_id_field_map[entity_type]]
     # The rest of data is in kwargs
     return {
-        'id': generate_universal_id(
-            entity_id=entity_id,
-            entity_type=entity_type,
-            **kwargs
-        ),
+        'id': generate_universal_id(entity_id=entity_id, entity_type=entity_type, **kwargs),
         'entity_id': entity_id,
-        'entity_type': entity_type
+        'entity_type': entity_type,
     }
 
 
@@ -42,16 +36,11 @@ _date_stop = 'date_stop'
 _hourly_stats_aggregated_by_advertiser_time_zone = 'hourly_stats_aggregated_by_advertiser_time_zone'
 
 
-def _from_day_segmented_entity(data, entity_type=None, **kwargs):
+def _from_day_segmented_entity(data: Dict[str, Any], entity_type: str = None, **kwargs) -> Dict[str, str]:
     """
     Generates Universal record ID from data that is
     differentiated by entity ID and reporting date
-
-    :param str timezone_name: Intentionally used first to bind it so it's passed in only once.
-    :param dict entity_type:
-    :return:
     """
-
     assert entity_type
 
     # ...
@@ -82,24 +71,21 @@ def _from_day_segmented_entity(data, entity_type=None, **kwargs):
             entity_id=entity_id,
             entity_type=entity_type,
             range_start=data[_date_start],
-            **kwargs
+            **kwargs,
         ),
         'range_start': data[_date_start],
         'entity_id': entity_id,
-        'entity_type': entity_type
+        'entity_type': entity_type,
     }
 
 
-def _from_hour_segmented_entity(timezone_name, data, entity_type=None, **kwargs):
+def _from_hour_segmented_entity(
+    timezone_name: str, data: Dict[str, Any], entity_type: str = None, **kwargs
+) -> Dict[str, str]:
     """
     Generates Universal record ID from data that is
     differentiated only by entity ID
-
-    :param str timezone_name: Intentionally used first to bind it so it's passed in only once.
-    :param dict entity_type:
-    :return:
     """
-
     assert timezone_name
     assert entity_type
 
@@ -124,32 +110,22 @@ def _from_hour_segmented_entity(timezone_name, data, entity_type=None, **kwargs)
 
     # The rest of data is in kwargs
     return {
-        'id': generate_universal_id(
-            entity_id=entity_id,
-            entity_type=entity_type,
-            range_start=dt_as_utc,
-            **kwargs
-        ),
+        'id': generate_universal_id(entity_id=entity_id, entity_type=entity_type, range_start=dt_as_utc, **kwargs),
         # Note that we communicate UTC-based range_start
         # which will be different in date and time from
         # data['date_start'] value and hour range attribute value
         # in Facebook's original data.
         'range_start': dt_as_utc.strftime('%Y-%m-%dT%H:%M:%S'),
         'entity_id': entity_id,
-        'entity_type': entity_type
+        'entity_type': entity_type,
     }
 
 
-def _from_age_gender_segmented_entity(data, entity_type=None, **kwargs):
+def _from_age_gender_segmented_entity(data: Dict[str, Any], entity_type: str = None, **kwargs) -> Dict[str, str]:
     """
     Generates Universal record ID from data that is
     differentiated only by entity ID
-
-    :param str timezone_name: Intentionally used first to bind it so it's passed in only once.
-    :param dict entity_type:
-    :return:
     """
-
     assert entity_type
 
     # ...
@@ -173,30 +149,25 @@ def _from_age_gender_segmented_entity(data, entity_type=None, **kwargs):
     # The rest of data is in kwargs
     return {
         'id': generate_universal_id(
-            fields=universal_id_fields + ['age','gender'],
+            fields=universal_id_fields + ['age', 'gender'],
             entity_id=entity_id,
             entity_type=entity_type,
             range_start=data[_date_start],
             age=data['age'],
             gender=data['gender'],
-            **kwargs
+            **kwargs,
         ),
         'range_start': data[_date_start],
         'entity_id': entity_id,
-        'entity_type': entity_type
+        'entity_type': entity_type,
     }
 
 
-def _from_platform_segmented_entity(data, entity_type=None, **kwargs):
+def _from_platform_segmented_entity(data: Dict[str, Any], entity_type: str = None, **kwargs) -> Dict[str, str]:
     """
     Generates Universal record ID from data that is
     differentiated only by entity ID
-
-    :param str timezone_name: Intentionally used first to bind it so it's passed in only once.
-    :param dict entity_type:
-    :return:
     """
-
     assert entity_type
 
     # ...
@@ -218,30 +189,25 @@ def _from_platform_segmented_entity(data, entity_type=None, **kwargs):
     # The rest of data is in kwargs
     return {
         'id': generate_universal_id(
-            fields=universal_id_fields + ['publisher_platform','platform_position'],
+            fields=universal_id_fields + ['publisher_platform', 'platform_position'],
             entity_id=entity_id,
             entity_type=entity_type,
             range_start=data[_date_start],
             publisher_platform=data['publisher_platform'],
             platform_position=data['platform_position'],
-            **kwargs
+            **kwargs,
         ),
         'range_start': data[_date_start],
         'entity_id': entity_id,
-        'entity_type': entity_type
+        'entity_type': entity_type,
     }
 
 
-def _from_dma_segmented_entity(data, entity_type=None, **kwargs):
+def _from_dma_segmented_entity(data: Dict[str, Any], entity_type: str = None, **kwargs) -> Dict[str, str]:
     """
     Generates Universal record ID from data that is
     differentiated only by entity ID
-
-    :param str timezone_name: Intentionally used first to bind it so it's passed in only once.
-    :param dict entity_type:
-    :return:
     """
-
     assert entity_type
 
     # ...
@@ -274,11 +240,11 @@ def _from_dma_segmented_entity(data, entity_type=None, **kwargs):
             entity_type=entity_type,
             range_start=data[_date_start],
             dma=data['dma'],  # generate_universal_id URL-encodes values. Sleep well.
-            **kwargs
+            **kwargs,
         ),
         'range_start': data[_date_start],
         'entity_id': entity_id,
-        'entity_type': entity_type
+        'entity_type': entity_type,
     }
 
 

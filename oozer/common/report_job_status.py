@@ -1,6 +1,7 @@
 import logging
 
 from datetime import datetime, date
+from typing import Any
 
 from boto3.resources.model import Action
 
@@ -14,7 +15,9 @@ from oozer.looper import SweepStatusTracker
 
 logger = logging.getLogger(__name__)
 
-_to_date_string_if_set = lambda v: v.strftime('%Y-%m-%d') if isinstance(v, (date, datetime)) else v
+
+def _to_date_string_if_set(v: Any) -> Any:
+    return v.strftime('%Y-%m-%d') if isinstance(v, (date, datetime)) else v
 
 
 def _set_or_remove(attr, value=None) -> Action:
@@ -25,31 +28,24 @@ def _set_or_remove(attr, value=None) -> Action:
     return attr.set(value)
 
 
-def _report_job_done_to_cold_store(job_scope):
-    """
-    :param JobScope job_scope:
-    :return:
-    """
-
+def _report_job_done_to_cold_store(job_scope: JobScope):
     reporting_job_scope = JobScope(
-        sweep_id=job_scope.sweep_id,
-        ad_account_id=job_scope.ad_account_id,
-        report_type=ReportType.sync_status
+        sweep_id=job_scope.sweep_id, ad_account_id=job_scope.ad_account_id, report_type=ReportType.sync_status
     )
 
     cold_storage.store(
-        dict(
-            job_id=job_scope.job_id,
-            account_id=job_scope.ad_account_id,
-            entity_type=job_scope.entity_type,
-            entity_id=job_scope.entity_id,
-            report_type=job_scope.report_type,
-            report_variant=job_scope.report_variant,
-            range_start=_to_date_string_if_set(job_scope.range_start),
-            range_end=_to_date_string_if_set(job_scope.range_end),
-            platform_namespace=job_scope.namespace,
-        ),
-        reporting_job_scope
+        {
+            'job_id': job_scope.job_id,
+            'account_id': job_scope.ad_account_id,
+            'entity_type': job_scope.entity_type,
+            'entity_id': job_scope.entity_id,
+            'report_type': job_scope.report_type,
+            'report_variant': job_scope.report_variant,
+            'range_start': _to_date_string_if_set(job_scope.range_start),
+            'range_end': _to_date_string_if_set(job_scope.range_end),
+            'platform_namespace': job_scope.namespace,
+        },
+        reporting_job_scope,
     )
 
 
@@ -62,7 +58,6 @@ def report_job_status(stage_id: int, job_scope: JobScope):
     :param JobScope job_scope: The job scope that is attached to this particular
         report
     """
-
     status_bucket = ExternalPlatformJobStatus.failure_bucket_map.get(stage_id)  # allowed to be None and 0 (Success)
 
     # Generic errors default bucket assignment
@@ -78,19 +73,13 @@ def report_job_status(stage_id: int, job_scope: JobScope):
             tracker.report_status(status_bucket)
             if status_bucket < 0:
                 # one of those "i am still alive" status reports.
-                logger.debug(
-                    f'#{job_scope.sweep_id} Temporary status report "{job_scope.job_id}": "{status_bucket}"'
-                )
+                logger.debug(f'#{job_scope.sweep_id} Temporary status report "{job_scope.job_id}": "{status_bucket}"')
             elif status_bucket > 0:
                 # "terminal" Failed
-                logger.warning(
-                    f'#{job_scope.sweep_id} Failure status report "{job_scope.job_id}": "{status_bucket}"'
-                )
+                logger.warning(f'#{job_scope.sweep_id} Failure status report "{job_scope.job_id}": "{status_bucket}"')
             else:  # is zero
                 # "terminal" Done
-                logger.info(
-                    f'#{job_scope.sweep_id} Done status report "{job_scope.job_id}": "{status_bucket}"'
-                )
+                logger.info(f'#{job_scope.sweep_id} Done status report "{job_scope.job_id}": "{status_bucket}"')
 
     is_done = False
     actions = None

@@ -1,4 +1,6 @@
 from datetime import datetime
+from typing import Dict, Any, Optional
+
 from dateutil.parser import parse as parse_iso_datetime_string
 
 from common.store.entities import ENTITY_TYPE_MODEL_MAP, AdAccountEntity
@@ -7,48 +9,41 @@ from common.tztools import dt_to_other_timezone, now
 from common.enums.entity import Entity
 
 
-def _parse_fb_datetime(value):
+def _parse_fb_datetime(value) -> Optional[datetime]:
     """
     Helper to parse facebooks datetime string
-    :param string value: The original datetime value
+    :param value: The original datetime value
 
-    :return datetime|None: Parsed datetime string
+    :return Parsed datetime string
     """
     if not value:
         return None
 
     if isinstance(value, datetime):
-        return dt_to_other_timezone(
-            value,
-            'UTC'
-        )
+        return dt_to_other_timezone(value, 'UTC')
 
-    return dt_to_other_timezone(
-        parse_iso_datetime_string(value),
-        'UTC'
-    )
+    return dt_to_other_timezone(parse_iso_datetime_string(value), 'UTC')
 
 
 _eol_status = {'ARCHIVED', 'DELETED'}
 
 
-def feedback_entity(entity_data, entity_type, entity_hash_pair):
+def feedback_entity(entity_data: Dict[str, Any], entity_type: str, entity_hash_pair):
     """
     This task is to feedback information about entity collected by updating
     data store.
 
-    :param dict entity_data: The entity we're feeding back to the system
-    :param string entity_type: Type of the entity, a string representation
-    :param tuple(string, string) entity_hash_pair: Tuple containing both entity data
+    :param entity_data: The entity we're feeding back to the system
+    :param entity_type: Type of the entity, a string representation
+    :param entity_hash_pair: Tuple containing both entity data
         itself and fields hashes that we can use
-
     """
-
     if entity_type not in Entity.ALL:
         raise ValueError(f'Argument "entity_type" must be one of {Entity.ALL}. Received "{entity_type}" instead.')
     if not isinstance(entity_data, dict):
         raise ValueError(
-            f'Argument "entity_data" must be an instance of Dict type. Received "{type(entity_data)}" instead.')
+            f'Argument "entity_data" must be an instance of Dict type. Received "{type(entity_data)}" instead.'
+        )
 
     if entity_type == Entity.AdAccount:
         _upsert_ad_account_entity(entity_data, entity_type, entity_hash_pair)
@@ -56,23 +51,22 @@ def feedback_entity(entity_data, entity_type, entity_hash_pair):
         _upsert_regular_entity(entity_data, entity_type, entity_hash_pair)
 
 
-def _upsert_ad_account_entity(entity_data, entity_type, entity_hash_pair):
+def _upsert_ad_account_entity(entity_data: Dict[str, Any], entity_type: str, entity_hash_pair):
     assert entity_type == Entity.AdAccount
-    upsert_data = {
-        'timezone': entity_data['timezone_name']
-    }
+    upsert_data = {'timezone': entity_data['timezone_name']}
     ad_account_id = entity_data['account_id']
     # The scope enum here must be hardcoded to Console (it is not available on JobScope or entity data).
     # Will have to be changed once we get more than one scope.
     AdAccountEntity.upsert(DEFAULT_SCOPE, ad_account_id, **upsert_data)
 
 
-def _upsert_regular_entity(entity_data, entity_type, entity_hash_pair):
+def _upsert_regular_entity(entity_data: Dict[str, Any], entity_type: str, entity_hash_pair):
     if entity_type not in Entity.ALL:
         raise ValueError(f'Argument "entity_type" must be one of {Entity.ALL}. Received "{entity_type}" instead.')
     if not isinstance(entity_data, dict):
         raise ValueError(
-            f'Argument "entity_data" must be an instance of Dict type. Received "{type(entity_data)}" instead.')
+            f'Argument "entity_data" must be an instance of Dict type. Received "{type(entity_data)}" instead.'
+        )
 
     Model = ENTITY_TYPE_MODEL_MAP[entity_type]
 
@@ -96,20 +90,14 @@ def _upsert_regular_entity(entity_data, entity_type, entity_hash_pair):
     # We guess that last update is a safe bet to treat as "it was turned off then" datetime
     # Thus speculatively deriving EOL from the last update if "irreversible death" is detected
     # We cast this to a string to avoid any issues with entity types using "status" as a dict
-    _is_eol = str(
-        entity_data.get('configured_status') or
-        entity_data.get('effective_status') or
-        entity_data.get('status')
-    ) in _eol_status
-
-    eol = _parse_fb_datetime(entity_data.get('updated_time')) \
-        if _is_eol \
-        else None
-
-    upsert_data = dict(
-        hash=entity_hash_pair[0],
-        hash_fields=entity_hash_pair[1],
+    _is_eol = (
+        str(entity_data.get('configured_status') or entity_data.get('effective_status') or entity_data.get('status'))
+        in _eol_status
     )
+
+    eol = _parse_fb_datetime(entity_data.get('updated_time')) if _is_eol else None
+
+    upsert_data = {'hash': entity_hash_pair[0], 'hash_fields': entity_hash_pair[1]}
 
     # Note on Model.attr | value use:
     # This is a way to express "set if does not exist" logic
@@ -120,8 +108,4 @@ def _upsert_regular_entity(entity_data, entity_type, entity_hash_pair):
     if eol:
         upsert_data['eol'] = Model.eol | eol  # allow previously computed value to stand against new value
 
-    Model.upsert(
-        ad_account_id,
-        entity_id,
-        **upsert_data
-    )
+    Model.upsert(ad_account_id, entity_id, **upsert_data)

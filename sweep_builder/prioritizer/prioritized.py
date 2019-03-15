@@ -13,13 +13,6 @@ LAST = -1
 def iter_prioritized(
     expectations_iter: Generator[ExpectationClaim, None, None],
 ) -> Generator[PrioritizationClaim, None, None]:
-    """
-
-    :param expectations_iter: generator yielding ExpectationClaim objects
-    :type expectations_iter: Generator[ExpectationClaim]
-    :return: Generator yielding PrioritizationClaim objects
-    :rtype: Generator[PrioritizationClaim]
-    """
     _measurement_name_base = __name__ + '.' + iter_prioritized.__name__ + '.'
     _measurement_sample_rate = 1
 
@@ -32,10 +25,8 @@ def iter_prioritized(
         }
 
         Measure.timing(
-            _measurement_name_base + 'next_expected',
-            tags=_measurement_tags,
-            sample_rate=_measurement_sample_rate
-        )((time.time() - _before_next_expectation)*1000)
+            _measurement_name_base + 'next_expected', tags=_measurement_tags, sample_rate=_measurement_sample_rate
+        )((time.time() - _before_next_expectation) * 1000)
 
         # Original logic
         # Temporarily ignored because of the focus in Persister component on last job in the list only
@@ -51,14 +42,9 @@ def iter_prioritized(
         # It's usually the last one in the list. If there is *only* a normative
         # job in the list, it's also the last one in the list.
         with Measure.timer(
-            _measurement_name_base + 'assign_score',
-            tags=_measurement_tags,
-            sample_rate=_measurement_sample_rate
+            _measurement_name_base + 'assign_score', tags=_measurement_tags, sample_rate=_measurement_sample_rate
         ):
-            last_task_score = assign_score(
-                expectation_claim.job_signatures[LAST].job_id,
-                expectation_claim.timezone
-            )
+            last_task_score = assign_score(expectation_claim.job_signatures[LAST].job_id, expectation_claim.timezone)
 
         # score of zero is returned for all jobs in the beginning of the expectation_claim.job_signatures
         # list, and only the last job in the list gets an actual score
@@ -68,13 +54,8 @@ def iter_prioritized(
         # between reads from us. Good way to measure how quickly we are
         # consumed (what pauses we have between each consumption)
         with Measure.timer(
-            _measurement_name_base + 'yield_result',
-            tags=_measurement_tags,
-            sample_rate=_measurement_sample_rate
+            _measurement_name_base + 'yield_result', tags=_measurement_tags, sample_rate=_measurement_sample_rate
         ):
-            yield PrioritizationClaim(
-                expectation_claim.to_dict(),
-                job_scores=job_scores
-            )
+            yield PrioritizationClaim(expectation_claim.to_dict(), job_scores=job_scores)
 
         _before_next_expectation = time.time()

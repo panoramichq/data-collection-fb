@@ -1,4 +1,6 @@
-FB_THROTTLING_WINDOW = 10*60  # seconds
+# flake8: noqa: E722
+
+FB_THROTTLING_WINDOW = 10 * 60  # seconds
 DECAY_FN_START_MULTIPLIER = 3  # value of 'z' used in linear decay formulas
 ALLOW_RECURSION = False
 
@@ -19,9 +21,8 @@ _looney_balooney_multiplier = 10  # yeah, this is NOT millions, but something, r
 # tasks, you need to crank this ^ up quite a bit, to 10,000 at least.
 
 # Used to define "max normal" estimatable tasks when it comes to Early Exit logic in looper
-SANE_MAX_TASKS = _number_of_long_tasks_per_aa * \
-                 MAX_EXPECTED_AD_ACCOUNTS * \
-                 _looney_balooney_multiplier
+SANE_MAX_TASKS = _number_of_long_tasks_per_aa * MAX_EXPECTED_AD_ACCOUNTS * _looney_balooney_multiplier
 
 from common.updatefromenv import update_from_env
+
 update_from_env(__name__)

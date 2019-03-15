@@ -11,10 +11,7 @@ from common.measurement import Measure
 from common.tokens import PlatformTokenManager
 from oozer.common.enum import ExternalPlatformJobStatus
 from oozer.common.errors import CollectionError
-from oozer.common.facebook_api import (
-    PlatformApiContext,
-    get_default_fields
-)
+from oozer.common.facebook_api import PlatformApiContext, get_default_fields
 from oozer.common.cold_storage.batch_store import NormalStore
 from oozer.common.job_context import JobContext
 from oozer.common.job_scope import JobScope
@@ -32,16 +29,11 @@ logger = logging.getLogger(__name__)
 @Measure.counter(__name__, function_name_as_metric=True, count_once=True)
 @reported_task
 def collect_page_task(job_scope: JobScope, job_context: JobContext) -> int:
-
     if not SweepRunningFlag.is_set(job_scope.sweep_id):
-        logger.info(
-            f'{job_scope} skipped because sweep {job_scope.sweep_id} is done'
-        )
+        logger.info(f'{job_scope} skipped because sweep {job_scope.sweep_id} is done')
         return 0
 
-    logger.info(
-        f'{job_scope} started'
-    )
+    logger.info(f'{job_scope} started')
 
     if not job_scope.tokens:
         good_token = PlatformTokenManager.from_job_scope(job_scope).get_best_token()
@@ -56,17 +48,12 @@ def collect_page(job_scope: JobScope, _job_context: JobContext):
     """
     Collect a single facebook page
     """
-
     if job_scope.report_variant != Entity.Page:
-        raise ValueError(
-            f"Report level {job_scope.report_variant} specified is not: {Entity.Page}"
-        )
+        raise ValueError(f"Report level {job_scope.report_variant} specified is not: {Entity.Page}")
 
     token = job_scope.token
     if not token:
-        raise ValueError(
-            f"Job {job_scope.job_id} cannot proceed. No platform tokens provided."
-        )
+        raise ValueError(f"Job {job_scope.job_id} cannot proceed. No platform tokens provided.")
 
     # We don't use it for getting a token. Something else that calls us does.
     # However, we use it to report usages of the token we got.
@@ -79,18 +66,9 @@ def collect_page(job_scope: JobScope, _job_context: JobContext):
         token_manager.report_usage(token, 2)
 
         record_id_data = job_scope.to_dict()
-        record_id_data.update(
-            entity_type=Entity.Page,
-            entity_id=job_scope.entity_id,
-            report_variant=None,
-        )
+        record_id_data.update(entity_type=Entity.Page, entity_id=job_scope.entity_id, report_variant=None)
         entity_data = page_fetched.export_all_data()
-        entity_data = add_vendor_data(
-            entity_data,
-            id=generate_universal_id(
-                **record_id_data
-            )
-        )
+        entity_data = add_vendor_data(entity_data, id=generate_universal_id(**record_id_data))
         store = NormalStore(job_scope)
         store.store(entity_data)
 
@@ -103,16 +81,11 @@ def collect_pages_from_business_task(job_scope: JobScope, job_context: JobContex
     """
     This task should import pages from FB using Business API. At the moment, it is not used anywhere.
     """
-
     if not SweepRunningFlag.is_set(job_scope.sweep_id):
-        logger.info(
-            f'{job_scope} skipped because sweep {job_scope.sweep_id} is done'
-        )
+        logger.info(f'{job_scope} skipped because sweep {job_scope.sweep_id} is done')
         raise CollectionError(Exception(f'{job_scope} skipped because sweep {job_scope.sweep_id} is done'), 0)
 
-    logger.info(
-        f'{job_scope} started'
-    )
+    logger.info(f'{job_scope} started')
 
     if not job_scope.tokens:
         good_token = PlatformTokenManager.from_job_scope(job_scope).get_best_token()
@@ -125,28 +98,22 @@ def collect_pages_from_business_task(job_scope: JobScope, job_context: JobContex
 def collect_pages_from_business(job_scope: JobScope, _job_context: JobContext) -> int:
     """
     Collect all facebook pages that are active
-
-    :param JobScope job_scope: The dict representation of JobScope
-    :param JobContext _job_context:
     """
     if job_scope.report_variant != Entity.Page:
-        raise ValueError(
-            f"Report level {job_scope.report_variant} specified is not: {Entity.Page}"
-        )
+        raise ValueError(f"Report level {job_scope.report_variant} specified is not: {Entity.Page}")
 
     token = job_scope.token
     if not token:
-        raise ValueError(
-            f"Job {job_scope.job_id} cannot proceed. No platform tokens provided."
-        )
+        raise ValueError(f"Job {job_scope.job_id} cannot proceed. No platform tokens provided.")
 
     # We don't use it for getting a token. Something else that calls us does.
     # However, we use it to report usages of the token we got.
     token_manager = PlatformTokenManager.from_job_scope(job_scope)
 
     with PlatformApiContext(token) as fb_ctx:
-        fb_req = FacebookRequest(node_id="me", method="GET", endpoint="/businesses",
-                                 api=fb_ctx.api, api_type='EDGE', target_class=Business)
+        fb_req = FacebookRequest(
+            node_id="me", method="GET", endpoint="/businesses", api=fb_ctx.api, api_type='EDGE', target_class=Business
+        )
         businesses = fb_req.execute()
 
     report_job_status_task.delay(ExternalPlatformJobStatus.DataFetched, job_scope)
@@ -155,29 +122,19 @@ def collect_pages_from_business(job_scope: JobScope, _job_context: JobContext) -
     entity_type = Entity.Page
 
     record_id_base_data = job_scope.to_dict()
-    record_id_base_data.update(
-        entity_type=entity_type,
-        report_variant=None,
-    )
+    record_id_base_data.update(entity_type=entity_type, report_variant=None)
 
     cnt = 0
     for biz in businesses:
         client_pages = list(biz.get_client_pages(fields=get_default_fields(Page)))
         owned_pages = list(biz.get_owned_pages(fields=get_default_fields(Page)))
-        pages_list = (client_pages + owned_pages)
+        pages_list = client_pages + owned_pages
 
-        for page in pages_list:
+        for page_inst in pages_list:
 
-            entity_data = page.export_all_data()
-            record_id_base_data.update(
-                entity_id=entity_data.get('id')
-            )
-            entity_data = add_vendor_data(
-                entity_data,
-                id=generate_universal_id(
-                    **record_id_base_data
-                )
-            )
+            entity_data = page_inst.export_all_data()
+            record_id_base_data.update(entity_id=entity_data.get('id'))
+            entity_data = add_vendor_data(entity_data, id=generate_universal_id(**record_id_base_data))
 
             store = NormalStore(job_scope)
             store.store(entity_data)

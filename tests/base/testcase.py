@@ -1,7 +1,11 @@
+# flake8: noqa: F401
+
 # Patches must be imported and ran first
 from common.patch import patch_event_loop
+
 patch_event_loop()
 from common.facebook.patch import patch_facebook_sdk
+
 patch_facebook_sdk()
 
 import pkgutil
@@ -10,7 +14,6 @@ from common.configure_logging import configure_logging
 from config.facebook import AD_ACCOUNT, AD_ACCOUNT_TIME_ZONE, TOKEN
 from importlib import import_module
 from unittest import TestCase as _TestCase, skip, mock
-
 
 configure_logging()
 
@@ -28,6 +31,7 @@ class TestCase(_TestCase):
     and, thus, is the best (until we find a new one) place to patch
     event loop, set up connections etc - all centrally.
     """
+
     def setUp(self):
         "Hook method for setting up the test fixture before exercising it."
         pass
@@ -46,7 +50,6 @@ class TestCase(_TestCase):
 
 
 class IntegrationTestCase(TestCase):
-
     def setUp(self):
         super().setUp()
         self.ad_account_id = AD_ACCOUNT
@@ -65,4 +68,5 @@ def integration(module='facebook'):
             return fn
         else:
             return skip(fn)
+
     return check_module

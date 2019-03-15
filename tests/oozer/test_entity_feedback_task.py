@@ -2,7 +2,7 @@
 from tests.base.testcase import TestCase
 from freezegun import freeze_time
 
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone
 
 from common.facebook.entity_model_map import MODEL_ENTITY_TYPE_MAP as FB_MODEL_ENTITY_TYPE_MAP
 from common.store.entities import ENTITY_TYPE_MODEL_MAP as ENTITY_TYPE_DB_MODEL_MAP
@@ -12,14 +12,7 @@ from tests.base.random import gen_string_id
 
 
 class TestEntityFeedback(TestCase):
-
-    def _entity_factory(
-        self,
-        entity_klazz,
-        ad_account_id=None,
-        entity_id=None,
-        **kwargs
-    ):
+    def _entity_factory(self, entity_klazz, ad_account_id=None, entity_id=None, **kwargs):
         """
         Manufactures an entity (based on suppplied entity_klazz) that we can
         use for testing
@@ -40,9 +33,7 @@ class TestEntityFeedback(TestCase):
         else:
             entity[entity.Field.account_id] = ad_account_id
 
-        entity_fields = filter(
-            lambda v: not v.startswith('__'), dir(entity_klazz.Field)
-        )
+        entity_fields = filter(lambda v: not v.startswith('__'), dir(entity_klazz.Field))
 
         # Add additional fields, if any
         for field in filter(lambda f: f in kwargs, entity_fields):
@@ -74,15 +65,11 @@ class TestEntityFeedback(TestCase):
                 entity_id=eid,
                 created_time="2000-01-2T03:04:05-0800",
                 configured_status='ARCHIVED',
-                updated_time='2001-01-2T03:04:05-0800'
+                updated_time='2001-01-2T03:04:05-0800',
             )
         )
 
-        feedback_entity_task(
-            entity_data,
-            entity_type,
-            ('e_hash', 'f_hash')
-        )
+        feedback_entity_task(entity_data, entity_type, ('e_hash', 'f_hash'))
 
         record = DBModel.get(aaid, eid)
 
@@ -93,7 +80,7 @@ class TestEntityFeedback(TestCase):
             'bol': datetime(2000, 1, 2, 11, 4, 5, tzinfo=timezone.utc),
             'eol': datetime(2001, 1, 2, 11, 4, 5, tzinfo=timezone.utc),
             'hash': 'e_hash',
-            'hash_fields': 'f_hash'
+            'hash_fields': 'f_hash',
         }
 
         # Now testing retention of the original BOL, EOL values
@@ -106,15 +93,11 @@ class TestEntityFeedback(TestCase):
                 entity_id=eid,
                 created_time="1980-01-2T03:04:05-0800",  # <- earlier date
                 configured_status='ARCHIVED',
-                updated_time=datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S%z')  # <- later date
+                updated_time=datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S%z'),  # <- later date
             )
         )
 
-        feedback_entity_task(
-            entity_data,
-            entity_type,
-            ('e_hash', 'f_hash')
-        )
+        feedback_entity_task(entity_data, entity_type, ('e_hash', 'f_hash'))
 
         record = DBModel.get(aaid, eid)
 
@@ -125,7 +108,7 @@ class TestEntityFeedback(TestCase):
             'bol': datetime(2000, 1, 2, 11, 4, 5, tzinfo=timezone.utc),  # <- original value
             'eol': datetime(2001, 1, 2, 11, 4, 5, tzinfo=timezone.utc),  # <- original value
             'hash': 'e_hash',
-            'hash_fields': 'f_hash'
+            'hash_fields': 'f_hash',
         }
 
     def test_bol_translation(self):
@@ -142,20 +125,10 @@ class TestEntityFeedback(TestCase):
 
         entity_data = dict(
             # returned value here is FB SDK model, hence the dict( above.
-            self._entity_factory(
-                FBModel,
-                account_id=aaid,
-                id=eid,
-                time_created=1523049070,
-                time_updated=1533162823
-            )
+            self._entity_factory(FBModel, account_id=aaid, id=eid, time_created=1523049070, time_updated=1533162823)
         )
 
-        feedback_entity_task(
-            entity_data,
-            entity_type,
-            ('e_hash', 'f_hash')
-        )
+        feedback_entity_task(entity_data, entity_type, ('e_hash', 'f_hash'))
 
         record = DBModel.get(aaid, eid)
 
@@ -166,7 +139,7 @@ class TestEntityFeedback(TestCase):
             'bol': datetime(2018, 4, 6, 21, 11, 10, tzinfo=timezone.utc),
             'eol': None,
             'hash': 'e_hash',
-            'hash_fields': 'f_hash'
+            'hash_fields': 'f_hash',
         }
 
     @freeze_time()
@@ -184,18 +157,10 @@ class TestEntityFeedback(TestCase):
 
         entity_data = dict(
             # returned value here is FB SDK model, hence the dict( above.
-            self._entity_factory(
-                FBModel,
-                ad_account_id=aaid,
-                id=eid
-            )
+            self._entity_factory(FBModel, ad_account_id=aaid, id=eid)
         )
 
-        feedback_entity_task(
-            entity_data,
-            entity_type,
-            ('e_hash', 'f_hash')
-        )
+        feedback_entity_task(entity_data, entity_type, ('e_hash', 'f_hash'))
 
         record = DBModel.get(aaid, eid)
 
@@ -206,7 +171,7 @@ class TestEntityFeedback(TestCase):
             'bol': datetime.now(timezone.utc),
             'eol': None,
             'hash': 'e_hash',
-            'hash_fields': 'f_hash'
+            'hash_fields': 'f_hash',
         }
 
     def test_all_upserted(self):
@@ -235,11 +200,7 @@ class TestEntityFeedback(TestCase):
                 )
             )
 
-            feedback_entity_task(
-                entity_data,
-                entity_type,
-                ('e_hash', 'f_hash')
-            )
+            feedback_entity_task(entity_data, entity_type, ('e_hash', 'f_hash'))
 
             record = DBModel.get(aaid, eid)
             if DBModel._default_bol:
@@ -250,7 +211,7 @@ class TestEntityFeedback(TestCase):
                     'bol': record.bol,
                     'eol': None,
                     'hash': 'e_hash',
-                    'hash_fields': 'f_hash'
+                    'hash_fields': 'f_hash',
                 }
             else:
                 assert record.to_dict() == {
@@ -260,5 +221,5 @@ class TestEntityFeedback(TestCase):
                     'bol': None,
                     'eol': None,
                     'hash': 'e_hash',
-                    'hash_fields': 'f_hash'
+                    'hash_fields': 'f_hash',
                 }

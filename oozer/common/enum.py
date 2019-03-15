@@ -14,7 +14,6 @@ from facebook_business.adobjects import (
 from common.enums.entity import Entity
 from common.enums.failure_bucket import FailureBucket
 
-
 FB_ADACCOUNT_MODEL = adaccount.AdAccount
 FB_CAMPAIGN_MODEL = campaign.Campaign
 FB_ADSET_MODEL = adset.AdSet
@@ -39,13 +38,10 @@ FB_MODEL_ENUM_VALUE_MAP = {
     FB_COMMENT_MODEL: Entity.Comment,
 }
 
-ENUM_VALUE_FB_MODEL_MAP = {
-    value: Model
-    for Model, value in FB_MODEL_ENUM_VALUE_MAP.items()
-}
+ENUM_VALUE_FB_MODEL_MAP = {value: Model for Model, value in FB_MODEL_ENUM_VALUE_MAP.items()}
 
 
-def to_fb_model(entity_id, entity_type, api=None):
+def to_fb_model(entity_id: str, entity_type: str, api=None):
     assert entity_type in Entity.ALL
 
     if entity_type == Entity.AdAccount:
@@ -116,5 +112,5 @@ class ExternalPlatformJobStatus(JobStatus):
         TooMuchData: FailureBucket.TooLarge,
         ThrottlingError: FailureBucket.Throttling,
         GenericPlatformError: FailureBucket.Other,
-        JobStatus.GenericError: FailureBucket.Other
+        JobStatus.GenericError: FailureBucket.Other,
     }

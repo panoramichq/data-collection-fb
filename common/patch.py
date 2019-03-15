@@ -15,8 +15,6 @@ def patch_event_loop():
     Plus, flake8 complains etc etc... So, setting on very explicit approach
     like this one - import and call this function, which, in -turn relies on
     global singleton for avoiding to patch twice.
-
-    :return:
     """
     global _patched
     if not _patched:

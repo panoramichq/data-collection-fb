@@ -3,15 +3,18 @@
 # Running this again and again should be fine (in testing with brute_force=True)
 # Long term, this should do proper upsert of schema in prod too.
 import sys
+
 sys.path.insert(0, '.')
 
 
 def do_it_all():
     from common.store.base import BaseMeta
+
     if BaseMeta.host is None:
         raise ValueError(f'DynamoDB host config not set. Could be running against prod/staging environment')
 
     from common.store.sync_schema import sync_schema
+
     sync_schema(brute_force=True)
 
     # Eventually this should go away and be replaced
@@ -32,12 +35,7 @@ def do_it_all():
     AssetScope.upsert(DEFAULT_SCOPE, platform_token_ids={token_id})
 
     if AD_ACCOUNT:
-        AdAccountEntity.upsert(
-            DEFAULT_SCOPE,
-            AD_ACCOUNT,
-            is_active=True,
-            timezone=AD_ACCOUNT_TIME_ZONE
-        )
+        AdAccountEntity.upsert(DEFAULT_SCOPE, AD_ACCOUNT, is_active=True, timezone=AD_ACCOUNT_TIME_ZONE)
 
 
 if __name__ == '__main__':

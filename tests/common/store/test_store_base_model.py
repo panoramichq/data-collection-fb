@@ -1,14 +1,13 @@
 # must be first, as it does event loop patching and other "first" things
+from pynamodb import attributes
+
 from tests.base.testcase import TestCase
 
-import uuid
-
-from common.store.base import BaseMeta, BaseModel, attributes
+from common.store.base import BaseMeta, BaseModel
 from tests.base import random
 
 
 class BaseModelTests(TestCase):
-
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
@@ -31,12 +30,7 @@ class BaseModelTests(TestCase):
         sid = random.gen_string_id()
         data = self.Model(pid, sid, data='primary data').to_dict()
 
-        assert data == dict(
-            primary_id=pid,
-            secondary_id=sid,
-            data='primary data',
-            more_data=None
-        )
+        assert data == dict(primary_id=pid, secondary_id=sid, data='primary data', more_data=None)
 
     def test_base_model_upsert(self):
 
@@ -50,20 +44,10 @@ class BaseModelTests(TestCase):
 
         m = self.Model.upsert(pid, sid, data='primary data')
         assert isinstance(m, self.Model)
-        assert m.to_dict() == dict(
-            primary_id=pid,
-            secondary_id=sid,
-            data='primary data',
-            more_data=None
-        )
+        assert m.to_dict() == dict(primary_id=pid, secondary_id=sid, data='primary data', more_data=None)
 
         m = self.Model.get(pid, sid)
-        assert m.to_dict() == dict(
-            primary_id=pid,
-            secondary_id=sid,
-            data='primary data',
-            more_data=None
-        )
+        assert m.to_dict() == dict(primary_id=pid, secondary_id=sid, data='primary data', more_data=None)
 
         # Now let's update same record and ensure we don't clobber
         # data we do NOT communicate in upsert
@@ -75,18 +59,13 @@ class BaseModelTests(TestCase):
             primary_id=pid,
             secondary_id=sid,
             data='primary data',  # <------- .update call picks up data that was already in DB
-            more_data='more data'
+            more_data='more data',
         )
 
         # and just in case, fresh get
 
         m = self.Model.get(pid, sid)
-        assert m.to_dict() == dict(
-            primary_id=pid,
-            secondary_id=sid,
-            data='primary data',
-            more_data='more data'
-        )
+        assert m.to_dict() == dict(primary_id=pid, secondary_id=sid, data='primary data', more_data='more data')
 
     def test_base_model_upsert_is_not_exists(self):
 
@@ -100,18 +79,9 @@ class BaseModelTests(TestCase):
 
         # record does not exist
 
-        self.Model.upsert(
-            pid,
-            sid,
-            data=self.Model.data | 'primary data' # if_not_exists change expression
-        )
+        self.Model.upsert(pid, sid, data=self.Model.data | 'primary data')  # if_not_exists change expression
         m = self.Model.get(pid, sid)
-        assert m.to_dict() == dict(
-            primary_id=pid,
-            secondary_id=sid,
-            data='primary data',
-            more_data=None
-        )
+        assert m.to_dict() == dict(primary_id=pid, secondary_id=sid, data='primary data', more_data=None)
 
         # Now record exists and one attr is set,
         # so attempt to overwrite it will be discarded
@@ -119,20 +89,16 @@ class BaseModelTests(TestCase):
         self.Model.upsert(
             pid,
             sid,
-            data=self.Model.data | 'primary data overwrite NOT', # if_not_exists change expression
-            more_data=self.Model.more_data | 'more data'
+            data=self.Model.data | 'primary data overwrite NOT',  # if_not_exists change expression
+            more_data=self.Model.more_data | 'more data',
         )
         m = self.Model.get(pid, sid)
         assert m.to_dict() == dict(
-            primary_id=pid,
-            secondary_id=sid,
-            data='primary data', # <-- still original
-            more_data='more data'
+            primary_id=pid, secondary_id=sid, data='primary data', more_data='more data'  # <-- still original
         )
 
 
 class BaseModelToDictFieldsTests(TestCase):
-
     def test_additional_fields(self):
 
         # purposefully messing with real attr names to test .to_dict()
@@ -158,17 +124,14 @@ class BaseModelToDictFieldsTests(TestCase):
         record = TestModel(pid, sid, data='value')
 
         assert record.to_dict() == dict(
-            primary_id=pid,
-            secondary_id=sid,
-            data='value',
-            record_type='SUPER_RECORD'  # <--- note static attribute
+            primary_id=pid, secondary_id=sid, data='value', record_type='SUPER_RECORD'  # <--- note static attribute
         )
 
         assert record.to_dict(fields=['data', 'record_type']) == dict(
             # primary_id=pid,
             # secondary_id=sid,
             data='value',
-            record_type='SUPER_RECORD'  # <--- note static attribute
+            record_type='SUPER_RECORD',  # <--- note static attribute
         )
 
         with self.assertRaises(AttributeError) as ex:
@@ -183,10 +146,7 @@ class BaseModelToDictFieldsTests(TestCase):
         # purposefully messing with real attr names to test .to_dict()
         class TestModel(BaseModel):
 
-            _fields = {
-                'secondary_id',
-                'record_type'
-            }
+            _fields = {'secondary_id', 'record_type'}
 
             Meta = BaseMeta(random.gen_string_id())
 
@@ -209,12 +169,12 @@ class BaseModelToDictFieldsTests(TestCase):
             # primary_id=pid,
             secondary_id=sid,
             # data='value',
-            record_type='SUPER_RECORD'  # <--- note static attribute
+            record_type='SUPER_RECORD',  # <--- note static attribute
         )
 
         assert record.to_dict(fields=['data', 'record_type']) == dict(
             # primary_id=pid,
             # secondary_id=sid,
             data='value',
-            record_type='SUPER_RECORD'  # <--- note static attribute
+            record_type='SUPER_RECORD',  # <--- note static attribute
         )

@@ -3,7 +3,6 @@ import logging
 from contextlib import AbstractContextManager
 from common.connect.redis import get_redis
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -19,16 +18,13 @@ class SweepRunningFlag(AbstractContextManager):
     """
 
     @staticmethod
-    def _generate_key(sweep_id):
+    def _generate_key(sweep_id: str) -> str:
         return f'{sweep_id}-running'
 
-    def __init__(self, sweep_id):
-        """
-        :param SortedJobsQueueInterface sorted_jobs_queue_interface:
-        """
+    def __init__(self, sweep_id: str):
         self.sweep_id = sweep_id
 
-    def __enter__(self):
+    def __enter__(self) -> 'SweepRunningFlag':
         get_redis().set(self._generate_key(self.sweep_id), 'true')
         return self
 
@@ -36,5 +32,5 @@ class SweepRunningFlag(AbstractContextManager):
         get_redis().delete(self._generate_key(self.sweep_id))
 
     @classmethod
-    def is_set(cls, sweep_id):
+    def is_set(cls, sweep_id: str) -> bool:
         return bool(get_redis().get(cls._generate_key(sweep_id)))

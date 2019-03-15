@@ -14,7 +14,6 @@ from tests.base import random
 
 
 class TestPageImportTask(TestCase):
-
     def setUp(self):
         super().setUp()
         self.sweep_id = random.gen_string_id()
@@ -31,9 +30,9 @@ class TestPageImportTask(TestCase):
             # Not passing tokens here
         )
 
-        with mock.patch.object(report_job_status_task, 'delay') as status_task, \
-            mock.patch.object(PlatformTokenManager, 'get_best_token', return_value=None) as get_best_token, \
-            self.assertRaises(ValueError) as ex_trap:
+        with mock.patch.object(report_job_status_task, 'delay') as status_task, mock.patch.object(
+            PlatformTokenManager, 'get_best_token', return_value=None
+        ) as get_best_token, self.assertRaises(ValueError) as ex_trap:
 
             # and code that falls back on PlatformTokenManager.get_best_token() gets nothing.
 
@@ -48,20 +47,13 @@ class TestPageImportTask(TestCase):
         assert status_task.called
         aa, kk = status_task.call_args
         assert not kk
-        assert aa == (
-            JobStatus.GenericError,
-            job_scope
-        )
+        assert aa == (JobStatus.GenericError, job_scope)
 
     def test_page_import(self):
 
         page_id = random.gen_string_id()
 
-        pages = [
-            dict(
-                ad_account_id=page_id
-            )
-        ]
+        pages = [dict(ad_account_id=page_id)]
 
         job_scope = JobScope(
             sweep_id=self.sweep_id,
@@ -69,12 +61,12 @@ class TestPageImportTask(TestCase):
             entity_id=self.scope_id,
             report_type=ReportType.import_accounts,
             report_variant=Entity.Page,
-            tokens=['token']
+            tokens=['token'],
         )
 
-        with mock.patch.object(ConsoleApi, 'get_pages', return_value=pages) as gp, \
-            mock.patch.object(PageEntity, 'upsert') as page_upsert, \
-            mock.patch.object(report_job_status_task, 'delay') as status_task:
+        with mock.patch.object(ConsoleApi, 'get_pages', return_value=pages) as gp, mock.patch.object(
+            PageEntity, 'upsert'
+        ) as page_upsert, mock.patch.object(report_job_status_task, 'delay') as status_task:
 
             import_pages_task(job_scope, None)
 
@@ -88,13 +80,7 @@ class TestPageImportTask(TestCase):
 
         assert page_upsert.call_count == 1
 
-        page_upsert_args = (
-            (self.scope_id, page_id),
-            {
-                'is_active': True,
-                'updated_by_sweep_id': self.sweep_id
-            }
-        )
+        page_upsert_args = ((self.scope_id, page_id), {'is_active': True, 'updated_by_sweep_id': self.sweep_id})
 
         args1 = page_upsert.call_args_list[0]
 

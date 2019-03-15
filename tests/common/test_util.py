@@ -1,3 +1,5 @@
+# flake8: noqa: F501
+
 from common.util import redact_access_token
 
 
@@ -18,10 +20,12 @@ def test_clear_secrets_match():
         "error_subcode": 99
       }
     }
-"""
+"""  # noqa
     result = redact_access_token(Exception(message))
 
-    assert str(result) == """
+    assert (
+        str(result)
+        == """
 
   Message: Call was not successful
   Method:  GET
@@ -38,6 +42,7 @@ def test_clear_secrets_match():
       }
     }
 """
+    )  # noqa
 
 
 def test_clear_secrets_no_match():
@@ -57,10 +62,12 @@ def test_clear_secrets_no_match():
         "error_subcode": 99
       }
     }
-"""
+"""  # noqa
     result = redact_access_token(Exception(message))
 
-    assert str(result) == """
+    assert (
+        str(result)
+        == """
 
   Message: Call was not successful
   Method:  GET
@@ -77,3 +84,4 @@ def test_clear_secrets_no_match():
       }
     }
 """
+    )  # noqa
