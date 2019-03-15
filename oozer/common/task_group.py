@@ -76,7 +76,7 @@ class TaskGroup:
     def __repr__(self):
         return f'<TaskGroup {self.group_id}:{self.number_of_shards}>'
 
-    def _get_next_task_key_int(self):
+    def _get_next_task_key_int(self) -> int:
         self._last_task_key = task_key = self._last_task_key + 1
         return task_key
 

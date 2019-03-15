@@ -341,7 +341,7 @@ def run_tasks(
     :param time_slice_length: in seconds. can be fractional
     """
     _measurement_name_base = __name__ + '.run_tasks.'  # <- function name. adjust if changed
-    _measurement_tags = dict(sweep_id=sweep_id)
+    _measurement_tags = {'sweep_id': sweep_id}
     _step = 100
 
     n = limit or SortedJobsQueue(sweep_id).get_queue_length()

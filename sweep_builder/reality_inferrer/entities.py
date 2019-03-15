@@ -84,7 +84,7 @@ def iter_entities_per_page_id(
         cnt = 0
 
         with Measure.counter(
-            __name__ + '.entities_per_page_id', tags=dict(entity_id=page_id, entity_type=EntityModel.entity_type)
+            __name__ + '.entities_per_page_id', tags={'entity_id': page_id, 'entity_type': EntityModel.entity_type}
         ) as cntr:
 
             for record in EntityModel.query(page_id):

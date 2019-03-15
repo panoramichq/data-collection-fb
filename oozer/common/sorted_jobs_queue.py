@@ -161,7 +161,8 @@ class _JobsReader:
         job_data = self.ad_account_id_job_scope_data_map.get(job_id_parts.ad_account_id, NotSet)
         if job_data is NotSet:
             job_data_redis_key = self.sorted_jobs_queue_interface.get_payload_key(job_id_parts.ad_account_id)
-            job_data = {} if not job_data_redis_key else json.loads(get_redis().get(job_data_redis_key))
+            job_data_str = get_redis().get(job_data_redis_key)
+            job_data = {} if job_data_str is None else json.loads(job_data_str)
             self.ad_account_id_job_scope_data_map[job_id_parts.ad_account_id] = job_data
             while len(self.ad_account_id_job_scope_data_map) > max_cache_size:  #
                 self.ad_account_id_job_scope_data_map.popitem()  # oldest

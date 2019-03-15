@@ -2,7 +2,7 @@ import functools
 from contextlib import ContextDecorator
 from time import time
 import logging
-from typing import Dict, Any
+from typing import Dict, List Any
 
 from datadog.dogstatsd import DogStatsd
 
@@ -13,7 +13,7 @@ import config.build
 logger = logging.getLogger(__name__)
 
 
-def _dict_as_statsd_tags(tags: Dict[str, Any]):
+def _dict_as_statsd_tags(tags: Dict[str, Any]) -> List[str]:
     """
     Reformat tags to somethign statsd understands
     """
