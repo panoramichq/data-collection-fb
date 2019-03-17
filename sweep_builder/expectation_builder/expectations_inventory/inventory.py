@@ -28,7 +28,8 @@ from sweep_builder.expectation_builder.expectations_inventory.entities import (
     page_entity,
     page_post_entities_per_page,
     comment_entities_per_page_post,
-    page_video_entities_per_page, )
+    page_video_entities_per_page,
+)
 
 from sweep_builder.expectation_builder.expectations_inventory.metrics import lifetime, breakdowns
 
