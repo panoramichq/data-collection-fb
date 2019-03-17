@@ -16,7 +16,6 @@ from oozer.common.enum import (
     FB_PAGE_MODEL,
     FB_PAGE_POST_MODEL,
     FB_COMMENT_MODEL,
-    FB_PAGE_VIDEO_MODEL,
 )
 from oozer.common.facebook_api import (
     get_default_fields,
@@ -124,7 +123,7 @@ def iter_native_entities_per_page(
     """
     Generic getter for entities from the Page edge
     """
-    getter_method_map = {FB_PAGE_POST_MODEL: page.get_posts, FB_PAGE_VIDEO_MODEL: page.get_videos}
+    getter_method_map = {FB_PAGE_POST_MODEL: page.get_posts, FB_AD_VIDEO_MODEL: page.get_videos}
 
     return _iterate_native_entities_per_parent(
         [Entity.PagePost, Entity.PageVideo], getter_method_map, entity_type, fields, page_size

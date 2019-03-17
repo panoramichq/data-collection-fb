@@ -272,7 +272,7 @@ class PageVideoEntity(PageEntityBaseMixin, BaseModel):
     Meta = EntityBaseMeta(dynamodb_config.PAGE_VIDEO_ENTITY_TABLE)
     entity_id = attributes.UnicodeAttribute(range_key=True, attr_name='eid')
 
-    entity_type = Entity.PagePost
+    entity_type = Entity.PageVideo
     _default_bol = True
 
 
@@ -289,6 +289,7 @@ ENTITY_TYPE_MODEL_MAP = {
         CustomAudienceEntity,
         PageEntity,
         PagePostEntity,
+        PageVideoEntity,
     ]
 }
 
@@ -312,6 +313,7 @@ def sync_schema(brute_force=False):
         CustomAudienceEntity,
         PageEntity,
         PagePostEntity,
+        PageVideoEntity,
     ]
 
     for table in tables:
