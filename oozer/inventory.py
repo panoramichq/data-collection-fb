@@ -32,6 +32,7 @@ entity_report_handler_map = {
         Entity.Page: collect_page_task,
         Entity.PagePost: collect_entities_per_page_task,
         Entity.Comment: collect_entities_per_page_post_task,
+        Entity.PageVideo: collect_entities_per_page_task,
     },
     ReportType.lifetime: {
         Entity.Campaign: collect_insights_task,

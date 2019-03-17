@@ -264,6 +264,18 @@ class PagePostEntity(PageEntityBaseMixin, BaseModel):
     _default_bol = True
 
 
+class PageVideoEntity(PageEntityBaseMixin, BaseModel):
+    """
+    Represents a single facebook page video entity
+    """
+
+    Meta = EntityBaseMeta(dynamodb_config.PAGE_VIDEO_ENTITY_TABLE)
+    entity_id = attributes.UnicodeAttribute(range_key=True, attr_name='eid')
+
+    entity_type = Entity.PagePost
+    _default_bol = True
+
+
 # Used to map from entity_type str to Model for persistence-style tasks
 ENTITY_TYPE_MODEL_MAP = {
     model.entity_type: model

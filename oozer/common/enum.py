@@ -24,6 +24,7 @@ FB_CUSTOM_AUDIENCE_MODEL = customaudience.CustomAudience
 FB_PAGE_MODEL = page.Page
 FB_PAGE_POST_MODEL = pagepost.PagePost
 FB_COMMENT_MODEL = comment.Comment
+FB_PAGE_VIDEO_MODEL = advideo.AdVideo
 
 FB_MODEL_ENUM_VALUE_MAP = {
     FB_ADACCOUNT_MODEL: Entity.AdAccount,
@@ -36,6 +37,7 @@ FB_MODEL_ENUM_VALUE_MAP = {
     FB_PAGE_MODEL: Entity.Page,
     FB_PAGE_POST_MODEL: Entity.PagePost,
     FB_COMMENT_MODEL: Entity.Comment,
+    FB_PAGE_VIDEO_MODEL: Entity.PageVideo,
 }
 
 ENUM_VALUE_FB_MODEL_MAP = {value: Model for Model, value in FB_MODEL_ENUM_VALUE_MAP.items()}

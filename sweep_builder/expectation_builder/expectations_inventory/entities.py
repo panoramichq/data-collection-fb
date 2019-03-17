@@ -142,5 +142,6 @@ custom_audience_entities_per_ad_account: ExpectationGeneratorType = functools.pa
 )
 
 page_post_entities_per_page: ExpectationGeneratorType = functools.partial(entities_per_page, Entity.PagePost)
+page_video_entities_per_page: ExpectationGeneratorType = functools.partial(entities_per_page, Entity.PageVideo)
 
 comment_entities_per_page_post: ExpectationGeneratorType = functools.partial(entities_per_page_post, Entity.Comment)

@@ -28,7 +28,7 @@ from sweep_builder.expectation_builder.expectations_inventory.entities import (
     page_entity,
     page_post_entities_per_page,
     comment_entities_per_page_post,
-)
+    page_video_entities_per_page, )
 
 from sweep_builder.expectation_builder.expectations_inventory.metrics import lifetime, breakdowns
 
@@ -87,12 +87,14 @@ entity_expectation_generator_map[Entity.AdAccount] = list(
     )
 )
 
+
 entity_expectation_generator_map[Entity.Page] = list(
     filter(
         None,
         [
             None if jobs_config.ENTITY_P_DISABLED else page_entity,
             None if jobs_config.ENTITY_PP_DISABLED else page_post_entities_per_page,
+            None if jobs_config.ENTITY_PV_DISABLED else page_video_entities_per_page,
             sync_expectations_per_page,
         ],
     )
