@@ -16,7 +16,7 @@ def test_timeout_exception():
 
 
 def test_timeout_success():
-    """Test function times out properly."""
+    """Test function doesn't time out prematurely."""
     def test_func():
         gevent.sleep(1)
 
