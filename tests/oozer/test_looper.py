@@ -15,7 +15,6 @@ def _mock_run_tasks(_, time=0):
 
 
 class TestLooperTimeout(TestCase):
-
     @patch('oozer.looper.looper_config.OOZER_TIMEOUT', new=1)
     @patch('oozer.looper.run_tasks', new=functools.partial(_mock_run_tasks, time=10))
     @patch('oozer.looper.SweepRunningFlag')
