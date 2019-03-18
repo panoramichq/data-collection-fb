@@ -50,7 +50,6 @@ def _report_success(job_scope: JobScope, start_time: float, retval: Any):
 
 def reported_task(func):
     """Report task stats."""
-
     @functools.wraps(func)
     def wrapper(job_scope: JobScope, *args: Any, **kwargs: Any):
         start_time = time.time()
@@ -60,6 +59,7 @@ def reported_task(func):
             _report_success(job_scope, start_time, retval)
         except CollectionError as e:
             _report_failure(job_scope, start_time, e.inner, partial_datapoint_count=e.partial_datapoint_count)
+            raise
         except Exception as e:
             _report_failure(job_scope, start_time, e)
             raise
