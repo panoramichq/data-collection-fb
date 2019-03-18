@@ -7,6 +7,9 @@ from collections import namedtuple
 from itertools import islice
 from typing import Generator, Tuple, Union, Callable, Dict, List
 
+from gevent import Timeout
+
+from common.bugsnag import BugSnagContextData
 from common.celeryapp import CeleryTask
 from common.connect.redis import get_redis
 from common.enums.failure_bucket import FailureBucket
@@ -625,7 +628,12 @@ def run_sweep_looper_suggest_restart_time(sweep_id: str) -> int:
 
     logger.info(f"#{sweep_id}: Starting sweep loop")
     with SweepRunningFlag(sweep_id):
-        cnt, pulse = run_tasks(sweep_id)  # type: Tuple[int, Pulse]
+        try:
+            cnt, pulse = gevent.with_timeout(looper_config.OOZER_TIMEOUT, run_tasks, sweep_id)
+        except Timeout as e:
+            BugSnagContextData.notify(e, sweep_id=sweep_id)
+            logger.exception(f"Oozer timed out running sweep {sweep_id}")
+            raise
     logger.info(f"#{sweep_id}: Ran {cnt} total jobs with following outcomes: {pulse}")
 
     min_sweep_seconds = looper_config.FB_THROTTLING_WINDOW
