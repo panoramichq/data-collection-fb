@@ -18,6 +18,8 @@ import time
 from datetime import datetime
 
 from common.measurement import Measure
+from common.timeout import timeout
+from config import looper as looper_config
 from oozer.looper import run_sweep_looper_suggest_restart_time
 from sweep_builder.tasks import build_sweep
 
@@ -28,6 +30,7 @@ def generate_sweep_id() -> str:
     return datetime.utcnow().strftime('%Y%m%d%H%M%S')
 
 
+@timeout(looper_config.RUN_SWEEP_TIMEOUT)
 def run_sweep(sweep_id: str = None) -> int:
     sweep_id = sweep_id or generate_sweep_id()
     build_sweep(sweep_id)

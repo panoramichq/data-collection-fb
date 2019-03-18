@@ -1,6 +1,7 @@
 # flake8: noqa: E722
 
-OOZER_TIMEOUT = 20 * 60  # seconds
+RUN_SWEEP_TIMEOUT = 20 * 60  # seconds
+RUN_TASKS_TIMEOUT = 60 * 60  # seconds
 
 FB_THROTTLING_WINDOW = 10 * 60  # seconds
 DECAY_FN_START_MULTIPLIER = 3  # value of 'z' used in linear decay formulas

@@ -7,15 +7,13 @@ from collections import namedtuple
 from itertools import islice
 from typing import Generator, Tuple, Union, Callable, Dict, List
 
-from gevent import Timeout
-
-from common.bugsnag import BugSnagContextData
 from common.celeryapp import CeleryTask
 from common.connect.redis import get_redis
 from common.enums.failure_bucket import FailureBucket
 from common.id_tools import parse_id
 from common.math import adapt_decay_rate_to_population, get_decay_proportion
 from common.measurement import Measure
+from common.timeout import timeout
 from config import looper as looper_config
 from oozer.common.job_context import JobContext
 from oozer.common.job_scope import JobScope
@@ -329,6 +327,7 @@ class SweepStatusTracker:
 
 @Measure.timer(__name__, function_name_as_metric=True)
 @Measure.counter(__name__, function_name_as_metric=True, count_once=True)
+@timeout(looper_config.RUN_TASKS_TIMEOUT)
 def run_tasks(
     sweep_id: str, limit: int = None, time_slices: int = looper_config.FB_THROTTLING_WINDOW, time_slice_length: int = 1
 ):
@@ -628,12 +627,7 @@ def run_sweep_looper_suggest_restart_time(sweep_id: str) -> int:
 
     logger.info(f"#{sweep_id}: Starting sweep loop")
     with SweepRunningFlag(sweep_id):
-        try:
-            cnt, pulse = gevent.with_timeout(looper_config.OOZER_TIMEOUT, run_tasks, sweep_id)
-        except Timeout as e:
-            BugSnagContextData.notify(e, sweep_id=sweep_id)
-            logger.exception(f"Oozer timed out running sweep {sweep_id}")
-            raise
+        cnt, pulse = run_tasks(sweep_id)
     logger.info(f"#{sweep_id}: Ran {cnt} total jobs with following outcomes: {pulse}")
 
     min_sweep_seconds = looper_config.FB_THROTTLING_WINDOW
