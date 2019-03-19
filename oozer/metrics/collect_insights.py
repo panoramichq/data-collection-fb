@@ -225,18 +225,6 @@ class Insights:
 
         return report_tracker.iter_report_data()
 
-    @staticmethod
-    def iter_video_insights(fb_entity: FB_AD_VIDEO_MODEL) -> Generator[Dict[str, Any], None, None]:
-        """
-        Run the actual execution of the insights job for video insights
-        """
-
-        params = {'metric': VIDEO_REPORT_METRICS}
-        report_status_obj: InsightsResult = fb_entity.get_video_insights(params=params, fields=VIDEO_REPORT_FIELDS)
-
-        for datum in report_status_obj:
-            yield datum.export_all_data()
-
     @classmethod
     def iter_collect_insights(cls, job_scope: JobScope, _):
         """
