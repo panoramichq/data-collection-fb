@@ -16,11 +16,7 @@ from oozer.common.facebook_async_report import FacebookAsyncReportStatus
 from oozer.common.job_scope import JobScope
 from oozer.common.vendor_data import add_vendor_data
 
-from oozer.metrics.constants import (
-    ENUM_LEVEL_MAP,
-    REPORT_TYPE_FB_BREAKDOWN_ENUM,
-    DEFAULT_REPORT_FIELDS,
-)
+from oozer.metrics.constants import ENUM_LEVEL_MAP, REPORT_TYPE_FB_BREAKDOWN_ENUM, DEFAULT_REPORT_FIELDS
 from oozer.metrics.vendor_data_extractor import report_type_vendor_data_extractor_map
 
 

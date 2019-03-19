@@ -4,7 +4,7 @@ from facebook_business.adobjects.insightsresult import InsightsResult
 
 from common.enums.entity import Entity
 from common.enums.reporttype import ReportType
-from common.id_tools import generate_universal_id, NAMESPACE_RAW
+from common.id_tools import NAMESPACE_RAW
 from common.tokens import PlatformTokenManager
 from oozer.common.cold_storage import batch_store
 from oozer.common.enum import ReportEntityApiKind, FB_AD_VIDEO_MODEL, ColdStoreBucketType
@@ -13,7 +13,11 @@ from oozer.common.job_scope import JobScope
 from oozer.common.vendor_data import add_vendor_data
 
 from oozer.metrics.constants import VIDEO_REPORT_METRICS, VIDEO_REPORT_FIELDS
-from oozer.metrics.vendor_data_extractor import report_type_vendor_data_extractor_map
+from oozer.metrics.vendor_data_extractor import (
+    report_type_vendor_data_extractor_map,
+    report_type_vendor_data_raw_extractor_map,
+    ORGANIC_DATA_PAGE_VIDEO_ID,
+)
 
 
 class OrganicJobScopeParsed:
@@ -115,27 +119,33 @@ class InsightsOrganic:
             job_scope, bucket_type=ColdStoreBucketType.RAW_BUCKET, custom_namespace=NAMESPACE_RAW
         )
         orig_store = batch_store.NormalStore(job_scope, bucket_type=ColdStoreBucketType.ORIGINAL_BUCKET)
+        common_vendor_data = {
+            'ad_account_id': job_scope.ad_account_id,
+            'entity_type': job_scope.report_variant,
+            'report_type': job_scope.report_type,
+            ORGANIC_DATA_PAGE_VIDEO_ID: job_scope.entity_id,
+        }
 
         data = list(data_iter)
         raw_record = {
-            'data': data,
-            'entity_id': job_scope.entity_id,
-            'entity_type': job_scope.report_variant,
+            'payload': data,
             'page_id': job_scope.ad_account_id,
+            ORGANIC_DATA_PAGE_VIDEO_ID: job_scope.entity_id,
         }
+        vendor_data_raw = report_type_vendor_data_raw_extractor_map[job_scope.report_type](
+            raw_record, **common_vendor_data
+        )
 
-        vendor_data = {'id': generate_universal_id(use_namespace=NAMESPACE_RAW, **job_scope.to_dict())}
-
-        # first, store original response from FB
-        raw_record = add_vendor_data(raw_record, **vendor_data)
+        raw_record = add_vendor_data(raw_record, **vendor_data_raw)
         raw_store.store(raw_record)
 
         if len(data):
             # then, transpose it to correct form
-            final_record = {'page_id': job_scope.ad_account_id, 'entity_id': job_scope.entity_id}
+            final_record = {'page_id': job_scope.ad_account_id, ORGANIC_DATA_PAGE_VIDEO_ID: job_scope.entity_id}
             for param_datum in data:
                 final_record[param_datum['name']] = param_datum['values'][0]['value']
 
+            vendor_data = report_type_vendor_data_extractor_map[job_scope.report_type](raw_record, **common_vendor_data)
             final_record = add_vendor_data(final_record, **vendor_data)
             orig_store.store(final_record)
 
