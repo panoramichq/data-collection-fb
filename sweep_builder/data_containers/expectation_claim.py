@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List
 
 from common.job_signature import JobSignature
 from sweep_builder.data_containers.reality_claim import RealityClaim
