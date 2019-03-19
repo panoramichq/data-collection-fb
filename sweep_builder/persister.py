@@ -27,7 +27,6 @@ def iter_persist_prioritized(
     ) as expectation_add:
 
         _measurement_name_base = f"{__name__}.{iter_persist_prioritized.__name__}"
-        _measurement_sample_rate = 1
 
         _before_next_prioritized = time.time()
         skipped_jobs = defaultdict(int)
@@ -39,11 +38,9 @@ def iter_persist_prioritized(
 
             _measurement_tags = {'ad_account_id': ad_account_id, 'entity_type': entity_type, 'sweep_id': sweep_id}
 
-            Measure.timing(
-                f'{_measurement_name_base}.next_prioritized',
-                tags=_measurement_tags,
-                sample_rate=_measurement_sample_rate,
-            )((time.time() - _before_next_prioritized) * 1000)
+            Measure.timing(f'{_measurement_name_base}.next_prioritized', tags=_measurement_tags)(
+                (time.time() - _before_next_prioritized) * 1000
+            )
 
             if not should_persist(score):
                 logger.info(f'Not persisting job {job_id_effective} due to low score: {score}')
@@ -70,9 +67,7 @@ def iter_persist_prioritized(
             if prioritization_claim.timezone:
                 extra_data['ad_account_timezone_name'] = prioritization_claim.timezone
 
-            with Measure.timer(
-                f'{_measurement_name_base}.add_to_queue', tags=_measurement_tags, sample_rate=_measurement_sample_rate
-            ):
+            with Measure.timer(f'{_measurement_name_base}.add_to_queue', tags=_measurement_tags):
                 add_to_queue(job_id_effective, score, **extra_data)
 
             # This is our cheap way of ensuring that we are dealing
@@ -81,19 +76,13 @@ def iter_persist_prioritized(
                 # TODO: contemplate parsing these instead and making sure they are norm vs eff
                 # at this point all this checks is that we have more than one job_id scheduled
                 if prioritization_claim.normative_job_id != job_id_effective:
-                    with Measure.timer(
-                        f'{_measurement_name_base}.expectation_add',
-                        tags=_measurement_tags,
-                        sample_rate=_measurement_sample_rate,
-                    ):
+                    with Measure.timer(f'{_measurement_name_base}.expectation_add', tags=_measurement_tags):
                         expectation_add(job_id_effective, ad_account_id, prioritization_claim.entity_id)
 
             # This time includes the time consumer of this generator wastes
             # between reads from us. Good way to measure how quickly we are
             # consumed (what pauses we have between each consumption)
-            with Measure.timer(
-                f'{_measurement_name_base}.yield_result', tags=_measurement_tags, sample_rate=_measurement_sample_rate
-            ):
+            with Measure.timer(f'{_measurement_name_base}.yield_result', tags=_measurement_tags):
                 yield prioritization_claim
 
             _before_next_prioritized = time.time()
