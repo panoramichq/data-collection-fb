@@ -26,7 +26,7 @@ def iter_persist_prioritized(
         sweep_id, cache_max_size=200000
     ) as expectation_add:
 
-        _measurement_name_base = __name__ + '.' + iter_persist_prioritized.__name__
+        _measurement_name_base = f"{__name__}.{iter_persist_prioritized.__name__}"
         _measurement_sample_rate = 1
 
         _before_next_prioritized = time.time()
@@ -78,13 +78,9 @@ def iter_persist_prioritized(
             # This is our cheap way of ensuring that we are dealing
             # with platform-bound job that we need to report our expectations for
             if prioritization_claim.is_subject_to_expectation_publication:
-                # For purpose of accounting for expectations,
-                # must save the normative job to right table
-                job_id_normative = prioritization_claim.normative_job_signature.job_id
-
                 # TODO: contemplate parsing these instead and making sure they are norm vs eff
                 # at this point all this checks is that we have more than one job_id scheduled
-                if job_id_normative != job_id_effective:
+                if prioritization_claim.normative_job_id != job_id_effective:
                     with Measure.timer(
                         f'{_measurement_name_base}.expectation_add',
                         tags=_measurement_tags,
