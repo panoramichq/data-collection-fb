@@ -1,4 +1,3 @@
-
 class JobSignature:
     """Represent serialized call signature of a task."""
 

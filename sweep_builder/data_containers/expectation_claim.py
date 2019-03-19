@@ -17,6 +17,7 @@ class ExpectationClaim(RealityClaim):
     (Used to avoid the need to change all functions in the stack if you need
     to add more data to context from the very bottom of the stack. Just extend this object.)
     """
+
     normative_job_signature: JobSignature = None
     effective_job_signatures: List[JobSignature] = []
 

@@ -36,7 +36,7 @@ def pages_per_scope(reality_claim: RealityClaim) -> Generator[ExpectationClaim, 
                 report_type=ReportType.import_pages,
                 report_variant=Entity.Page,
             )
-        )
+        ),
     )
 
 
@@ -61,5 +61,5 @@ def sync_expectations_per_page(reality_claim: RealityClaim) -> Generator[Expecta
                 entity_type=reality_claim.entity_type,
                 report_type=ReportType.sync_expectations,
             )
-        )
+        ),
     )

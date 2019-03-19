@@ -15,12 +15,14 @@ class PrioritizationClaim(ScorableClaim):
     (Used to avoid the need to change all functions in the stack if you need
     to add more data to context from the very bottom of the stack. Just extend this object.)
     """
+
     job_scores: List[int] = []
     score: int = None
 
     @property
     def is_subject_to_expectation_publication(self):
         return (
-            self.ad_account_id is not None and self.entity_id is not None and
-            self.entity_type in SUBJECT_TO_EXPECTATION_PUBLICATION
+            self.ad_account_id is not None
+            and self.entity_id is not None
+            and self.entity_type in SUBJECT_TO_EXPECTATION_PUBLICATION
         )
