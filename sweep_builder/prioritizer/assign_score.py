@@ -207,11 +207,11 @@ def assign_score(job_id: str, timezone: str) -> int:
         # happens in the block below. At minimum we should collect lifetime reports once in two hours.
         pass
 
-    # if collection_record and collection_record.last_success_dt:
-    #     seconds_old = (now() - collection_record.last_success_dt).seconds
-    #     # at this rate, 80% of score id regained by 15th minute
-    #     # and ~100% by 36th minute.
-    #     score = score * get_fade_in_proportion(seconds_old / 60, rate=0.1)
+    if collection_record and collection_record.last_success_dt:
+        seconds_old = (now() - collection_record.last_success_dt).seconds
+        # at this rate, 80% of score id regained by 15th minute
+        # and ~100% by 36th minute.
+        score = score * get_fade_in_proportion(seconds_old / 60, rate=0.1)
 
     score = int(score)
 

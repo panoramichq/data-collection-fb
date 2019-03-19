@@ -6,13 +6,11 @@ from facebook_business.adobjects.adreportrun import AdReportRun
 from facebook_business.adobjects.adsinsights import AdsInsights
 from typing import Callable, Dict, Any, Generator
 
-from facebook_business.adobjects.insightsresult import InsightsResult
-
 from common.enums.entity import Entity
 from common.enums.reporttype import ReportType
 from common.tokens import PlatformTokenManager
 from oozer.common.cold_storage import batch_store
-from oozer.common.enum import ReportEntityApiKind, FB_AD_VIDEO_MODEL
+from oozer.common.enum import ReportEntityApiKind
 from oozer.common.facebook_api import PlatformApiContext
 from oozer.common.facebook_async_report import FacebookAsyncReportStatus
 from oozer.common.job_scope import JobScope
@@ -22,8 +20,6 @@ from oozer.metrics.constants import (
     ENUM_LEVEL_MAP,
     REPORT_TYPE_FB_BREAKDOWN_ENUM,
     DEFAULT_REPORT_FIELDS,
-    VIDEO_REPORT_METRICS,
-    VIDEO_REPORT_FIELDS,
 )
 from oozer.metrics.vendor_data_extractor import report_type_vendor_data_extractor_map
 
