@@ -1,6 +1,6 @@
 import time
 
-from typing import Generator, Iterable
+from typing import Generator, Iterable, Dict
 
 from common.measurement import Measure
 from sweep_builder.data_containers.prioritization_claim import PrioritizationClaim
@@ -15,7 +15,7 @@ def iter_prioritized(claims: Iterable[ScorableClaim]) -> Generator[Prioritizatio
 
     _before_next_expectation = time.time()
 
-    seen_job_ids = set()
+    assigned_scores: Dict[str, int] = {}
 
     for claim in claims:
         _measurement_tags = {"entity_type": claim.entity_type, "ad_account_id": claim.ad_account_id}
@@ -24,9 +24,10 @@ def iter_prioritized(claims: Iterable[ScorableClaim]) -> Generator[Prioritizatio
             f"{_measurement_name_base}.next_expected", tags=_measurement_tags, sample_rate=_measurement_sample_rate
         )((time.time() - _before_next_expectation) * 1000)
 
-        # Skip already seen job_ids
-        if claim.selected_signature.job_id in seen_job_ids:
-            continue
+        # Cache already seen job_ids
+        assigned_score = assigned_scores.get(claim.selected_job_id)
+        if assigned_score is not None:
+            yield PrioritizationClaim(claim.to_dict(), score=assigned_score)
 
         with Measure.timer(
             f"{_measurement_name_base}.assign_score", tags=_measurement_tags, sample_rate=_measurement_sample_rate
