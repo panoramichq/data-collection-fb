@@ -1,4 +1,5 @@
 # must be first, as it does event loop patching and other "first" things
+from oozer.common.enum import ColdStoreBucketType
 from tests.base.testcase import TestCase, mock, skip
 
 from common.enums.entity import Entity
@@ -54,8 +55,8 @@ class TestBatchStore(TestCase):
 
         aa, kk = sig1
         assert not kk
-        assert aa == ([{'id': 1}, {'id': 2}], self.job_scope, 0)  # chunk ID
+        assert aa == ([{'id': 1}, {'id': 2}], self.job_scope, 0, ColdStoreBucketType.ORIGINAL_BUCKET, None)  # chunk ID
 
         aa, kk = sig2
         assert not kk
-        assert aa == ([{'id': 3}], self.job_scope, 1)  # chunk ID
+        assert aa == ([{'id': 3}], self.job_scope, 1, ColdStoreBucketType.ORIGINAL_BUCKET, None)  # chunk ID

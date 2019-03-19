@@ -77,7 +77,7 @@ class ChunkDumpStore(BaseStoreHandler):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if len(self.data):
-            self._store(self.data, self.job_scope, self.chunk_marker)
+            self._store(self.data, self.job_scope, self.chunk_marker, self.bucket_type, self.custom_namespace)
 
 
 class NaturallyNormativeChildStore(BaseStoreHandler):

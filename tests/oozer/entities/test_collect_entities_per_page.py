@@ -4,7 +4,7 @@ from tests.base.testcase import TestCase, mock
 
 from common.enums.entity import Entity
 from common.enums.reporttype import ReportType
-from common.id_tools import generate_universal_id, NAMESPACE_ORGANIC
+from common.id_tools import generate_universal_id
 from oozer.common.cold_storage.batch_store import ChunkDumpStore
 from oozer.common.job_scope import JobScope
 from oozer.common.enum import FB_PAGE_MODEL, FB_PAGE_POST_MODEL, FB_AD_VIDEO_MODEL
@@ -23,7 +23,7 @@ class TestCollectEntitiesPerPage(TestCase):
 
         entity_types = [Entity.PagePost, Entity.PageVideo]
         fb_model_map = {Entity.PagePost: FB_PAGE_POST_MODEL, Entity.PageVideo: FB_AD_VIDEO_MODEL}
-        get_all_method_map = {Entity.PagePost: 'get_posts', Entity.PageVideo: 'get_videos'}
+        get_all_method_map = {Entity.PagePost: 'get_posts', Entity.PageVideo: 'get_indexed_videos'}
 
         for entity_type in entity_types:
 
@@ -40,11 +40,7 @@ class TestCollectEntitiesPerPage(TestCase):
             )
 
             universal_id_should_be = generate_universal_id(
-                use_namespace=NAMESPACE_ORGANIC,
-                ad_account_id=self.ad_account_id,
-                report_type=ReportType.entity,
-                entity_id=fbid,
-                entity_type=entity_type,
+                ad_account_id=self.ad_account_id, report_type=ReportType.entity, entity_id=fbid, entity_type=entity_type
             )
 
             fb_data = FB_MODEL(fbid=fbid)

@@ -142,7 +142,10 @@ def generate_universal_id(
     use_fields: List[str] = None, trailing_parts: List[str] = None, use_namespace: str = None, **parts
 ) -> str:
     return generate_id(
-        fields=use_fields or universal_id_fields, trailing_parts=trailing_parts, use_namespace=use_namespace, **parts
+        use_fields=use_fields or universal_id_fields,
+        trailing_parts=trailing_parts,
+        use_namespace=use_namespace,
+        **parts,
     )
 
 
