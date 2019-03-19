@@ -1,7 +1,7 @@
 import functools
 from collections import defaultdict
 
-from typing import Iterable, Generator, Optional, Set
+from typing import Iterable, Generator, Optional
 
 from common.job_signature import JobSignature
 from common.measurement import Measure
@@ -19,7 +19,6 @@ def _fetch_job_report(job_id: str) -> Optional[JobReport]:
 
 def should_select(signature: JobSignature, report: Optional[JobReport]) -> bool:
     """Decide if signature should be used based on last report."""
-    # TODO: should we use this signature based on job history
     if report is None:
         # not ran yet
         return True

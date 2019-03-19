@@ -6,6 +6,7 @@ from common.timeout import timeout
 
 def test_timeout_exception():
     """Test function times out properly."""
+
     def test_func():
         gevent.sleep(10)
 
@@ -17,6 +18,7 @@ def test_timeout_exception():
 
 def test_timeout_success():
     """Test function doesn't time out prematurely."""
+
     def test_func():
         gevent.sleep(1)
 
