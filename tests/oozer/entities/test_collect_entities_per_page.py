@@ -23,7 +23,7 @@ class TestCollectEntitiesPerPage(TestCase):
 
         entity_types = [Entity.PagePost, Entity.PageVideo]
         fb_model_map = {Entity.PagePost: FB_PAGE_POST_MODEL, Entity.PageVideo: FB_AD_VIDEO_MODEL}
-        get_all_method_map = {Entity.PagePost: 'get_posts', Entity.PageVideo: 'get_indexed_videos'}
+        get_all_method_map = {Entity.PagePost: 'get_posts', Entity.PageVideo: 'get_videos'}
 
         for entity_type in entity_types:
 
