@@ -1,9 +1,12 @@
 import functools
+
 from collections import defaultdict
 
 from typing import Iterable, Generator, Optional
 
-from common.job_signature import JobSignature
+from common.enums.failure_bucket import FailureBucket
+from config.jobs import FAILS_IN_ROW_BREAKDOWN_LIMIT
+
 from common.measurement import Measure
 from common.store.jobreport import JobReport
 from sweep_builder.data_containers.expectation_claim import ExpectationClaim
@@ -17,21 +20,28 @@ def _fetch_job_report(job_id: str) -> Optional[JobReport]:
     return JobReport.get(job_id)
 
 
-def should_select(signature: JobSignature, report: Optional[JobReport]) -> bool:
+def should_select(report: Optional[JobReport]) -> bool:
     """Decide if signature should be used based on last report."""
+    # not ran yet
     if report is None:
-        # not ran yet
         return True
 
-    # TODO: Implement logic that decides whether job should be broken down or not
-    return True
+    # only break down jobs with too large error
+    if report.last_failure_bucket != FailureBucket.TooLarge:
+        return True
+
+    # need to fail n-times in a row
+    if report.fails_in_row is None or report.fails_in_row < FAILS_IN_ROW_BREAKDOWN_LIMIT:
+        return True
+
+    return False
 
 
 def select_signature(claim: ExpectationClaim) -> ScorableClaim:
     """Select job signature for single expectation claim."""
     for signature in claim.effective_job_signatures:
         report = _fetch_job_report(signature.job_id)
-        if should_select(signature, report):
+        if should_select(report):
             return ScorableClaim(claim.to_dict(), selected_job_signature=signature, last_report=report)
 
     # default to normative signature
