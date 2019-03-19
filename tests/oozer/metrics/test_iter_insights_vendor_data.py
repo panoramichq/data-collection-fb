@@ -1,5 +1,4 @@
 # must be first, as it does event loop patching and other "first" things
-from oozer.metrics.vendor_data_extractor import ORGANIC_DATA_PAGE_VIDEO_ID
 from tests.base.testcase import TestCase, mock
 
 import functools
@@ -346,12 +345,7 @@ class VendorDataInjectionTests(TestCase):
 
         # intentionally NOT reusing collect_insights._entity_type_id_field_map map
         # effectively, here we are testing it too.
-        entity_id_attr_name_map = {
-            Entity.Campaign: 'campaign_id',
-            Entity.AdSet: 'adset_id',
-            Entity.Ad: 'ad_id',
-            Entity.PageVideo: ORGANIC_DATA_PAGE_VIDEO_ID,
-        }
+        entity_id_attr_name_map = {Entity.Campaign: 'campaign_id', Entity.AdSet: 'adset_id', Entity.Ad: 'ad_id'}
 
         for entity_type in entity_types:
 
