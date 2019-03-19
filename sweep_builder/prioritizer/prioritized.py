@@ -24,7 +24,7 @@ def iter_prioritized(claims: Iterable[ScorableClaim]) -> Generator[Prioritizatio
             f"{_measurement_name_base}.next_expected", tags=_measurement_tags, sample_rate=_measurement_sample_rate
         )((time.time() - _before_next_expectation) * 1000)
 
-        # Skip claims already yielded
+        # Skip already seen job_ids
         if claim.selected_signature.job_id in seen_job_ids:
             continue
 
