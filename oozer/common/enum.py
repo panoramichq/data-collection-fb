@@ -117,3 +117,16 @@ class ExternalPlatformJobStatus(JobStatus):
         GenericPlatformError: FailureBucket.Other,
         JobStatus.GenericError: FailureBucket.Other,
     }
+
+
+class ReportEntityApiKind:
+
+    Ad = 'ads'
+    Page = 'page'
+    Video = 'video'
+    Post = 'post'
+
+
+class ColdStoreBucketType:
+    ORIGINAL_BUCKET = 'orig'
+    RAW_BUCKET = 'raw'

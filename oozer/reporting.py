@@ -60,6 +60,7 @@ def reported_task(func):
             _report_success(job_scope, start_time, retval)
         except CollectionError as e:
             _report_failure(job_scope, start_time, e.inner, partial_datapoint_count=e.partial_datapoint_count)
+            raise
         except Exception as e:
             _report_failure(job_scope, start_time, e)
             raise

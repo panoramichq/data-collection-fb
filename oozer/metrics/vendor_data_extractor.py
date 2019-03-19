@@ -12,6 +12,7 @@ _entity_type_id_field_map = {
     Entity.Campaign: AdsInsights.Field.campaign_id,
     Entity.AdSet: AdsInsights.Field.adset_id,
     Entity.Ad: AdsInsights.Field.ad_id,
+    Entity.PageVideo: 'id',
 }
 
 
@@ -67,7 +68,7 @@ def _from_day_segmented_entity(data: Dict[str, Any], entity_type: str = None, **
     # The rest of data is in kwargs
     return {
         'id': generate_universal_id(
-            fields=universal_id_fields,
+            use_fields=universal_id_fields,
             entity_id=entity_id,
             entity_type=entity_type,
             range_start=data[_date_start],
@@ -149,7 +150,7 @@ def _from_age_gender_segmented_entity(data: Dict[str, Any], entity_type: str = N
     # The rest of data is in kwargs
     return {
         'id': generate_universal_id(
-            fields=universal_id_fields + ['age', 'gender'],
+            use_fields=universal_id_fields + ['age', 'gender'],
             entity_id=entity_id,
             entity_type=entity_type,
             range_start=data[_date_start],
@@ -189,7 +190,7 @@ def _from_platform_segmented_entity(data: Dict[str, Any], entity_type: str = Non
     # The rest of data is in kwargs
     return {
         'id': generate_universal_id(
-            fields=universal_id_fields + ['publisher_platform', 'platform_position'],
+            use_fields=universal_id_fields + ['publisher_platform', 'platform_position'],
             entity_id=entity_id,
             entity_type=entity_type,
             range_start=data[_date_start],
@@ -235,7 +236,7 @@ def _from_dma_segmented_entity(data: Dict[str, Any], entity_type: str = None, **
     # The rest of data is in kwargs
     return {
         'id': generate_universal_id(
-            fields=universal_id_fields + ['dma'],
+            use_fields=universal_id_fields + ['dma'],
             entity_id=entity_id,
             entity_type=entity_type,
             range_start=data[_date_start],

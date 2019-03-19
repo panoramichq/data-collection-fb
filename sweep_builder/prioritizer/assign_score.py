@@ -62,8 +62,9 @@ def assign_score(job_id: str, timezone: str) -> int:
 
     # if we are here, we have Platform-flavored job
     is_per_parent_job = bool(report_variant and (not entity_type or entity_type == Entity.PagePost))
+    is_per_page_metrics_job = bool(report_variant and report_variant in Entity.NON_AA_SCOPED)
 
-    if not is_per_parent_job and ad_account_id != '23845179':
+    if not is_per_parent_job and ad_account_id != '23845179' and not is_per_page_metrics_job:
         # at this time, it's impossible to have per-entity_id
         # jobs here because sweep builder specifically avoids
         # scoring and releasing per-entity_id jobs
@@ -96,7 +97,7 @@ def assign_score(job_id: str, timezone: str) -> int:
                 # Succeeded in last 8 hours
                 return 0
 
-    if is_per_parent_job:
+    if is_per_parent_job or is_per_page_metrics_job:
         # yeah, i know, redundant, but keeping it here
         # to allow per-entity_id logic further below to be around
 
@@ -206,11 +207,11 @@ def assign_score(job_id: str, timezone: str) -> int:
         # happens in the block below. At minimum we should collect lifetime reports once in two hours.
         pass
 
-    if collection_record and collection_record.last_success_dt:
-        seconds_old = (now() - collection_record.last_success_dt).seconds
-        # at this rate, 80% of score id regained by 15th minute
-        # and ~100% by 36th minute.
-        score = score * get_fade_in_proportion(seconds_old / 60, rate=0.1)
+    # if collection_record and collection_record.last_success_dt:
+    #     seconds_old = (now() - collection_record.last_success_dt).seconds
+    #     # at this rate, 80% of score id regained by 15th minute
+    #     # and ~100% by 36th minute.
+    #     score = score * get_fade_in_proportion(seconds_old / 60, rate=0.1)
 
     score = int(score)
 

@@ -6,16 +6,25 @@ from facebook_business.adobjects.adreportrun import AdReportRun
 from facebook_business.adobjects.adsinsights import AdsInsights
 from typing import Callable, Dict, Any, Generator
 
+from facebook_business.adobjects.insightsresult import InsightsResult
+
 from common.enums.entity import Entity
 from common.enums.reporttype import ReportType
 from common.tokens import PlatformTokenManager
 from oozer.common.cold_storage import batch_store
+from oozer.common.enum import ReportEntityApiKind, FB_AD_VIDEO_MODEL
 from oozer.common.facebook_api import PlatformApiContext
 from oozer.common.facebook_async_report import FacebookAsyncReportStatus
 from oozer.common.job_scope import JobScope
 from oozer.common.vendor_data import add_vendor_data
 
-from oozer.metrics.constants import ENUM_LEVEL_MAP, REPORT_TYPE_FB_BREAKDOWN_ENUM, DEFAULT_REPORT_FIELDS
+from oozer.metrics.constants import (
+    ENUM_LEVEL_MAP,
+    REPORT_TYPE_FB_BREAKDOWN_ENUM,
+    DEFAULT_REPORT_FIELDS,
+    VIDEO_REPORT_METRICS,
+    VIDEO_REPORT_FIELDS,
+)
 from oozer.metrics.vendor_data_extractor import report_type_vendor_data_extractor_map
 
 
@@ -41,8 +50,9 @@ class JobScopeParsed:
     report_params: Dict[str, Any] = None
     datum_handler: Callable[[Dict[str, Any]], None] = None
     report_root_fb_entity = None
+    report_entity_kind: str = None
 
-    def __init__(self, job_scope: JobScope):
+    def __init__(self, job_scope: JobScope, report_entity_api_kind: str):
         if job_scope.report_type not in ReportType.ALL_METRICS:
             raise ValueError(
                 f"Report type {job_scope.report_type} specified is not one of supported values: "
@@ -74,13 +84,15 @@ class JobScopeParsed:
             entity_id = job_scope.ad_account_id
             entity_type = Entity.AdAccount
             entity_type_reporting = job_scope.report_variant
-            self.report_params.update(level=ENUM_LEVEL_MAP[job_scope.report_variant])
+            if report_entity_api_kind == ReportEntityApiKind.Ad:
+                self.report_params.update(level=ENUM_LEVEL_MAP[job_scope.report_variant])
         else:
             # direct, per-entity report
             entity_id = job_scope.entity_id
             entity_type = job_scope.entity_type
             entity_type_reporting = job_scope.report_variant
-            self.report_params.update(level=ENUM_LEVEL_MAP[entity_type_reporting])
+            if report_entity_api_kind == ReportEntityApiKind.Ad:
+                self.report_params.update(level=ENUM_LEVEL_MAP[entity_type_reporting])
 
         # Now, (c), (d), (e), (f), (g) choices
         # we already checked above that this is one of metrics report types
@@ -187,9 +199,9 @@ class JobScopeParsed:
 
 class Insights:
     @staticmethod
-    def iter_insights(fb_entity: Any, report_params: Dict[str, Any]) -> Generator[Dict[str, Any], None, None]:
+    def iter_ads_insights(fb_entity: Any, report_params: Dict[str, Any]) -> Generator[Dict[str, Any], None, None]:
         """
-        Run the actual execution of the insights job
+        Run the actual execution of the insights job for Ads API
 
         :param fb_entity: The ads api facebook entity instance
         :param report_params: FB API report params
@@ -213,6 +225,18 @@ class Insights:
 
         return report_tracker.iter_report_data()
 
+    @staticmethod
+    def iter_video_insights(fb_entity: FB_AD_VIDEO_MODEL) -> Generator[Dict[str, Any], None, None]:
+        """
+        Run the actual execution of the insights job for video insights
+        """
+
+        params = {'metric': VIDEO_REPORT_METRICS}
+        report_status_obj: InsightsResult = fb_entity.get_video_insights(params=params, fields=VIDEO_REPORT_FIELDS)
+
+        for datum in report_status_obj:
+            yield datum.export_all_data()
+
     @classmethod
     def iter_collect_insights(cls, job_scope: JobScope, _):
         """
@@ -235,8 +259,9 @@ class Insights:
         # However, we use it to report usages of the token we got.
         token_manager = PlatformTokenManager.from_job_scope(job_scope)
 
-        scope_parsed = JobScopeParsed(job_scope)
-        data_iter = cls.iter_insights(scope_parsed.report_root_fb_entity, scope_parsed.report_params)
+        scope_parsed = JobScopeParsed(job_scope, ReportEntityApiKind.Ad)
+        data_iter = cls.iter_ads_insights(scope_parsed.report_root_fb_entity, scope_parsed.report_params)
+
         with scope_parsed.datum_handler as store:
             for cnt, datum in enumerate(data_iter):
                 # this computes values for and adds _oprm data object

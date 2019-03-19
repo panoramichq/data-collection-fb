@@ -30,7 +30,7 @@ entity_type_model_map = {
     Entity.CustomAudience: entities.CustomAudienceEntity,
 }
 
-page_entity_type_model_map = {Entity.PagePost: entities.PagePostEntity}
+page_entity_type_model_map = {Entity.PagePost: entities.PagePostEntity, Entity.PageVideo: entities.PageVideoEntity}
 
 
 def iter_entities_per_ad_account_id(

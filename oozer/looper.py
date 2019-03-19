@@ -204,7 +204,7 @@ class SweepStatusTracker:
         # kill outstanding tasks?
         pass
 
-    def _gen_key(self, minute: int) -> str:
+    def _gen_key(self, minute: Union[int, str]) -> str:
         return f'{self.sweep_id}:{minute}:{self.__class__.__name__}'
 
     @staticmethod

@@ -105,6 +105,10 @@ entity_expectation_generator_map[Entity.PagePost] = list(
     filter(None, [None if jobs_config.ENTITY_CM_DISABLED else comment_entities_per_page_post])
 )
 
+entity_expectation_generator_map[Entity.PageVideo] = list(
+    filter(None, [None if jobs_config.INSIGHTS_LIFETIME_PV_DISABLED else lifetime.lifetime_metrics_per_page_video])
+)
+
 entity_expectation_generator_map[Entity.Campaign] = list(
     filter(None, [None if jobs_config.INSIGHTS_LIFETIME_C_DISABLED else lifetime.lifetime_metrics_per_campaign])
 )

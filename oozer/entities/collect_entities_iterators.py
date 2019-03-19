@@ -99,9 +99,9 @@ def iter_native_entities_per_adaccount(
     Generic getter for entities from the AdAccount edge
     """
 
-    def get_augmented_account_ad_videos(fields, params):
+    def get_augmented_account_ad_videos(aug_fields, aug_params):
         parsed_account_id = ad_account['id'].split('_')[1]  # Parse act_12345678
-        for ad_video in ad_account.get_ad_videos(fields=fields, params=params):
+        for ad_video in ad_account.get_ad_videos(fields=aug_fields, params=aug_params):
             ad_video['account_id'] = parsed_account_id
             yield ad_video
 
@@ -123,7 +123,7 @@ def iter_native_entities_per_page(
     """
     Generic getter for entities from the Page edge
     """
-    getter_method_map = {FB_PAGE_POST_MODEL: page.get_posts, FB_AD_VIDEO_MODEL: page.get_videos}
+    getter_method_map = {FB_PAGE_POST_MODEL: page.get_posts, FB_AD_VIDEO_MODEL: page.get_indexed_videos}
 
     return _iterate_native_entities_per_parent(
         [Entity.PagePost, Entity.PageVideo], getter_method_map, entity_type, fields, page_size
