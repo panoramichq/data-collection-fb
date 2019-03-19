@@ -47,7 +47,7 @@ def lifecycle_metrics_per_entity(
                 range_end=range_end,
                 range_start=range_start,
             )
-        )
+        ),
     )
 
 
@@ -85,7 +85,7 @@ def daily_metrics_per_entity(
                     report_variant=entity_type,
                     range_start=day,
                 )
-            )
+            ),
         )
 
 
@@ -146,30 +146,20 @@ def day_metrics_per_entities_under_ad_account(
             for report_type in report_types:
                 generate_id_func = partial(generate_id_func, report_type=report_type)
                 normative_job_signature = JobSignature(
-                    job_id_func=partial(
-                        generate_id_func, entity_type=child_reality_claim.entity_type, entity_id=child_reality_claim
-                    )
+                    generate_id_func(entity_type=child_reality_claim.entity_type, entity_id=child_reality_claim)
                 )
-                effective_job_signatures = [JobSignature(job_id_func=generate_id_func)]
+                effective_job_signatures = [JobSignature(generate_id_func())]
 
                 if child_reality_claim.campaign_id is not None:
                     effective_job_signatures.append(
                         JobSignature(
-                            job_id_func=partial(
-                                generate_id_func,
-                                entity_type=Entity.Campaign,
-                                entity_id=child_reality_claim.campaign_id,
-                            )
+                            generate_id_func(entity_type=Entity.Campaign, entity_id=child_reality_claim.campaign_id)
                         )
                     )
 
                 if child_reality_claim.adset_id is not None:
                     effective_job_signatures.append(
-                        JobSignature(
-                            job_id_func=partial(
-                                generate_id_func, entity_type=Entity.AdSet, entity_id=child_reality_claim.adset_id
-                            )
-                        )
+                        JobSignature(generate_id_func(entity_type=Entity.AdSet, entity_id=child_reality_claim.adset_id))
                     )
 
                 yield ExpectationClaim(

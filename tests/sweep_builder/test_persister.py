@@ -38,7 +38,7 @@ class PersisterSavesJobScopeData(TestCase):
                     # auxiliary data blob for saving on Data Flower.
                     # We don't have to do that there.
                     # It can be pre-computed and placed on the JobSignature
-                    JobSignature.bind(
+                    JobSignature(
                         job_id
                         # Here
                         # As it takes args, kwargs
