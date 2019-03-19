@@ -6,9 +6,9 @@ from sweep_builder.data_containers.expectation_claim import ExpectationClaim
 class ScorableClaim(ExpectationClaim):
     """Expectation claim ready for scoring."""
 
-    selected_signature: JobSignature = None
+    selected_job_signature: JobSignature = None
     last_report: JobReport = None
 
     @property
     def selected_job_id(self):
-        return self.selected_signature.job_id
+        return self.selected_job_signature.job_id

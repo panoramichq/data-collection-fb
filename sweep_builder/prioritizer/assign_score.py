@@ -1,4 +1,3 @@
-import functools
 import random
 
 import config.application
@@ -42,7 +41,7 @@ def assign_score(claim: ScorableClaim) -> int:
     """
     Calculate score for a given job.
     """
-    job_id = claim.selected_signature.job_id
+    job_id = claim.selected_job_id
     timezone = claim.timezone
     ad_account_id = claim.ad_account_id
     entity_type = claim.entity_type
