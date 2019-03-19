@@ -101,6 +101,4 @@ def iter_persist_prioritized(
         if skipped_jobs:
             _measurement_name = f'{_measurement_name_base}.gatekeeper_stop_jobs'
             for ad_account_id in skipped_jobs:
-                # TODO: should we use _measurement_tags below?
-                measurement_tags = {'sweep_id': sweep_id, 'ad_account_id': ad_account_id}
-                Measure.gauge(_measurement_name, tags=measurement_tags)(skipped_jobs[ad_account_id])
+                Measure.gauge(_measurement_name, tags=_measurement_tags)(skipped_jobs[ad_account_id])
