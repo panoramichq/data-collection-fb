@@ -23,3 +23,7 @@ class ExpectationClaim(RealityClaim):
     def __init__(self, _data=None, **more_data):
         super(ExpectationClaim, self).__init__(data=None, **more_data)
         assert self.normative_job_signature is not None
+
+    @property
+    def normative_job_id(self):
+        return self.normative_job_signature.job_id

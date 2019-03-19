@@ -8,3 +8,7 @@ class ScorableClaim(ExpectationClaim):
 
     selected_signature: JobSignature = None
     last_report: JobReport = None
+
+    @property
+    def selected_job_id(self):
+        return self.selected_signature.job_id
