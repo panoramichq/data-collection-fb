@@ -49,9 +49,8 @@ def iter_select_signature(claims: Iterable[ExpectationClaim]) -> Generator[Scora
         yield select_signature(claim)
         histogram_counter[(claim.ad_account_id, claim.entity_type)] += 1
 
-    for ((ad_account_id, entity_type), count) in histogram_counter:
+    for ((ad_account_id, entity_type), count) in histogram_counter.items():
         Measure.histogram(
             f'{__name__}.{iter_select_signature.__name__}.scorable_claims_per_expectation_claim',
             tags={'ad_account_id': ad_account_id, 'entity_type': entity_type},
-            sample_rate=1,
         )(count)
