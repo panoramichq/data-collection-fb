@@ -99,6 +99,8 @@ def iter_persist_prioritized(
             _before_next_prioritized = time.time()
 
         if skipped_jobs:
-            _measurement_name = f'{_measurement_name_base}.gatekeeper_stop_jobs'
-            for ad_account_id in skipped_jobs:
-                Measure.gauge(_measurement_name, tags=_measurement_tags)(skipped_jobs[ad_account_id])
+            for (ad_account_id, count) in skipped_jobs.items():
+                Measure.gauge(
+                    f'{_measurement_name_base}.gatekeeper_stop_jobs',
+                    tags={'sweep_id': sweep_id, 'ad_account_id': ad_account_id},
+                )(count)
