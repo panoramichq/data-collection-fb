@@ -54,7 +54,7 @@ def sync_expectations_per_page(reality_claim: RealityClaim) -> Generator[Expecta
 
     yield ExpectationClaim(
         reality_claim.to_dict(),
-        normative_job_signatures=JobSignature(
+        normative_job_signature=JobSignature(
             generate_id(
                 ad_account_id=reality_claim.ad_account_id,
                 entity_id=reality_claim.ad_account_id,
