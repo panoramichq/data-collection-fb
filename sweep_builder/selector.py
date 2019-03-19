@@ -33,12 +33,12 @@ def select_signature(claim: ExpectationClaim) -> ScorableClaim:
     for signature in claim.effective_job_signatures:
         report = _fetch_job_report(signature.job_id)
         if should_select(signature, report):
-            return ScorableClaim(claim.to_dict(), selected_signature=signature, last_report=report)
+            return ScorableClaim(claim.to_dict(), selected_job_signature=signature, last_report=report)
 
     # default to normative signature
     return ScorableClaim(
         claim.to_dict(),
-        selected_signature=claim.normative_job_signature,
+        selected_job_signature=claim.normative_job_signature,
         last_report=_fetch_job_report(claim.normative_job_id),
     )
 

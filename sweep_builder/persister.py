@@ -34,7 +34,7 @@ def iter_persist_prioritized(
         for prioritization_claim in prioritized_iter:
             ad_account_id = prioritization_claim.ad_account_id
             entity_type = prioritization_claim.entity_type
-            job_id_effective = prioritization_claim.selected_signature.job_id
+            job_id_effective = prioritization_claim.selected_job_id
             score = prioritization_claim.score
 
             _measurement_tags = {'ad_account_id': ad_account_id, 'entity_type': entity_type, 'sweep_id': sweep_id}

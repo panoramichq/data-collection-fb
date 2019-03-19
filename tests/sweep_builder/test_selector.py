@@ -21,9 +21,9 @@ def test_select_signature_default_to_normative(mock_should_select, _):
     )
     mock_should_select.side_effect = [False, False]
 
-    signature, report = select_signature(claim)
+    scorable_claim = select_signature(claim)
 
-    assert signature == expected
+    assert scorable_claim.selected_job_signature == expected
 
 
 @patch('sweep_builder.selector._fetch_job_report')
@@ -41,6 +41,7 @@ def test_select_signature_select_first_true(mock_should_select, _):
     )
     mock_should_select.side_effect = [False, True]
 
-    signature, report = select_signature(claim)
+    scorable_claim = select_signature(claim)
 
-    assert signature == expected
+    assert scorable_claim.selected_job_signature == expected
+

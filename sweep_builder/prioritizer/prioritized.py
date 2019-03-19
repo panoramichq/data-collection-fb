@@ -2,6 +2,7 @@ import time
 
 from typing import Generator, Iterable, Dict
 
+from common.job_signature import JobSignature
 from common.measurement import Measure
 from sweep_builder.data_containers.prioritization_claim import PrioritizationClaim
 from sweep_builder.data_containers.scorable_claim import ScorableClaim
@@ -15,7 +16,7 @@ def iter_prioritized(claims: Iterable[ScorableClaim]) -> Generator[Prioritizatio
 
     _before_next_expectation = time.time()
 
-    assigned_scores: Dict[str, int] = {}
+    assigned_scores: Dict[JobSignature, int] = {}
 
     for claim in claims:
         _measurement_tags = {"entity_type": claim.entity_type, "ad_account_id": claim.ad_account_id}
@@ -24,10 +25,13 @@ def iter_prioritized(claims: Iterable[ScorableClaim]) -> Generator[Prioritizatio
             f"{_measurement_name_base}.next_expected", tags=_measurement_tags, sample_rate=_measurement_sample_rate
         )((time.time() - _before_next_expectation) * 1000)
 
+        selected_signature = claim.selected_job_signature
+
         # Cache already seen job_ids
-        assigned_score = assigned_scores.get(claim.selected_job_id)
-        if assigned_score is not None:
-            yield PrioritizationClaim(claim.to_dict(), score=assigned_score)
+        cached_score = assigned_scores.get(selected_signature)
+        if cached_score is not None:
+            yield PrioritizationClaim(claim.to_dict(), score=cached_score)
+            continue
 
         with Measure.timer(
             f"{_measurement_name_base}.assign_score", tags=_measurement_tags, sample_rate=_measurement_sample_rate
@@ -39,4 +43,5 @@ def iter_prioritized(claims: Iterable[ScorableClaim]) -> Generator[Prioritizatio
         ):
             yield PrioritizationClaim(claim.to_dict(), score=score)
 
+        assigned_scores[selected_signature] = score
         _before_next_expectation = time.time()
