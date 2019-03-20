@@ -1,57 +1,61 @@
-from typing import Dict, Any, Generator
+from typing import Dict, Any, Generator, Union
 
 from facebook_business.adobjects.insightsresult import InsightsResult
+from facebook_business.api import FacebookRequest
 
 from common.enums.entity import Entity
-from common.enums.reporttype import ReportType
 from common.id_tools import NAMESPACE_RAW
 from common.tokens import PlatformTokenManager
 from oozer.common.cold_storage import batch_store
-from oozer.common.enum import ReportEntityApiKind, FB_AD_VIDEO_MODEL, ColdStoreBucketType
+from oozer.common.enum import (
+    ReportEntityApiKind,
+    FB_AD_VIDEO_MODEL,
+    ColdStoreBucketType,
+    FB_PAGE_MODEL,
+    FB_PAGE_POST_MODEL,
+)
 from oozer.common.facebook_api import PlatformApiContext
 from oozer.common.job_scope import JobScope
 from oozer.common.vendor_data import add_vendor_data
 
-from oozer.metrics.constants import VIDEO_REPORT_METRICS, VIDEO_REPORT_FIELDS
+from oozer.metrics.constants import INSIGHTS_REPORT_FIELDS, ORGANIC_DATA_FIELDS_MAP
 from oozer.metrics.vendor_data_extractor import (
     report_type_vendor_data_extractor_map,
     report_type_vendor_data_raw_extractor_map,
-    ORGANIC_DATA_PAGE_VIDEO_ID,
+    ORGANIC_DATA_ENTITY_ID_MAP,
 )
 
 
-class OrganicJobScopeParsed:
-    report_root_fb_entity = None
+class InsightsOrganic:
+    @staticmethod
+    def _fetch_page_token(fb_ctx: PlatformApiContext, page_id: str) -> str:
+        # In ideal world, this logic is moved to the beginning of the pipeline so each task does not need to fetch it
+        # Their AdAccountUser object is missing `get_accounts` method
 
-    def __init__(self, job_scope: JobScope):
-        if job_scope.report_type not in [ReportType.lifetime]:
-            raise ValueError(
-                f"Report type {job_scope.report_type} specified is not one of supported values: "
-                + ReportType.ALL_METRICS
-            )
-        # cool. we are in the right place...
+        request = FacebookRequest(node_id='me', method='GET', endpoint='/accounts', api=fb_ctx.api, api_type='NODE')
+        request.add_params({'limit': 250})
 
-        # direct, per-entity report
-        entity_id = job_scope.entity_id
-        entity_type = job_scope.entity_type
-        entity_type_reporting = job_scope.report_variant
+        while True:
+            # I assume that there's a better way to do paginate over this, but I wasn't able to find the corresponding
+            # target class in SDK :/
+            response = request.execute()
+            response_json = response.json()
+            selected_page = list(filter(lambda entry: entry['id'] == page_id, response_json['data']))
+            if selected_page:
+                break
 
-        with PlatformApiContext(job_scope.token) as fb_ctx:
-            self.report_root_fb_entity = fb_ctx.to_fb_model(entity_id, entity_type)
+            if 'next' in response_json['paging']:
+                request._path = response_json['paging']['next']
+            else:
+                break
 
-        # here we configure code that will augment each datum with  record ID
-        vendor_data_extractor = report_type_vendor_data_extractor_map[job_scope.report_type]
+        if not selected_page:
+            raise ValueError(f'Cannot generate Page Access token for page_id "{page_id}"')
 
-        aux_data = {
-            'ad_account_id': job_scope.ad_account_id,
-            'entity_type': entity_type_reporting,
-            'report_type': job_scope.report_type,
-        }
-
-        self.augment_with_vendor_data = lambda data: add_vendor_data(data, **vendor_data_extractor(data, **aux_data))
+        return selected_page[0]['access_token']
 
     @staticmethod
-    def detect_report_api_kind(job_scope: JobScope) -> str:
+    def _detect_report_api_kind(job_scope: JobScope) -> str:
         if job_scope.entity_type == Entity.Page:
             return ReportEntityApiKind.Page
         elif job_scope.entity_type == Entity.PagePost:
@@ -61,16 +65,28 @@ class OrganicJobScopeParsed:
         else:
             raise ValueError(f'Unknown entity type "{job_scope.entity_type}" when detecting report API kind')
 
-
-class InsightsOrganic:
     @staticmethod
     def iter_video_insights(fb_entity: FB_AD_VIDEO_MODEL) -> Generator[Dict[str, Any], None, None]:
         """
         Run the actual execution of the insights job for video insights
         """
 
-        params = {'metric': VIDEO_REPORT_METRICS}
-        report_status_obj: InsightsResult = fb_entity.get_video_insights(params=params, fields=VIDEO_REPORT_FIELDS)
+        params = {'metric': ORGANIC_DATA_FIELDS_MAP[ReportEntityApiKind.Video]}
+        report_status_obj: InsightsResult = fb_entity.get_video_insights(params=params, fields=INSIGHTS_REPORT_FIELDS)
+
+        for datum in report_status_obj:
+            yield datum.export_all_data()
+
+    @staticmethod
+    def iter_other_insights(
+        fb_entity: Union[FB_PAGE_MODEL, FB_PAGE_POST_MODEL], report_entity_kind: str
+    ) -> Generator[Dict[str, Any], None, None]:
+        """
+        Run the actual execution of the insights job for video insights
+        """
+
+        params = {'metric': ORGANIC_DATA_FIELDS_MAP[report_entity_kind]}
+        report_status_obj: InsightsResult = fb_entity.get_insights(params=params, fields=INSIGHTS_REPORT_FIELDS)
 
         for datum in report_status_obj:
             yield datum.export_all_data()
@@ -95,24 +111,33 @@ class InsightsOrganic:
         # We don't use it for getting a token. Something else that calls us does.
         # However, we use it to report usages of the token we got.
         token_manager = PlatformTokenManager.from_job_scope(job_scope)
-
-        report_entity_kind = OrganicJobScopeParsed.detect_report_api_kind(job_scope)
-        scope_parsed = OrganicJobScopeParsed(job_scope)
+        report_entity_kind = InsightsOrganic._detect_report_api_kind(job_scope)
 
         if report_entity_kind == ReportEntityApiKind.Video:
-            data_iter = cls.iter_video_insights(scope_parsed.report_root_fb_entity)
-            for datum in cls._iter_collect_video_insights(data_iter, job_scope):
-                yield datum
+            with PlatformApiContext(job_scope.token) as fb_ctx:
+                report_root_fb_entity = fb_ctx.to_fb_model(job_scope.entity_id, job_scope.report_variant)
 
-                # right now, we support fetching video insights for only one video at a time
-                # so no reason to report usage here
+            data_iter = cls.iter_video_insights(report_root_fb_entity)
+
+        elif report_entity_kind in {ReportEntityApiKind.Page, ReportEntityApiKind.Post}:
+            with PlatformApiContext(job_scope.token) as fb_ctx:
+                page_token = InsightsOrganic._fetch_page_token(fb_ctx, job_scope.ad_account_id)
+
+            with PlatformApiContext(page_token) as fb_ctx:
+                report_root_fb_entity = fb_ctx.to_fb_model(job_scope.entity_id, job_scope.report_variant)
+
+            data_iter = cls.iter_other_insights(report_root_fb_entity, report_entity_kind)
         else:
             raise ValueError(f'Unsupported report entity kind "{report_entity_kind}" to collect organic insights')
 
+        for datum in cls._iter_collect_organic_insights(data_iter, job_scope):
+            yield datum
+        # right now, we support fetching insights for only one entity at a time
+        # so no reason to report usage here
         token_manager.report_usage(token)
 
     @classmethod
-    def _iter_collect_video_insights(
+    def _iter_collect_organic_insights(
         cls, data_iter: Generator[Dict[str, Any], None, None], job_scope: JobScope
     ) -> Generator[Dict[str, Any], None, None]:
         raw_store = batch_store.NormalStore(
@@ -123,14 +148,14 @@ class InsightsOrganic:
             'ad_account_id': job_scope.ad_account_id,
             'entity_type': job_scope.report_variant,
             'report_type': job_scope.report_type,
-            ORGANIC_DATA_PAGE_VIDEO_ID: job_scope.entity_id,
+            ORGANIC_DATA_ENTITY_ID_MAP[job_scope.report_variant]: job_scope.entity_id,
         }
 
         data = list(data_iter)
         raw_record = {
             'payload': data,
             'page_id': job_scope.ad_account_id,
-            ORGANIC_DATA_PAGE_VIDEO_ID: job_scope.entity_id,
+            ORGANIC_DATA_ENTITY_ID_MAP[job_scope.report_variant]: job_scope.entity_id,
         }
         vendor_data_raw = report_type_vendor_data_raw_extractor_map[job_scope.report_type](
             raw_record, **common_vendor_data
@@ -141,7 +166,10 @@ class InsightsOrganic:
 
         if len(data):
             # then, transpose it to correct form
-            final_record = {'page_id': job_scope.ad_account_id, ORGANIC_DATA_PAGE_VIDEO_ID: job_scope.entity_id}
+            final_record = {
+                'page_id': job_scope.ad_account_id,
+                ORGANIC_DATA_ENTITY_ID_MAP[job_scope.report_variant]: job_scope.entity_id,
+            }
             for param_datum in data:
                 final_record[param_datum['name']] = param_datum['values'][0]['value']
 

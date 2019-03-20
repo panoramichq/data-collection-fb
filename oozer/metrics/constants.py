@@ -3,6 +3,7 @@ from facebook_business.adobjects.insightsresult import InsightsResult
 from common.enums.entity import Entity
 from facebook_business.adobjects.adsinsights import AdsInsights
 from common.enums.reporttype import ReportType
+from oozer.common.enum import ReportEntityApiKind
 
 ENUM_LEVEL_MAP = {
     Entity.AdAccount: AdsInsights.Level.account,
@@ -377,4 +378,10 @@ VIDEO_REPORT_METRICS = [
     'total_video_view_time_by_distribution_type',
 ]
 
-VIDEO_REPORT_FIELDS = [InsightsResult.Field.name, InsightsResult.Field.values]
+ORGANIC_DATA_FIELDS_MAP = {
+    ReportEntityApiKind.Page: PAGE_METRICS,
+    ReportEntityApiKind.Post: POST_METRICS,
+    ReportEntityApiKind.Video: VIDEO_REPORT_METRICS,
+}
+
+INSIGHTS_REPORT_FIELDS = [InsightsResult.Field.name, InsightsResult.Field.values]

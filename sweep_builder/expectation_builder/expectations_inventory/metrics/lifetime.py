@@ -82,3 +82,8 @@ lifetime_metrics_per_ad: ExpectationGeneratorType = functools.partial(lifetime_m
 lifetime_metrics_per_page_video: ExpectationGeneratorType = functools.partial(
     lifetime_page_metrics_per_entity, Entity.PageVideo
 )
+
+lifetime_metrics_per_page: ExpectationGeneratorType = functools.partial(lifetime_page_metrics_per_entity, Entity.Page)
+lifetime_metrics_per_page_post: ExpectationGeneratorType = functools.partial(
+    lifetime_page_metrics_per_entity, Entity.PagePost
+)
