@@ -4,6 +4,8 @@ from collections import defaultdict
 
 from typing import Iterable, Generator, Optional
 
+from pynamodb.exceptions import DoesNotExist
+
 from common.enums.failure_bucket import FailureBucket
 from config.jobs import FAILS_IN_ROW_BREAKDOWN_LIMIT
 
@@ -17,7 +19,10 @@ from sweep_builder.data_containers.scorable_claim import ScorableClaim
 @functools.lru_cache(maxsize=None)
 def _fetch_job_report(job_id: str) -> Optional[JobReport]:
     """Retrieve job report from job report table (cached)."""
-    return JobReport.get(job_id)
+    try:
+        return JobReport.get(job_id)
+    except DoesNotExist:
+        return None
 
 
 def should_select(report: Optional[JobReport]) -> bool:
