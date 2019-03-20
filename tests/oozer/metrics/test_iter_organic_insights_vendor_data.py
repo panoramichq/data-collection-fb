@@ -154,7 +154,7 @@ class VendorOrganicDataInjectionTests(TestCase):
                 entity_type=entity_type,
                 entity_id=self.entity_id,
                 report_type=ReportType.lifetime,
-                report_variant=Entity.PageVideo,
+                report_variant=entity_type,
                 tokens=['blah'],
             )
 
