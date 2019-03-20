@@ -146,7 +146,7 @@ def day_metrics_per_entities_under_ad_account(
             for report_type in report_types:
                 generate_id_func = partial(generate_id_func, report_type=report_type)
                 normative_job_signature = JobSignature(
-                    generate_id_func(entity_type=child_reality_claim.entity_type, entity_id=child_reality_claim)
+                    generate_id_func(entity_type=child_reality_claim.entity_type, entity_id=child_reality_claim.entity_id)
                 )
                 effective_job_signatures = [JobSignature(generate_id_func())]
 
