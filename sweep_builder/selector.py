@@ -25,12 +25,8 @@ def _fetch_job_report(job_id: str) -> Optional[JobReport]:
         return None
 
 
-def should_select(report: Optional[JobReport]) -> bool:
+def should_select(report: JobReport) -> bool:
     """Decide if signature should be used based on last report."""
-    # not ran yet
-    if report is None:
-        return True
-
     # only break down jobs with too large error
     if report.last_failure_bucket != FailureBucket.TooLarge:
         return True
@@ -42,26 +38,27 @@ def should_select(report: Optional[JobReport]) -> bool:
     return False
 
 
-def select_signature(claim: ExpectationClaim) -> ScorableClaim:
+def select_signature(claim: ExpectationClaim) -> Generator[ScorableClaim, None, None]:
     """Select job signature for single expectation claim."""
-    for signature in claim.effective_job_signatures:
-        report = _fetch_job_report(signature.job_id)
-        if should_select(report):
-            return ScorableClaim(claim.to_dict(), selected_job_signature=signature, last_report=report)
-
-    # default to normative signature
-    return ScorableClaim(
-        claim.to_dict(),
-        selected_job_signature=claim.normative_job_signature,
-        last_report=_fetch_job_report(claim.normative_job_id),
+    signature = (
+        claim.effective_job_signature if claim.effective_job_signature is not None else claim.normative_job_signature
     )
+
+    report = _fetch_job_report(signature.job_id)
+    if not claim.is_dividable or report is None or should_select(report):
+        yield ScorableClaim(claim.to_dict(), selected_job_signature=signature, last_report=report)
+        return
+
+    # break down into smaller jobs recursively
+    for child_claim in claim.generate_child_claims():
+        yield from select_signature(child_claim)
 
 
 def iter_select_signature(claims: Iterable[ExpectationClaim]) -> Generator[ScorableClaim, None, None]:
     """Select signature for each expectation claim based on job history."""
     histogram_counter = defaultdict(int)
     for claim in claims:
-        yield select_signature(claim)
+        yield from select_signature(claim)
         histogram_counter[(claim.ad_account_id, claim.entity_type)] += 1
 
     for ((ad_account_id, entity_type), count) in histogram_counter.items():

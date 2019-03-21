@@ -9,7 +9,8 @@ from typing import Dict, List
 from config import jobs as jobs_config
 from common.enums.entity import Entity
 from common.enums.reporttype import ReportType
-from sweep_builder.expectation_builder.expectations_inventory.metrics.breakdowns import metrics_per_ad_per_ad_account
+from sweep_builder.expectation_builder.expectations_inventory.metrics.breakdowns import \
+    day_metrics_per_ads_under_ad_account
 from sweep_builder.expectation_builder.expectations_inventory.page import pages_per_scope, sync_expectations_per_page
 from sweep_builder.types import ExpectationGeneratorType
 
@@ -59,10 +60,8 @@ entity_expectation_generator_map: Dict[str, List[ExpectationGeneratorType]] = {
                 None if jobs_config.ENTITY_AV_DISABLED else ad_video_entities_per_ad_account,
                 None if jobs_config.ENTITY_CA_DISABLED else custom_audience_entities_per_ad_account,
                 # Insights
-                None if jobs_config.INSIGHTS_HOUR_C_DISABLED else breakdowns.hour_metrics_per_campaign_per_parent,
-                None if jobs_config.INSIGHTS_HOUR_AS_DISABLED else breakdowns.hour_metrics_per_adset_per_parent,
                 functools.partial(
-                    metrics_per_ad_per_ad_account,
+                    day_metrics_per_ads_under_ad_account,
                     list(
                         filter(
                             None,
@@ -145,8 +144,6 @@ entity_expectations_for_23845179: Dict[str, List[ExpectationGeneratorType]] = {
                 None if jobs_config.INSIGHTS_LIFETIME_C_DISABLED else lifetime.lifetime_metrics_per_campaign,
                 None if jobs_config.INSIGHTS_LIFETIME_AS_DISABLED else lifetime.lifetime_metrics_per_adset,
                 None if jobs_config.INSIGHTS_LIFETIME_A_DISABLED else lifetime.lifetime_metrics_per_ad,
-                None if jobs_config.INSIGHTS_HOUR_C_DISABLED else breakdowns.hour_metrics_per_campaign_per_entity,
-                None if jobs_config.INSIGHTS_HOUR_AS_DISABLED else breakdowns.hour_metrics_per_adset_per_entity,
                 None if jobs_config.INSIGHTS_DAY_A_DISABLED else breakdowns.day_metrics_per_ad_per_entity,
                 None if jobs_config.INSIGHTS_HOUR_A_DISABLED else breakdowns.hour_metrics_per_ad_per_entity,
                 None
