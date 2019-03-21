@@ -43,12 +43,12 @@ class InsightsOrganic:
 
             selected_pages = [entry for entry in response_json['data'] if entry['id'] == page_id]
             if selected_pages:
-                break
+                return selected_pages[0]['access_token']
 
             if 'next' in response_json['paging']:
                 request._path = response_json['paging']['next']
             else:
-                return selected_pages[0]['access_token']
+                break
 
         raise ValueError(f'Cannot generate Page Access token for page_id "{page_id}"')
 
