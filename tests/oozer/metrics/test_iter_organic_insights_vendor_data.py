@@ -19,33 +19,33 @@ class VendorOrganicDataUniversalIdExtraction(TestCase):
         entity_types = [Entity.PageVideo, Entity.PagePost, Entity.Page]
 
         for entity_type in entity_types:
+            with self.subTest(f'Entity type = "{entity_type}"'):
+                vendor_data = vendor_data_extractor._from_non_segmented_raw_entity(
+                    {ORGANIC_DATA_ENTITY_ID_MAP[entity_type]: 'SomeID'},
+                    # used by code and for ID
+                    entity_type=entity_type,
+                    # data used for ID
+                    ad_account_id='AAID',
+                    report_type='reporttype',
+                    # range_start=None,
+                )
 
-            vendor_data = vendor_data_extractor._from_non_segmented_raw_entity(
-                {ORGANIC_DATA_ENTITY_ID_MAP[entity_type]: 'SomeID'},
-                # used by code and for ID
-                entity_type=entity_type,
-                # data used for ID
-                ad_account_id='AAID',
-                report_type='reporttype',
-                # range_start=None,
-            )
+                universal_id_should_be = D.join(
+                    [
+                        'oprm',
+                        'm',
+                        NS,
+                        'AAID',
+                        entity_type,  # entity Type
+                        'SomeID',  # entity ID
+                        'reporttype',
+                        # '', # report variant
+                        # '', # Range start
+                        # '', # Range end
+                    ]
+                )
 
-            universal_id_should_be = D.join(
-                [
-                    'oprm',
-                    'm',
-                    NS,
-                    'AAID',
-                    entity_type,  # entity Type
-                    'SomeID',  # entity ID
-                    'reporttype',
-                    # '', # report variant
-                    # '', # Range start
-                    # '', # Range end
-                ]
-            )
-
-            assert vendor_data == dict(id=universal_id_should_be, entity_type=entity_type, entity_id='SomeID')
+                assert vendor_data == dict(id=universal_id_should_be, entity_type=entity_type, entity_id='SomeID')
 
 
 class VendorOrganicDataInjectionTests(TestCase):
@@ -141,53 +141,56 @@ class VendorOrganicDataInjectionTests(TestCase):
 
         entity_types = {Entity.Page, Entity.PagePost}
         for entity_type in entity_types:
-            job_scope = JobScope(
-                sweep_id=self.sweep_id,
-                ad_account_id=self.ad_account_id,
-                entity_type=entity_type,
-                entity_id=self.entity_id,
-                report_type=ReportType.lifetime,
-                report_variant=entity_type,
-                tokens=['blah'],
-            )
+            with self.subTest(f'Entity type = "{entity_type}"'):
+                job_scope = JobScope(
+                    sweep_id=self.sweep_id,
+                    ad_account_id=self.ad_account_id,
+                    entity_type=entity_type,
+                    entity_id=self.entity_id,
+                    report_type=ReportType.lifetime,
+                    report_variant=entity_type,
+                    tokens=['blah'],
+                )
 
-            with mock.patch.object(
-                collect_organic_insights.InsightsOrganic, 'iter_other_insights', return_value=input_data
-            ), mock.patch.object(NormalStore, 'store') as store:
+                with mock.patch.object(
+                    collect_organic_insights.InsightsOrganic, 'iter_other_insights', return_value=input_data
+                ), mock.patch.object(
+                    collect_organic_insights.InsightsOrganic, '_fetch_page_token', return_value='token'
+                ), mock.patch.object(NormalStore, 'store') as store:
 
-                data_iter = collect_organic_insights.InsightsOrganic.iter_collect_insights(job_scope)
-                assert len(list(data_iter)) == 1
+                    data_iter = collect_organic_insights.InsightsOrganic.iter_collect_insights(job_scope)
+                    assert len(list(data_iter)) == 1
 
-            assert len(store.call_args_list) == 2
-            sig1, sig2 = store.call_args_list
+                assert len(store.call_args_list) == 2
+                sig1, sig2 = store.call_args_list
 
-            aa, kk = sig1
-            assert not kk
-            assert aa == (
-                {
-                    'page_id': self.ad_account_id,
-                    ORGANIC_DATA_ENTITY_ID_MAP[entity_type]: self.entity_id,
-                    'payload': input_data,
-                    '__oprm': {
-                        'id': f'oprm|m|fb-raw|{self.ad_account_id}|{entity_type}|{self.entity_id}|lifetime',
-                        'entity_id': self.entity_id,
-                        'entity_type': entity_type,
+                aa, kk = sig1
+                assert not kk
+                assert aa == (
+                    {
+                        'page_id': self.ad_account_id,
+                        ORGANIC_DATA_ENTITY_ID_MAP[entity_type]: self.entity_id,
+                        'payload': input_data,
+                        '__oprm': {
+                            'id': f'oprm|m|fb-raw|{self.ad_account_id}|{entity_type}|{self.entity_id}|lifetime',
+                            'entity_id': self.entity_id,
+                            'entity_type': entity_type,
+                        },
                     },
-                },
-            )
+                )
 
-            aa, kk = sig2
-            assert not kk
-            assert aa == (
-                {
-                    'page_id': self.ad_account_id,
-                    ORGANIC_DATA_ENTITY_ID_MAP[entity_type]: self.entity_id,
-                    'total_video_views': 1504,
-                    'total_video_views_unique': 1456,
-                    '__oprm': {
-                        'id': f'oprm|m|fb|{self.ad_account_id}|{entity_type}|{self.entity_id}|lifetime',
-                        'entity_id': self.entity_id,
-                        'entity_type': entity_type,
+                aa, kk = sig2
+                assert not kk
+                assert aa == (
+                    {
+                        'page_id': self.ad_account_id,
+                        ORGANIC_DATA_ENTITY_ID_MAP[entity_type]: self.entity_id,
+                        'total_video_views': 1504,
+                        'total_video_views_unique': 1456,
+                        '__oprm': {
+                            'id': f'oprm|m|fb|{self.ad_account_id}|{entity_type}|{self.entity_id}|lifetime',
+                            'entity_id': self.entity_id,
+                            'entity_type': entity_type,
+                        },
                     },
-                },
-            )
+                )

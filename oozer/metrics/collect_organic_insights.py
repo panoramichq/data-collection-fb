@@ -14,7 +14,7 @@ from oozer.common.enum import (
     FB_PAGE_MODEL,
     FB_PAGE_POST_MODEL,
 )
-from oozer.common.facebook_api import PlatformApiContext
+from oozer.common.facebook_api import PlatformApiContext, DEFAULT_PAGE_ACCESS_TOKEN_LIMIT
 from oozer.common.job_scope import JobScope
 from oozer.common.vendor_data import add_vendor_data
 
@@ -33,26 +33,24 @@ class InsightsOrganic:
         # Their AdAccountUser object is missing `get_accounts` method
 
         request = FacebookRequest(node_id='me', method='GET', endpoint='/accounts', api=fb_ctx.api, api_type='NODE')
-        request.add_params({'limit': 250})
+        request.add_params({'limit': DEFAULT_PAGE_ACCESS_TOKEN_LIMIT})
 
         while True:
             # I assume that there's a better way to do paginate over this, but I wasn't able to find the corresponding
             # target class in SDK :/
             response = request.execute()
             response_json = response.json()
-            selected_page = list(filter(lambda entry: entry['id'] == page_id, response_json['data']))
-            if selected_page:
+
+            selected_pages = [entry for entry in response_json['data'] if entry['id'] == page_id]
+            if selected_pages:
                 break
 
             if 'next' in response_json['paging']:
                 request._path = response_json['paging']['next']
             else:
-                break
+                return selected_pages[0]['access_token']
 
-        if not selected_page:
-            raise ValueError(f'Cannot generate Page Access token for page_id "{page_id}"')
-
-        return selected_page[0]['access_token']
+        raise ValueError(f'Cannot generate Page Access token for page_id "{page_id}"')
 
     @staticmethod
     def _detect_report_api_kind(job_scope: JobScope) -> str:
