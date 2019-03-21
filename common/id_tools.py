@@ -5,29 +5,30 @@ are giving to actionable items in the system back and forth.
 
 from collections import namedtuple
 from datetime import date, datetime
-from itertools import zip_longest
+from itertools import zip_longest, chain
 from typing import List, Any, Dict
 from urllib.parse import quote_plus, unquote_plus
 
 import config.application
 
 NAMESPACE = 'fb'
+NAMESPACE_RAW = 'fb-raw'
 ID_DELIMITER = '|'
 
-fields = [
-    "namespace",
-    "ad_account_id",
-    "entity_type",
-    "entity_id",
-    "report_type",
-    "report_variant",
-    "range_start",
-    "range_end",
+FIELDS = [
+    'namespace',
+    'ad_account_id',
+    'entity_type',
+    'entity_id',
+    'report_type',
+    'report_variant',
+    'range_start',
+    'range_end',
 ]
 
-universal_id_fields = ['component_vendor', 'component_id'] + fields
+universal_id_fields = ['component_vendor', 'component_id'] + FIELDS
 
-JobIdParts = namedtuple('JobIdParts', fields)
+JobIdParts = namedtuple('JobIdParts', FIELDS)
 
 
 def _id_parts_default_converter(v):
@@ -66,7 +67,7 @@ def _id_parts_datetime_converter(v):
     return _id_parts_default_converter(v)
 
 
-def generate_id(fields: List[str] = fields, trailing_parts: List[str] = None, **parts) -> str:
+def generate_id(fields: List[str] = None, trailing_parts: List[str] = None, use_namespace: str = None, **parts) -> str:
     """
     Generate a string that uniquely identifies an entity, a report type, a job
     Output is compatible with Universal ID spec's component_scoped_id format
@@ -117,6 +118,8 @@ def generate_id(fields: List[str] = fields, trailing_parts: List[str] = None, **
         'component_id': config.application.UNIVERSAL_ID_COMPONENT,
     }
     base_parts.update(parts)
+    if use_namespace:
+        base_parts['namespace'] = use_namespace
 
     # per Universal ID spec, we must URL+Plus encode all parts
     # https://operam.atlassian.net/wiki/spaces/EN/pages/160596078/Universal+IDs
@@ -126,15 +129,21 @@ def generate_id(fields: List[str] = fields, trailing_parts: List[str] = None, **
     if parts.get('range_end'):
         converters['range_end'] = _id_parts_datetime_converter
 
-    parts = [converters.get(field, _id_parts_default_converter)(base_parts.get(field)) for field in fields] + [
-        _id_parts_default_converter(part) for part in trailing_parts or []
-    ]
+    converted_base_parts = (
+        converters.get(field, _id_parts_default_converter)(base_parts.get(field)) for field in (fields or FIELDS)
+    )
+    converted_trail_parts = (_id_parts_default_converter(part) for part in trailing_parts or [])
+    converted_parts = chain(converted_base_parts, converted_trail_parts)
 
-    return ID_DELIMITER.join([quote_plus(part) for part in parts]).strip(ID_DELIMITER)
+    return ID_DELIMITER.join([quote_plus(part) for part in converted_parts]).strip(ID_DELIMITER)
 
 
-def generate_universal_id(fields: List[str] = universal_id_fields, trailing_parts: List[str] = None, **parts) -> str:
-    return generate_id(fields=fields, trailing_parts=trailing_parts, **parts)
+def generate_universal_id(
+    fields: List[str] = None, trailing_parts: List[str] = None, use_namespace: str = None, **parts
+) -> str:
+    return generate_id(
+        fields=fields or universal_id_fields, trailing_parts=trailing_parts, use_namespace=use_namespace, **parts
+    )
 
 
 def _base_part_parser(v):
@@ -173,7 +182,7 @@ def _datetime_part_parser(v):
 _field_part_parsers_map = {'range_start': _datetime_part_parser, 'range_end': _datetime_part_parser}
 
 
-def parse_id(id_str: str, fields: List[str] = fields) -> Dict[str, Any]:
+def parse_id(id_str: str, fields: List[str] = None) -> Dict[str, Any]:
     """
     This parser is for Job IDs - things that have prescribed number and order of parts
 
@@ -192,6 +201,9 @@ def parse_id(id_str: str, fields: List[str] = fields) -> Dict[str, Any]:
     and hope for the best.
     """
     id_parts = id_str.split(ID_DELIMITER)
+
+    if not fields:
+        fields = FIELDS
 
     if len(fields) < len(id_parts):
         # this may change if we have field definitions that are clever enough to

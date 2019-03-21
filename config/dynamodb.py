@@ -16,6 +16,7 @@ ADSET_ENTITY_TABLE = 'AdsetEntity'
 CAMPAIGN_ENTITY_TABLE = 'CampaignEntity'
 PAGE_ENTITY_TABLE = 'PageEntity'
 PAGE_POST_ENTITY_TABLE = 'PagePostEntity'
+PAGE_VIDEO_ENTITY_TABLE = 'PageVideoEntity'
 TOKEN_TABLE = 'PlatformToken'
 JOB_REPORT_TABLE = 'JobReport'
 

@@ -1,3 +1,5 @@
+from facebook_business.adobjects.insightsresult import InsightsResult
+
 from common.enums.entity import Entity
 from facebook_business.adobjects.adsinsights import AdsInsights
 from common.enums.reporttype import ReportType
@@ -322,3 +324,57 @@ POST_METRICS = [
     'post_video_ad_break_earnings',
     'post_video_ad_break_ad_cpm',
 ]
+
+VIDEO_REPORT_METRICS = [
+    'total_video_views',
+    'total_video_views_unique',
+    'total_video_views_autoplayed',
+    'total_video_views_clicked_to_play',
+    'total_video_views_organic',
+    'total_video_views_organic_unique',
+    'total_video_views_paid',
+    'total_video_views_paid_unique',
+    'total_video_views_sound_on',
+    'total_video_complete_views',
+    'total_video_complete_views_unique',
+    'total_video_complete_views_auto_played',
+    'total_video_complete_views_clicked_to_play',
+    'total_video_complete_views_organic',
+    'total_video_complete_views_organic_unique',
+    'total_video_complete_views_paid',
+    'total_video_complete_views_paid_unique',
+    'total_video_10s_views',
+    'total_video_10s_views_unique',
+    'total_video_10s_views_auto_played',
+    'total_video_10s_views_clicked_to_play',
+    'total_video_10s_views_organic',
+    'total_video_10s_views_paid',
+    'total_video_10s_views_sound_on',
+    'total_video_retention_graph',
+    'total_video_retention_graph_autoplayed',
+    'total_video_retention_graph_clicked_to_play',
+    'total_video_avg_time_watched',
+    'total_video_view_total_time',
+    'total_video_view_total_time_organic',
+    'total_video_view_total_time_paid',
+    'total_video_impressions',
+    'total_video_impressions_unique',
+    'total_video_impressions_paid_unique',
+    'total_video_impressions_paid',
+    'total_video_impressions_organic_unique',
+    'total_video_impressions_organic',
+    'total_video_impressions_viral_unique',
+    'total_video_impressions_viral',
+    'total_video_impressions_fan_unique',
+    'total_video_impressions_fan',
+    'total_video_impressions_fan_paid_unique',
+    'total_video_impressions_fan_paid',
+    'total_video_stories_by_action_type',
+    'total_video_reactions_by_type_total',
+    'total_video_view_time_by_age_bucket_and_gender',
+    'total_video_view_time_by_region_id',
+    'total_video_views_by_distribution_type',
+    'total_video_view_time_by_distribution_type',
+]
+
+VIDEO_REPORT_FIELDS = [InsightsResult.Field.name, InsightsResult.Field.values]

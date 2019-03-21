@@ -123,9 +123,11 @@ def iter_native_entities_per_page(
     """
     Generic getter for entities from the Page edge
     """
-    getter_method_map = {FB_PAGE_POST_MODEL: page.get_posts}
+    getter_method_map = {FB_PAGE_POST_MODEL: page.get_posts, FB_AD_VIDEO_MODEL: page.get_videos}
 
-    return _iterate_native_entities_per_parent([Entity.PagePost], getter_method_map, entity_type, fields, page_size)
+    return _iterate_native_entities_per_parent(
+        [Entity.PagePost, Entity.PageVideo], getter_method_map, entity_type, fields, page_size
+    )
 
 
 def iter_native_entities_per_page_post(
@@ -190,7 +192,7 @@ def iter_collect_entities_per_page(job_scope: JobScope) -> Generator[Dict[str, A
     Collects an arbitrary entity for a page
     """
     token, entity_type, root_fb_entity = _extract_token_entity_type_parent_entity(
-        job_scope, [Entity.PagePost], Entity.Page, 'ad_account_id'
+        job_scope, [Entity.PagePost, Entity.PageVideo], Entity.Page, 'ad_account_id'
     )
 
     entities = iter_native_entities_per_page(root_fb_entity, entity_type)

@@ -360,16 +360,12 @@ class VendorDataInjectionTests(TestCase):
             )
 
             with mock.patch.object(
-                collect_insights.Insights, 'iter_insights', return_value=[input_data]
+                collect_insights.Insights, 'iter_ads_insights', return_value=[input_data]
             ), mock.patch.object(ChunkDumpStore, 'store') as store:
 
-                gg = collect_insights.Insights.iter_collect_insights(job_scope, None)
-                cnt = 0
-                for _ in gg:
-                    cnt += 1
-                assert cnt == 1
+                data_iter = collect_insights.Insights.iter_collect_insights(job_scope, None)
+                assert len(list(data_iter)) == 1
 
-            assert store.called
             aa, kk = store.call_args
             assert not kk
             assert aa == (
@@ -417,16 +413,12 @@ class VendorDataInjectionTests(TestCase):
             )
 
             with mock.patch.object(
-                collect_insights.Insights, 'iter_insights', return_value=[input_data]
+                collect_insights.Insights, 'iter_ads_insights', return_value=[input_data]
             ), mock.patch.object(ChunkDumpStore, 'store') as store:
 
-                gg = collect_insights.Insights.iter_collect_insights(job_scope, None)
-                cnt = 0
-                for _ in gg:
-                    cnt += 1
-                assert cnt == 1
+                data_iter = collect_insights.Insights.iter_collect_insights(job_scope, None)
+                assert len(list(data_iter)) == 1
 
-            assert store.called
             aa, kk = store.call_args
             assert not kk
             assert aa == (
@@ -485,16 +477,12 @@ class VendorDataInjectionTests(TestCase):
             )
 
             with mock.patch.object(
-                collect_insights.Insights, 'iter_insights', return_value=[input_data]
+                collect_insights.Insights, 'iter_ads_insights', return_value=[input_data]
             ), mock.patch.object(ChunkDumpStore, 'store') as store:
 
-                gg = collect_insights.Insights.iter_collect_insights(job_scope, None)
-                cnt = 0
-                for _ in gg:
-                    cnt += 1
-                assert cnt == 1
+                data_iter = collect_insights.Insights.iter_collect_insights(job_scope, None)
+                assert len(list(data_iter)) == 1
 
-            assert store.called
             aa, kk = store.call_args
             assert not kk
             assert aa == (
@@ -558,16 +546,12 @@ class VendorDataInjectionTests(TestCase):
             )
 
             with mock.patch.object(
-                collect_insights.Insights, 'iter_insights', return_value=[input_data]
+                collect_insights.Insights, 'iter_ads_insights', return_value=[input_data]
             ), mock.patch.object(ChunkDumpStore, 'store') as store:
 
-                gg = collect_insights.Insights.iter_collect_insights(job_scope, None)
-                cnt = 0
-                for _ in gg:
-                    cnt += 1
-                assert cnt == 1
+                data_iter = collect_insights.Insights.iter_collect_insights(job_scope, None)
+                assert len(list(data_iter)) == 1
 
-            assert store.called
             aa, kk = store.call_args
             assert not kk
             assert aa == (
@@ -629,16 +613,12 @@ class VendorDataInjectionTests(TestCase):
             )
 
             with mock.patch.object(
-                collect_insights.Insights, 'iter_insights', return_value=[input_data]
+                collect_insights.Insights, 'iter_ads_insights', return_value=[input_data]
             ), mock.patch.object(ChunkDumpStore, 'store') as store:
 
-                gg = collect_insights.Insights.iter_collect_insights(job_scope, None)
-                cnt = 0
-                for _ in gg:
-                    cnt += 1
-                assert cnt == 1
+                data_iter = collect_insights.Insights.iter_collect_insights(job_scope, None)
+                assert len(list(data_iter)) == 1
 
-            assert store.called
             aa, kk = store.call_args
             assert not kk
             assert aa == (

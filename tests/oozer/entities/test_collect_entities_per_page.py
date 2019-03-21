@@ -7,7 +7,7 @@ from common.enums.reporttype import ReportType
 from common.id_tools import generate_universal_id
 from oozer.common.cold_storage.batch_store import ChunkDumpStore
 from oozer.common.job_scope import JobScope
-from oozer.common.enum import FB_PAGE_MODEL, FB_PAGE_POST_MODEL
+from oozer.common.enum import FB_PAGE_MODEL, FB_PAGE_POST_MODEL, FB_AD_VIDEO_MODEL
 
 from tests.base import random
 
@@ -21,9 +21,9 @@ class TestCollectEntitiesPerPage(TestCase):
 
     def test_correct_vendor_data_inserted_into_cold_store_payload_posts(self):
 
-        entity_types = [Entity.PagePost]
-        fb_model_map = {Entity.PagePost: FB_PAGE_POST_MODEL}
-        get_all_method_map = {Entity.PagePost: 'get_posts'}
+        entity_types = [Entity.PagePost, Entity.PageVideo]
+        fb_model_map = {Entity.PagePost: FB_PAGE_POST_MODEL, Entity.PageVideo: FB_AD_VIDEO_MODEL}
+        get_all_method_map = {Entity.PagePost: 'get_posts', Entity.PageVideo: 'get_videos'}
 
         for entity_type in entity_types:
 

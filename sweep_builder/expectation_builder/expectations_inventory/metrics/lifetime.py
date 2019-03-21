@@ -50,6 +50,27 @@ def lifetime_metrics_per_entity(
         )
 
 
+def lifetime_page_metrics_per_entity(
+    entity_type: str, reality_claim: RealityClaim
+) -> Generator[ExpectationClaim, None, None]:
+    assert entity_type in Entity.ALL
+
+    normative_job_id = generate_id(
+        ad_account_id=reality_claim.ad_account_id,
+        entity_type=reality_claim.entity_type,
+        entity_id=reality_claim.entity_id,
+        report_type=ReportType.lifetime,
+        report_variant=entity_type,
+    )
+    yield ExpectationClaim(
+        reality_claim.to_dict(),
+        job_signatures=[
+            # normative job signature
+            JobSignature.bind(normative_job_id)
+        ],
+    )
+
+
 lifetime_metrics_per_campaign: ExpectationGeneratorType = functools.partial(
     lifetime_metrics_per_entity, Entity.Campaign
 )
@@ -57,3 +78,7 @@ lifetime_metrics_per_campaign: ExpectationGeneratorType = functools.partial(
 lifetime_metrics_per_adset: ExpectationGeneratorType = functools.partial(lifetime_metrics_per_entity, Entity.AdSet)
 
 lifetime_metrics_per_ad: ExpectationGeneratorType = functools.partial(lifetime_metrics_per_entity, Entity.Ad)
+
+lifetime_metrics_per_page_video: ExpectationGeneratorType = functools.partial(
+    lifetime_page_metrics_per_entity, Entity.PageVideo
+)

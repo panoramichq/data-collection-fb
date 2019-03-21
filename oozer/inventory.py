@@ -7,6 +7,7 @@ from oozer.entities.collect_pages import collect_page_task
 from oozer.entities.import_scope_entities_task import import_ad_accounts_task, import_pages_task
 from oozer.entities.tasks import collect_entities_per_adaccount_task
 from oozer.entities.tasks import collect_entities_per_page_task
+from oozer.metrics.collect_organic_insights_task import collect_video_insights_task
 from oozer.metrics.tasks import collect_insights_task
 from oozer.sync_expectations_task import sync_expectations_task
 
@@ -32,6 +33,7 @@ entity_report_handler_map = {
         Entity.Page: collect_page_task,
         Entity.PagePost: collect_entities_per_page_task,
         Entity.Comment: collect_entities_per_page_post_task,
+        Entity.PageVideo: collect_entities_per_page_task,
     },
     ReportType.lifetime: {
         Entity.Campaign: collect_insights_task,
@@ -39,6 +41,7 @@ entity_report_handler_map = {
         Entity.Ad: collect_insights_task,
         Entity.Page: collect_insights_task,
         # Entity.PagePost: collect_insights_task
+        Entity.PageVideo: collect_video_insights_task,
     },
     ReportType.day: {
         Entity.Ad: collect_insights_task,

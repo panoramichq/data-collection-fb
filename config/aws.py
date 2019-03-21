@@ -7,6 +7,8 @@ useful for testing
 """
 
 S3_BUCKET_NAME = 'operam-metrics-reports'
+S3_BUCKET_RAW_NAME = 'operam-metrics-reports-raw'
+
 """
 The bucket name where we push our report files
 """

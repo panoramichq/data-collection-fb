@@ -5,13 +5,17 @@ from facebook_business.adobjects.adsinsights import AdsInsights
 
 from common.enums.entity import Entity
 from common.enums.reporttype import ReportType
-from common.id_tools import generate_universal_id, universal_id_fields
+from common.id_tools import generate_universal_id, universal_id_fields, NAMESPACE_RAW
 from common.tztools import dt_to_other_timezone
+
+
+ORGANIC_DATA_PAGE_VIDEO_ID = 'page_video_id'
 
 _entity_type_id_field_map = {
     Entity.Campaign: AdsInsights.Field.campaign_id,
     Entity.AdSet: AdsInsights.Field.adset_id,
     Entity.Ad: AdsInsights.Field.ad_id,
+    Entity.PageVideo: ORGANIC_DATA_PAGE_VIDEO_ID,
 }
 
 
@@ -26,6 +30,24 @@ def _from_non_segmented_entity(data: Dict[str, Any], entity_type: str = None, **
     # The rest of data is in kwargs
     return {
         'id': generate_universal_id(entity_id=entity_id, entity_type=entity_type, **kwargs),
+        'entity_id': entity_id,
+        'entity_type': entity_type,
+    }
+
+
+def _from_non_segmented_raw_entity(data: Dict[str, Any], entity_type: str = None, **kwargs) -> Dict[str, str]:
+    """
+    Generates Universal record ID from data that is
+    differentiated only by entity ID
+    """
+    assert entity_type
+
+    entity_id = data[_entity_type_id_field_map[entity_type]]
+    # The rest of data is in kwargs
+    return {
+        'id': generate_universal_id(
+            entity_id=entity_id, entity_type=entity_type, use_namespace=NAMESPACE_RAW, **kwargs
+        ),
         'entity_id': entity_id,
         'entity_type': entity_type,
     }
@@ -259,3 +281,5 @@ report_type_vendor_data_extractor_map = {
     ReportType.day_platform: _from_platform_segmented_entity,
     ReportType.lifetime: _from_non_segmented_entity,
 }
+
+report_type_vendor_data_raw_extractor_map = {ReportType.lifetime: _from_non_segmented_raw_entity}

@@ -21,7 +21,7 @@ class IntegrationTestingMetricsCollection(TestCase):
 
             entity = context.to_fb_model(AD_ACCOUNT, Entity.AdAccount)
 
-            metrics = Insights.iter_insights(entity, {'date_preset': 'lifetime', 'level': 'campaign'})
+            metrics = Insights.iter_ads_insights(entity, {'date_preset': 'lifetime', 'level': 'campaign'})
 
             datum = None
             for datum in metrics:
@@ -33,7 +33,7 @@ class IntegrationTestingMetricsCollection(TestCase):
         with PlatformApiContext(TOKEN) as context:
             entity = context.to_fb_model(AD_ACCOUNT, Entity.AdAccount)
 
-            metrics = Insights.iter_insights(entity, {'date_preset': 'lifetime', 'level': 'adset'})
+            metrics = Insights.iter_ads_insights(entity, {'date_preset': 'lifetime', 'level': 'adset'})
 
             datum = None
             for datum in metrics:
@@ -44,7 +44,7 @@ class IntegrationTestingMetricsCollection(TestCase):
         with PlatformApiContext(TOKEN) as context:
             entity = context.to_fb_model(AD_ACCOUNT, Entity.AdAccount)
 
-            metrics = Insights.iter_insights(entity, {'date_preset': 'lifetime', 'level': 'ad'})
+            metrics = Insights.iter_ads_insights(entity, {'date_preset': 'lifetime', 'level': 'ad'})
 
             datum = None
             for datum in metrics:

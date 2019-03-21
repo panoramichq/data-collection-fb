@@ -41,6 +41,7 @@ from common.measurement import Measure
 import config.aws
 import config.build
 import common.tztools
+from oozer.common.enum import ColdStoreBucketType
 
 from oozer.common.job_scope import JobScope
 
@@ -50,14 +51,28 @@ logger = logging.getLogger(__name__)
 # the faked S3 service, which we contact based on a specific endpoint_url
 _s3 = boto3.resource('s3', endpoint_url=config.aws.S3_ENDPOINT)
 _bucket = _s3.Bucket(config.aws.S3_BUCKET_NAME)
+_bucket_raw = _s3.Bucket(config.aws.S3_BUCKET_RAW_NAME)
 
 
-def _job_scope_to_storage_key(job_scope: JobScope, chunk_marker: Optional[int] = 0) -> str:
+BUCKET_MAP = {ColdStoreBucketType.ORIGINAL_BUCKET: _bucket, ColdStoreBucketType.RAW_BUCKET: _bucket_raw}
+DEFAULT_CHUNK_NUMBER = 0
+
+
+def get_bucket_by_type(bucket_type: str = ColdStoreBucketType.ORIGINAL_BUCKET):
+    bucket = BUCKET_MAP.get(bucket_type)
+    return bucket
+
+
+def _job_scope_to_storage_key(
+    job_scope: JobScope, chunk_marker: Optional[int] = DEFAULT_CHUNK_NUMBER, custom_namespace: Optional[str] = None
+) -> str:
     """
     Puts together the S3 object key we need for given report data. This is
     just a helper function
 
-    :param JobScope job_scope: The job scope (dict representation)
+    :param job_scope: The job scope (dict representation)
+    :param chunk_marker: Order number of written chunk
+    :param custom_namespace: Custom job namespace
     :return string: The full S3 key to use
     """
     assert isinstance(job_scope, JobScope)
@@ -74,7 +89,7 @@ def _job_scope_to_storage_key(job_scope: JobScope, chunk_marker: Optional[int] =
         report_datetime = common.tztools.now()
 
     key = (
-        f'{job_scope.namespace}/'
+        f'{custom_namespace or job_scope.namespace}/'
         f'{prefix}-{job_scope.ad_account_id}/'
         f'{job_scope.report_type}/'
         f'{report_datetime.strftime("%Y")}/'
@@ -107,9 +122,6 @@ def _job_scope_to_metadata(job_scope: JobScope) -> Dict[str, str]:
     We also compute entity_type value to look like a "normative" report value
     because for all code starting with S3 the difference is irrelevant and all data
     looks like it's "normative."
-
-    :param job_scope:
-    :return:
     """
     if job_scope.ad_account_id == '23845179':
         # We download campaign/adset entity but report on variant
@@ -145,7 +157,13 @@ def _job_scope_to_metadata(job_scope: JobScope) -> Dict[str, str]:
 
 @Measure.timer(__name__, function_name_as_metric=True)
 @Measure.counter(__name__, function_name_as_metric=True, count_once=True)
-def store(data: Any, job_scope: JobScope, chunk_marker: Optional[int] = 0) -> str:
+def store(
+    data: Any,
+    job_scope: JobScope,
+    chunk_marker: Optional[int] = DEFAULT_CHUNK_NUMBER,
+    bucket_type: str = ColdStoreBucketType.ORIGINAL_BUCKET,
+    custom_namespace: str = None,
+) -> str:
     """
     Adds the item to the current buffer (by JSON dumping it) and Uploads the
     buffer to S3 under a constructed key
@@ -160,16 +178,19 @@ def store(data: Any, job_scope: JobScope, chunk_marker: Optional[int] = 0) -> st
     :param chunk_marker: indicator / label hinting that this payload is
         just some portion of this job's total returned data and that this
         particular chunk must be saved under an ID that includes the chunk_marker.
+    :param bucket_type: Defines destination bucket
+    :param custom_namespace: Defines custom job namespace
     :return string: The key used to store the data
     """
-    key = _job_scope_to_storage_key(job_scope, chunk_marker)
+    key = _job_scope_to_storage_key(job_scope, chunk_marker, custom_namespace)
 
     # per discussion with Mike C, to make Lambda code behind S3 simpler
     # ALL payloads are lists, even those that are single datum.
     if not isinstance(data, (list, tuple, set)):
         data = [data]
 
-    _bucket.put_object(
+    bucket = get_bucket_by_type(bucket_type)
+    bucket.put_object(
         Key=key, Body=json.dumps(data, ensure_ascii=False).encode(), Metadata=_job_scope_to_metadata(job_scope)
     )
 

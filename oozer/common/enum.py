@@ -26,19 +26,22 @@ FB_PAGE_POST_MODEL = pagepost.PagePost
 FB_COMMENT_MODEL = comment.Comment
 
 FB_MODEL_ENUM_VALUE_MAP = {
-    FB_ADACCOUNT_MODEL: Entity.AdAccount,
-    FB_CAMPAIGN_MODEL: Entity.Campaign,
-    FB_ADSET_MODEL: Entity.AdSet,
-    FB_AD_MODEL: Entity.Ad,
-    FB_AD_CREATIVE_MODEL: Entity.AdCreative,
-    FB_AD_VIDEO_MODEL: Entity.AdVideo,
-    FB_CUSTOM_AUDIENCE_MODEL: Entity.CustomAudience,
-    FB_PAGE_MODEL: Entity.Page,
-    FB_PAGE_POST_MODEL: Entity.PagePost,
-    FB_COMMENT_MODEL: Entity.Comment,
+    FB_ADACCOUNT_MODEL: (Entity.AdAccount,),
+    FB_CAMPAIGN_MODEL: (Entity.Campaign,),
+    FB_ADSET_MODEL: (Entity.AdSet,),
+    FB_AD_MODEL: (Entity.Ad,),
+    FB_AD_CREATIVE_MODEL: (Entity.AdCreative,),
+    FB_AD_VIDEO_MODEL: (Entity.AdVideo, Entity.PageVideo),
+    FB_CUSTOM_AUDIENCE_MODEL: (Entity.CustomAudience,),
+    FB_PAGE_MODEL: (Entity.Page,),
+    FB_PAGE_POST_MODEL: (Entity.PagePost,),
+    FB_COMMENT_MODEL: (Entity.Comment,),
 }
 
-ENUM_VALUE_FB_MODEL_MAP = {value: Model for Model, value in FB_MODEL_ENUM_VALUE_MAP.items()}
+ENUM_VALUE_FB_MODEL_MAP = {}
+for Model, values in FB_MODEL_ENUM_VALUE_MAP.items():
+    for value in values:
+        ENUM_VALUE_FB_MODEL_MAP[value] = Model
 
 
 def to_fb_model(entity_id: str, entity_type: str, api=None):
@@ -114,3 +117,16 @@ class ExternalPlatformJobStatus(JobStatus):
         GenericPlatformError: FailureBucket.Other,
         JobStatus.GenericError: FailureBucket.Other,
     }
+
+
+class ReportEntityApiKind:
+
+    Ad = 'ads'
+    Page = 'page'
+    Video = 'video'
+    Post = 'post'
+
+
+class ColdStoreBucketType:
+    ORIGINAL_BUCKET = 'orig'
+    RAW_BUCKET = 'raw'
