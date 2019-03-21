@@ -67,9 +67,7 @@ def _id_parts_datetime_converter(v):
     return _id_parts_default_converter(v)
 
 
-def generate_id(
-    fields: List[str] = None, trailing_parts: List[str] = None, use_namespace: str = None, **parts
-) -> str:
+def generate_id(fields: List[str] = None, trailing_parts: List[str] = None, use_namespace: str = None, **parts) -> str:
     """
     Generate a string that uniquely identifies an entity, a report type, a job
     Output is compatible with Universal ID spec's component_scoped_id format
@@ -144,10 +142,7 @@ def generate_universal_id(
     fields: List[str] = None, trailing_parts: List[str] = None, use_namespace: str = None, **parts
 ) -> str:
     return generate_id(
-        fields=fields or universal_id_fields,
-        trailing_parts=trailing_parts,
-        use_namespace=use_namespace,
-        **parts,
+        fields=fields or universal_id_fields, trailing_parts=trailing_parts, use_namespace=use_namespace, **parts
     )
 
 

@@ -55,17 +55,16 @@ _bucket_raw = _s3.Bucket(config.aws.S3_BUCKET_RAW_NAME)
 
 
 BUCKET_MAP = {ColdStoreBucketType.ORIGINAL_BUCKET: _bucket, ColdStoreBucketType.RAW_BUCKET: _bucket_raw}
+DEFAULT_CHUNK_NUMBER = 0
 
 
 def get_bucket_by_type(bucket_type: str = ColdStoreBucketType.ORIGINAL_BUCKET):
     bucket = BUCKET_MAP.get(bucket_type)
-    if not bucket:
-        raise AttributeError(f'Unknown cold store bucket type "{bucket_type}"')
     return bucket
 
 
 def _job_scope_to_storage_key(
-    job_scope: JobScope, chunk_marker: Optional[int] = 0, custom_namespace: Optional[str] = None
+    job_scope: JobScope, chunk_marker: Optional[int] = DEFAULT_CHUNK_NUMBER, custom_namespace: Optional[str] = None
 ) -> str:
     """
     Puts together the S3 object key we need for given report data. This is
@@ -161,7 +160,7 @@ def _job_scope_to_metadata(job_scope: JobScope) -> Dict[str, str]:
 def store(
     data: Any,
     job_scope: JobScope,
-    chunk_marker: Optional[int] = 0,
+    chunk_marker: Optional[int] = DEFAULT_CHUNK_NUMBER,
     bucket_type: str = ColdStoreBucketType.ORIGINAL_BUCKET,
     custom_namespace: str = None,
 ) -> str:

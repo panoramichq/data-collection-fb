@@ -50,6 +50,7 @@ def _report_success(job_scope: JobScope, start_time: float, retval: Any):
 
 def reported_task(func):
     """Report task stats."""
+
     @functools.wraps(func)
     def wrapper(job_scope: JobScope, *args: Any, **kwargs: Any):
         start_time = time.time()
