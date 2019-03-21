@@ -7,7 +7,7 @@ from common.enums.entity import Entity
 from oozer.common.job_scope import JobScope
 from oozer.common.enum import JobStatus, ColdStoreBucketType
 
-from oozer.common.cold_storage.base_store import store
+from oozer.common.cold_storage.base_store import store, DEFAULT_CHUNK_NUMBER
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +38,7 @@ class NormalStore(BaseStoreHandler):
         self.custom_namespace = custom_namespace
 
     def store(self, datum):
-        return self._store(datum, self.job_scope, 0, self.bucket_type, self.custom_namespace)
+        return self._store(datum, self.job_scope, DEFAULT_CHUNK_NUMBER, self.bucket_type, self.custom_namespace)
 
 
 class MemorySpoolStore(BaseStoreHandler):
@@ -110,7 +110,7 @@ class NaturallyNormativeChildStore(BaseStoreHandler):
         assert entity_id, "This code must have an entity ID for building of unique insertion ID"
         normative_job_scope = JobScope(self.job_scope_base_data, entity_id=entity_id)
         # and store data under that per-entity, normative JobScope.
-        self._store(datum, normative_job_scope, 50, self.bucket_type)
+        self._store(datum, normative_job_scope, DEFAULT_CHUNK_NUMBER, self.bucket_type)
         # since we report for many entities in this code,
         # must also communicate out the status inside of the for-loop
         # at the normative level.

@@ -1,5 +1,5 @@
 # flake8: noqa: F501
-
+from facebook_business.exceptions import FacebookError
 from common.util import redact_access_token
 
 
@@ -21,7 +21,7 @@ def test_clear_secrets_match():
       }
     }
 """  # noqa
-    result = redact_access_token(Exception(message))
+    result = redact_access_token(FacebookError(message))
 
     assert (
         str(result)
@@ -63,7 +63,7 @@ def test_clear_secrets_no_match():
       }
     }
 """  # noqa
-    result = redact_access_token(Exception(message))
+    result = redact_access_token(FacebookError(message))
 
     assert (
         str(result)

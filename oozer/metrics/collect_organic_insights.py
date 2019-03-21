@@ -108,8 +108,6 @@ class InsightsOrganic:
             raise ValueError(f"Job {job_scope.job_id} cannot proceed. No platform tokens provided.")
 
         token = job_scope.token
-        # We don't use it for getting a token. Something else that calls us does.
-        # However, we use it to report usages of the token we got.
         token_manager = PlatformTokenManager.from_job_scope(job_scope)
         report_entity_kind = InsightsOrganic._detect_report_api_kind(job_scope)
 

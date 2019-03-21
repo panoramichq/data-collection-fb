@@ -16,7 +16,6 @@ D = id_tools.ID_DELIMITER
 
 class VendorOrganicDataUniversalIdExtraction(TestCase):
     def test_entity_level_data(self):
-
         entity_types = [Entity.PageVideo, Entity.PagePost, Entity.Page]
 
         for entity_type in entity_types:
@@ -58,7 +57,6 @@ class VendorOrganicDataInjectionTests(TestCase):
         self.ad_account_id = random.gen_string_id()
 
     def test_page_video_data(self):
-
         # intentionally NOT reusing collect_insights._entity_type_id_field_map map
         # effectively, here we are testing it too.
         input_data = [
@@ -88,13 +86,9 @@ class VendorOrganicDataInjectionTests(TestCase):
             collect_organic_insights.InsightsOrganic, 'iter_video_insights', return_value=input_data
         ), mock.patch.object(NormalStore, 'store') as store:
 
-            gg = collect_organic_insights.InsightsOrganic.iter_collect_insights(job_scope)
-            cnt = 0
-            for _ in gg:
-                cnt += 1
-            assert cnt == 1
+            data_iter = collect_organic_insights.InsightsOrganic.iter_collect_insights(job_scope)
+            assert len(list(data_iter)) == 1
 
-        assert store.called
         assert len(store.call_args_list) == 2
         sig1, sig2 = store.call_args_list
 
@@ -130,7 +124,6 @@ class VendorOrganicDataInjectionTests(TestCase):
         )
 
     def test_other_insights_data(self):
-
         # intentionally NOT reusing collect_insights._entity_type_id_field_map map
         # effectively, here we are testing it too.
         input_data = [
@@ -162,13 +155,9 @@ class VendorOrganicDataInjectionTests(TestCase):
                 collect_organic_insights.InsightsOrganic, 'iter_other_insights', return_value=input_data
             ), mock.patch.object(NormalStore, 'store') as store:
 
-                gg = collect_organic_insights.InsightsOrganic.iter_collect_insights(job_scope)
-                cnt = 0
-                for _ in gg:
-                    cnt += 1
-                assert cnt == 1
+                data_iter = collect_organic_insights.InsightsOrganic.iter_collect_insights(job_scope)
+                assert len(list(data_iter)) == 1
 
-            assert store.called
             assert len(store.call_args_list) == 2
             sig1, sig2 = store.call_args_list
 
