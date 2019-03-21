@@ -229,13 +229,13 @@ class TestingIdParsingTools(TestCase):
     def test_fields_custom_short(self):
 
         with self.assertRaises(ValueError) as ex_catcher:
-            id_tools.parse_id(D.join(['a', 'b']), use_fields=['one_only'])
+            id_tools.parse_id(D.join(['a', 'b']), fields=['one_only'])
 
         assert 'contains 2 parts which is more than the number of declared id components' in str(ex_catcher.exception)
 
     def test_fields_custom_exact(self):
 
-        id_data_actual = id_tools.parse_id(D.join(['A', 'B']), use_fields=['a', 'b'])
+        id_data_actual = id_tools.parse_id(D.join(['A', 'B']), fields=['a', 'b'])
 
         id_data_should_be = dict(a='A', b='B')
 
@@ -243,7 +243,7 @@ class TestingIdParsingTools(TestCase):
 
     def test_fields_custom_extra(self):
 
-        id_data_actual = id_tools.parse_id(D.join(['A', 'B']), use_fields=['a', 'b', 'c'])
+        id_data_actual = id_tools.parse_id(D.join(['A', 'B']), fields=['a', 'b', 'c'])
 
         id_data_should_be = dict(a='A', b='B', c=None)
 
@@ -251,7 +251,7 @@ class TestingIdParsingTools(TestCase):
 
     def test_value_url_decoding(self):
 
-        id_data_actual = id_tools.parse_id(D.join(['A+A', 'B%20B']), use_fields=['a', 'b', 'c'])
+        id_data_actual = id_tools.parse_id(D.join(['A+A', 'B%20B']), fields=['a', 'b', 'c'])
 
         id_data_should_be = dict(a='A A', b='B B', c=None)
 
@@ -279,7 +279,7 @@ class TestingIdParsingTools(TestCase):
 
     def test_fields_default_universal(self):
 
-        id_data_actual = id_tools.parse_id(D.join(['oprm', 'm', NS, '123']), use_fields=id_tools.universal_id_fields)
+        id_data_actual = id_tools.parse_id(D.join(['oprm', 'm', NS, '123']), fields=id_tools.universal_id_fields)
 
         id_data_should_be = dict(
             component_vendor='oprm',
@@ -303,7 +303,7 @@ class TestingIdParsingDatetimeFieldsTools(TestCase):
         datetime_fields = ['range_start', 'range_end']
 
         for field in datetime_fields:
-            id_data_actual = id_tools.parse_id(D.join(['A', '2010-01-01']), use_fields=['a', field])
+            id_data_actual = id_tools.parse_id(D.join(['A', '2010-01-01']), fields=['a', field])
 
             id_data_should_be = {'a': 'A', field: date(2010, 1, 1)}
 
@@ -314,7 +314,7 @@ class TestingIdParsingDatetimeFieldsTools(TestCase):
         datetime_fields = ['range_start', 'range_end']
 
         for field in datetime_fields:
-            id_data_actual = id_tools.parse_id(D.join(['A', '2010-01-01T00']), use_fields=['a', field])
+            id_data_actual = id_tools.parse_id(D.join(['A', '2010-01-01T00']), fields=['a', field])
 
             id_data_should_be = {'a': 'A', field: datetime(2010, 1, 1, 0, 0, 0)}
 
@@ -325,7 +325,7 @@ class TestingIdParsingDatetimeFieldsTools(TestCase):
         datetime_fields = ['range_start', 'range_end']
 
         for field in datetime_fields:
-            id_data_actual = id_tools.parse_id(D.join(['A', '2010-01-02T03']), use_fields=['a', field])
+            id_data_actual = id_tools.parse_id(D.join(['A', '2010-01-02T03']), fields=['a', field])
 
             id_data_should_be = {'a': 'A', field: datetime(2010, 1, 2, 3, 0, 0)}
 
@@ -336,7 +336,7 @@ class TestingIdParsingDatetimeFieldsTools(TestCase):
         datetime_fields = ['range_start', 'range_end']
 
         for field in datetime_fields:
-            id_data_actual = id_tools.parse_id(D.join(['A', '2010-01-02T03:04']), use_fields=['a', field])
+            id_data_actual = id_tools.parse_id(D.join(['A', '2010-01-02T03:04']), fields=['a', field])
 
             id_data_should_be = {'a': 'A', field: datetime(2010, 1, 2, 3, 4, 0)}
 
@@ -347,7 +347,7 @@ class TestingIdParsingDatetimeFieldsTools(TestCase):
         datetime_fields = ['range_start', 'range_end']
 
         for field in datetime_fields:
-            id_data_actual = id_tools.parse_id(D.join(['A', '2010-01-02T03:04:05']), use_fields=['a', field])
+            id_data_actual = id_tools.parse_id(D.join(['A', '2010-01-02T03:04:05']), fields=['a', field])
 
             id_data_should_be = {'a': 'A', field: datetime(2010, 1, 2, 3, 4, 5)}
 
@@ -358,7 +358,7 @@ class TestingIdParsingDatetimeFieldsTools(TestCase):
         datetime_fields = ['range_start', 'range_end']
 
         for field in datetime_fields:
-            id_data_actual = id_tools.parse_id(D.join(['A', '1234567890T03E04E05']), use_fields=['a', field])
+            id_data_actual = id_tools.parse_id(D.join(['A', '1234567890T03E04E05']), fields=['a', field])
 
             id_data_should_be = {'a': 'A', field: '1234567890T03E04E05'}
 
@@ -369,7 +369,7 @@ class TestingIdParsingDatetimeFieldsTools(TestCase):
         datetime_fields = ['range_start', 'range_end']
 
         for field in datetime_fields:
-            id_data_actual = id_tools.parse_id(D.join(['A', '']), use_fields=['a', field])
+            id_data_actual = id_tools.parse_id(D.join(['A', '']), fields=['a', field])
 
             id_data_should_be = {'a': 'A', field: None}
 

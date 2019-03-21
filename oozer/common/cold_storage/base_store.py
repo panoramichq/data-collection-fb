@@ -123,9 +123,6 @@ def _job_scope_to_metadata(job_scope: JobScope) -> Dict[str, str]:
     We also compute entity_type value to look like a "normative" report value
     because for all code starting with S3 the difference is irrelevant and all data
     looks like it's "normative."
-
-    :param job_scope:
-    :return:
     """
     if job_scope.ad_account_id == '23845179':
         # We download campaign/adset entity but report on variant
