@@ -29,7 +29,6 @@ class OrganicJobScopeParsed:
                 f"Report type {job_scope.report_type} specified is not one of supported values: "
                 + ReportType.ALL_METRICS
             )
-        # cool. we are in the right place...
 
         # direct, per-entity report
         entity_id = job_scope.entity_id
@@ -39,7 +38,7 @@ class OrganicJobScopeParsed:
         with PlatformApiContext(job_scope.token) as fb_ctx:
             self.report_root_fb_entity = fb_ctx.to_fb_model(entity_id, entity_type)
 
-        # here we configure code that will augment each datum with  record ID
+        # here we configure code that will augment each datum with record ID
         vendor_data_extractor = report_type_vendor_data_extractor_map[job_scope.report_type]
 
         aux_data = {
@@ -92,8 +91,6 @@ class InsightsOrganic:
             raise ValueError(f"Job {job_scope.job_id} cannot proceed. No platform tokens provided.")
 
         token = job_scope.token
-        # We don't use it for getting a token. Something else that calls us does.
-        # However, we use it to report usages of the token we got.
         token_manager = PlatformTokenManager.from_job_scope(job_scope)
 
         report_entity_kind = OrganicJobScopeParsed.detect_report_api_kind(job_scope)
