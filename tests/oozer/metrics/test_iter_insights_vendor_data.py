@@ -366,7 +366,6 @@ class VendorDataInjectionTests(TestCase):
                 data_iter = collect_insights.Insights.iter_collect_insights(job_scope, None)
                 assert len(list(data_iter)) == 1
 
-            assert store.called
             aa, kk = store.call_args
             assert not kk
             assert aa == (
@@ -420,7 +419,6 @@ class VendorDataInjectionTests(TestCase):
                 data_iter = collect_insights.Insights.iter_collect_insights(job_scope, None)
                 assert len(list(data_iter)) == 1
 
-            assert store.called
             aa, kk = store.call_args
             assert not kk
             assert aa == (
@@ -485,7 +483,6 @@ class VendorDataInjectionTests(TestCase):
                 data_iter = collect_insights.Insights.iter_collect_insights(job_scope, None)
                 assert len(list(data_iter)) == 1
 
-            assert store.called
             aa, kk = store.call_args
             assert not kk
             assert aa == (
@@ -555,7 +552,6 @@ class VendorDataInjectionTests(TestCase):
                 data_iter = collect_insights.Insights.iter_collect_insights(job_scope, None)
                 assert len(list(data_iter)) == 1
 
-            assert store.called
             aa, kk = store.call_args
             assert not kk
             assert aa == (
@@ -623,7 +619,6 @@ class VendorDataInjectionTests(TestCase):
                 data_iter = collect_insights.Insights.iter_collect_insights(job_scope, None)
                 assert len(list(data_iter)) == 1
 
-            assert store.called
             aa, kk = store.call_args
             assert not kk
             assert aa == (

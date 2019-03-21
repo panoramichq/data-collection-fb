@@ -94,7 +94,6 @@ class VendorOrganicDataInjectionTests(TestCase):
             data_iter = collect_organic_insights.InsightsOrganic.iter_collect_insights(job_scope)
             assert len(list(data_iter)) == 1
 
-        assert store.called
         assert len(store.call_args_list) == 2
         sig1, sig2 = store.call_args_list
 
