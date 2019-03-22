@@ -18,7 +18,7 @@ app = get_celery_app()
 @Measure.timer(__name__, function_name_as_metric=True)
 @Measure.counter(__name__, function_name_as_metric=True, count_once=True)
 @reported_task
-def collect_video_insights_task(job_scope: JobScope, _: JobContext):
+def collect_organic_insights_task(job_scope: JobScope, _: JobContext):
     if not SweepRunningFlag.is_set(job_scope.sweep_id):
         logger.info(f'{job_scope} skipped because sweep {job_scope.sweep_id} is done')
         return

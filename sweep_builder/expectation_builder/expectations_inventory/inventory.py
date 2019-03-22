@@ -96,13 +96,20 @@ entity_expectation_generator_map[Entity.Page] = list(
             None if jobs_config.ENTITY_P_DISABLED else page_entity,
             None if jobs_config.ENTITY_PP_DISABLED else page_post_entities_per_page,
             None if jobs_config.ENTITY_PV_DISABLED else page_video_entities_per_page,
+            None if jobs_config.INSIGHTS_LIFETIME_P_DISABLED else lifetime.lifetime_metrics_per_page,
             sync_expectations_per_page,
         ],
     )
 )
 
 entity_expectation_generator_map[Entity.PagePost] = list(
-    filter(None, [None if jobs_config.ENTITY_CM_DISABLED else comment_entities_per_page_post])
+    filter(
+        None,
+        [
+            None if jobs_config.ENTITY_CM_DISABLED else comment_entities_per_page_post,
+            None if jobs_config.INSIGHTS_LIFETIME_PP_DISABLED else lifetime.lifetime_metrics_per_page_post,
+        ],
+    )
 )
 
 entity_expectation_generator_map[Entity.PageVideo] = list(

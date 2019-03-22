@@ -9,13 +9,15 @@ from common.id_tools import generate_universal_id, universal_id_fields, NAMESPAC
 from common.tztools import dt_to_other_timezone
 
 
-ORGANIC_DATA_PAGE_VIDEO_ID = 'page_video_id'
+ORGANIC_DATA_ENTITY_ID_MAP = {Entity.PageVideo: 'page_video_id', Entity.Page: 'id', Entity.PagePost: 'page_post_id'}
 
 _entity_type_id_field_map = {
     Entity.Campaign: AdsInsights.Field.campaign_id,
     Entity.AdSet: AdsInsights.Field.adset_id,
     Entity.Ad: AdsInsights.Field.ad_id,
-    Entity.PageVideo: ORGANIC_DATA_PAGE_VIDEO_ID,
+    Entity.PageVideo: ORGANIC_DATA_ENTITY_ID_MAP[Entity.PageVideo],
+    Entity.Page: ORGANIC_DATA_ENTITY_ID_MAP[Entity.Page],
+    Entity.PagePost: ORGANIC_DATA_ENTITY_ID_MAP[Entity.PagePost],
 }
 
 

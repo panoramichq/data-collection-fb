@@ -673,6 +673,8 @@ _default_page_size = {
     Comment: 250,
 }
 
+DEFAULT_PAGE_ACCESS_TOKEN_LIMIT = 250
+
 
 def get_default_page_size(model_klass: Type['Model']) -> int:
     """
