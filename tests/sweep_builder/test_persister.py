@@ -31,7 +31,6 @@ class PersisterSavesJobScopeData(TestCase):
                 entity_id=entity_id,
                 entity_type=Entity.Campaign,
                 ad_account_id=ad_account_id,
-                token='blah',
                 timezone='Europe/London',
                 normative_job_signature=JobSignature(job_id),
                 selected_job_signature=JobSignature(job_id),
