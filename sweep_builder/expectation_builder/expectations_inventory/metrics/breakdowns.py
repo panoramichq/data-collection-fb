@@ -41,7 +41,10 @@ def lifecycle_metrics_per_entity(
         return
 
     yield ExpectationClaim(
-        reality_claim.to_dict(),
+        reality_claim.entity_id,
+        reality_claim.entity_type,
+        ad_account_id=reality_claim.ad_account_id,
+        timezone=reality_claim.timezone,
         normative_job_signature=JobSignature(
             generate_id(
                 ad_account_id=reality_claim.ad_account_id,
@@ -80,7 +83,10 @@ def daily_metrics_per_entity(
 
     for day in date_range(range_start, range_end):
         yield ExpectationClaim(
-            reality_claim.to_dict(),
+            reality_claim.entity_id,
+            reality_claim.entity_type,
+            ad_account_id=reality_claim.ad_account_id,
+            timezone=reality_claim.timezone,
             normative_job_signature=JobSignature(
                 generate_id(
                     ad_account_id=reality_claim.ad_account_id,
@@ -127,7 +133,6 @@ def day_metrics_per_ads_under_ad_account(
     if not report_types or not reality_claim.timezone:
         return
 
-    reality_claim_data = reality_claim.to_dict()
     date_map: Dict[date, Dict[str, Dict[str, Set]]] = defaultdict(lambda: defaultdict(lambda: defaultdict(set)))
 
     # TODO: Remove once all entities have parent ids
@@ -146,7 +151,10 @@ def day_metrics_per_ads_under_ad_account(
     for (day, entity_id_map) in date_map.items():
         for report_type in report_types:
             yield ExpectationClaim(
-                reality_claim_data,
+                reality_claim.entity_id,
+                reality_claim.entity_type,
+                ad_account_id=reality_claim.ad_account_id,
+                timezone=reality_claim.timezone,
                 entity_id_map=entity_id_map if is_dividing_possible else None,
                 range_start=day,
                 report_type=report_type,

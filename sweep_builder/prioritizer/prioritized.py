@@ -29,13 +29,31 @@ def iter_prioritized(claims: Iterable[ScorableClaim]) -> Generator[Prioritizatio
         # Cache already seen job_ids
         cached_score = assigned_scores.get(selected_signature)
         if cached_score is not None:
-            yield PrioritizationClaim(claim.to_dict(), score=cached_score)
+            # TODO: check what fields are required by PrioritizationClaim
+            yield PrioritizationClaim(
+                claim.entity_id,
+                claim.entity_type,
+                selected_signature,
+                claim.normative_job_signature,
+                cached_score,
+                ad_account_id=claim.ad_account_id,
+                timezone=claim.timezone,
+            )
             continue
 
         score = assign_score(claim)
 
         with Measure.timer(f"{_measurement_name_base}.yield_result", tags=_measurement_tags):
-            yield PrioritizationClaim(claim.to_dict(), score=score)
+            # TODO: check what fields are required by PrioritizationClaim
+            yield PrioritizationClaim(
+                claim.entity_id,
+                claim.entity_type,
+                selected_signature,
+                claim.normative_job_signature,
+                score,
+                ad_account_id=claim.ad_account_id,
+                timezone=claim.timezone,
+            )
 
         assigned_scores[selected_signature] = score
         _before_next_expectation = time.time()

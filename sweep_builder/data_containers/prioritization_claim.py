@@ -1,11 +1,12 @@
-from typing import List
+from typing import List, Optional
 from common.enums.entity import Entity
-from sweep_builder.data_containers.scorable_claim import ScorableClaim
+from common.job_signature import JobSignature
+from common.store.jobreport import JobReport
 
 SUBJECT_TO_EXPECTATION_PUBLICATION = {Entity.Campaign, Entity.AdSet, Entity.Ad}
 
 
-class PrioritizationClaim(ScorableClaim):
+class PrioritizationClaim:
     """
     Used to express a bundle of data representing scored realization of
     need to have certain data point filled.
@@ -16,8 +17,30 @@ class PrioritizationClaim(ScorableClaim):
     to add more data to context from the very bottom of the stack. Just extend this object.)
     """
 
-    job_scores: List[int] = []
+    entity_id: str
+    entity_type: str
+    selected_job_signature: JobSignature
+
+    ad_account_id: str
     score: int = None
+
+    def __init__(
+        self,
+        entity_id: str,
+        entity_type: str,
+        selected_job_signature: JobSignature,
+        normative_job_signature: JobSignature,
+        score: int,
+        ad_account_id: str = None,
+        timezone: str = None,
+    ):
+        self.entity_id = entity_id
+        self.entity_type = entity_type
+        self.selected_job_signature = selected_job_signature
+        self.normative_job_signature = normative_job_signature
+        self.score = score
+        self.ad_account_id = ad_account_id
+        self.timezone = timezone
 
     @property
     def is_subject_to_expectation_publication(self):
@@ -26,3 +49,11 @@ class PrioritizationClaim(ScorableClaim):
             and self.entity_id is not None
             and self.entity_type in SUBJECT_TO_EXPECTATION_PUBLICATION
         )
+
+    @property
+    def selected_job_id(self):
+        return self.selected_job_signature.job_id
+
+    @property
+    def normative_job_id(self):
+        return None if self.normative_job_signature is None else self.normative_job_signature.job_id

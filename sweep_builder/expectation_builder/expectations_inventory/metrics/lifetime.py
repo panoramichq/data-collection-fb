@@ -30,10 +30,18 @@ def lifetime_metrics_per_entity(
 
     if reality_claim.ad_account_id == '23845179':
         # Use normative job for ad account 23845179
-        yield ExpectationClaim(reality_claim.to_dict(), normative_job_signature=JobSignature(normative_job_id))
+        yield ExpectationClaim(
+            reality_claim.entity_id,
+            reality_claim.entity_type,
+            ad_account_id=reality_claim.ad_account_id,
+            timezone=reality_claim.timezone,
+            normative_job_signature=JobSignature(normative_job_id))
     else:
         yield ExpectationClaim(
-            reality_claim.to_dict(),
+            reality_claim.entity_id,
+            reality_claim.entity_type,
+            ad_account_id=reality_claim.ad_account_id,
+            timezone=reality_claim.timezone,
             normative_job_signature=JobSignature(normative_job_id),
             effective_job_signature=JobSignature(
                 generate_id(

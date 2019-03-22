@@ -1,13 +1,10 @@
 from datetime import date
 from typing import Any, Dict
 
-from common.enums.entity import Entity
-from common.id_tools import generate_id
 from common.job_signature import JobSignature
-from sweep_builder.data_containers.reality_claim import RealityClaim
 
 
-class ExpectationClaim(RealityClaim):
+class ExpectationClaim:
     """
     Used to express a bundle of data representing realization of
     need to have certain data point filled.
@@ -22,12 +19,42 @@ class ExpectationClaim(RealityClaim):
     """
 
     # Keeping signatures for lifetime reports (only ones using effective)
-    normative_job_signature: JobSignature = None
-    effective_job_signature: JobSignature = None
-    entity_id_map: Dict[str, Any] = {}
-    range_start: date = None
-    report_type: str = None
-    report_variant: str = None
+    normative_job_signature: JobSignature
+    effective_job_signature: JobSignature
+
+    entity_id: str
+    entity_type: str
+    ad_account_id: str
+    timezone: str
+
+    entity_id_map: Dict[str, Any]
+    range_start: date
+    report_type: str
+    report_variant: str
+
+    def __init__(
+        self,
+        entity_id: str,
+        entity_type: str,
+        ad_account_id: str = None,
+        timezone: str = None,
+        normative_job_signature: JobSignature = None,
+        effective_job_signature: JobSignature = None,
+        entity_id_map: Dict[str, Any] = None,
+        range_start: str = None,
+        report_type: str = None,
+        report_variant: str = None,
+    ):
+        self.entity_id = entity_id
+        self.entity_type = entity_type
+        self.ad_account_id = ad_account_id
+        self.timezone = timezone
+        self.normative_job_signature = normative_job_signature
+        self.effective_job_signature = effective_job_signature
+        self.entity_id_map = entity_id_map
+        self.range_start = range_start
+        self.report_type = report_type
+        self.report_variant = report_variant
 
     @property
     def is_divisible(self):
@@ -36,20 +63,3 @@ class ExpectationClaim(RealityClaim):
     @property
     def normative_job_id(self):
         return None if self.normative_job_signature is None else self.normative_job_signature.job_id
-
-    def generate_child_claims(self):
-        entity_type = self.entity_type or Entity.AdAccount
-        for child_entity_id, child_entity_id_map in self.entity_id_map.items():
-            yield ExpectationClaim(
-                # TODO: we need to avoid doing this everywhere
-                self.to_dict(),
-                entity_id_map=child_entity_id_map,
-                normative_job_signature=generate_id(
-                    ad_account_id=self.ad_account_id,
-                    range_start=self.range_start,
-                    report_type=self.report_type,
-                    report_variant=self.report_variant,
-                    entity_id=child_entity_id,
-                    entity_type=Entity.next_level(entity_type)  # TODO: does not have entity type
-                )
-            )

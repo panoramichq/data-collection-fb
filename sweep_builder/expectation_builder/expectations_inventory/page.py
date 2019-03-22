@@ -25,7 +25,8 @@ def pages_per_scope(reality_claim: RealityClaim) -> Generator[ExpectationClaim, 
         return
 
     yield ExpectationClaim(
-        reality_claim.to_dict(),
+        reality_claim.entity_id,
+        reality_claim.entity_type,
         normative_job_signature=JobSignature(
             generate_id(
                 namespace=config.application.UNIVERSAL_ID_SYSTEM_NAMESPACE,
@@ -53,7 +54,9 @@ def sync_expectations_per_page(reality_claim: RealityClaim) -> Generator[Expecta
         ValueError("Only Page-level expectations may generate this job signature")
 
     yield ExpectationClaim(
-        reality_claim.to_dict(),
+        reality_claim.entity_id,
+        reality_claim.entity_type,
+        ad_account_id=reality_claim.ad_account_id,
         normative_job_signature=JobSignature(
             generate_id(
                 ad_account_id=reality_claim.ad_account_id,

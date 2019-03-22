@@ -33,7 +33,7 @@ def iter_persist_prioritized(
         for prioritization_claim in prioritized_iter:
             ad_account_id = prioritization_claim.ad_account_id
             entity_type = prioritization_claim.entity_type
-            job_id_effective = prioritization_claim.selected_job_id
+            selected_job_id = prioritization_claim.selected_job_id
             score = prioritization_claim.score
 
             _measurement_tags = {'ad_account_id': ad_account_id, 'entity_type': entity_type, 'sweep_id': sweep_id}
@@ -43,7 +43,7 @@ def iter_persist_prioritized(
             )
 
             if not should_persist(score):
-                logger.info(f'Not persisting job {job_id_effective} due to low score: {score}')
+                logger.info(f'Not persisting job {selected_job_id} due to low score: {score}')
                 skipped_jobs[ad_account_id] += 1
                 continue
 
@@ -68,16 +68,16 @@ def iter_persist_prioritized(
                 extra_data['ad_account_timezone_name'] = prioritization_claim.timezone
 
             with Measure.timer(f'{_measurement_name_base}.add_to_queue', tags=_measurement_tags):
-                add_to_queue(job_id_effective, score, **extra_data)
+                add_to_queue(selected_job_id, score, **extra_data)
 
             # This is our cheap way of ensuring that we are dealing
             # with platform-bound job that we need to report our expectations for
             if prioritization_claim.is_subject_to_expectation_publication:
                 # TODO: contemplate parsing these instead and making sure they are norm vs eff
                 # at this point all this checks is that we have more than one job_id scheduled
-                if prioritization_claim.normative_job_id != job_id_effective:
+                if prioritization_claim.normative_job_id != selected_job_id:
                     with Measure.timer(f'{_measurement_name_base}.expectation_add', tags=_measurement_tags):
-                        expectation_add(job_id_effective, ad_account_id, prioritization_claim.entity_id)
+                        expectation_add(selected_job_id, ad_account_id, prioritization_claim.entity_id)
 
             # This time includes the time consumer of this generator wastes
             # between reads from us. Good way to measure how quickly we are
