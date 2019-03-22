@@ -29,7 +29,6 @@ def iter_prioritized(claims: Iterable[ScorableClaim]) -> Generator[Prioritizatio
         # Cache already seen job_ids
         cached_score = assigned_scores.get(selected_signature)
         if cached_score is not None:
-            # TODO: check what fields are required by PrioritizationClaim
             yield PrioritizationClaim(
                 claim.entity_id,
                 claim.entity_type,
@@ -44,7 +43,6 @@ def iter_prioritized(claims: Iterable[ScorableClaim]) -> Generator[Prioritizatio
         score = assign_score(claim)
 
         with Measure.timer(f"{_measurement_name_base}.yield_result", tags=_measurement_tags):
-            # TODO: check what fields are required by PrioritizationClaim
             yield PrioritizationClaim(
                 claim.entity_id,
                 claim.entity_type,

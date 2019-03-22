@@ -70,7 +70,6 @@ def select_signature(claim: ExpectationClaim) -> Generator[ScorableClaim, None, 
 
     last_report = _fetch_job_report(selected_signature.job_id)
     if not claim.is_divisible or last_report is None or should_select(last_report):
-        # TODO: check what values are needed by scorable claim
         yield ScorableClaim(
             claim.entity_id,
             claim.entity_type,
