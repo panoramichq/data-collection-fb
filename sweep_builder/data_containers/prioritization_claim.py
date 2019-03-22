@@ -1,7 +1,5 @@
-from typing import List, Optional
 from common.enums.entity import Entity
 from common.job_signature import JobSignature
-from common.store.jobreport import JobReport
 
 SUBJECT_TO_EXPECTATION_PUBLICATION = {Entity.Campaign, Entity.AdSet, Entity.Ad}
 

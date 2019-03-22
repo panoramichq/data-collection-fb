@@ -7,12 +7,9 @@ from common.store.jobreport import JobReport
 from sweep_builder.selector import should_select
 
 
-@pytest.mark.parametrize('bucket', [
-    FailureBucket.WorkingOnIt,
-    FailureBucket.Success,
-    FailureBucket.Other,
-    FailureBucket.Throttling,
-])
+@pytest.mark.parametrize(
+    'bucket', [FailureBucket.WorkingOnIt, FailureBucket.Success, FailureBucket.Other, FailureBucket.Throttling]
+)
 def test_should_select_last_error_not_too_large(bucket):
     report = JobReport(last_failure_bucket=bucket)
 

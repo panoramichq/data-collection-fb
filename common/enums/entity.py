@@ -32,8 +32,4 @@ class Entity:
     def next_level(entity_type):
         if entity_type not in {Entity.AdAccount, Entity.Campaign, Entity.AdSet}:
             raise NotImplementedError(f'Determining next level from type: {entity_type} is not supported')
-        return {
-            Entity.AdAccount: Entity.Campaign,
-            Entity.Campaign: Entity.AdSet,
-            Entity.AdSet: Entity.Ad,
-        }[entity_type]
+        return {Entity.AdAccount: Entity.Campaign, Entity.Campaign: Entity.AdSet, Entity.AdSet: Entity.Ad}[entity_type]

@@ -159,12 +159,14 @@ def day_metrics_per_ads_under_ad_account(
                 range_start=day,
                 report_type=report_type,
                 report_variant=Entity.Ad,
-                normative_job_signature=JobSignature(generate_id(
-                    ad_account_id=reality_claim.ad_account_id,
-                    range_start=day,
-                    report_type=report_type,
-                    report_variant=Entity.Ad,
-                )),
+                normative_job_signature=JobSignature(
+                    generate_id(
+                        ad_account_id=reality_claim.ad_account_id,
+                        range_start=day,
+                        report_type=report_type,
+                        report_variant=Entity.Ad,
+                    )
+                ),
             )
 
 

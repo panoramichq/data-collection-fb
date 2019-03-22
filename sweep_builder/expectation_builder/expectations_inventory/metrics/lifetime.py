@@ -35,7 +35,8 @@ def lifetime_metrics_per_entity(
             reality_claim.entity_type,
             ad_account_id=reality_claim.ad_account_id,
             timezone=reality_claim.timezone,
-            normative_job_signature=JobSignature(normative_job_id))
+            normative_job_signature=JobSignature(normative_job_id),
+        )
     else:
         yield ExpectationClaim(
             reality_claim.entity_id,
@@ -49,7 +50,7 @@ def lifetime_metrics_per_entity(
                     report_type=ReportType.lifetime,
                     report_variant=entity_type,
                 )
-            )
+            ),
         )
 
 

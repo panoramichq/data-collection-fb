@@ -9,8 +9,9 @@ from typing import Dict, List
 from config import jobs as jobs_config
 from common.enums.entity import Entity
 from common.enums.reporttype import ReportType
-from sweep_builder.expectation_builder.expectations_inventory.metrics.breakdowns import \
-    day_metrics_per_ads_under_ad_account
+from sweep_builder.expectation_builder.expectations_inventory.metrics.breakdowns import (
+    day_metrics_per_ads_under_ad_account,
+)
 from sweep_builder.expectation_builder.expectations_inventory.page import pages_per_scope, sync_expectations_per_page
 from sweep_builder.types import ExpectationGeneratorType
 
