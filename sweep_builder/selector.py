@@ -45,7 +45,7 @@ def select_signature(claim: ExpectationClaim) -> Generator[ScorableClaim, None, 
     )
 
     report = _fetch_job_report(signature.job_id)
-    if not claim.is_dividable or report is None or should_select(report):
+    if not claim.is_divisible or report is None or should_select(report):
         yield ScorableClaim(claim.to_dict(), selected_job_signature=signature, last_report=report)
         return
 

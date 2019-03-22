@@ -44,10 +44,6 @@ def test_select_signature_select_first_true(mock_should_select, _):
     assert scorable_claim.selected_job_signature == expected
 
 
-def test_should_select_report_is_none():
-    assert should_select(None)
-
-
 @pytest.mark.parametrize('bucket', [
     FailureBucket.WorkingOnIt,
     FailureBucket.Success,

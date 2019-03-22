@@ -30,7 +30,7 @@ class ExpectationClaim(RealityClaim):
     report_variant: str = None
 
     @property
-    def is_dividable(self):
+    def is_divisible(self):
         return self.entity_id_map is not None
 
     @property
