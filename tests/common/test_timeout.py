@@ -2,6 +2,7 @@ import pytest
 import gevent
 
 from common.timeout import timeout
+from oozer.common.errors import TimeoutException
 
 
 def test_timeout_exception():
@@ -13,7 +14,7 @@ def test_timeout_exception():
 
     timeout_factory = timeout(1)
     wrapped_func = timeout_factory(test_func)
-    with pytest.raises(gevent.Timeout):
+    with pytest.raises(TimeoutException):
         wrapped_func(1, 2, c=3)
 
 
