@@ -19,7 +19,7 @@ def timeout(seconds: int) -> [[Callable], Callable]:
         def wrapper(*args: Any, **kwargs: Any) -> Any:
             try:
                 with Timeout(seconds):
-                    return func(*args, *kwargs)
+                    return func(*args, **kwargs)
             except Timeout as e:
                 BugSnagContextData.notify(e)
                 logger.exception(f"Timed out running function {func.__name__}")
