@@ -4,9 +4,9 @@ import logging
 
 LEVEL = 'INFO'
 
-from common.updatefromenv import update_from_env
+# from common.updatefromenv import update_from_env
 
-update_from_env(__name__)
+# update_from_env(__name__)
 
 if isinstance(LEVEL, str):
     # they must be native logging enums (ints)
