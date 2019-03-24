@@ -1,5 +1,5 @@
-import functools
 import random
+from typing import Dict
 
 import config.application
 
@@ -8,10 +8,11 @@ from common.enums.entity import Entity
 from common.enums.failure_bucket import FailureBucket
 from common.enums.reporttype import ReportType
 from common.id_tools import parse_id_parts
-from common.store.jobreport import JobReport
+from common.measurement import Measure
 from common.tztools import now_in_tz, now
 from common.math import adapt_decay_rate_to_population, get_decay_proportion, get_fade_in_proportion
 from config.jobs import ACTIVATE_JOB_GATEKEEPER
+from sweep_builder.data_containers.scorable_claim import ScorableClaim
 from sweep_builder.prioritizer.gatekeeper import JobGateKeeper
 
 # This controls score decay for insights that are day-specific
@@ -20,6 +21,10 @@ from sweep_builder.prioritizer.gatekeeper import JobGateKeeper
 
 DAYS_BACK_DECAY_RATE = adapt_decay_rate_to_population(365 * 2)
 MINUTES_AWAY_FROM_WHOLE_HOUR_DECAY_RATE = adapt_decay_rate_to_population(30)
+
+
+def _extract_tags_from_claim(claim: ScorableClaim, *_, **__) -> Dict[str, str]:
+    return {'entity_type': claim.entity_type, 'ad_account_id': claim.ad_account_id}
 
 
 def get_minutes_away_from_whole_hour() -> int:
@@ -38,19 +43,19 @@ def get_minutes_away_from_whole_hour() -> int:
 #  margin of comfort (say, 3)
 #  ========
 #  ~20k
-@functools.lru_cache(maxsize=20000)
-def assign_score(job_id: str, timezone: str) -> int:
-    """
-    Calculate score for a given job.
-    """
-    # for convenience of reading of the code below,
-    # exploding the job id parts into individual vars
+@Measure.timer(__name__, function_name_as_metric=True, extract_tags_from_arguments=_extract_tags_from_claim)
+def assign_score(claim: ScorableClaim) -> int:
+    """Calculate score for a given job."""
+    job_id = claim.selected_job_id
+    timezone = claim.timezone
+    last_report = claim.last_report
+    # TODO: Avoid parsing ID - all information should be available
     job_id_parts = parse_id_parts(job_id)
     ad_account_id = job_id_parts.ad_account_id
-    entity_type = job_id_parts.entity_type
     report_day = job_id_parts.range_start
     report_type = job_id_parts.report_type
     report_variant = job_id_parts.report_variant
+    entity_type = job_id_parts.entity_type
 
     if job_id_parts.namespace == config.application.UNIVERSAL_ID_SYSTEM_NAMESPACE:
         # some system worker. must run on every sweep usually
@@ -72,12 +77,7 @@ def assign_score(job_id: str, timezone: str) -> int:
         # Until then, we are making sure per-parent jobs get out first
         return 0
 
-    try:
-        collection_record = JobReport.get(job_id)  # type: JobReport
-    except:  # TODO: proper error catching here
-        collection_record = None  # type: JobReport
-
-    last_success_dt = None if collection_record is None else collection_record.last_success_dt
+    last_success_dt = None if last_report is None else last_report.last_success_dt
     if ACTIVATE_JOB_GATEKEEPER and not JobGateKeeper.shall_pass(job_id_parts, last_success_dt=last_success_dt):
         return JobGateKeeper.JOB_NOT_PASSED_SCORE
 
@@ -85,11 +85,11 @@ def assign_score(job_id: str, timezone: str) -> int:
 
     if ad_account_id == '23845179' and report_type != ReportType.entity:
         now_time = now_in_tz(timezone)
-        if not collection_record or not collection_record.last_success_dt:
+        if not last_report or not last_report.last_success_dt:
             # Not succeeded this job yet
             return random.randint(8, 15)
         else:
-            secs_since_last_success = (now_time - collection_record.last_success_dt).seconds
+            secs_since_last_success = (now_time - last_report.last_success_dt).seconds
             if secs_since_last_success > 60 * 60 * 8:
                 # Succeeded more than 8 hours ago
                 return random.randint(8, 15)
@@ -101,7 +101,7 @@ def assign_score(job_id: str, timezone: str) -> int:
         # yeah, i know, redundant, but keeping it here
         # to allow per-entity_id logic further below to be around
 
-        if not collection_record:
+        if not last_report:
             # for a group route that has no collection record,
             # this means we absolutely have to try it first (before per-element)
             score += 1000
@@ -109,14 +109,14 @@ def assign_score(job_id: str, timezone: str) -> int:
 
             # Happy outcomes
 
-            if collection_record.last_success_dt and not collection_record.last_failure_dt:
+            if last_report.last_success_dt and not last_report.last_failure_dt:
                 # perfect record of success in fetching
                 # TODO: decay this based on time here, instead of below, maybe...
                 score += 10
             elif (
-                collection_record.last_success_dt
-                and collection_record.last_failure_dt
-                and collection_record.last_success_dt > collection_record.last_failure_dt
+                last_report.last_success_dt
+                and last_report.last_failure_dt
+                and last_report.last_success_dt > last_report.last_failure_dt
             ):
                 # Some history of recent success, but also record of failures,
                 # meaning next time we schedule this one, it may error our
@@ -129,13 +129,13 @@ def assign_score(job_id: str, timezone: str) -> int:
             # here we enter unhappy territory
             # either no or old history of success, overshadowed by failure or nothingness
 
-            elif collection_record.last_failure_dt:
-                if collection_record.last_failure_bucket == FailureBucket.Throttling:
+            elif last_report.last_failure_dt:
+                if last_report.last_failure_bucket == FailureBucket.Throttling:
                     # not cool. it was important to us on prior runs, but
                     # we got clobbered by something jumping in front of us last time
                     # let's try a little higher priority
                     score += 100
-                elif collection_record.last_failure_bucket == FailureBucket.TooLarge:
+                elif last_report.last_failure_bucket == FailureBucket.TooLarge:
                     # last time we tried this, report failed because we asked for
                     # too much data and should probably not try us again.
                     # however, if this was long time ago, maybe we should
@@ -143,7 +143,7 @@ def assign_score(job_id: str, timezone: str) -> int:
                     # FB's release cycles are weekly (release on Tuesday)
                     # Let's imagine that we should probably retry these failures if they are
                     # 2+ weeks old
-                    days_since_failure = (now() - collection_record.last_failure_dt).days
+                    days_since_failure = (now() - last_report.last_failure_dt).days
                     score += 10 * (days_since_failure / 14)
                 else:
                     # some other failure. Not sure what approach to take, but
@@ -165,16 +165,16 @@ def assign_score(job_id: str, timezone: str) -> int:
         # per entity_id
         # this is not used now, but is left for reuse when we unleash per-entity_id jobs
         # onto this code again. Must be revisited
-        if not collection_record:
+        if not last_report:
             score += 20
-        elif collection_record.last_success_dt > collection_record.last_failure_dt:
+        elif last_report.last_success_dt > last_report.last_failure_dt:
             # last group route was success. Let's try to keep it that way
             score += 10
-        elif collection_record.last_failure_bucket == FailureBucket.Throttling:
+        elif last_report.last_failure_bucket == FailureBucket.Throttling:
             # not cool. we got clobbered by something jumping in front of us last time
             # let's try a little higher priority
             score += 80  # ever slightly less than per-parent approach
-        elif collection_record.last_failure_bucket == FailureBucket.TooLarge:
+        elif last_report.last_failure_bucket == FailureBucket.TooLarge:
             # last time we tried this, report failed because we asked for
             # too much data and should probably not try us again.
             # however, if this was long time ago, maybe we should
@@ -182,12 +182,12 @@ def assign_score(job_id: str, timezone: str) -> int:
             # FB's release cycles are weekly (release on Tuesday)
             # Let's imagine that we should probably retry these failures if they are
             # 2+ weeks old
-            days_since_failure = (now() - collection_record.last_failure_dt).days
+            days_since_failure = (now() - last_report.last_failure_dt).days
             score += 10 * min(2, days_since_failure / 14)
         else:
             # some sort of failure that we don't understand the meaning of right now
             # So, let's proceed with caution
-            days_since_failure = (now() - collection_record.last_failure_dt).days
+            days_since_failure = (now() - last_report.last_failure_dt).days
             score += 5 * min(3, days_since_failure / 14)
 
     if report_type in ReportType.ALL_DAY_BREAKDOWNS:
@@ -207,8 +207,8 @@ def assign_score(job_id: str, timezone: str) -> int:
         # happens in the block below. At minimum we should collect lifetime reports once in two hours.
         pass
 
-    if collection_record and collection_record.last_success_dt:
-        seconds_old = (now() - collection_record.last_success_dt).seconds
+    if last_report and last_report.last_success_dt:
+        seconds_old = (now() - last_report.last_success_dt).seconds
         # at this rate, 80% of score id regained by 15th minute
         # and ~100% by 36th minute.
         score = score * get_fade_in_proportion(seconds_old / 60, rate=0.1)
