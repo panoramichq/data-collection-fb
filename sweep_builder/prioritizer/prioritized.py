@@ -11,16 +11,16 @@ from sweep_builder.prioritizer.assign_score import assign_score
 
 def iter_prioritized(claims: Iterable[ScorableClaim]) -> Generator[PrioritizationClaim, None, None]:
     """Assign score for each claim."""
-    _measurement_name_base = f"{__name__}.{iter_prioritized.__name__}"
+    _measurement_name_base = f'{__name__}.{iter_prioritized.__name__}'
 
     _before_next_expectation = time.time()
 
     assigned_scores: Dict[JobSignature, int] = {}
 
     for claim in claims:
-        _measurement_tags = {"entity_type": claim.entity_type, "ad_account_id": claim.ad_account_id}
+        _measurement_tags = {'entity_type': claim.entity_type, 'ad_account_id': claim.ad_account_id}
 
-        Measure.timing(f"{_measurement_name_base}.next_expected", tags=_measurement_tags)(
+        Measure.timing(f'{_measurement_name_base}.next_expected', tags=_measurement_tags)(
             (time.time() - _before_next_expectation) * 1000
         )
 
@@ -42,7 +42,7 @@ def iter_prioritized(claims: Iterable[ScorableClaim]) -> Generator[Prioritizatio
 
         score = assign_score(claim)
 
-        with Measure.timer(f"{_measurement_name_base}.yield_result", tags=_measurement_tags):
+        with Measure.timer(f'{_measurement_name_base}.yield_result', tags=_measurement_tags):
             yield PrioritizationClaim(
                 claim.entity_id,
                 claim.entity_type,

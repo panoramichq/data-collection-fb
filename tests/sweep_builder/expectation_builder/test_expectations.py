@@ -10,7 +10,7 @@ from sweep_builder.data_containers.reality_claim import RealityClaim
 from tests.base.random import gen_string_id
 
 
-@patch("sweep_builder.expectation_builder.expectations.entity_expectation_generator_map")
+@patch('sweep_builder.expectation_builder.expectations.entity_expectation_generator_map')
 def test_iter_expectations_generates_jobs_from_map(mock_map):
     mock_map.get.return_value = [Mock(return_value=[sentinel.expectation_claim])]
 

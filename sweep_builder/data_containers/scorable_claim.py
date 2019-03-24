@@ -34,9 +34,9 @@ class ScorableClaim:
         self.timezone = timezone
 
     @property
-    def selected_job_id(self):
+    def selected_job_id(self) -> str:
         return self.selected_job_signature.job_id
 
     @property
-    def normative_job_id(self):
+    def normative_job_id(self) -> Optional[str]:
         return None if self.normative_job_signature is None else self.normative_job_signature.job_id

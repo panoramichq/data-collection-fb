@@ -1,5 +1,5 @@
 from datetime import date
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from common.job_signature import JobSignature
 
@@ -57,9 +57,9 @@ class ExpectationClaim:
         self.report_variant = report_variant
 
     @property
-    def is_divisible(self):
+    def is_divisible(self) -> bool:
         return self.entity_id_map is not None
 
     @property
-    def normative_job_id(self):
+    def normative_job_id(self) -> Optional[str]:
         return None if self.normative_job_signature is None else self.normative_job_signature.job_id

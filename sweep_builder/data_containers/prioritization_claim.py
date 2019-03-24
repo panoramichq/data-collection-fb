@@ -1,4 +1,5 @@
 from common.enums.entity import Entity
+from typing import Optional
 from common.job_signature import JobSignature
 
 SUBJECT_TO_EXPECTATION_PUBLICATION = {Entity.Campaign, Entity.AdSet, Entity.Ad}
@@ -41,7 +42,7 @@ class PrioritizationClaim:
         self.timezone = timezone
 
     @property
-    def is_subject_to_expectation_publication(self):
+    def is_subject_to_expectation_publication(self) -> bool:
         return (
             self.ad_account_id is not None
             and self.entity_id is not None
@@ -49,9 +50,9 @@ class PrioritizationClaim:
         )
 
     @property
-    def selected_job_id(self):
+    def selected_job_id(self) -> str:
         return self.selected_job_signature.job_id
 
     @property
-    def normative_job_id(self):
+    def normative_job_id(self) -> Optional[str]:
         return None if self.normative_job_signature is None else self.normative_job_signature.job_id

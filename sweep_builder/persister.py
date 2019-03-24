@@ -26,7 +26,7 @@ def iter_persist_prioritized(
         sweep_id, cache_max_size=200000
     ) as expectation_add:
 
-        _measurement_name_base = f"{__name__}.{iter_persist_prioritized.__name__}"
+        _measurement_name_base = f'{__name__}.{iter_persist_prioritized.__name__}.'
 
         _before_next_prioritized = time.time()
         skipped_jobs = defaultdict(int)

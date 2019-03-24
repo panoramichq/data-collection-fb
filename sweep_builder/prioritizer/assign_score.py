@@ -24,7 +24,7 @@ MINUTES_AWAY_FROM_WHOLE_HOUR_DECAY_RATE = adapt_decay_rate_to_population(30)
 
 
 def _extract_tags_from_claim(claim: ScorableClaim, *_, **__) -> Dict[str, str]:
-    return {"entity_type": claim.entity_type, "ad_account_id": claim.ad_account_id}
+    return {'entity_type': claim.entity_type, 'ad_account_id': claim.ad_account_id}
 
 
 def get_minutes_away_from_whole_hour() -> int:
@@ -83,7 +83,7 @@ def assign_score(claim: ScorableClaim) -> int:
 
     score = 0
 
-    if ad_account_id == "23845179" and report_type != ReportType.entity:
+    if ad_account_id == '23845179' and report_type != ReportType.entity:
         now_time = now_in_tz(timezone)
         if not last_report or not last_report.last_success_dt:
             # Not succeeded this job yet
