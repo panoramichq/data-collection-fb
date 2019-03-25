@@ -1,5 +1,4 @@
 # must be first, as it does event loop patching and other "first" things
-from oozer.common.facebook_api import PlatformApiContext
 from oozer.entities.collect_entities_iterators import (
     iter_collect_entities_per_page,
     iter_collect_entities_per_page_graph,
