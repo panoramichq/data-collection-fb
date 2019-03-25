@@ -16,6 +16,7 @@ class Entity:
 
     Page = 'P'
     PagePost = 'PP'
+    PagePostPromotable = 'PP_P'
     Comment = 'CM'
     PageVideo = 'PV'
 
@@ -24,7 +25,7 @@ class Entity:
 
     AA_SCOPED = {AdAccount, Campaign, AdSet, Ad, AdCreative, AdVideo, CustomAudience}
 
-    NON_AA_SCOPED = {Page, PagePost, Comment, PageVideo}
+    NON_AA_SCOPED = {Page, PagePost, Comment, PageVideo, PagePostPromotable}
 
     ALL = AA_SCOPED.union({Scope}, NON_AA_SCOPED)
 
@@ -33,7 +34,3 @@ class Entity:
         if entity_type not in {Entity.AdAccount, Entity.Campaign, Entity.AdSet}:
             raise NotImplementedError(f'Determining next level from type: {entity_type} is not supported')
         return {Entity.AdAccount: Entity.Campaign, Entity.Campaign: Entity.AdSet, Entity.AdSet: Entity.Ad}[entity_type]
-
-
-PAGE_POST_TYPE_PROMOTABLE = 'promotable_post'
-PAGE_POST_TYPE_POST = 'post'

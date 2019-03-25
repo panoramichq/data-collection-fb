@@ -2,7 +2,7 @@ from common.enums.entity import Entity
 from common.enums.reporttype import ReportType
 from oozer.common.job_scope import JobScope
 from oozer.entities.collect_adaccount import collect_adaccount_task
-from oozer.entities.collect_entities_task import collect_entities_per_page_post_task, collect_entities_page_posts_task
+from oozer.entities.collect_entities_task import collect_entities_per_page_post_task, collect_entities_page_graph_task
 from oozer.entities.collect_pages import collect_page_task
 from oozer.entities.import_scope_entities_task import import_ad_accounts_task, import_pages_task
 from oozer.entities.tasks import collect_entities_per_adaccount_task
@@ -31,7 +31,8 @@ entity_report_handler_map = {
         Entity.AdVideo: collect_entities_per_adaccount_task,
         Entity.CustomAudience: collect_entities_per_adaccount_task,
         Entity.Page: collect_page_task,
-        Entity.PagePost: collect_entities_page_posts_task,
+        Entity.PagePostPromotable: collect_entities_page_graph_task,
+        Entity.PagePost: collect_entities_per_page_task,
         Entity.Comment: collect_entities_per_page_post_task,
         Entity.PageVideo: collect_entities_per_page_task,
     },
