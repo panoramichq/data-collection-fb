@@ -12,6 +12,7 @@ from oozer.entities.collect_entities_iterators import (
     iter_collect_entities_per_page_post,
     iter_collect_entities_per_adaccount,
     iter_collect_entities_per_page,
+    iter_collect_page_posts_per_page,
 )
 from oozer.reporting import reported_task
 
@@ -63,6 +64,17 @@ def collect_entities_per_page_task(job_scope: JobScope, _: JobContext):
     Collect all entities data for a given page
     """
     return collect_entities_from_iterator(job_scope, iter_collect_entities_per_page(job_scope))
+
+
+@app.task
+@Measure.timer(__name__, function_name_as_metric=True)
+@Measure.counter(__name__, function_name_as_metric=True, count_once=True)
+@reported_task
+def collect_entities_page_posts_task(job_scope: JobScope, _: JobContext):
+    """
+    Collect all page posts for a given page
+    """
+    return collect_entities_from_iterator(job_scope, iter_collect_page_posts_per_page(job_scope))
 
 
 @app.task

@@ -1,6 +1,6 @@
 from typing import List, Generator, Callable, Dict, Union, Tuple, Any
 
-from common.enums.entity import Entity
+from common.enums.entity import Entity, PAGE_POST_TYPE_PROMOTABLE, PAGE_POST_TYPE_POST
 from common.id_tools import generate_universal_id
 from common.tokens import PlatformTokenManager
 from oozer.common.cold_storage import ChunkDumpStore
@@ -26,6 +26,9 @@ from oozer.common.facebook_api import (
 from oozer.common.job_scope import JobScope
 from oozer.common.vendor_data import add_vendor_data
 from oozer.entities.feedback_entity_task import feedback_entity_task
+from oozer.metrics.collect_organic_insights import InsightsOrganic
+
+DEFAULT_CHUNK_SIZE = 200
 
 
 def _extract_token_entity_type_parent_entity(
@@ -155,7 +158,7 @@ def iter_collect_entities_per_adaccount(job_scope: JobScope) -> Generator[Dict[s
     record_id_base_data.update(entity_type=entity_type, report_variant=None)
 
     token_manager = PlatformTokenManager.from_job_scope(job_scope)
-    with ChunkDumpStore(job_scope, chunk_size=200) as store:
+    with ChunkDumpStore(job_scope, chunk_size=DEFAULT_CHUNK_SIZE) as store:
         for cnt, entity in enumerate(entities):
             entity_data = entity.export_all_data()
             entity_data = add_vendor_data(
@@ -201,7 +204,7 @@ def iter_collect_entities_per_page(job_scope: JobScope) -> Generator[Dict[str, A
     record_id_base_data.update(entity_type=entity_type, report_variant=None)
 
     token_manager = PlatformTokenManager.from_job_scope(job_scope)
-    with ChunkDumpStore(job_scope, chunk_size=200) as store:
+    with ChunkDumpStore(job_scope, chunk_size=DEFAULT_CHUNK_SIZE) as store:
         cnt = 0
         for entity in entities:
             entity_data = entity.export_all_data()
@@ -244,7 +247,7 @@ def iter_collect_entities_per_page_post(job_scope: JobScope) -> Generator[Dict[s
     del record_id_base_data['entity_id']
 
     token_manager = PlatformTokenManager.from_job_scope(job_scope)
-    with ChunkDumpStore(job_scope, chunk_size=200) as store:
+    with ChunkDumpStore(job_scope, chunk_size=DEFAULT_CHUNK_SIZE) as store:
         cnt = 0
         for entity in entities:
             entity_data = entity.export_all_data()
@@ -266,5 +269,70 @@ def iter_collect_entities_per_page_post(job_scope: JobScope) -> Generator[Dict[s
                 # is typically around 250. So, each 250 results
                 # means about 4 hits to FB
                 token_manager.report_usage(token, 4)
+
+    token_manager.report_usage(token)
+
+
+def iter_collect_page_posts_per_page(job_scope: JobScope) -> Generator[Dict[str, Any], None, None]:
+    """
+    Collects an page posts for a page using both endpoins (/promotable_posts and /posts)
+    """
+    # prepare /posts endpoint
+    token, entity_type, root_fb_entity = _extract_token_entity_type_parent_entity(
+        job_scope, [Entity.PagePost], Entity.Page, 'ad_account_id'
+    )
+    getter_method_map_posts = {FB_PAGE_POST_MODEL: root_fb_entity.get_posts}
+    posts_entities = _iterate_native_entities_per_parent([Entity.PagePost], getter_method_map_posts, entity_type)
+
+    # prepare /promotable_poss endpoint
+    with PlatformApiContext(job_scope.token) as fb_ctx:
+        page_token = InsightsOrganic.fetch_page_token(fb_ctx, job_scope.ad_account_id)
+
+    with PlatformApiContext(page_token) as fb_ctx:
+        page_root_fb_entity = fb_ctx.to_fb_model(job_scope.ad_account_id, Entity.Page)
+    getter_method_map_promotable_posts = {FB_PAGE_POST_MODEL: page_root_fb_entity.get_promotable_posts}
+    promotable_posts_entities = _iterate_native_entities_per_parent(
+        [Entity.PagePost], getter_method_map_promotable_posts, entity_type
+    )
+
+    record_id_base_data = job_scope.to_dict()
+    record_id_base_data.update(entity_type=entity_type, report_variant=None)
+
+    token_manager = PlatformTokenManager.from_job_scope(job_scope)
+    with ChunkDumpStore(job_scope, chunk_size=DEFAULT_CHUNK_SIZE) as store:
+        cnt = 0
+
+        def _process_entity(entity_raw, source_api_type, count):
+            entity_data = entity_raw.export_all_data()
+            entity_data = add_vendor_data(
+                entity_data,
+                id=generate_universal_id(
+                    entity_id=entity_data.get('id'), trailing_parts=[source_api_type], **record_id_base_data
+                ),
+            )
+            entity_data['page_id'] = job_scope.ad_account_id
+            entity_data['post_source_api_type'] = source_api_type
+
+            # Store the individual datum, use job context for the cold
+            # storage thing to divine whatever it needs from the job context
+            store(entity_data)
+
+            # Signal to the system the new entity
+            feedback_entity_task.delay(entity_data, entity_type, [None, None])
+            count += 1
+
+            if count % 1000 == 0:
+                # default paging size for entities per parent
+                # is typically around 200. So, each 200 results
+                # means about 5 hits to FB
+                token_manager.report_usage(token, 5)
+
+            return entity_data
+
+        for entity in posts_entities:
+            yield _process_entity(entity, PAGE_POST_TYPE_POST, cnt)
+
+        for entity in promotable_posts_entities:
+            yield _process_entity(entity, PAGE_POST_TYPE_PROMOTABLE, cnt)
 
     token_manager.report_usage(token)

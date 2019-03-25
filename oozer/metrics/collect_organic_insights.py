@@ -28,7 +28,7 @@ from oozer.metrics.vendor_data_extractor import (
 
 class InsightsOrganic:
     @staticmethod
-    def _fetch_page_token(fb_ctx: PlatformApiContext, page_id: str) -> str:
+    def fetch_page_token(fb_ctx: PlatformApiContext, page_id: str) -> str:
         # In ideal world, this logic is moved to the beginning of the pipeline so each task does not need to fetch it
         # Their AdAccountUser object is missing `get_accounts` method
 
@@ -117,7 +117,7 @@ class InsightsOrganic:
 
         elif report_entity_kind in {ReportEntityApiKind.Page, ReportEntityApiKind.Post}:
             with PlatformApiContext(job_scope.token) as fb_ctx:
-                page_token = InsightsOrganic._fetch_page_token(fb_ctx, job_scope.ad_account_id)
+                page_token = InsightsOrganic.fetch_page_token(fb_ctx, job_scope.ad_account_id)
 
             with PlatformApiContext(page_token) as fb_ctx:
                 report_root_fb_entity = fb_ctx.to_fb_model(job_scope.entity_id, job_scope.report_variant)
