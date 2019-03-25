@@ -16,7 +16,7 @@ D = id_tools.ID_DELIMITER
 
 class VendorOrganicDataUniversalIdExtraction(TestCase):
     def test_entity_level_data(self):
-        entity_types = [Entity.PageVideo, Entity.PagePost, Entity.Page]
+        entity_types = [Entity.PageVideo, Entity.PagePost, Entity.Page, Entity.PagePostPromotable]
 
         for entity_type in entity_types:
             with self.subTest(f'Entity type = "{entity_type}"'):
@@ -155,7 +155,7 @@ class VendorOrganicDataInjectionTests(TestCase):
                 with mock.patch.object(
                     collect_organic_insights.InsightsOrganic, 'iter_other_insights', return_value=input_data
                 ), mock.patch.object(
-                    collect_organic_insights.InsightsOrganic, '_fetch_page_token', return_value='token'
+                    collect_organic_insights.InsightsOrganic, 'fetch_page_token', return_value='token'
                 ), mock.patch.object(
                     NormalStore, 'store'
                 ) as store:

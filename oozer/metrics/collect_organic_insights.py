@@ -56,7 +56,7 @@ class InsightsOrganic:
     def _detect_report_api_kind(job_scope: JobScope) -> str:
         if job_scope.entity_type == Entity.Page:
             return ReportEntityApiKind.Page
-        elif job_scope.entity_type == Entity.PagePost:
+        elif job_scope.entity_type in {Entity.PagePost, Entity.PagePostPromotable}:
             return ReportEntityApiKind.Post
         elif job_scope.entity_type == Entity.PageVideo:
             return ReportEntityApiKind.Video
