@@ -4,7 +4,7 @@ import pytest
 
 from common.enums.failure_bucket import FailureBucket
 from common.store.jobreport import JobReport
-from sweep_builder.selector import should_select
+from sweep_builder.scorable import should_select
 
 
 @pytest.mark.parametrize(
@@ -22,14 +22,14 @@ def test_should_select_last_error_is_too_large_none_fails_in_row():
     assert should_select(report)
 
 
-@patch('sweep_builder.selector.FAILS_IN_ROW_BREAKDOWN_LIMIT', new=2)
+@patch('sweep_builder.scorable.FAILS_IN_ROW_BREAKDOWN_LIMIT', new=2)
 def test_should_select_last_error_is_too_large_none_fails_under_limit():
     report = Mock(last_failure_bucket=FailureBucket.TooLarge, fails_in_row=1)
 
     assert should_select(report)
 
 
-@patch('sweep_builder.selector.FAILS_IN_ROW_BREAKDOWN_LIMIT', new=2)
+@patch('sweep_builder.scorable.FAILS_IN_ROW_BREAKDOWN_LIMIT', new=2)
 def test_should_select_last_error_is_too_large_fails_in_row_over_limit():
     report = Mock(last_failure_bucket=FailureBucket.TooLarge, fails_in_row=3)
 

@@ -1,8 +1,4 @@
-from common.enums.entity import Entity
-from typing import Optional
 from common.job_signature import JobSignature
-
-SUBJECT_TO_EXPECTATION_PUBLICATION = {Entity.Campaign, Entity.AdSet, Entity.Ad}
 
 
 class PrioritizationClaim:
@@ -18,41 +14,29 @@ class PrioritizationClaim:
 
     entity_id: str
     entity_type: str
-    selected_job_signature: JobSignature
+    job_signature: JobSignature
+    score: int
 
-    ad_account_id: str
-    score: int = None
+    ad_account_id: str = None
+    timezone: str = None
 
     def __init__(
         self,
         entity_id: str,
         entity_type: str,
         selected_job_signature: JobSignature,
-        normative_job_signature: JobSignature,
         score: int,
+        *,
         ad_account_id: str = None,
         timezone: str = None,
     ):
         self.entity_id = entity_id
         self.entity_type = entity_type
-        self.selected_job_signature = selected_job_signature
-        self.normative_job_signature = normative_job_signature
+        self.job_signature = selected_job_signature
         self.score = score
         self.ad_account_id = ad_account_id
         self.timezone = timezone
 
     @property
-    def is_subject_to_expectation_publication(self) -> bool:
-        return (
-            self.ad_account_id is not None
-            and self.entity_id is not None
-            and self.entity_type in SUBJECT_TO_EXPECTATION_PUBLICATION
-        )
-
-    @property
     def selected_job_id(self) -> str:
-        return self.selected_job_signature.job_id
-
-    @property
-    def normative_job_id(self) -> Optional[str]:
-        return None if self.normative_job_signature is None else self.normative_job_signature.job_id
+        return self.job_signature.job_id
