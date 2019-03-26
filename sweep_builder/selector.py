@@ -84,6 +84,10 @@ def select_signature(claim: ExpectationClaim) -> Generator[ScorableClaim, None, 
         return
 
     logger.info(f'Performing task breakdown for job_id: {selected_signature.job_id}')
+    Measure.increment(
+        f'{__name__}.{select_signature.__name__}.task_broken_down',
+        tags={'ad_account_id': claim.ad_account_id, 'entity_type': claim.entity_type},
+    )()
 
     # break down into smaller jobs recursively
     for child_claim in generate_child_claims(claim):
