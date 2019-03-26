@@ -2,6 +2,7 @@ from datetime import date
 from typing import Optional
 
 from common.job_signature import JobSignature
+from common.util import convert_class_with_props_to_str
 from sweep_builder.data_containers.entity_node import EntityNode
 
 
@@ -52,6 +53,12 @@ class ExpectationClaim:
         self.entity_hierarchy = entity_hierarchy
         self.range_start = range_start
         self.report_variant = report_variant
+
+    def __eq__(self, other):
+        return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+    def __repr__(self):
+        return convert_class_with_props_to_str(self)
 
     @property
     def is_divisible(self) -> bool:
