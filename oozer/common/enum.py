@@ -34,7 +34,7 @@ FB_MODEL_ENUM_VALUE_MAP = {
     FB_AD_VIDEO_MODEL: (Entity.AdVideo, Entity.PageVideo),
     FB_CUSTOM_AUDIENCE_MODEL: (Entity.CustomAudience,),
     FB_PAGE_MODEL: (Entity.Page,),
-    FB_PAGE_POST_MODEL: (Entity.PagePost,),
+    FB_PAGE_POST_MODEL: (Entity.PagePost, Entity.PagePostPromotable),
     FB_COMMENT_MODEL: (Entity.Comment,),
 }
 

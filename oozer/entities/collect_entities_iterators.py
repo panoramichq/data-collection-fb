@@ -26,6 +26,9 @@ from oozer.common.facebook_api import (
 from oozer.common.job_scope import JobScope
 from oozer.common.vendor_data import add_vendor_data
 from oozer.entities.feedback_entity_task import feedback_entity_task
+from oozer.metrics.collect_organic_insights import InsightsOrganic
+
+DEFAULT_CHUNK_SIZE = 200
 
 
 def _extract_token_entity_type_parent_entity(
@@ -130,6 +133,19 @@ def iter_native_entities_per_page(
     )
 
 
+def iter_native_entities_per_page_graph(
+    page: FB_PAGE_MODEL, entity_type: str, fields: List[str] = None, page_size: int = None
+) -> Generator[Union[FB_PAGE_POST_MODEL], None, None]:
+    """
+    Generic getter for entities from the Page edge using Graph API
+    """
+    getter_method_map = {FB_PAGE_POST_MODEL: page.get_promotable_posts}
+
+    return _iterate_native_entities_per_parent(
+        [Entity.PagePostPromotable], getter_method_map, entity_type, fields, page_size
+    )
+
+
 def iter_native_entities_per_page_post(
     page_post: FB_PAGE_POST_MODEL, entity_type: str, fields: List[str] = None, page_size: int = None
 ) -> Generator[Union[FB_PAGE_POST_MODEL], None, None]:
@@ -155,7 +171,7 @@ def iter_collect_entities_per_adaccount(job_scope: JobScope) -> Generator[Dict[s
     record_id_base_data.update(entity_type=entity_type, report_variant=None)
 
     token_manager = PlatformTokenManager.from_job_scope(job_scope)
-    with ChunkDumpStore(job_scope, chunk_size=200) as store:
+    with ChunkDumpStore(job_scope, chunk_size=DEFAULT_CHUNK_SIZE) as store:
         for cnt, entity in enumerate(entities):
             entity_data = entity.export_all_data()
             entity_data = add_vendor_data(
@@ -192,7 +208,7 @@ def iter_collect_entities_per_page(job_scope: JobScope) -> Generator[Dict[str, A
     Collects an arbitrary entity for a page
     """
     token, entity_type, root_fb_entity = _extract_token_entity_type_parent_entity(
-        job_scope, [Entity.PagePost, Entity.PageVideo], Entity.Page, 'ad_account_id'
+        job_scope, [Entity.PagePost, Entity.PageVideo, Entity.PagePostPromotable], Entity.Page, 'ad_account_id'
     )
 
     entities = iter_native_entities_per_page(root_fb_entity, entity_type)
@@ -201,7 +217,7 @@ def iter_collect_entities_per_page(job_scope: JobScope) -> Generator[Dict[str, A
     record_id_base_data.update(entity_type=entity_type, report_variant=None)
 
     token_manager = PlatformTokenManager.from_job_scope(job_scope)
-    with ChunkDumpStore(job_scope, chunk_size=200) as store:
+    with ChunkDumpStore(job_scope, chunk_size=DEFAULT_CHUNK_SIZE) as store:
         cnt = 0
         for entity in entities:
             entity_data = entity.export_all_data()
@@ -229,6 +245,39 @@ def iter_collect_entities_per_page(job_scope: JobScope) -> Generator[Dict[str, A
     token_manager.report_usage(token)
 
 
+def iter_collect_entities_per_page_graph(job_scope: JobScope) -> Generator[Dict[str, Any], None, None]:
+    """
+    Collects an arbitrary entity for a page using graph API
+    """
+    with PlatformApiContext(job_scope.token) as fb_ctx:
+        page_token = InsightsOrganic.fetch_page_token(fb_ctx, job_scope.ad_account_id)
+
+    with PlatformApiContext(page_token) as fb_ctx:
+        page_root_fb_entity = fb_ctx.to_fb_model(job_scope.ad_account_id, Entity.Page)
+
+    entity_type = job_scope.report_variant
+    entities = iter_native_entities_per_page_graph(page_root_fb_entity, entity_type)
+
+    record_id_base_data = job_scope.to_dict()
+    record_id_base_data.update(entity_type=entity_type, report_variant=None)
+
+    with ChunkDumpStore(job_scope, chunk_size=DEFAULT_CHUNK_SIZE) as store:
+        for entity in entities:
+            entity_data = entity.export_all_data()
+            entity_data = add_vendor_data(
+                entity_data, id=generate_universal_id(entity_id=entity_data.get('id'), **record_id_base_data)
+            )
+            entity_data['page_id'] = job_scope.ad_account_id
+
+            # Store the individual datum, use job context for the cold
+            # storage thing to divine whatever it needs from the job context
+            store(entity_data)
+
+            # Signal to the system the new entity
+            feedback_entity_task.delay(entity_data, entity_type, [None, None])
+            yield entity_data
+
+
 def iter_collect_entities_per_page_post(job_scope: JobScope) -> Generator[Dict[str, Any], None, None]:
     """
     Collects an arbitrary entity for a page post
@@ -244,7 +293,7 @@ def iter_collect_entities_per_page_post(job_scope: JobScope) -> Generator[Dict[s
     del record_id_base_data['entity_id']
 
     token_manager = PlatformTokenManager.from_job_scope(job_scope)
-    with ChunkDumpStore(job_scope, chunk_size=200) as store:
+    with ChunkDumpStore(job_scope, chunk_size=DEFAULT_CHUNK_SIZE) as store:
         cnt = 0
         for entity in entities:
             entity_data = entity.export_all_data()
