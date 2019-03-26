@@ -4,7 +4,7 @@ import logging
 from typing import Callable, Any
 from gevent import Timeout
 
-from common.bugsnag import BugSnagContextData
+from oozer.common.errors import TimeoutException
 
 logger = logging.getLogger(__name__)
 
@@ -21,9 +21,9 @@ def timeout(seconds: int) -> [[Callable], Callable]:
                 with Timeout(seconds):
                     return func(*args, **kwargs)
             except Timeout as e:
-                BugSnagContextData.notify(e)
-                logger.exception(f"Timed out running function {func.__name__}")
-                raise
+                msg = f'Timed out running function {func.__name__}'
+                logger.exception(msg)
+                raise TimeoutException(msg) from e
 
         return wrapper
 
