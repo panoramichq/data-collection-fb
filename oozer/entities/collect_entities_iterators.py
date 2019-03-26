@@ -261,9 +261,6 @@ def iter_collect_entities_per_page_graph(job_scope: JobScope) -> Generator[Dict[
     record_id_base_data = job_scope.to_dict()
     record_id_base_data.update(entity_type=entity_type, report_variant=None)
 
-    # this remapping is done so we can map promotable posts to ordinary posts in dynamo tables
-    remapping_entity_type_feedback = {Entity.PagePostPromotable: Entity.PagePost}
-
     with ChunkDumpStore(job_scope, chunk_size=DEFAULT_CHUNK_SIZE) as store:
         for entity in entities:
             entity_data = entity.export_all_data()
@@ -277,7 +274,7 @@ def iter_collect_entities_per_page_graph(job_scope: JobScope) -> Generator[Dict[
             store(entity_data)
 
             # Signal to the system the new entity
-            feedback_entity_task.delay(entity_data, remapping_entity_type_feedback[entity_type], [None, None])
+            feedback_entity_task.delay(entity_data, entity_type, [None, None])
             yield entity_data
 
 

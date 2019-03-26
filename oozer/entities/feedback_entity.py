@@ -8,6 +8,9 @@ from common.store.scope import DEFAULT_SCOPE
 from common.tztools import dt_to_other_timezone, now
 from common.enums.entity import Entity
 
+# this remapping is done so we can map promotable posts to ordinary posts in dynamo tables
+REMAPPING_ENTITY_TYPE_FEEDBACK = {Entity.PagePostPromotable: Entity.PagePost}
+
 
 def _parse_fb_datetime(value) -> Optional[datetime]:
     """
@@ -68,6 +71,7 @@ def _upsert_regular_entity(entity_data: Dict[str, Any], entity_type: str, entity
             f'Argument "entity_data" must be an instance of Dict type. Received "{type(entity_data)}" instead.'
         )
 
+    entity_type = REMAPPING_ENTITY_TYPE_FEEDBACK.get(entity_type, entity_type)
     Model = ENTITY_TYPE_MODEL_MAP[entity_type]
 
     entity_id = entity_data['id']
