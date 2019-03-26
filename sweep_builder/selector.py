@@ -90,8 +90,9 @@ def iter_select_signature(claims: Iterable[ExpectationClaim]) -> Generator[Scora
     """Select signature for each expectation claim based on job history."""
     histogram_counter = defaultdict(int)
     for claim in claims:
-        yield from select_signature(claim)
-        histogram_counter[(claim.ad_account_id, claim.entity_type)] += 1
+        for scorable_claim in select_signature(claim):
+            histogram_counter[(claim.ad_account_id, claim.entity_type)] += 1
+            yield scorable_claim
 
     for ((ad_account_id, entity_type), count) in histogram_counter.items():
         Measure.histogram(
