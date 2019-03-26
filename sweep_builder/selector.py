@@ -1,4 +1,5 @@
 import functools
+import logging
 
 from collections import defaultdict
 from typing import Iterable, Generator, Optional
@@ -15,8 +16,9 @@ from common.job_signature import JobSignature
 from sweep_builder.data_containers.expectation_claim import ExpectationClaim
 from sweep_builder.data_containers.scorable_claim import ScorableClaim
 
+logger = logging.getLogger(__name__)
 
-# TODO: add maxsize to cache below?
+
 @functools.lru_cache(maxsize=None)
 def _fetch_job_report(job_id: str) -> Optional[JobReport]:
     """Retrieve job report from job report table (cached)."""
@@ -80,6 +82,12 @@ def select_signature(claim: ExpectationClaim) -> Generator[ScorableClaim, None, 
             timezone=claim.timezone,
         )
         return
+
+    logger.info(f'Performing task breakdown for job_id: {selected_signature.job_id}')
+    Measure.increment(
+        f'{__name__}.{select_signature.__name__}.task_broken_down',
+        tags={'ad_account_id': claim.ad_account_id, 'entity_type': claim.entity_type},
+    )()
 
     # break down into smaller jobs recursively
     for child_claim in generate_child_claims(claim):
