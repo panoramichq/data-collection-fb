@@ -4,7 +4,7 @@ from typing import Generator
 from common.celeryapp import get_celery_app
 from common.measurement import Measure
 from common.tokens import PlatformTokenManager
-from oozer.common.errors import CollectionError
+from oozer.common.errors import CollectionError, TaskOutsideSweepException
 from oozer.common.helpers import extract_tags_for_celery_fb_task
 from oozer.common.job_context import JobContext
 from oozer.common.job_scope import JobScope
@@ -23,8 +23,7 @@ app = get_celery_app()
 
 def collect_entities_from_iterator(job_scope: JobScope, entity_iterator: Generator[object, None, None]) -> int:
     if not SweepRunningFlag.is_set(job_scope.sweep_id):
-        logger.info(f'{job_scope} skipped because sweep {job_scope.sweep_id} is done')
-        raise CollectionError(Exception(f'{job_scope} skipped because sweep {job_scope.sweep_id} is done'), 0)
+        raise TaskOutsideSweepException(job_scope)
 
     logger.info(f'{job_scope} started')
 

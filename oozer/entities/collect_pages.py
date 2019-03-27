@@ -10,7 +10,7 @@ from common.id_tools import generate_universal_id
 from common.measurement import Measure
 from common.tokens import PlatformTokenManager
 from oozer.common.enum import ExternalPlatformJobStatus
-from oozer.common.errors import CollectionError
+from oozer.common.errors import CollectionError, TaskOutsideSweepException
 from oozer.common.facebook_api import PlatformApiContext, get_default_fields
 from oozer.common.cold_storage.batch_store import NormalStore
 from oozer.common.helpers import extract_tags_for_celery_fb_task
@@ -33,8 +33,7 @@ logger = logging.getLogger(__name__)
 @reported_task
 def collect_page_task(job_scope: JobScope, job_context: JobContext) -> int:
     if not SweepRunningFlag.is_set(job_scope.sweep_id):
-        logger.info(f'{job_scope} skipped because sweep {job_scope.sweep_id} is done')
-        return 0
+        raise TaskOutsideSweepException(job_scope)
 
     logger.info(f'{job_scope} started')
 
@@ -87,8 +86,7 @@ def collect_pages_from_business_task(job_scope: JobScope, job_context: JobContex
     This task should import pages from FB using Business API. At the moment, it is not used anywhere.
     """
     if not SweepRunningFlag.is_set(job_scope.sweep_id):
-        logger.info(f'{job_scope} skipped because sweep {job_scope.sweep_id} is done')
-        raise CollectionError(Exception(f'{job_scope} skipped because sweep {job_scope.sweep_id} is done'), 0)
+        raise TaskOutsideSweepException(job_scope)
 
     logger.info(f'{job_scope} started')
 
