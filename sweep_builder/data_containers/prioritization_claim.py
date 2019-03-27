@@ -1,11 +1,11 @@
-from common.enums.entity import Entity
-from typing import Optional
+from typing import List, Iterable, Tuple
+from itertools import zip_longest
+
 from common.job_signature import JobSignature
+from sweep_builder.data_containers.expectation_claim import ExpectationClaim
 
-SUBJECT_TO_EXPECTATION_PUBLICATION = {Entity.Campaign, Entity.AdSet, Entity.Ad}
 
-
-class PrioritizationClaim:
+class PrioritizationClaim(ExpectationClaim):
     """
     Used to express a bundle of data representing scored realization of
     need to have certain data point filled.
@@ -16,43 +16,11 @@ class PrioritizationClaim:
     to add more data to context from the very bottom of the stack. Just extend this object.)
     """
 
-    entity_id: str
-    entity_type: str
-    selected_job_signature: JobSignature
-
-    ad_account_id: str
-    score: int = None
-
-    def __init__(
-        self,
-        entity_id: str,
-        entity_type: str,
-        selected_job_signature: JobSignature,
-        normative_job_signature: JobSignature,
-        score: int,
-        ad_account_id: str = None,
-        timezone: str = None,
-    ):
-        self.entity_id = entity_id
-        self.entity_type = entity_type
-        self.selected_job_signature = selected_job_signature
-        self.normative_job_signature = normative_job_signature
-        self.score = score
-        self.ad_account_id = ad_account_id
-        self.timezone = timezone
+    # structure matching job_signatures on underlying class
+    # here score for each element in original list is matched in
+    # position in job_scores list.
+    job_scores: List[int] = []
 
     @property
-    def is_subject_to_expectation_publication(self) -> bool:
-        return (
-            self.ad_account_id is not None
-            and self.entity_id is not None
-            and self.entity_type in SUBJECT_TO_EXPECTATION_PUBLICATION
-        )
-
-    @property
-    def selected_job_id(self) -> str:
-        return self.selected_job_signature.job_id
-
-    @property
-    def normative_job_id(self) -> Optional[str]:
-        return None if self.normative_job_signature is None else self.normative_job_signature.job_id
+    def score_job_pairs(self) -> Iterable[Tuple[int, JobSignature]]:
+        return zip_longest(self.job_scores, self.job_signatures)
