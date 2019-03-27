@@ -13,6 +13,7 @@ from oozer.common.enum import ExternalPlatformJobStatus
 from oozer.common.errors import CollectionError
 from oozer.common.facebook_api import PlatformApiContext, get_default_fields
 from oozer.common.cold_storage.batch_store import NormalStore
+from oozer.common.helpers import extract_tags_for_celery_fb_task
 from oozer.common.job_context import JobContext
 from oozer.common.job_scope import JobScope
 from oozer.common.report_job_status_task import report_job_status_task
@@ -25,8 +26,10 @@ logger = logging.getLogger(__name__)
 
 
 @app.task
-@Measure.timer(__name__, function_name_as_metric=True)
-@Measure.counter(__name__, function_name_as_metric=True, count_once=True)
+@Measure.timer(__name__, function_name_as_metric=True, extract_tags_from_arguments=extract_tags_for_celery_fb_task)
+@Measure.counter(
+    __name__, function_name_as_metric=True, count_once=True, extract_tags_from_arguments=extract_tags_for_celery_fb_task
+)
 @reported_task
 def collect_page_task(job_scope: JobScope, job_context: JobContext) -> int:
     if not SweepRunningFlag.is_set(job_scope.sweep_id):
@@ -74,8 +77,10 @@ def collect_page(job_scope: JobScope, _job_context: JobContext):
 
 
 @app.task
-@Measure.timer(__name__, function_name_as_metric=True)
-@Measure.counter(__name__, function_name_as_metric=True, count_once=True)
+@Measure.timer(__name__, function_name_as_metric=True, extract_tags_from_arguments=extract_tags_for_celery_fb_task)
+@Measure.counter(
+    __name__, function_name_as_metric=True, count_once=True, extract_tags_from_arguments=extract_tags_for_celery_fb_task
+)
 @reported_task
 def collect_pages_from_business_task(job_scope: JobScope, job_context: JobContext) -> int:
     """

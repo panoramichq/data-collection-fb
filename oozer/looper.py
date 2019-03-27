@@ -377,7 +377,8 @@ def run_tasks(
 
             # We need to see into the jobs scoring state per sweep
             Measure.counter(
-                _measurement_name_base + 'job_scores', tags={'score': score, **_measurement_tags}
+                _measurement_name_base + 'job_scores',
+                tags={'score': score, 'ad_account_id': job_scope.ad_account_id, **_measurement_tags},
             ).increment()
 
             yield celery_task, job_scope, job_context

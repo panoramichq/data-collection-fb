@@ -10,6 +10,7 @@ from common.store.entities import AdAccountEntity, PageEntity
 from common.tokens import PlatformTokenManager
 from oozer.common.console_api import ConsoleApi
 from oozer.common.enum import JobStatus
+from oozer.common.helpers import extract_tags_for_celery_fb_task
 from oozer.common.job_scope import JobScope
 from oozer.common.report_job_status_task import report_job_status_task
 
@@ -18,8 +19,10 @@ logger = logging.getLogger(__name__)
 
 
 @app.task
-@Measure.timer(__name__, function_name_as_metric=True)
-@Measure.counter(__name__, function_name_as_metric=True, count_once=True)
+@Measure.timer(__name__, function_name_as_metric=True, extract_tags_from_arguments=extract_tags_for_celery_fb_task)
+@Measure.counter(
+    __name__, function_name_as_metric=True, count_once=True, extract_tags_from_arguments=extract_tags_for_celery_fb_task
+)
 def import_ad_accounts_task(job_scope: JobScope, _):
     """
     Collect all facebook ad accounts that are active in the console api
@@ -37,8 +40,10 @@ def import_ad_accounts_task(job_scope: JobScope, _):
 
 
 @app.task
-@Measure.timer(__name__, function_name_as_metric=True)
-@Measure.counter(__name__, function_name_as_metric=True, count_once=True)
+@Measure.timer(__name__, function_name_as_metric=True, extract_tags_from_arguments=extract_tags_for_celery_fb_task)
+@Measure.counter(
+    __name__, function_name_as_metric=True, count_once=True, extract_tags_from_arguments=extract_tags_for_celery_fb_task
+)
 def import_pages_task(job_scope: JobScope, _):
     """
     Collect all facebook ad accounts that are active in the console api

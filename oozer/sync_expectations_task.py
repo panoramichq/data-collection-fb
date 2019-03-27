@@ -9,6 +9,7 @@ from common.enums.entity import Entity
 from oozer.common.cold_storage.batch_store import ChunkDumpStore
 from oozer.common.enum import JobStatus
 from oozer.common import expecations_store
+from oozer.common.helpers import extract_tags_for_celery_fb_task
 from oozer.common.job_scope import JobScope
 
 app = get_celery_app()
@@ -63,8 +64,10 @@ def sync_expectations(job_scope: JobScope):
 
 
 @app.task
-@Measure.timer(__name__, function_name_as_metric=True)
-@Measure.counter(__name__, function_name_as_metric=True, count_once=True)
+@Measure.timer(__name__, function_name_as_metric=True, extract_tags_from_arguments=extract_tags_for_celery_fb_task)
+@Measure.counter(
+    __name__, function_name_as_metric=True, count_once=True, extract_tags_from_arguments=extract_tags_for_celery_fb_task
+)
 def sync_expectations_task(job_scope: JobScope, _):
     from oozer.common.report_job_status_task import report_job_status_task
 

@@ -5,6 +5,7 @@ from common.celeryapp import get_celery_app
 from common.measurement import Measure
 from common.tokens import PlatformTokenManager
 from oozer.common.errors import CollectionError
+from oozer.common.helpers import extract_tags_for_celery_fb_task
 from oozer.common.job_context import JobContext
 from oozer.common.job_scope import JobScope
 from oozer.common.sweep_running_flag import SweepRunningFlag
@@ -45,8 +46,10 @@ def collect_entities_from_iterator(job_scope: JobScope, entity_iterator: Generat
 
 
 @app.task
-@Measure.timer(__name__, function_name_as_metric=True)
-@Measure.counter(__name__, function_name_as_metric=True, count_once=True)
+@Measure.timer(__name__, function_name_as_metric=True, extract_tags_from_arguments=extract_tags_for_celery_fb_task)
+@Measure.counter(
+    __name__, function_name_as_metric=True, count_once=True, extract_tags_from_arguments=extract_tags_for_celery_fb_task
+)
 @reported_task
 def collect_entities_per_adaccount_task(job_scope: JobScope, _: JobContext):
     """
@@ -56,8 +59,10 @@ def collect_entities_per_adaccount_task(job_scope: JobScope, _: JobContext):
 
 
 @app.task
-@Measure.timer(__name__, function_name_as_metric=True)
-@Measure.counter(__name__, function_name_as_metric=True, count_once=True)
+@Measure.timer(__name__, function_name_as_metric=True, extract_tags_from_arguments=extract_tags_for_celery_fb_task)
+@Measure.counter(
+    __name__, function_name_as_metric=True, count_once=True, extract_tags_from_arguments=extract_tags_for_celery_fb_task
+)
 @reported_task
 def collect_entities_per_page_task(job_scope: JobScope, _: JobContext):
     """
@@ -67,8 +72,10 @@ def collect_entities_per_page_task(job_scope: JobScope, _: JobContext):
 
 
 @app.task
-@Measure.timer(__name__, function_name_as_metric=True)
-@Measure.counter(__name__, function_name_as_metric=True, count_once=True)
+@Measure.timer(__name__, function_name_as_metric=True, extract_tags_from_arguments=extract_tags_for_celery_fb_task)
+@Measure.counter(
+    __name__, function_name_as_metric=True, count_once=True, extract_tags_from_arguments=extract_tags_for_celery_fb_task
+)
 @reported_task
 def collect_entities_page_graph_task(job_scope: JobScope, _: JobContext):
     """
@@ -78,8 +85,10 @@ def collect_entities_page_graph_task(job_scope: JobScope, _: JobContext):
 
 
 @app.task
-@Measure.timer(__name__, function_name_as_metric=True)
-@Measure.counter(__name__, function_name_as_metric=True, count_once=True)
+@Measure.timer(__name__, function_name_as_metric=True, extract_tags_from_arguments=extract_tags_for_celery_fb_task)
+@Measure.counter(
+    __name__, function_name_as_metric=True, count_once=True, extract_tags_from_arguments=extract_tags_for_celery_fb_task
+)
 @reported_task
 def collect_entities_per_page_post_task(job_scope: JobScope, _: JobContext):
     """

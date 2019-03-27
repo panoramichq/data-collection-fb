@@ -9,6 +9,7 @@ from common.tokens import PlatformTokenManager
 from oozer.common.cold_storage.batch_store import NormalStore
 from oozer.common.errors import CollectionError
 from oozer.common.facebook_api import PlatformApiContext, get_default_fields
+from oozer.common.helpers import extract_tags_for_celery_fb_task
 from oozer.common.job_context import JobContext
 from oozer.common.job_scope import JobScope
 from oozer.common.sweep_running_flag import SweepRunningFlag
@@ -21,8 +22,10 @@ logger = logging.getLogger(__name__)
 
 
 @app.task
-@Measure.timer(__name__, function_name_as_metric=True)
-@Measure.counter(__name__, function_name_as_metric=True, count_once=True)
+@Measure.timer(__name__, function_name_as_metric=True, extract_tags_from_arguments=extract_tags_for_celery_fb_task)
+@Measure.counter(
+    __name__, function_name_as_metric=True, count_once=True, extract_tags_from_arguments=extract_tags_for_celery_fb_task
+)
 @reported_task
 def collect_adaccount_task(job_scope: JobScope, _: JobContext):
     if not SweepRunningFlag.is_set(job_scope.sweep_id):

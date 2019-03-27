@@ -8,9 +8,18 @@ logger = logging.getLogger(__name__)
 app = get_celery_app()
 
 
+def _extract_tags_for_report_job_status(stage_status: int, job_scope: JobScope, *_, **__):
+    return {'entity_type': job_scope.entity_type, 'ad_account_id': job_scope.ad_account_id, 'stage_id': stage_status}
+
+
 @app.task
-@Measure.timer(__name__, function_name_as_metric=True)
-@Measure.counter(__name__, function_name_as_metric=True, count_once=True)
+@Measure.timer(__name__, function_name_as_metric=True, extract_tags_from_arguments=_extract_tags_for_report_job_status)
+@Measure.counter(
+    __name__,
+    function_name_as_metric=True,
+    count_once=True,
+    extract_tags_from_arguments=_extract_tags_for_report_job_status,
+)
 def report_job_status_task(stage_status: int, job_scope: JobScope):
     """
     We take job scope to divine basic information about the job itself.
