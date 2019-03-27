@@ -22,10 +22,7 @@ class RealityClaim:
     entity_type: str = None
 
     ad_account_id: str = None
-    campaign_id: str = None
-    adset_id: str = None
 
-    # TODO: Remove cause not used
     tokens: Set[str] = None
 
     # Comes from parent AdAccount record
