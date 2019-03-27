@@ -70,20 +70,11 @@ def assign_score(claim: ScorableClaim) -> int:
     is_per_page_metrics_job = bool(report_variant and report_variant in Entity.NON_AA_SCOPED)
 
     if not is_per_parent_job and ad_account_id != '23845179' and not is_per_page_metrics_job:
-        _measurement_name_base = __name__ + '.' + assign_score.__name__ + '.'
-        _measurement_tags = {
-            'ad_account_id': ad_account_id,
-            'entity_type': entity_type,
-            'report_variant': report_variant,
-            'report_type': report_type,
-        }
-
         # at this time, it's impossible to have per-entity_id
         # jobs here because sweep builder specifically avoids
         # scoring and releasing per-entity_id jobs
         # TODO: when we get per-entity_id jobs back, do some scoring for these
         # Until then, we are making sure per-parent jobs get out first
-        Measure.counter(_measurement_name_base + 'skipped_not_parent_jobs', _measurement_tags).increment()
         return 0
 
     last_success_dt = None if last_report is None else last_report.last_success_dt

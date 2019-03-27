@@ -67,10 +67,11 @@ def lifetime_page_metrics_per_entity(
         report_variant=entity_type,
     )
     yield ExpectationClaim(
-        reality_claim.entity_id,
-        reality_claim.entity_type,
-        ad_account_id=reality_claim.ad_account_id,
-        normative_job_signature=JobSignature(normative_job_id),
+        reality_claim.to_dict(),
+        job_signatures=[
+            # normative job signature
+            JobSignature.bind(normative_job_id)
+        ],
     )
 
 
