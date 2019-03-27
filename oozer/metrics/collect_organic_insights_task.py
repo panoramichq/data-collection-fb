@@ -6,8 +6,8 @@ from common.tokens import PlatformTokenManager
 from oozer.common.helpers import extract_tags_for_celery_fb_task
 from oozer.common.job_context import JobContext
 from oozer.common.job_scope import JobScope
-from oozer.common.sweep_running_flag import SweepRunningFlag
-from oozer.common.errors import CollectionError, TaskOutsideSweepException
+from oozer.common.sweep_running_flag import sweep_running
+from oozer.common.errors import CollectionError
 from oozer.metrics.collect_organic_insights import InsightsOrganic
 from oozer.reporting import reported_task
 
@@ -21,10 +21,8 @@ app = get_celery_app()
     __name__, function_name_as_metric=True, count_once=True, extract_tags_from_arguments=extract_tags_for_celery_fb_task
 )
 @reported_task
+@sweep_running
 def collect_organic_insights_task(job_scope: JobScope, _: JobContext):
-    if not SweepRunningFlag.is_set(job_scope.sweep_id):
-        raise TaskOutsideSweepException(job_scope)
-
     logger.info(f'{job_scope} started')
 
     if not job_scope.tokens:

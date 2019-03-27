@@ -2,7 +2,7 @@ import functools
 import logging
 import math
 import time
-from typing import Any
+from typing import Any, Callable
 
 from facebook_business.exceptions import FacebookError
 
@@ -51,7 +51,7 @@ def _report_success(job_scope: JobScope, start_time: float, retval: Any):
     report_job_status_task.delay(ExternalPlatformJobStatus.Done, job_scope)
 
 
-def reported_task(func):
+def reported_task(func: Callable) -> Callable:
     """Report task stats."""
 
     @functools.wraps(func)

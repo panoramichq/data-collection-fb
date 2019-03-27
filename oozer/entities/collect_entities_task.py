@@ -4,11 +4,11 @@ from typing import Generator
 from common.celeryapp import get_celery_app
 from common.measurement import Measure
 from common.tokens import PlatformTokenManager
-from oozer.common.errors import CollectionError, TaskOutsideSweepException
+from oozer.common.errors import CollectionError
 from oozer.common.helpers import extract_tags_for_celery_fb_task
 from oozer.common.job_context import JobContext
 from oozer.common.job_scope import JobScope
-from oozer.common.sweep_running_flag import SweepRunningFlag
+from oozer.common.sweep_running_flag import sweep_running
 from oozer.entities.collect_entities_iterators import (
     iter_collect_entities_per_page_post,
     iter_collect_entities_per_adaccount,
@@ -22,9 +22,6 @@ app = get_celery_app()
 
 
 def collect_entities_from_iterator(job_scope: JobScope, entity_iterator: Generator[object, None, None]) -> int:
-    if not SweepRunningFlag.is_set(job_scope.sweep_id):
-        raise TaskOutsideSweepException(job_scope)
-
     logger.info(f'{job_scope} started')
 
     if not job_scope.tokens:
@@ -50,6 +47,7 @@ def collect_entities_from_iterator(job_scope: JobScope, entity_iterator: Generat
     __name__, function_name_as_metric=True, count_once=True, extract_tags_from_arguments=extract_tags_for_celery_fb_task
 )
 @reported_task
+@sweep_running
 def collect_entities_per_adaccount_task(job_scope: JobScope, _: JobContext):
     """
     Collect all entities data for a given adaccount
@@ -63,6 +61,7 @@ def collect_entities_per_adaccount_task(job_scope: JobScope, _: JobContext):
     __name__, function_name_as_metric=True, count_once=True, extract_tags_from_arguments=extract_tags_for_celery_fb_task
 )
 @reported_task
+@sweep_running
 def collect_entities_per_page_task(job_scope: JobScope, _: JobContext):
     """
     Collect all entities data for a given page
@@ -76,6 +75,7 @@ def collect_entities_per_page_task(job_scope: JobScope, _: JobContext):
     __name__, function_name_as_metric=True, count_once=True, extract_tags_from_arguments=extract_tags_for_celery_fb_task
 )
 @reported_task
+@sweep_running
 def collect_entities_page_graph_task(job_scope: JobScope, _: JobContext):
     """
     Collect all entity data for a given page using graph API
@@ -89,6 +89,7 @@ def collect_entities_page_graph_task(job_scope: JobScope, _: JobContext):
     __name__, function_name_as_metric=True, count_once=True, extract_tags_from_arguments=extract_tags_for_celery_fb_task
 )
 @reported_task
+@sweep_running
 def collect_entities_per_page_post_task(job_scope: JobScope, _: JobContext):
     """
     Collect all entities data for a given page
