@@ -13,7 +13,7 @@ class ScorableClaim:
     last_report: Optional[JobReport]
 
     ad_account_id: Optional[str]
-    timezone: [str]
+    timezone: Optional[str]
 
     def __init__(
         self,
