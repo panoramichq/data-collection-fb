@@ -74,8 +74,13 @@ def build_sweep_slice_per_ad_account_task(sweep_id: str, ad_account_reality_clai
 
 
 @app.task(routing_key=RoutingKey.longrunning, ignore_result=False)
-@Measure.timer(__name__, function_name_as_metric=True)
-@Measure.counter(__name__, function_name_as_metric=True, count_once=True)
+@Measure.timer(__name__, function_name_as_metric=True, extract_tags_from_arguments=extract_tags_for_build_sweep_slice)
+@Measure.counter(
+    __name__,
+    function_name_as_metric=True,
+    count_once=True,
+    extract_tags_from_arguments=extract_tags_for_build_sweep_slice,
+)
 def build_sweep_slice_per_page(sweep_id: str, page_reality_claim: RealityClaim, task_id: str = None):
     from sweep_builder.pipeline import iter_pipeline
     from sweep_builder.reality_inferrer.reality import iter_reality_per_page_claim

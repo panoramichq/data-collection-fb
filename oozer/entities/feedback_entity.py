@@ -63,6 +63,15 @@ def _upsert_ad_account_entity(entity_data: Dict[str, Any], entity_type: str, ent
     AdAccountEntity.upsert(DEFAULT_SCOPE, ad_account_id, **upsert_data)
 
 
+def determine_ad_account_id(entity_data: Dict[str, Any], entity_type: str) -> str:
+    if entity_type == Entity.AdAccount:
+        ad_account_id = entity_data['id']
+    else:
+        ad_account_id = entity_data['page_id'] if entity_type in Entity.NON_AA_SCOPED else entity_data['account_id']
+
+    return ad_account_id
+
+
 def _upsert_regular_entity(entity_data: Dict[str, Any], entity_type: str, entity_hash_pair):
     if entity_type not in Entity.ALL:
         raise ValueError(f'Argument "entity_type" must be one of {Entity.ALL}. Received "{entity_type}" instead.')
@@ -75,7 +84,7 @@ def _upsert_regular_entity(entity_data: Dict[str, Any], entity_type: str, entity
     Model = ENTITY_TYPE_MODEL_MAP[entity_type]
 
     entity_id = entity_data['id']
-    ad_account_id = entity_data['page_id'] if entity_type in Entity.NON_AA_SCOPED else entity_data['account_id']
+    ad_account_id = determine_ad_account_id(entity_data, entity_type)
 
     # Custom audiences specify create & update time as unix timestamps
     if entity_data.get('time_created'):
