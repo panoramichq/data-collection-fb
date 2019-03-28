@@ -633,6 +633,15 @@ _default_fields_map = {
             # Error message: "(#200) The page does not have READ_PAGE_MAILBOXES or PAGES_MESSAGING permission."
             # 'private_reply_conversation',
             'user_likes',
+
+            # Reactions
+            'reactions.type(LIKE).summary(true).limit(0).as(reaction_like)',
+            'reactions.type(LOVE).summary(true).limit(0).as(reaction_love)',
+            'reactions.type(WOW).summary(true).limit(0).as(reaction_wow)',
+            'reactions.type(HAHA).summary(true).limit(0).as(reaction_haha)',
+            'reactions.type(SAD).summary(true).limit(0).as(reaction_sad)',
+            'reactions.type(ANGRY).summary(true).limit(0).as(reaction_angry)',
+            'reactions.type(THANKFUL).summary(true).limit(0).as(reaction_thankful)',
         ]
     ),
 }
