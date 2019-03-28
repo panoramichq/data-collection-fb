@@ -301,7 +301,7 @@ def iter_collect_entities_per_page_post(job_scope: JobScope) -> Generator[Dict[s
                 entity_data, id=generate_universal_id(entity_id=entity_data.get('id'), **record_id_base_data)
             )
             entity_data['page_id'] = job_scope.ad_account_id
-            entity_data['post_id'] = job_scope.entity_id
+            entity_data['page_post_id'] = job_scope.entity_id
 
             # Store the individual datum, use job context for the cold
             # storage thing to divine whatever it needs from the job context
