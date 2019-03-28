@@ -1,7 +1,8 @@
 import functools
+import logging
 import math
 import time
-from typing import Any
+from typing import Any, Callable
 
 from facebook_business.exceptions import FacebookError
 
@@ -12,7 +13,9 @@ from oozer.common.job_scope import JobScope
 from oozer.common.report_job_status_task import report_job_status_task
 from oozer.common.enum import ExternalPlatformJobStatus
 from oozer.common.facebook_api import FacebookApiErrorInspector
-from oozer.common.errors import CollectionError
+from oozer.common.errors import CollectionError, TaskOutsideSweepException
+
+logger = logging.getLogger(__name__)
 
 
 def _report_failure(job_scope: JobScope, start_time: float, exc: Exception, **kwargs: Any):
@@ -48,7 +51,7 @@ def _report_success(job_scope: JobScope, start_time: float, retval: Any):
     report_job_status_task.delay(ExternalPlatformJobStatus.Done, job_scope)
 
 
-def reported_task(func):
+def reported_task(func: Callable) -> Callable:
     """Report task stats."""
 
     @functools.wraps(func)
@@ -58,6 +61,8 @@ def reported_task(func):
         try:
             retval = func(job_scope, *args, **kwargs)
             _report_success(job_scope, start_time, retval)
+        except TaskOutsideSweepException as e:
+            logger.info(f'{e.job_scope} skipped because sweep {e.job_scope.sweep_id} is done')
         except CollectionError as e:
             _report_failure(job_scope, start_time, e.inner, partial_datapoint_count=e.partial_datapoint_count)
             raise

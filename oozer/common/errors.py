@@ -1,3 +1,6 @@
+from oozer.common.job_scope import JobScope
+
+
 class CollectionError(Exception):
     """Unrecoverable error thrown when a collection job fails."""
 
@@ -8,4 +11,12 @@ class CollectionError(Exception):
 
 class TimeoutException(Exception):
 
-    pass
+    """Raised when a task times out - see @timeout decorator."""
+
+
+class TaskOutsideSweepException(Exception):
+
+    """Raised when a task starts after sweep stopped running."""
+
+    def __init__(self, job_scope: JobScope):
+        self.job_scope = job_scope
