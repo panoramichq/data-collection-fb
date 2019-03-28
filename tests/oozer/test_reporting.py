@@ -56,7 +56,7 @@ def test_reported_task_on_failure_facebook_error(
         call(ExternalPlatformJobStatus.ThrottlingError, mock_job_scope),
     ]
 
-    mock_notify.assert_called_once_with(exc, job_scope=mock_job_scope, severity=SEVERITY_WARNING)
+    assert not mock_notify.called
     mock_from_job_scope.return_value.report_usage_per_failure_bucket.assert_called_once_with(
         'token', FailureBucket.Throttling
     )

@@ -48,14 +48,16 @@ class ErrorTypesReport:
 
 
 def _send_measurement_error(error_type: str, ad_account_id: str):
-    Measure.counter(__name__ + '.errors', {
-        'ad_account_id': ad_account_id,
-        'error_type': error_type,
-    }).increment()
+    Measure.counter(__name__ + '.errors', {'ad_account_id': ad_account_id, 'error_type': error_type}).increment()
 
 
 def _detect_dynamo_error(exc: Exception):
-    return isinstance(exc, UpdateError) or isinstance(exc, GetError) or isinstance(exc, PutError) or isinstance(exc, QueryError)
+    return (
+        isinstance(exc, UpdateError)
+        or isinstance(exc, GetError)
+        or isinstance(exc, PutError)
+        or isinstance(exc, QueryError)
+    )
 
 
 def _report_failure(job_scope: JobScope, start_time: float, exc: Exception, **kwargs: Any):
