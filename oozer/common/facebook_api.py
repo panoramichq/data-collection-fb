@@ -635,7 +635,7 @@ _default_fields_map = {
             'user_likes',
 
             # Reactions
-            'reactions.type(LIKE).summary(true).limit(3).as(reaction_like)',
+            'reactions.type(LIKE).summary(true).limit(0).as(reaction_like)',
             'reactions.type(LOVE).summary(true).limit(0).as(reaction_love)',
             'reactions.type(WOW).summary(true).limit(0).as(reaction_wow)',
             'reactions.type(HAHA).summary(true).limit(0).as(reaction_haha)',
