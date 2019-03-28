@@ -40,7 +40,7 @@ def iter_persist_prioritized(
         sweep_id, cache_max_size=200000
     ) as expectation_add:
 
-        _measurement_name_base = __name__ + '.' + iter_persist_prioritized.__name__
+        _measurement_name_base = f'{__name__}.{iter_persist_prioritized.__name__}'
         _measurement_sample_rate = 1
 
         _before_next_prioritized = time.time()
@@ -54,7 +54,7 @@ def iter_persist_prioritized(
             }
 
             Measure.timing(
-                _measurement_name_base + 'next_prioritized',
+                f'{_measurement_name_base}.next_prioritized',
                 tags=_measurement_tags,
                 sample_rate=_measurement_sample_rate,
             )((time.time() - _before_next_prioritized) * 1000)
@@ -169,7 +169,7 @@ def iter_persist_prioritized(
 
             # we are adding only per-parent job to the queue
             with Measure.timer(
-                _measurement_name_base + 'add_to_queue', tags=_measurement_tags, sample_rate=_measurement_sample_rate
+                f'{_measurement_name_base}.add_to_queue', tags=_measurement_tags, sample_rate=_measurement_sample_rate
             ):
                 add_to_queue(job_id_effective, score, **extra_data)
 
@@ -191,7 +191,7 @@ def iter_persist_prioritized(
                 # at this point all this checks is that we have more than one job_id scheduled
                 if job_id_normative != job_id_effective:
                     with Measure.timer(
-                        _measurement_name_base + 'expectation_add',
+                        f'{_measurement_name_base}.expectation_add',
                         tags=_measurement_tags,
                         sample_rate=_measurement_sample_rate,
                     ):
@@ -203,14 +203,15 @@ def iter_persist_prioritized(
             # between reads from us. Good way to measure how quickly we are
             # consumed (what pauses we have between each consumption)
             with Measure.timer(
-                _measurement_name_base + 'yield_result', tags=_measurement_tags, sample_rate=_measurement_sample_rate
+                f'{_measurement_name_base}.yield_result', tags=_measurement_tags, sample_rate=_measurement_sample_rate
             ):
                 yield prioritization_claim
 
             _before_next_prioritized = time.time()
 
         if skipped_jobs:
-            _measurement_name = _measurement_name_base + '.gatekeeper_stop_jobs'
             for ad_account_id in skipped_jobs:
                 measurement_tags = {'sweep_id': sweep_id, 'ad_account_id': ad_account_id}
-                Measure.gauge(_measurement_name, tags=measurement_tags)(skipped_jobs[ad_account_id])
+                Measure.gauge(f'{_measurement_name_base}.gatekeeper_stop_jobs', tags=measurement_tags)(
+                    skipped_jobs[ad_account_id]
+                )
