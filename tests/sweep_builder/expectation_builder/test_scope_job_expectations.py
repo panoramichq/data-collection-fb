@@ -29,7 +29,7 @@ class ScopeJobsExpectationsTests(TestCase):
         results = list(iter_expectations([reality_claim]))
 
         assert results
-        assert len(results) == 1
+        assert len(results) == 2
         expectation_claim = results[0]
 
         assert expectation_claim.entity_id == reality_claim.entity_id
