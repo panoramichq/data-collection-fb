@@ -14,7 +14,7 @@ from oozer.common.report_job_status_task import report_job_status_task
 from oozer.common.enum import ExternalPlatformJobStatus
 from oozer.common.facebook_api import FacebookApiErrorInspector
 from oozer.common.errors import CollectionError, TaskOutsideSweepException
-from oozer.looper import SweepStatusTracker
+from oozer.common.sweep_status_tracker import SweepStatusTracker
 
 logger = logging.getLogger(__name__)
 
