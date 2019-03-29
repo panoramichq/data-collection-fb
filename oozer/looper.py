@@ -214,7 +214,7 @@ class SweepStatusTracker:
 
     _aggregate_record_marker = 'aggregate'
 
-    def report_status(self, failure_bucket: str = None):
+    def report_status(self, failure_bucket: int = FailureBucket.Success):
         """
         Every effective job calls this to indicate done-ness and severity of done-ness
 
@@ -229,10 +229,6 @@ class SweepStatusTracker:
         # Thus, within given minute, various tasks' status reports will fall into same
         # outter key, inside of which value for each of inner keys will be growing,
         # until we fall onto next minute, when we start fresh.
-
-        if failure_bucket is None:
-            failure_bucket = FailureBucket.Success
-
         key = self._gen_key(self.now_in_minutes())
         get_redis().hincrby(key, failure_bucket)
         if failure_bucket < 0:
