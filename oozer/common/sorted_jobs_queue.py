@@ -1,6 +1,6 @@
 import logging
-import random
 import ujson as json
+import gevent.pool
 
 from collections import namedtuple, OrderedDict, defaultdict
 from typing import List
@@ -20,7 +20,7 @@ class NotSet:
 class _JobsWriter:
     GLOBAL_ACCOUNT_ID: str = 'global'
 
-    def __init__(self, sorted_jobs_queue_interface: 'SortedJobsQueue', batch_size: int = 30):
+    def __init__(self, sorted_jobs_queue_interface: 'SortedJobsQueue', batch_size: int = 30, number_of_shards = 10):
         """
         Closure that exposes a callable that gets repeatedly called with item to add to one and same
         SortedSet Redis key. The focus is on keeping track of some (batch_size) last additions
@@ -56,19 +56,42 @@ class _JobsWriter:
         self.redis_client = get_redis()
         self.sweep_id = sorted_jobs_queue_interface.sweep_id
         self.sorted_jobs_queue_interface = sorted_jobs_queue_interface
+        self.number_of_shards = number_of_shards
 
-    def flush(self):
+        self._last_used_key_index = -1
+        self._keys = self.sorted_jobs_queue_interface.get_queue_keys_range()
+        self._pool = gevent.pool.Pool(self.sorted_jobs_queue_interface.number_of_shards)
+
+    def flush(self, asynchronous=False):
         # zadd takes a list of key, score, key2, score2, ... arguments
         # we need to convert dict into list of key, value, key2, value2, ...
-        args = [item for pair in self.batch.items() for item in pair]
 
-        self.redis_client.zadd(
-            # since we do a batch, there is no particular reason to
-            # provide a value for deterministic key shart. Random it is.
-            self.sorted_jobs_queue_interface.get_queue_key(),
-            *args,
-        )
+        key_index = self._last_used_key_index + 1
+        if key_index == len(self._keys):
+            key_index = 0
+        self._last_used_key_index = key_index
+
+        args = [
+            item
+            for pair in self.batch.items()
+            for item in pair
+        ]
+
+        self.cnt += len(self.batch)
+
         self.batch.clear()
+
+        doit = lambda : self.redis_client.zadd(self._keys[key_index], *args)
+
+        if asynchronous:
+            self._pool.spawn(doit)
+            # let it spin a bit in sub-thread and return to us
+            # sorta like 'yield' keyword:
+            gevent.sleep(0)
+        else:
+            self._pool.join()  # empty or not, need to wait for earlier tasks to be flushed
+            # before adding/running final task
+            doit()
 
     def write_job_scope_data(self, job_scope_data, job_id_parts):
         # scope_data are chunks of data we elsewhere refer to as "petals" in Data Flower
@@ -125,7 +148,7 @@ class _JobsWriter:
                     self.cnts[self.GLOBAL_ACCOUNT_ID] += 1
 
         if len(self.batch) == self.batch_size:
-            self.flush()
+            self.flush(asynchronous=True)
 
     def __enter__(self):
         return self.add_to_queue
@@ -269,7 +292,7 @@ class SortedJobsQueue:
 
     _JOBS_READER_BATCH_SIZE = 200
 
-    def __init__(self, sweep_id: str):
+    def __init__(self, sweep_id: str, number_of_shards = 10):
         """
         Closure that exposes a callable that gets repeatedly called with item to add to one and same
         SortedSet Redis key. The focus is on keeping track of some (batch_size) last additions
@@ -289,6 +312,7 @@ class SortedJobsQueue:
         self.sweep_id = sweep_id
         self._queue_key_base = f'{sweep_id}-sorted-jobs-queue-'
         self._payload_key_base = f'{sweep_id}-sorted-jobs-data-'
+        self.number_of_shards = number_of_shards
 
     def get_payload_key(self, ad_account_id: str) -> str:
         """
@@ -298,22 +322,18 @@ class SortedJobsQueue:
         """
         return self._payload_key_base + (ad_account_id or 'global')
 
-    def get_queue_key(self, value: str = None, shard_id: int = None) -> str:
-        if shard_id is not None:
-            return self._queue_key_base + str(shard_id)
-        if value:
-            # since we take just the last decimal from the hash int
-            # effectively we have 10 shards
-            return self._queue_key_base + str(hash(value))[-1]
-        # same here - 10 possible shards
-        return self._queue_key_base + str(random.randint(0, 9))
+    def get_queue_key(self, shard_id: int) -> str:
+        return self._queue_key_base + str(shard_id)
 
     def get_queue_key_ad_account(self) -> str:
         return f'{self._queue_key_base}-ad_account_id'
 
     def get_queue_keys_range(self) -> List[str]:
-        # still same 10 shards
-        return [self.get_queue_key(shard_id=i) for i in range(0, 10)]  # last arg is exclusive not inclusive
+        # fmt: off
+        return [
+            self.get_queue_key(shard_id=i)
+            for i in range(0, self.number_of_shards+1)
+        ]  # last arg is exclusive not inclusive
 
     def get_queue_length(self) -> int:
         cnt = 0
