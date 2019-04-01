@@ -227,6 +227,7 @@ def run_tasks(
     cnt = 0
     _pulse_refresh_interval = 5  # seconds
     sweep_tracker = SweepStatusTracker(sweep_id)
+    sweep_tracker.start_metrics_collector()
 
     tasks_iter = iter_tasks(sweep_id)
     if limit:
@@ -251,7 +252,6 @@ def run_tasks(
     with TaskOozer(n, time_slices, time_slice_length, z) as ooze_task, Measure.counter(
         _measurement_name_base + 'oozed', tags=_measurement_tags
     ) as cntr:
-
         next_pulse_review_second = time.time() + _pulse_refresh_interval
 
         # now, don't freak out about us looping 4 time off the same exact generator

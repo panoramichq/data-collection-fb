@@ -3,10 +3,14 @@ from collections import namedtuple
 
 from typing import Union, List, Dict
 
+import gevent
+
 from common.connect.redis import get_redis
 from common.enums.failure_bucket import FailureBucket
 
 # attr names are same as names of attrs in FailureBucket enum
+from common.measurement import Measure
+
 Pulse = namedtuple('Pulse', list(FailureBucket.attr_name_enum_value_map.keys()) + ['Total'])
 
 
@@ -97,6 +101,9 @@ class SweepStatusTracker:
             FailureBucket.Success: 0,
             FailureBucket.Other: 0,
             FailureBucket.Throttling: 0,
+            FailureBucket.UserThrottling: 0,
+            FailureBucket.ApplicationThrottling: 0,
+            FailureBucket.AdAccountThrottling: 0,
             FailureBucket.TooLarge: 0,
             FailureBucket.WorkingOnIt: 0,
         }
@@ -135,3 +142,35 @@ class SweepStatusTracker:
         )
 
         return pulse
+
+    def start_metrics_collector(self):
+        """Start reporting metrics too Datadog in a regular interval."""
+        gevent.spawn(self._report_metrics)
+
+    def _report_metrics(self):
+        """Regularly report pulse metrics for previous minute to Datadog."""
+        while True:
+            gevent.sleep(5)
+            prev_minute = self.now_in_minutes() - 1
+            redis = get_redis()
+            pulse_values = {int(k): int(v) for k, v in redis.hgetall(self._gen_key(prev_minute)).items()}
+
+            name_map = {
+                FailureBucket.Success: 'success',
+                FailureBucket.Other: 'other',
+                FailureBucket.Throttling: 'throttling',
+                FailureBucket.UserThrottling: 'user_throttling',
+                FailureBucket.ApplicationThrottling: 'application_throttling',
+                FailureBucket.AdAccountThrottling: 'adaccount_throttling',
+                FailureBucket.TooLarge: 'too_large',
+                FailureBucket.WorkingOnIt: 'working_on_it',
+            }
+
+            total = 0
+            for bucket, name in name_map.items():
+                value = pulse_values.get(bucket, 0)
+                total += value
+                Measure.histogram(f'{__name__}.pulse_stats', tags={'sweep_id': self.sweep_id, 'bucket': name})(value)
+
+            if total:
+                Measure.histogram(f'{__name__}.pulse_stats', tags={'sweep_id': self.sweep_id, 'bucket': 'total'})(total)
