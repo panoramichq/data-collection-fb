@@ -1,4 +1,4 @@
-from typing import List, Type, Any, Dict, Optional, Tuple
+from typing import List, Type, Any, Dict, Tuple
 
 from facebook_business.adobjects.adaccount import AdAccount
 from facebook_business.adobjects.comment import Comment
@@ -579,7 +579,6 @@ _default_fields_map = {
             # Error message: "(#200) The page does not have READ_PAGE_MAILBOXES or PAGES_MESSAGING permission."
             # 'private_reply_conversation',
             'user_likes',
-
             # Reactions
             'reactions.type(LIKE).summary(true).limit(0).as(reaction_like)',
             'reactions.type(LOVE).summary(true).limit(0).as(reaction_love)',
