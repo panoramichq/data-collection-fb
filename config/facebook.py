@@ -6,6 +6,7 @@ AD_ACCOUNT = None
 AD_ACCOUNT_TIME_ZONE = 'America/Los_Angeles'
 TOKEN = 'bogus token'
 PAGE = None
+PAGE_POST = None
 
 # Real Ad Accounts, tokens are injected by collection workers
 

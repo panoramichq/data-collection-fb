@@ -5,11 +5,11 @@ from oozer.entities.collect_entities_iterators import (
     iter_native_entities_per_page,
     iter_collect_entities_per_adaccount,
     iter_collect_entities_per_page,
-)
+    iter_native_entities_per_page_post)
 from tests.base.testcase import TestCase, integration
 
 from common.enums.entity import Entity
-from config.facebook import TOKEN, AD_ACCOUNT, PAGE
+from config.facebook import TOKEN, AD_ACCOUNT, PAGE, PAGE_POST
 from oozer.common.job_scope import JobScope
 from oozer.common.facebook_api import PlatformApiContext
 
@@ -96,6 +96,18 @@ class TestingEntityCollection(TestCase):
         with PlatformApiContext(TOKEN) as ctx:
             page = ctx.to_fb_model(PAGE, Entity.Page)
             entities = iter_native_entities_per_page(page, Entity.PagePost)
+            cnt = 0
+
+            for _ in entities:
+                cnt += 1
+                break
+
+            assert cnt
+
+    def test_fetch_all_comments(self):
+        with PlatformApiContext(TOKEN) as ctx:
+            page = ctx.to_fb_model(PAGE_POST, Entity.PagePost)
+            entities = iter_native_entities_per_page_post(page, Entity.Comment)
             cnt = 0
 
             for _ in entities:
