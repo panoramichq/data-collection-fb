@@ -1,4 +1,4 @@
-from typing import List, Type, Any, Dict
+from typing import List, Type, Any, Dict, Optional, Tuple
 
 from facebook_business.adobjects.adaccount import AdAccount
 from facebook_business.adobjects.comment import Comment
@@ -57,12 +57,11 @@ class FacebookApiErrorInspector:
 
     GENERIC_ERROR_CODE = 1
 
-    THROTTLING_CODES = {
-        (4, None),  # Application request limit reached
-        (17, None),  # User request limit reached
-        (17, 2446079),  # User request limit reached
-        (613, 1487742),  # AdAccount request limit reached
-    }
+    APP_THROTTLING_CODES = {(4, None)}
+    AD_ACCOUNT_THROTTLING_CODES = {(613, 1487742)}
+    USER_THROTTLING_CODES = {(17, None), (17, 2446079)}
+    THROTTLING_CODES = set.union(APP_THROTTLING_CODES, AD_ACCOUNT_THROTTLING_CODES, USER_THROTTLING_CODES)
+
     """
     List of known codes (subcodes) where FB starts throttling us
     """
@@ -97,18 +96,17 @@ class FacebookApiErrorInspector:
         :param set values: List of individual codes or tuples of (code, subcode)
         :return bool: The exception conforms to our excepted list
         """
-        if not isinstance(self._exception, FacebookRequestError):
+        codes = self.get_throttling_error_codes()
+        if not codes:
             return False
 
-        code = self._exception.api_error_code()
-        subcode = self._exception.api_error_subcode()
+        code, subcode = codes
 
         return (code, subcode) in values
 
     def _is_exception_message_in_set(self, values) -> bool:
         """
         Check the exception error message against a given set.
-        :return:
         """
         if not isinstance(self._exception, FacebookRequestError):
             return False
@@ -122,6 +120,18 @@ class FacebookApiErrorInspector:
         :return bool: If True, the exception is of type throttling
         """
         return self._is_exception_code_in_set(self.THROTTLING_CODES)
+
+    def get_throttling_error_codes(self) -> Optional[Tuple[int, Optional[int]]]:
+        """
+        Examines request error and returns its code and subvode
+        """
+        if not isinstance(self._exception, FacebookRequestError):
+            return
+
+        code = self._exception.api_error_code()
+        subcode = self._exception.api_error_subcode()
+
+        return code, subcode
 
     def is_too_large_data_exception(self) -> bool:
         """
@@ -756,6 +766,8 @@ def get_default_status(model_klass: Type['Model']) -> List[str]:
     What we are trying to solve here is remove the default filter for Archived
     from all calls by repeating all possible fetch-able effective status values
     per that FB Entity Level, including Archived
+
+    NOTE: never used
     """
     assert issubclass(model_klass, abstractcrudobject.AbstractCrudObject)
     return _default_fetch_statuses.get(model_klass)
