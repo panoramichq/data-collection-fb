@@ -204,7 +204,9 @@ def build_sweep(sweep_id: str):
         # You will nee
         should_be_done_by = time.time() + (60 * 20)
 
-        Measure.gauge(f'{_measurement_name_base}per_account_sweep.total', tags=_measurement_tags)(len(group_result.results))
+        Measure.gauge(f'{_measurement_name_base}per_account_sweep.total', tags=_measurement_tags)(
+            len(group_result.results)
+        )
 
         # Monitor the progress. Although this obviously can be achieved with
         # group_result.join(), we need to "see" into the task group progress

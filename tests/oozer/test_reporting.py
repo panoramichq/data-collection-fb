@@ -4,7 +4,7 @@ from unittest.mock import patch, call, Mock
 
 from facebook_business.exceptions import FacebookError
 
-from common.bugsnag import SEVERITY_WARNING, SEVERITY_ERROR
+from common.bugsnag import SEVERITY_ERROR
 from common.enums.failure_bucket import FailureBucket
 from oozer.common.enum import ExternalPlatformJobStatus
 from oozer.reporting import reported_task
