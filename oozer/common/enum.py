@@ -113,9 +113,9 @@ class ExternalPlatformJobStatus(JobStatus):
         DataFetched: FailureBucket.WorkingOnIt,
         JobStatus.Done: FailureBucket.Success,
         TooMuchData: FailureBucket.TooLarge,
-        AdAccountThrottlingError: FailureBucket.Throttling,
-        UserThrottlingError: FailureBucket.Throttling,
-        ApplicationThrottlingError: FailureBucket.Throttling,
+        AdAccountThrottlingError: FailureBucket.AdAccountThrottling,
+        UserThrottlingError: FailureBucket.UserThrottling,
+        ApplicationThrottlingError: FailureBucket.ApplicationThrottling,
         GenericPlatformError: FailureBucket.Other,
         JobStatus.GenericError: FailureBucket.Other,
     }
