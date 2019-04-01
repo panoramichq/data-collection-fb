@@ -1,7 +1,8 @@
-from typing import List
+from typing import List, Iterable, Tuple
 from itertools import zip_longest
 
-from .expectation_claim import ExpectationClaim
+from common.job_signature import JobSignature
+from sweep_builder.data_containers.expectation_claim import ExpectationClaim
 
 
 class PrioritizationClaim(ExpectationClaim):
@@ -18,8 +19,8 @@ class PrioritizationClaim(ExpectationClaim):
     # structure matching job_signatures on underlying class
     # here score for each element in original list is matched in
     # position in job_scores list.
-    job_scores = []  # type: List[int]
+    job_scores: List[int] = []
 
     @property
-    def score_job_pairs(self):
+    def score_job_pairs(self) -> Iterable[Tuple[int, JobSignature]]:
         return zip_longest(self.job_scores, self.job_signatures)

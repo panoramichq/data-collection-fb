@@ -10,48 +10,37 @@ from oozer.common.expecations_store import JobExpectationsWriter
 from oozer.common.sorted_jobs_queue import SortedJobsQueue
 from sweep_builder.prioritizer.gatekeeper import JobGateKeeper
 
-from .data_containers.prioritization_claim import PrioritizationClaim
-
+from sweep_builder.data_containers.prioritization_claim import PrioritizationClaim
 
 logger = logging.getLogger(__name__)
-
 
 # :) Guess what for
 FIRST = 0
 LAST = -1
 
-
-subject_to_expectation_publication = {
-    Entity.Campaign,
-    Entity.AdSet,
-    Entity.Ad
-}
+subject_to_expectation_publication = {Entity.Campaign, Entity.AdSet, Entity.Ad}
 
 
-def should_persist(job_score):
+def should_persist(job_score: int) -> bool:
     """Determine whether job with score should be persisted."""
     return job_score > JobGateKeeper.JOB_NOT_PASSED_SCORE
 
 
-def iter_persist_prioritized(sweep_id, prioritized_iter):
-    # type: (str, Generator[PrioritizationClaim]) -> Generator[PrioritizationClaim]
+def iter_persist_prioritized(
+    sweep_id: str, prioritized_iter: Generator[PrioritizationClaim, None, None]
+) -> Generator[PrioritizationClaim, None, None]:
     """
     Persist prioritized jobs and pass-through context objects for inspection
-
-    :param str sweep_id:
-    :param prioritized_iter:
-    :type prioritized_iter: Generator[PrioritizationClaim]
-    :rtype: Generator[PrioritizationClaim]
     """
-
     # cache_max_size allows us to avoid writing same score
     # for same jobID when given objects rely on same JobID
     # for collection.
 
-    with SortedJobsQueue(sweep_id).JobsWriter() as add_to_queue, \
-        JobExpectationsWriter(sweep_id, cache_max_size=200000) as expectation_add:
+    with SortedJobsQueue(sweep_id).JobsWriter() as add_to_queue, JobExpectationsWriter(
+        sweep_id, cache_max_size=200000
+    ) as expectation_add:
 
-        _measurement_name_base = __name__ + '.' + iter_persist_prioritized.__name__
+        _measurement_name_base = f'{__name__}.{iter_persist_prioritized.__name__}'
         _measurement_sample_rate = 1
 
         _before_next_prioritized = time.time()
@@ -65,10 +54,10 @@ def iter_persist_prioritized(sweep_id, prioritized_iter):
             }
 
             Measure.timing(
-                _measurement_name_base + 'next_prioritized',
+                f'{_measurement_name_base}.next_prioritized',
                 tags=_measurement_tags,
-                sample_rate=_measurement_sample_rate
-            )((time.time() - _before_next_prioritized)*1000)
+                sample_rate=_measurement_sample_rate,
+            )((time.time() - _before_next_prioritized) * 1000)
 
             # Approaches to Job queueing:
 
@@ -143,8 +132,7 @@ def iter_persist_prioritized(sweep_id, prioritized_iter):
 
             # don't care about JobSignature's args, kwargs at this point
             score_job_id_pairs = [
-                (score, job_id)
-                for score, (job_id, job_args, job_kwargs) in prioritization_claim.score_job_pairs
+                (score, job_id) for score, (job_id, job_args, job_kwargs) in prioritization_claim.score_job_pairs
             ]
 
             # as mentioned earlier, at this time we expect at most 2 job variants
@@ -181,15 +169,9 @@ def iter_persist_prioritized(sweep_id, prioritized_iter):
 
             # we are adding only per-parent job to the queue
             with Measure.timer(
-                _measurement_name_base + 'add_to_queue',
-                tags=_measurement_tags,
-                sample_rate=_measurement_sample_rate
+                f'{_measurement_name_base}.add_to_queue', tags=_measurement_tags, sample_rate=_measurement_sample_rate
             ):
-                add_to_queue(
-                    job_id_effective,
-                    score,
-                    **extra_data
-                )
+                add_to_queue(job_id_effective, score, **extra_data)
 
             # This is our cheap way of ensuring that we are dealing
             # with platform-bound job that we need to report our expectations for
@@ -209,35 +191,27 @@ def iter_persist_prioritized(sweep_id, prioritized_iter):
                 # at this point all this checks is that we have more than one job_id scheduled
                 if job_id_normative != job_id_effective:
                     with Measure.timer(
-                        _measurement_name_base + 'expectation_add',
+                        f'{_measurement_name_base}.expectation_add',
                         tags=_measurement_tags,
-                        sample_rate=_measurement_sample_rate
+                        sample_rate=_measurement_sample_rate,
                     ):
                         expectation_add(
-                            job_id_effective,
-                            prioritization_claim.ad_account_id,
-                            prioritization_claim.entity_id
+                            job_id_effective, prioritization_claim.ad_account_id, prioritization_claim.entity_id
                         )
 
             # This time includes the time consumer of this generator wastes
             # between reads from us. Good way to measure how quickly we are
             # consumed (what pauses we have between each consumption)
             with Measure.timer(
-                _measurement_name_base + 'yield_result',
-                tags=_measurement_tags,
-                sample_rate=_measurement_sample_rate
+                f'{_measurement_name_base}.yield_result', tags=_measurement_tags, sample_rate=_measurement_sample_rate
             ):
                 yield prioritization_claim
 
             _before_next_prioritized = time.time()
 
         if skipped_jobs:
-            _measurement_name = _measurement_name_base + '.gatekeeper_stop_jobs'
             for ad_account_id in skipped_jobs:
-                measurement_tags = {
-                    'sweep_id': sweep_id,
-                    'ad_account_id': ad_account_id,
-                }
-                Measure.gauge(_measurement_name, tags=measurement_tags)(
+                measurement_tags = {'sweep_id': sweep_id, 'ad_account_id': ad_account_id}
+                Measure.gauge(f'{_measurement_name_base}.gatekeeper_stop_jobs', tags=measurement_tags)(
                     skipped_jobs[ad_account_id]
                 )

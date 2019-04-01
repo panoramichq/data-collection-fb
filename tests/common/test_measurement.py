@@ -8,16 +8,12 @@ from config import measurement, build
 
 
 class BaseMeasureTestCase(TestCase):
-
     def setUp(self):
         self.Measure = MeasureWrapper(
             host='localhost',
             port=measurement.STATSD_PORT,
             # prefix=application.NAME,
-            default_tags={
-                'build_id': build.BUILD_ID,
-                'commit_id': build.COMMIT_ID,
-            }
+            default_tags={'build_id': build.BUILD_ID, 'commit_id': build.COMMIT_ID},
         )
 
     def _construct_measure(self, mtype, subtype, *args, **kwargs):
@@ -34,23 +30,17 @@ class BaseMeasureTestCase(TestCase):
         method = getattr(self.Measure, mtype)
         return method('.'.join([mtype, subtype]), *args, **kwargs)
 
-    def _test_direct_simple(
-        self, mtype, subtype='direct', value=1, *args, **kwargs
-    ):
+    def _test_direct_simple(self, mtype, subtype='direct', value=1, *args, **kwargs):
         measure = self._construct_measure(mtype, subtype, *args, **kwargs)
         measure(value)
         return measure
 
-    def _test_context_manager_simple(
-        self, mtype, subtype='ctx', value=5, *args, **kwargs
-    ):
+    def _test_context_manager_simple(self, mtype, subtype='ctx', value=5, *args, **kwargs):
         with self._construct_measure(mtype, subtype, *args, **kwargs) as measure:
             measure(value)
         return measure
 
-    def _test_decorator_simple(
-            self, mtype, subtype='deco', value=10, *args, **kwargs
-    ):
+    def _test_decorator_simple(self, mtype, subtype='deco', value=10, *args, **kwargs):
         @self._construct_measure(mtype, subtype, bind=True, *args, **kwargs)
         def some_func(measure):
             measure(value)
@@ -162,9 +152,9 @@ class TestAutotimingMeasurements(BaseMeasureTestCase):
 
         entropy = 5
         now_values = [
-            entropy + 0, # start time
-            entropy + 1.5, # first .elapsed call time
-            entropy + 2.75  # exit - end time
+            entropy + 0,  # start time
+            entropy + 1.5,  # first .elapsed call time
+            entropy + 2.75,  # exit - end time
         ]
         with mock.patch.object(TimerMeasuringPrimitive, '_get_now_in_seconds', side_effect=now_values):
 
@@ -188,9 +178,9 @@ class TestAutotimingMeasurements(BaseMeasureTestCase):
 
         entropy = 7
         now_values = [
-            entropy + 0, # start time
-            entropy + 1.5, # first .elapsed call time
-            entropy + 2.75  # exit - end time
+            entropy + 0,  # start time
+            entropy + 1.5,  # first .elapsed call time
+            entropy + 2.75,  # exit - end time
         ]
         with mock.patch.object(TimerMeasuringPrimitive, '_get_now_in_seconds', side_effect=now_values):
 
@@ -217,7 +207,6 @@ class TestAutotimingMeasurements(BaseMeasureTestCase):
 
 
 class TestCounterMeasurements(BaseMeasureTestCase):
-
     def test_direct_measuring_forbidden(self):
         with self.assertRaises(RuntimeError):
             self._test_direct_simple('counter')
@@ -245,7 +234,6 @@ class TestCounterMeasurements(BaseMeasureTestCase):
             self.assertEqual(15, measure.total_value)
 
     def test_as_decorator(self):
-
         @self._construct_measure('counter', 'deco', bind=True)
         def some_func(measure):
             # Direct calls forbidden
@@ -277,8 +265,7 @@ def test_measurement_extract_tags_from_arguments():
     measure_mock = mock.Mock()
 
     primitive = MeasuringPrimitive(
-        measure_mock, 'prefix', None, 'metric',
-        extract_tags_from_arguments=test_extract_tags_from_arguments
+        measure_mock, 'prefix', None, 'metric', extract_tags_from_arguments=test_extract_tags_from_arguments
     )
 
     @primitive

@@ -12,16 +12,16 @@ class JobContext:
 
     """
 
-    entity_checksums = None  # type: Dict[str, Tuple[str, str]]
+    entity_checksums: Dict[str, Tuple[str, str]] = None
     """
-    Checksums are in this format: 
+    Checksums are in this format:
 
     {
         '<entity_id'>: (entity_hash, fields_hash),
     }
     """
 
-    normative_tasks = None  # type: List[str]
+    normative_tasks: List[str] = None
     """
     A simple list of "normative" tasks being represented by the effective task
     being executed. The representation as a job_id identifier is sufficient and
@@ -33,5 +33,5 @@ class JobContext:
     """
 
     def __init__(self):
-        self.entity_checksums = dict()
-        self.normative_tasks = list()
+        self.entity_checksums = {}
+        self.normative_tasks = []

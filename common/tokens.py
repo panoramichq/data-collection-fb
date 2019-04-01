@@ -1,14 +1,10 @@
-from itertools import zip_longest
-from typing import List, Set, Union, Optional
-
-import config.application
+from typing import Optional
 
 from common.connect.redis import get_redis
 from common.enums.entity import Entity
 from common.enums.failure_bucket import FailureBucket
-from common.enums.reporttype import ReportType
+from common.store.scope import AssetScope
 from oozer.common.job_scope import JobScope
-
 
 failure_bucket_count_map = {
     # this is the only one that is really deriving any "clever" value from TokenManager
@@ -21,13 +17,12 @@ failure_bucket_count_map = {
 
 
 class PlatformTokenManager:
-
-    def __init__(self, asset_scope, sweep_id):
+    def __init__(self, asset_scope: str, sweep_id: str):
         self.queue_key = f'{asset_scope}-{sweep_id}-sorted-token-queue'
         self._redis = get_redis()
 
     @classmethod
-    def populate_from_scope_entity(cls, scope_entity, sweep_id):
+    def populate_from_scope_entity(cls, scope_entity: AssetScope, sweep_id: str):
         """
         Helps dump tokens of various kinds to Redis for use
         by `.from_job_scope` method declared below.
@@ -46,33 +41,22 @@ class PlatformTokenManager:
         single super important reason - to keep the code of "write" and
         "read" sides right next to each other to ensure they are in sync.
         Otherwise, yeah, this feels like it should be elsewhere.
-
-        :param common.store.scope.AssetScope scope_entity:
-        :param sweep_id:
-        :return:
         """
-
         # for Scope-centric refresh jobs, entity_id element is the Scope ID
         asset_scope = scope_entity.scope
         tokens = [scope_entity.scope_api_token]
 
-        PlatformTokenManager(
-            asset_scope,
-            sweep_id
-        ).add(*tokens)
+        PlatformTokenManager(asset_scope, sweep_id).add(*tokens)
 
         # for FB-centric refresh jobs, job namespace is default value on JobScope.namespace
         # and tokens are one or more platform tokens from Scope object
         asset_scope = JobScope.namespace
         tokens = scope_entity.platform_tokens
 
-        PlatformTokenManager(
-            asset_scope,
-            sweep_id
-        ).add(*tokens)
+        PlatformTokenManager(asset_scope, sweep_id).add(*tokens)
 
     @classmethod
-    def from_job_scope(cls, job_scope):
+    def from_job_scope(cls, job_scope: JobScope) -> 'PlatformTokenManager':
         """
         infers required asset scope parameters from JobScope data
         and creates an instance of PlatformTokenManager properly set for
@@ -84,11 +68,7 @@ class PlatformTokenManager:
         This is the "read" side of the "write" side depicted in
         populate_from_scope_entity method immediately above.
         If you change it here, change it there.
-
-        :param JobScope job_scope:
-        :rtype: PlatformTokenManager
         """
-
         # while we have support for many many scopes,
         # here we temporarily collapse all
         # `fb` namespace jobs into one, single token pool
@@ -108,10 +88,7 @@ class PlatformTokenManager:
             # Until then, we, effectively, will have only one tokens pool
             asset_scope = job_scope.namespace  # likely something like 'fb' or 'tw'
 
-        return PlatformTokenManager(
-            asset_scope,
-            job_scope.sweep_id
-        )
+        return PlatformTokenManager(asset_scope, job_scope.sweep_id)
 
     def add(self, *tokens):
         """
@@ -119,10 +96,6 @@ class PlatformTokenManager:
 
         Seeds temporary tokens inventory with tokens, while resetting
         their usage counters to zero.
-
-        :param tokens: List (or any other iterable
-        :type tokens: List[str]
-        :return:
         """
         self._redis.zadd(
             self.queue_key,
@@ -133,27 +106,16 @@ class PlatformTokenManager:
             # that may contain characters not allowed to be in variable names.
             # So, keeping them as positional str args instead
             # Combined list must be a sequence of key, score, key2, score2, ...
-            *(
-                arg
-                for token in tokens
-                for arg in [token, 0]
-            )
+            *(arg for token in tokens for arg in [token, 0]),
         )
 
     def remove(self, *tokens):
         """
         Like .add but in reverse.
-
-        :param tokens:
-        :return:
         """
-        self._redis.zrem(
-            self.queue_key,
-            *tokens
-        )
+        self._redis.zrem(self.queue_key, *tokens)
 
-    def get_best_token(self):
-        # type: () -> Union[str,None]
+    def get_best_token(self) -> Optional[str]:
         token_candidate = (self._redis.zrange(self.queue_key, 0, 1) or [None])[0]
         if token_candidate is not None:
             return token_candidate.decode('utf8')
@@ -163,23 +125,15 @@ class PlatformTokenManager:
         # type: () -> int
         return self._redis.zcount(self.queue_key, '-inf', '+inf') or 0
 
-    def report_usage(self, token, usage_count=1):
+    def report_usage(self, token: str, usage_count: Optional[int] = 1):
         """
         Notes somewhere, where-ever we are keeping the token use counts,
         that a given token was used.
 
         Optionally allows to communicate in one call how many times the token
         was used. By default, it's one.
-
-        :param token:
-        :param usage_count:
-        :return:
         """
-        # type: (str, Optional[int]) -> None
         self._redis.zincrby(self.queue_key, token, usage_count)
 
-    def report_usage_per_failure_bucket(self, token, failure_bucket):
-        self.report_usage(
-            token,
-            failure_bucket_count_map.get(failure_bucket, 1)
-        )
+    def report_usage_per_failure_bucket(self, token: str, failure_bucket: int):
+        self.report_usage(token, failure_bucket_count_map.get(failure_bucket, 1))

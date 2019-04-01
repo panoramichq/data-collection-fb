@@ -10,11 +10,7 @@ from common.enums.reporttype import ReportType
 from common.id_tools import parse_id_parts
 from common.store.jobreport import JobReport
 from common.tztools import now_in_tz, now
-from common.math import (
-    adapt_decay_rate_to_population,
-    get_decay_proportion,
-    get_fade_in_proportion,
-)
+from common.math import adapt_decay_rate_to_population, get_decay_proportion, get_fade_in_proportion
 from config.jobs import ACTIVATE_JOB_GATEKEEPER
 from sweep_builder.prioritizer.gatekeeper import JobGateKeeper
 
@@ -26,7 +22,7 @@ DAYS_BACK_DECAY_RATE = adapt_decay_rate_to_population(365 * 2)
 MINUTES_AWAY_FROM_WHOLE_HOUR_DECAY_RATE = adapt_decay_rate_to_population(30)
 
 
-def get_minutes_away_from_whole_hour():
+def get_minutes_away_from_whole_hour() -> int:
     minute = now().minute
     if minute > 30:
         minute = 60 - minute
@@ -43,17 +39,10 @@ def get_minutes_away_from_whole_hour():
 #  ========
 #  ~20k
 @functools.lru_cache(maxsize=20000)
-def assign_score(job_id, timezone):
-    # type: (str, str) -> int
+def assign_score(job_id: str, timezone: str) -> int:
     """
     Calculate score for a given job.
-
-    :param str job_id:
-    :param str timezone:
-    :return: score
-    :rtype: int
     """
-
     # for convenience of reading of the code below,
     # exploding the job id parts into individual vars
     job_id_parts = parse_id_parts(job_id)
@@ -72,11 +61,12 @@ def assign_score(job_id, timezone):
         return 1000
 
     # if we are here, we have Platform-flavored job
-    is_per_parent_job = bool(not entity_type and report_variant)
+    is_per_parent_job = bool(report_variant and (not entity_type or entity_type == Entity.PagePost))
+    is_per_page_metrics_job = bool(report_variant and report_variant in Entity.NON_AA_SCOPED)
 
-    if not is_per_parent_job and ad_account_id != '23845179':
+    if not is_per_parent_job and ad_account_id != '23845179' and not is_per_page_metrics_job:
         # at this time, it's impossible to have per-entity_id
-        # jobs here becase sweep builder specifically avoids
+        # jobs here because sweep builder specifically avoids
         # scoring and releasing per-entity_id jobs
         # TODO: when we get per-entity_id jobs back, do some scoring for these
         # Until then, we are making sure per-parent jobs get out first
@@ -107,7 +97,7 @@ def assign_score(job_id, timezone):
                 # Succeeded in last 8 hours
                 return 0
 
-    if is_per_parent_job:
+    if is_per_parent_job or is_per_page_metrics_job:
         # yeah, i know, redundant, but keeping it here
         # to allow per-entity_id logic further below to be around
 
@@ -124,7 +114,8 @@ def assign_score(job_id, timezone):
                 # TODO: decay this based on time here, instead of below, maybe...
                 score += 10
             elif (
-                collection_record.last_success_dt and collection_record.last_failure_dt
+                collection_record.last_success_dt
+                and collection_record.last_failure_dt
                 and collection_record.last_success_dt > collection_record.last_failure_dt
             ):
                 # Some history of recent success, but also record of failures,
@@ -166,7 +157,7 @@ def assign_score(job_id, timezone):
                 score += 5
 
     else:
-        if entity_type == Entity.AdAccount:
+        if entity_type in [Entity.AdAccount, Entity.Page]:
             # This is an ad account sync job, let's rank it a bit higher as
             # these updates ar quite important
             score += 100
@@ -208,9 +199,7 @@ def assign_score(job_id, timezone):
             # which may happen if report_day is not in proper timezone
             days_from_now = 0
         score = score * get_decay_proportion(
-            days_from_now,
-            rate=DAYS_BACK_DECAY_RATE,
-            decay_floor=0.10  # never decay to lower then 10% of the score
+            days_from_now, rate=DAYS_BACK_DECAY_RATE, decay_floor=0.10  # never decay to lower then 10% of the score
         )
 
     elif report_type == ReportType.lifetime:
