@@ -12,8 +12,8 @@ class ScorableClaim:
     selected_job_signature: JobSignature
     last_report: Optional[JobReport]
 
-    ad_account_id: str
-    timezone: str
+    ad_account_id: Optional[str]
+    timezone: [str]
 
     def __init__(
         self,
