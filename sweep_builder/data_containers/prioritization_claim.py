@@ -1,3 +1,5 @@
+from typing import Optional
+
 from common.job_signature import JobSignature
 
 
@@ -17,8 +19,8 @@ class PrioritizationClaim:
     job_signature: JobSignature
     score: int
 
-    ad_account_id: str = None
-    timezone: str = None
+    ad_account_id: Optional[str]
+    timezone: Optional[str]
 
     def __init__(
         self,
