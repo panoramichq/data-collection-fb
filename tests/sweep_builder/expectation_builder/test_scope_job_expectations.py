@@ -29,7 +29,9 @@ class ScopeJobsExpectationsTests(TestCase):
         results = list(iter_expectations([reality_claim]))
 
         assert results
-        assert len(results) == 2
+        assert len(results) == 2, f'Should yield page and account import jobs but the expectation count does not match'
+
+        # FIXME: Fix these tests so that they are not dependent on the order of the result claims
         expectation_claim = results[0]
 
         assert expectation_claim.entity_id == reality_claim.entity_id
@@ -45,3 +47,11 @@ class ScopeJobsExpectationsTests(TestCase):
             report_type=ReportType.import_accounts,
             report_variant=Entity.AdAccount,
         )
+
+        assert results[1].job_signatures[0].job_id == generate_id(
+            namespace=config.application.UNIVERSAL_ID_SYSTEM_NAMESPACE,
+            entity_type=Entity.Scope,
+            entity_id=entity_id,
+            report_type=ReportType.import_pages,
+            report_variant=Entity.Page,
+        ), f'The second expectation is for import pages'

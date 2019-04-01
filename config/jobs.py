@@ -25,7 +25,7 @@ REPORT_TYPE_ENTITY_FREQUENCY = 2
 
 # Ad account sourcing
 AD_ACCOUNT_IMPORT_DISABLED = False
-PAGES_IMPORT_DISABLED = False
+PAGE_IMPORT_DISABLED = False
 
 # actual entity jobs:
 ENTITY_AA_DISABLED = False
