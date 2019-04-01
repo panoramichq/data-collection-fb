@@ -30,11 +30,11 @@ def test_aa_import_expectation_not_generated_on_nontoken():
 def test_aa_import_expectation_generated_on_token():
     entity_id = gen_string_id()
 
-    reality_claim = RealityClaim(entity_type=Entity.Scope, entity_id=entity_id, tokens=["blah"])
+    reality_claim = RealityClaim(entity_type=Entity.Scope, entity_id=entity_id, tokens=['blah'])
 
     results = list(iter_expectations([reality_claim]))
 
-    assert len(results) == 1
+    assert len(results) == 2
     expectation_claim = results[0]
 
     assert expectation_claim.entity_id == reality_claim.entity_id
