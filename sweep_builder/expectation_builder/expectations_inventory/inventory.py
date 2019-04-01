@@ -44,7 +44,7 @@ entity_expectation_generator_map[Entity.Scope] = list(
         None,
         [
             None if jobs_config.AD_ACCOUNT_IMPORT_DISABLED else ad_accounts_per_scope,
-            None if jobs_config.PAGES_IMPORT_DISABLED else pages_per_scope,
+            None if jobs_config.PAGE_IMPORT_DISABLED else pages_per_scope,
         ],
     )
 )
