@@ -149,22 +149,22 @@ class SweepStatusTracker:
 
     def _report_metrics(self):
         """Regularly report pulse metrics for previous minute to Datadog."""
+        name_map = {
+            FailureBucket.Success: 'success',
+            FailureBucket.Other: 'other',
+            FailureBucket.Throttling: 'throttling',
+            FailureBucket.UserThrottling: 'user_throttling',
+            FailureBucket.ApplicationThrottling: 'application_throttling',
+            FailureBucket.AdAccountThrottling: 'adaccount_throttling',
+            FailureBucket.TooLarge: 'too_large',
+            FailureBucket.WorkingOnIt: 'working_on_it',
+        }
+
         while True:
             gevent.sleep(5)
             prev_minute = self.now_in_minutes() - 1
             redis = get_redis()
             pulse_values = {int(k): int(v) for k, v in redis.hgetall(self._gen_key(prev_minute)).items()}
-
-            name_map = {
-                FailureBucket.Success: 'success',
-                FailureBucket.Other: 'other',
-                FailureBucket.Throttling: 'throttling',
-                FailureBucket.UserThrottling: 'user_throttling',
-                FailureBucket.ApplicationThrottling: 'application_throttling',
-                FailureBucket.AdAccountThrottling: 'adaccount_throttling',
-                FailureBucket.TooLarge: 'too_large',
-                FailureBucket.WorkingOnIt: 'working_on_it',
-            }
 
             total = 0
             for bucket, name in name_map.items():
