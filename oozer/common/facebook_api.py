@@ -1,4 +1,4 @@
-from typing import List, Type, Any, Dict, Tuple
+from typing import List, Type, Any, Dict, Tuple, Optional
 
 from facebook_business.adobjects.adaccount import AdAccount
 from facebook_business.adobjects.comment import Comment
