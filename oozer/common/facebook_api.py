@@ -81,7 +81,7 @@ class FacebookApiErrorInspector:
         """Store the exception we want to test."""
         self._exception = exception
 
-    def get_status_and_bucket(self) -> (int, int):
+    def get_status_and_bucket(self) -> Optional[Tuple[int, int]]:
         """Extract status and bucket from inspected exception."""
         if not isinstance(self._exception, FacebookRequestError):
             return None
