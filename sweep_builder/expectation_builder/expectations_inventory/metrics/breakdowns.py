@@ -128,7 +128,6 @@ def day_metrics_per_entity_under_ad_account(
                 timezone=reality_claim.timezone,
                 entity_hierarchy=entity_node if is_dividing_possible else None,
                 range_start=day,
-                report_type=report_type,
                 report_variant=entity_type,
             )
 
