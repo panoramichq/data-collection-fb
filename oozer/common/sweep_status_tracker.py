@@ -144,7 +144,7 @@ class SweepStatusTracker:
         return pulse
 
     def start_metrics_collector(self):
-        """Start reporting metrics too Datadog in a regular interval."""
+        """Start reporting metrics to Datadog in a regular interval."""
         gevent.spawn(self._report_metrics)
 
     def _report_metrics(self):
