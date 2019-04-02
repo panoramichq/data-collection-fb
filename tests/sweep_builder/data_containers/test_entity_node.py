@@ -22,3 +22,23 @@ def test_add_child_with_path():
     assert 'campaign-id' == campaign_node.entity_id
     assert 'adset-id' == adset_node.entity_id
     assert 'ad-id' == ad_node.entity_id
+
+
+def test_is_leaf():
+    node = EntityNode('ad-account-id', Entity.AdAccount)
+    assert node.is_leaf
+
+
+def test_has_child():
+    node = EntityNode('ad-account-id', Entity.AdAccount)
+    node.add_node(EntityNode('ad-id1', Entity.Ad))
+
+    assert node.has_child('ad-id1')
+
+
+def test_get_child():
+    node = EntityNode('ad-account-id', Entity.AdAccount)
+    child = EntityNode('ad-id1', Entity.Ad)
+    node.add_node(child)
+
+    assert child == node.get_child('ad-id1')
