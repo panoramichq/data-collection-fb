@@ -149,6 +149,7 @@ class SweepStatusTracker:
 
     def _report_metrics(self):
         """Regularly report pulse metrics for previous minute to Datadog."""
+        redis = get_redis()
         name_map = {
             FailureBucket.Success: 'success',
             FailureBucket.Other: 'other',
@@ -163,7 +164,6 @@ class SweepStatusTracker:
         while True:
             gevent.sleep(5)
             prev_minute = self.now_in_minutes() - 1
-            redis = get_redis()
             pulse_values = {int(k): int(v) for k, v in redis.hgetall(self._gen_key(prev_minute)).items()}
 
             total = 0
