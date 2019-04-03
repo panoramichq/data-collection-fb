@@ -189,8 +189,7 @@ class TaskOozer():
         # (Albeit in a concurrent way)
         # This means that calling process will be stuck waiting for us to exit,
         # without even knowing they are blocked.
-        # FIXME: temporarily decreasing throughput by factor of 10
-        while self.actual_processed > (self.get_normative_processed() / 10):
+        while self.actual_processed > self.get_normative_processed():
             gevent.sleep(self.time_slice_length)
 
         task.delay(job_scope, job_context)
