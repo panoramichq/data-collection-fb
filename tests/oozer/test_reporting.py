@@ -31,7 +31,7 @@ def test_reported_task_on_success(mock_report):
 
 @patch('oozer.reporting.PlatformTokenManager.from_job_scope')
 @patch('oozer.reporting.report_job_status_task')
-@patch('oozer.reporting.BugSnagContextData.notify')
+@patch('common.error_inspector.BugSnagContextData.notify')
 @patch('oozer.reporting.FacebookApiErrorInspector.get_status_and_bucket')
 def test_reported_task_on_failure_facebook_error(
     mock_get_status_and_bucket, mock_notify, mock_report, mock_from_job_scope
@@ -47,11 +47,7 @@ def test_reported_task_on_failure_facebook_error(
     def test_task(*_, **__):
         raise exc
 
-    try:
-        test_task(mock_job_scope)
-        pytest.fail('Exception expected to be thrown')
-    except FacebookError:
-        pass
+    test_task(mock_job_scope)
 
     assert mock_job_scope.running_time is not None
     assert mock_report.delay.call_args_list == [
@@ -67,7 +63,7 @@ def test_reported_task_on_failure_facebook_error(
 
 @patch('oozer.reporting.PlatformTokenManager.from_job_scope')
 @patch('oozer.reporting.report_job_status_task')
-@patch('oozer.reporting.BugSnagContextData.notify')
+@patch('common.error_inspector.BugSnagContextData.notify')
 def test_reported_task_on_failure_generic_error(mock_notify, mock_report, mock_from_job_scope):
     exc = Exception('test')
     mock_job_scope = Mock(token='token')
@@ -76,11 +72,7 @@ def test_reported_task_on_failure_generic_error(mock_notify, mock_report, mock_f
     def test_task(*_, **__):
         raise exc
 
-    try:
-        test_task(mock_job_scope)
-        pytest.fail('Exception expected to be thrown')
-    except Exception:
-        pass
+    test_task(mock_job_scope)
 
     assert mock_job_scope.running_time is not None
     assert mock_report.delay.call_args_list == [

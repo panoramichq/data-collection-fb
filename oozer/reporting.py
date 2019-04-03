@@ -26,7 +26,13 @@ def _report_failure(job_scope: JobScope, start_time: float, exc: Exception, **kw
     ErrorInspector.inspect(exc, job_scope.ad_account_id, {'job_scope': job_scope})
 
     token = job_scope.token
-    failure_status, failure_bucket = FacebookApiErrorInspector(exc).get_status_and_bucket()
+    failure_description = FacebookApiErrorInspector(exc).get_status_and_bucket()
+    if failure_description:
+        failure_status, failure_bucket = failure_description
+    else:
+        failure_status = ExternalPlatformJobStatus.GenericError
+        failure_bucket = FailureBucket.Other
+
     report_job_status_task.delay(failure_status, job_scope)
     PlatformTokenManager.from_job_scope(job_scope).report_usage_per_failure_bucket(token, failure_bucket)
     SweepStatusTracker(job_scope.sweep_id).report_status(failure_bucket)
