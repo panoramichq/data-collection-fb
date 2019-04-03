@@ -1,3 +1,5 @@
+# flake8: noqa: E722
+
 # arguments here are new-style (lower-case) Celery config arguments.
 # do NOT rename them without checking
 # http://docs.celeryproject.org/en/latest/userguide/configuration.html#new-lowercase-settings
@@ -40,9 +42,10 @@ worker_hijack_root_logger = False
 broker_pool_limit = None
 
 # http://docs.celeryproject.org/en/latest/userguide/configuration.html#task-soft-time-limit
-#task_soft_time_limit = 60 * 60  # an hour
+# task_soft_time_limit = 60 * 60  # an hour
 
 from common.updatefromenv import update_from_env
+
 update_from_env(__name__)
 
 # for the time being, setting up result store to be same

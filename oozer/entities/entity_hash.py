@@ -3,9 +3,9 @@ import xxhash
 from collections import namedtuple
 from facebook_business.adobjects import ad
 
-
 from oozer.common.enum import FB_CAMPAIGN_MODEL, FB_ADSET_MODEL, FB_AD_MODEL
 from oozer.common.facebook_api import get_default_fields
+from oozer.common.job_context import JobContext
 
 
 class EntityHash(namedtuple('EntityHash', ['data', 'fields'])):
@@ -20,7 +20,7 @@ class EntityHash(namedtuple('EntityHash', ['data', 'fields'])):
         return self.data == other.data and self.fields == other.fields
 
 
-def _checksum_entity(entity, fields=None):
+def _checksum_entity(entity, fields=None) -> EntityHash:
     """
     Compute a hash of the entity fields that we consider stable, to be able
     to tell apart entities that have / have not changed in between runs.
@@ -32,11 +32,7 @@ def _checksum_entity(entity, fields=None):
     """
 
     # Drop fields we don't care about
-    blacklist = {
-        FB_CAMPAIGN_MODEL: [],
-        FB_ADSET_MODEL: [],
-        FB_AD_MODEL: [ad.Ad.Field.recommendations]
-    }
+    blacklist = {FB_CAMPAIGN_MODEL: [], FB_ADSET_MODEL: [], FB_AD_MODEL: [ad.Ad.Field.recommendations]}
 
     fields = fields or get_default_fields(entity.__class__)
 
@@ -52,13 +48,10 @@ def _checksum_entity(entity, fields=None):
         data_hash.update(str(raw_data.get(field, '')))
         fields_hash.update(field)
 
-    return EntityHash(
-        data=data_hash.hexdigest(),
-        fields=fields_hash.hexdigest()
-    )
+    return EntityHash(data=data_hash.hexdigest(), fields=fields_hash.hexdigest())
 
 
-def _checksum_from_job_context(job_context, entity_id):
+def _checksum_from_job_context(job_context: JobContext, entity_id: str) -> EntityHash:
     """
     Recreate the EntityHash object from JobContext provided
 
@@ -67,7 +60,5 @@ def _checksum_from_job_context(job_context, entity_id):
 
     :return EntityHash: The reconstructed EntityHash object
     """
-    current_hash_raw = job_context.entity_checksums.get(
-        entity_id, (None, None)
-    )
+    current_hash_raw = job_context.entity_checksums.get(entity_id, (None, None))
     return EntityHash(*current_hash_raw)

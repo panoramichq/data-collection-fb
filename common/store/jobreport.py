@@ -152,12 +152,12 @@ datetimes of last expectation. Maybe add a worker for that clean up. Without tha
 constant annoyance.
 
 """
+from pynamodb import attributes
 
-from common.id_tools import parse_id, generate_id, JobIdParts, fields as job_id_fields
-from common.memoize import MemoizeMixin, memoized_property
+from common.memoize import MemoizeMixin
 from config import dynamodb as dynamodb_config
 
-from .base import BaseMeta, BaseModel, attributes
+from common.store.base import BaseMeta, BaseModel
 
 
 class JobReport(BaseModel, MemoizeMixin):
@@ -172,9 +172,7 @@ class JobReport(BaseModel, MemoizeMixin):
     # but we care much more about fast idempotent writes in batches
     # more than fast occasional reads.
 
-    Meta = BaseMeta(
-        dynamodb_config.JOB_REPORT_TABLE
-    )
+    Meta = BaseMeta(dynamodb_config.JOB_REPORT_TABLE)
 
     # value of job_id here could be super weird.
     # It's actually the value of JobReportEntityExpectation.job_id
@@ -202,8 +200,16 @@ class JobReport(BaseModel, MemoizeMixin):
     last_failure_error = attributes.UnicodeAttribute(null=True, attr_name='fmessage')
     last_failure_bucket = attributes.NumberAttribute(null=True, attr_name='fb')
 
+    last_total_running_time = attributes.NumberAttribute(null=True, attr_name='trt')
+    last_total_datapoint_count = attributes.NumberAttribute(null=True, attr_name='tdc')
 
-def sync_schema(brute_force=False):
+    last_partial_running_time = attributes.NumberAttribute(null=True, attr_name='prt')
+    last_partial_datapoint_count = attributes.NumberAttribute(null=True, attr_name='pdc')
+
+    fails_in_row = attributes.NumberAttribute(attr_name='fir')
+
+
+def sync_schema(brute_force: bool = False):
     """
     In order to push fidelity and maintenance of table "migrations"
     closer to the code where the models are migrated, this is where
@@ -212,9 +218,7 @@ def sync_schema(brute_force=False):
     """
     from pynamodb.exceptions import TableError, TableDoesNotExist
 
-    tables = [
-        JobReport
-    ]
+    tables = [JobReport]
 
     for table in tables:
         # create_table does NOTHING if table already exists - bad

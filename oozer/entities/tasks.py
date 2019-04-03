@@ -1,3 +1,5 @@
-from .feedback_entity_task import feedback_entity_task
-from .collect_entities_per_adaccount_task import collect_entities_per_adaccount_task
-from .import_ad_accounts_task import import_ad_accounts_task
+# flake8: noqa: F401
+
+from oozer.entities.feedback_entity_task import feedback_entity_task
+from oozer.entities.collect_entities_task import collect_entities_per_adaccount_task, collect_entities_per_page_task
+from oozer.entities.import_scope_entities_task import import_ad_accounts_task
