@@ -1,6 +1,8 @@
 import sys
 import types
 
+from contextlib import contextmanager
+
 
 class FakeModule:
     """
@@ -38,7 +40,7 @@ class FakeModule:
             _prior_parts.append(name_part)
 
         if not module:
-            raise ValueError(f'Module name "{self.module_name}" cannot be faked as it already exists')
+            raise ValueError(f'Module name "{module_name}" cannot be faked as it already exists')
 
         if self.module_body:
             exec(self.module_body, module.__dict__)

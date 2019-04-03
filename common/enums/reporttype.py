@@ -3,7 +3,6 @@ To ward off evil (mis)spelling spirits, using centralized collection of labels
 to be used for labeling all reports
 """
 
-
 class ReportType:
     """
     There are 2 types of report type labels we use in this system:
@@ -37,8 +36,6 @@ class ReportType:
     # given scope, import AdAccounts (as associated data) from scope
     import_accounts = 'import_accounts'
 
-    import_pages = 'import_pages'
-
     # Part of "done-ness" calculation system
     # used to wrap bundles of persisted expectations to Cold Store
     sync_expectations = 'sync_expectations'
@@ -47,12 +44,15 @@ class ReportType:
     # used to wrap payloads communicating "done with job X" payloads to to Cold Store
     sync_status = 'sync_status'
 
-    MUST_RUN_EVERY_SWEEP = {import_accounts, import_pages, sync_expectations, sync_status}
+    MUST_RUN_EVERY_SWEEP = {
+        import_accounts,
+        sync_expectations,
+        sync_status
+    }
 
     entity = 'entity'
 
     lifetime = 'lifetime'
-
     # day_hour is a bastardisation of
     # actual `hour` normative task (meaning we actually, eventually
     # store and use this data in per-hour slices in Cold Store and elsewhere)
@@ -89,6 +89,14 @@ class ReportType:
     day_hour = f'day{Breakdown.hour}'
     day_platform = f'day{Breakdown.platform}'
 
-    ALL_DAY_BREAKDOWNS = {day, day_age_gender, day_dma, day_hour, day_platform}
+    ALL_DAY_BREAKDOWNS = {
+        day,
+        day_age_gender,
+        day_dma,
+        day_hour,
+        day_platform
+    }
 
-    ALL_METRICS = ALL_DAY_BREAKDOWNS | {lifetime}
+    ALL_METRICS = ALL_DAY_BREAKDOWNS | {
+        lifetime
+    }

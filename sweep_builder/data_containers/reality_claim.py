@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Set
+from typing import Optional, Set
 
 from common.enums.entity import Entity
 
@@ -18,21 +18,21 @@ class RealityClaim:
     # entity_id may be same value as ad_account_id for AdAccount types (for consistency of interface)
     # entity_id value may actually be scope ID for claims of Scope's existence
 
-    entity_id: str = None
-    entity_type: str = None
+    entity_id = None  # type: str or None
+    entity_type = None  # type: str or None
 
-    ad_account_id: str = None
+    ad_account_id = None  # type: str or None
 
-    tokens: Set[str] = None
+    tokens = None  # type: Set[str]
 
     # Comes from parent AdAccount record
-    timezone: str = None
+    timezone = None  # type: str
 
     # Campaign, AdSet, Ad objects may have these set
     # Beginning of Life Datetime
-    bol: datetime = None
+    bol = None  # type: datetime or None
     # End of Life Datetime
-    eol: datetime = None
+    eol = None  # type: Optional[datetime]
 
     def __init__(self, _data=None, **more_data):
         self.update(_data, **more_data)
@@ -42,13 +42,23 @@ class RealityClaim:
     def update(self, _data=None, **more_data):
         """
         Similar to native python's dict.update()
+
+        :param _data: Positionally-provided Dict with data to apply to model
+        :type _data: Optional[dict]
+        :param more_data:
+        :type more_data: dict
+        :return:
         """
         if _data is not None:
             self.__dict__.update(**_data)
         self.__dict__.update(**more_data)
 
-    def __repr__(self) -> str:
-        return "<{0} {1} {2}>".format(self.__class__.__name__, self.entity_type, self.entity_id)
+    def __repr__(self):
+        return "<{} {} {}>".format(
+            self.__class__.__name__,
+            self.entity_type,
+            self.entity_id
+        )
 
     def to_dict(self):
         return self.__dict__.copy()

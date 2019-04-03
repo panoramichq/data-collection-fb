@@ -114,22 +114,6 @@ jobs:
           aws configure set default.region $AWS_REGION
           aws ssm put-parameter --overwrite --name "data-collection-fb-${SSM_PARAM_SUFFIX}" --type "String" --value ${IMAGE_NAME}
 
-  run_flake8:
-    docker:
-    - image: circleci/python:3.6-jessie-node
-    steps:
-    - checkout
-    - run: sudo pip install -r requirements.dev.txt
-    - run: flake8 --filename=*.py
-
-  run_black:
-    docker:
-    - image: circleci/python:3.6-jessie-node
-    steps:
-    - checkout
-    - run: sudo pip install -r requirements.dev.txt
-    - run: black --skip-string-normalization --diff --line-length 120 --target-version py36 .
-
   run_tests:
     machine:
       image: circleci/classic:latest
@@ -219,8 +203,6 @@ workflows:
               only:
                 - master
                 - production
-      - run_flake8
-      - run_black
 
       # - hold_for_deploy_staging:
       #     type: approval

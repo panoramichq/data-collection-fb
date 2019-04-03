@@ -1,12 +1,15 @@
-import functools
 import logging
+import random
+import ujson as json
 
+from collections import namedtuple, OrderedDict
+from typing import Generator, Tuple, List
 from contextlib import AbstractContextManager
-from typing import Callable, Any
 
+from common.bugsnag import BugSnagContextData
 from common.connect.redis import get_redis
-from oozer.common.errors import TaskOutsideSweepException
-from oozer.common.job_scope import JobScope
+from common.id_tools import parse_id_parts
+
 
 logger = logging.getLogger(__name__)
 
@@ -23,13 +26,16 @@ class SweepRunningFlag(AbstractContextManager):
     """
 
     @staticmethod
-    def _generate_key(sweep_id: str) -> str:
+    def _generate_key(sweep_id):
         return f'{sweep_id}-running'
 
-    def __init__(self, sweep_id: str):
+    def __init__(self, sweep_id):
+        """
+        :param SortedJobsQueueInterface sorted_jobs_queue_interface:
+        """
         self.sweep_id = sweep_id
 
-    def __enter__(self) -> 'SweepRunningFlag':
+    def __enter__(self):
         get_redis().set(self._generate_key(self.sweep_id), 'true')
         return self
 
@@ -37,18 +43,5 @@ class SweepRunningFlag(AbstractContextManager):
         get_redis().delete(self._generate_key(self.sweep_id))
 
     @classmethod
-    def is_set(cls, sweep_id: str) -> bool:
+    def is_set(cls, sweep_id):
         return bool(get_redis().get(cls._generate_key(sweep_id)))
-
-
-def sweep_running(func: Callable) -> Callable:
-    """Decorator that checks sweep is running."""
-
-    @functools.wraps(func)
-    def wrapper(job_scope: JobScope, *args: Any, **kwargs: Any):
-        if not SweepRunningFlag.is_set(job_scope.sweep_id):
-            raise TaskOutsideSweepException(job_scope)
-
-        return func(job_scope, *args, **kwargs)
-
-    return wrapper

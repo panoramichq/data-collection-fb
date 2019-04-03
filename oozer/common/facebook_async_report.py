@@ -1,9 +1,13 @@
 from facebook_business.adobjects.adreportrun import AdReportRun
+from facebook_business.adobjects.adsinsights import AdsInsights
 
 from config.facebook import INSIGHTS_MAX_POLLING_INTERVAL, INSIGHTS_MIN_POLLING_INTERVAL
 
 
 class FacebookReportDefinition:
+    """
+
+    """
     # TODO: Decide whether we need and want the notion of what fields constitute
     # a report
 
@@ -42,15 +46,19 @@ class FacebookAsyncReportStatus:
     class ReportFailed(ValueError):
         pass
 
+
     PENDING_STATE = {'Job Not Started', 'Job Started', 'Job Running'}
-    SUCCEEDED_STATE = {'Job Completed'}
+    SUCCEEDED_STATE = {'Job Completed',}
     FAILED_STATE = {'Job Failed', 'Job Skipped'}
     COMPLETED_STATE = SUCCEEDED_STATE | FAILED_STATE
     BACKOFF_MAX_REFRESH_COUNT = 10
 
     _report = None
 
-    def __init__(self, report_status_obj: AdReportRun):
+    def __init__(self, report_status_obj):
+        """
+        :param AdReportRun report_status_obj:
+        """
         # prior version of this method allowed spin up of
         # AdReportRun on the fly from report ID and Token.
         # That's actually cool because if we stay true to that
@@ -86,13 +94,13 @@ class FacebookAsyncReportStatus:
         return self.status in self.COMPLETED_STATE
 
     @property
-    def backoff_interval(self) -> int:
+    def backoff_interval(self):
         # Cap refresh count to avoid large powers
         refresh_count = min(self._refresh_count, self.BACKOFF_MAX_REFRESH_COUNT)
         return min(INSIGHTS_MAX_POLLING_INTERVAL, INSIGHTS_MIN_POLLING_INTERVAL * (2 ** refresh_count))
 
     @property
-    def is_success(self) -> bool:
+    def is_success(self):
         """
         Check whether given report finished being worked on and the operation
         was a success. If so, it is safe to start reading the report
@@ -102,6 +110,9 @@ class FacebookAsyncReportStatus:
         return self.status in self.SUCCEEDED_STATE
 
     def iter_report_data(self, *args, **kwargs):
+        """
+        :return:
+        """
         if not self.is_success:
             self.ReportFailed(f"Report is not marked as '{self.status}' - not ready for consumption.")
 
@@ -110,6 +121,7 @@ class FacebookAsyncReportStatus:
         # Do NOT use any serialization methods on self._report.get_insights() returned value
         # just iterate through it and you are guarantee to get them all that way.
 
+        ads_insights_object = None  # type: AdsInsights
         for ads_insights_object in self._report.get_insights(*args, **kwargs):
             # .export_all_data converts AdsInsights back into pure dict
             # with native keys and *native* nested values.

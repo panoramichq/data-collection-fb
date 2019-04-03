@@ -7,6 +7,7 @@ from .fakemodule import FakeModule
 
 
 class TestingFakeModule(TestCase):
+
     def test_create_and_clean(self):
 
         with FakeModule('a.b.c') as m:

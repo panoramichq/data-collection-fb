@@ -5,12 +5,15 @@ from common.enums.entity import Entity
 from common.enums.reporttype import ReportType
 from common.id_tools import generate_id, parse_id_parts
 from common.tztools import now
+from oozer import inventory
 from oozer.common import cold_storage
 from oozer.common import expecations_store
 from oozer.common.job_scope import JobScope
 from oozer.common.enum import JobStatus
+from oozer.common.sorted_jobs_queue import SortedJobsQueue
 from oozer import sync_expectations_task
 from tests.base import random
+from unittest.mock import patch, Mock, ANY
 
 
 class TestSyncExcpectationsTask(TestCase):
@@ -45,7 +48,7 @@ class TestSyncExcpectationsTask(TestCase):
             ad_account_id=random.gen_string_id(),
             report_type=ReportType.day_hour,
             report_variant=Entity.Ad,
-            range_start='2000-01-01',
+            range_start='2000-01-01'
         )
         rr = [expectation_job_id]
 
@@ -55,7 +58,7 @@ class TestSyncExcpectationsTask(TestCase):
             report_type=ReportType.sync_expectations,
         )
 
-        with mock.patch.object(expecations_store, 'iter_expectations_per_ad_account', return_value=rr):
+        with mock.patch.object(expecations_store, 'iter_expectations_per_ad_account', return_value=rr) as jid_iter:
             sync_expectations_task.sync_expectations(sync_expectations_job_scope)
 
     def test_task_is_called_with_right_data(self):
@@ -67,7 +70,7 @@ class TestSyncExcpectationsTask(TestCase):
             ad_account_id=random.gen_string_id(),
             report_type=ReportType.day_hour,
             report_variant=Entity.Ad,
-            range_start=range_start,
+            range_start=range_start
         )
         rr = [expected_job_id]
         expected_job_id_parts = parse_id_parts(expected_job_id)
@@ -78,9 +81,8 @@ class TestSyncExcpectationsTask(TestCase):
             report_type=ReportType.sync_expectations,
         )
 
-        with mock.patch.object(
-            expecations_store, 'iter_expectations_per_ad_account', return_value=rr
-        ) as jid_iter, mock.patch.object(cold_storage.ChunkDumpStore, 'store') as store:
+        with mock.patch.object(expecations_store, 'iter_expectations_per_ad_account', return_value=rr) as jid_iter, \
+            mock.patch.object(cold_storage.ChunkDumpStore, 'store') as store:
 
             sync_expectations_task.sync_expectations(sync_expectations_job_scope)
 
@@ -106,9 +108,9 @@ class TestSyncExcpectationsTask(TestCase):
             'entity_id': expected_job_id_parts.entity_id,
             'report_type': expected_job_id_parts.report_type,
             'report_variant': expected_job_id_parts.report_variant,
-            'range_start': range_start_should_be,  # checking manually to ensure it's properly stringified
+            'range_start': range_start_should_be, # checking manually to ensure it's properly stringified
             'range_end': None,
-            'platform_namespace': JobScope.namespace,  # default platform value
+            'platform_namespace': JobScope.namespace  # default platform value
         }
 
     def test_task_error_is_logged_into_job_report(self):
@@ -123,9 +125,8 @@ class TestSyncExcpectationsTask(TestCase):
             report_type=ReportType.sync_expectations,
         )
 
-        with mock.patch.object(report_job_status_task, 'delay') as job_report, mock.patch.object(
-            sync_expectations_task, 'sync_expectations', side_effect=MyException('nope!')
-        ):
+        with mock.patch.object(report_job_status_task, 'delay') as job_report, \
+            mock.patch.object(sync_expectations_task, 'sync_expectations', side_effect=MyException('nope!')):
 
             with self.assertRaises(MyException):
                 sync_expectations_task.sync_expectations_task.delay(sync_expectations_job_scope, None)

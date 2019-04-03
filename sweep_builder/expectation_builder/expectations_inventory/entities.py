@@ -8,13 +8,18 @@ from common.id_tools import generate_id
 from common.job_signature import JobSignature
 from common.enums.reporttype import ReportType
 from common.enums.entity import Entity
-from sweep_builder.types import ExpectationGeneratorType
 
 
-def entities_per_ad_account(entity_type: str, reality_claim: RealityClaim) -> Generator[ExpectationClaim, None, None]:
+def entities_per_ad_account(entity_type, reality_claim):
+    # type: (str, RealityClaim) -> Generator[ExpectationClaim]
     """
     Generates "fetch EntityType entities metadata per given AA" job call sig
+
+    :param str entity_type: One of Entity enum values
+    :param RealityClaim reality_claim:
+    :rtype: Generator[ExpectationClaim]
     """
+
     # Mental Note:
     # This job signature generator is designed to be parked
     # *under AdAccount job signatures generators inventory*
@@ -36,115 +41,73 @@ def entities_per_ad_account(entity_type: str, reality_claim: RealityClaim) -> Ge
 
     yield ExpectationClaim(
         reality_claim.to_dict(),
-        job_signatures=[
-            JobSignature.bind(
-                generate_id(
-                    ad_account_id=reality_claim.ad_account_id, report_type=ReportType.entity, report_variant=entity_type
-                )
-            )
-        ],
-    )
-
-
-def entities_per_page(entity_type: str, reality_claim: RealityClaim) -> Generator[ExpectationClaim, None, None]:
-    """
-    Generates "fetch EntityType entities metadata per given Page" job call sig
-    """
-    assert entity_type in Entity.NON_AA_SCOPED
-
-    yield ExpectationClaim(
-        reality_claim.to_dict(),
-        job_signatures=[
-            JobSignature.bind(
-                generate_id(
-                    ad_account_id=reality_claim.ad_account_id, report_type=ReportType.entity, report_variant=entity_type
-                )
-            )
-        ],
-    )
-
-
-def entities_per_page_post(entity_type: str, reality_claim: RealityClaim) -> Generator[ExpectationClaim, None, None]:
-    """
-    Generates "fetch EntityType entities metadata per given Page" job call sig
-    """
-    assert entity_type in Entity.NON_AA_SCOPED
-
-    yield ExpectationClaim(
-        reality_claim.to_dict(),
-        job_signatures=[
+        job_signatures = [
             JobSignature.bind(
                 generate_id(
                     ad_account_id=reality_claim.ad_account_id,
                     report_type=ReportType.entity,
-                    report_variant=entity_type,
-                    entity_id=reality_claim.entity_id,
+                    report_variant=entity_type
                 )
             )
-        ],
+        ]
     )
 
 
-def page_entity(reality_claim: RealityClaim) -> Generator[ExpectationClaim, None, None]:
-    assert reality_claim.entity_type == Entity.Page, 'Page expectation should be triggered only by page reality claims'
+def ad_account_entity(reality_claim): # type: (RealityClaim) -> Generator[ExpectationClaim]
+    assert reality_claim.entity_type == Entity.AdAccount, \
+        'Ad account expectation should be triggered only by ad account reality claims'
 
     yield ExpectationClaim(
         reality_claim.to_dict(),
-        job_signatures=[
+        job_signatures = [
             JobSignature.bind(
                 generate_id(
                     ad_account_id=reality_claim.ad_account_id,
                     entity_id=reality_claim.entity_id,
                     report_type=ReportType.entity,
-                    report_variant=Entity.Page,
+                    report_variant=Entity.AdAccount
                 )
             )
-        ],
+        ]
     )
 
 
-def ad_account_entity(reality_claim: RealityClaim) -> Generator[ExpectationClaim, None, None]:
-    assert (
-        reality_claim.entity_type == Entity.AdAccount
-    ), 'Ad account expectation should be triggered only by ad account reality claims'
 
-    yield ExpectationClaim(
-        reality_claim.to_dict(),
-        job_signatures=[
-            JobSignature.bind(
-                generate_id(
-                    ad_account_id=reality_claim.ad_account_id,
-                    entity_id=reality_claim.entity_id,
-                    report_type=ReportType.entity,
-                    report_variant=Entity.AdAccount,
-                )
-            )
-        ],
-    )
+ad_account = functools.partial(
+    entities_per_ad_account,
+    Entity.AdAccount
+) # type: (RealityClaim) -> Generator[ExpectationClaim]
+
+campaign_entities_per_ad_account = functools.partial(
+    entities_per_ad_account,
+    Entity.Campaign
+)  # type: (RealityClaim) -> Generator[ExpectationClaim]
 
 
-ad_account: ExpectationGeneratorType = functools.partial(entities_per_ad_account, Entity.AdAccount)
+adset_entities_per_ad_account = functools.partial(
+    entities_per_ad_account,
+    Entity.AdSet
+)  # type: (RealityClaim) -> Generator[ExpectationClaim]
 
-campaign_entities_per_ad_account: ExpectationGeneratorType = functools.partial(entities_per_ad_account, Entity.Campaign)
 
-adset_entities_per_ad_account: ExpectationGeneratorType = functools.partial(entities_per_ad_account, Entity.AdSet)
+ad_entities_per_ad_account = functools.partial(
+    entities_per_ad_account,
+    Entity.Ad
+)  # type: (RealityClaim) -> Generator[ExpectationClaim]
 
-ad_entities_per_ad_account: ExpectationGeneratorType = functools.partial(entities_per_ad_account, Entity.Ad)
+ad_creative_entities_per_ad_account = functools.partial(
+    entities_per_ad_account,
+    Entity.AdCreative
+)  # type: (RealityClaim) -> Generator[ExpectationClaim]
 
-ad_creative_entities_per_ad_account: ExpectationGeneratorType = functools.partial(
-    entities_per_ad_account, Entity.AdCreative
-)
+ad_video_entities_per_ad_account = functools.partial(
+    entities_per_ad_account,
+    Entity.AdVideo
+)  # type: (RealityClaim) -> Generator[ExpectationClaim]
 
-ad_video_entities_per_ad_account: ExpectationGeneratorType = functools.partial(entities_per_ad_account, Entity.AdVideo)
 
-custom_audience_entities_per_ad_account: ExpectationGeneratorType = functools.partial(
-    entities_per_ad_account, Entity.CustomAudience
-)
+custom_audience_entities_per_ad_account = functools.partial(
+    entities_per_ad_account,
+    Entity.CustomAudience
+)  # type: (RealityClaim) -> Generator[ExpectationClaim]
 
-page_post_entities_per_page: ExpectationGeneratorType = functools.partial(entities_per_page, Entity.PagePost)
-page_post_promotable_entities_per_page: ExpectationGeneratorType = functools.partial(
-    entities_per_page, Entity.PagePostPromotable
-)
-page_video_entities_per_page: ExpectationGeneratorType = functools.partial(entities_per_page, Entity.PageVideo)
-
-comment_entities_per_page_post: ExpectationGeneratorType = functools.partial(entities_per_page_post, Entity.Comment)

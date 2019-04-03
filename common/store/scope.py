@@ -1,10 +1,10 @@
-from pynamodb import attributes
-
+from common.enums.entity import Entity
 from common.memoize import memoized_property, MemoizeMixin
 from config import dynamodb as dynamodb_config
 from config import operam_console_api as operam_console_api_config
 
-from common.store.base import BaseMeta, BaseModel
+from .base import BaseMeta, BaseModel, attributes
+
 
 # at least one value is meaningful here. It indicates
 # both, the source of ad accounts AND one-and-only token
@@ -13,7 +13,6 @@ from common.store.base import BaseMeta, BaseModel
 # from Console DB and use that single system user token
 # stored in Console for them all"
 DEFAULT_SCOPE = 'Console'
-
 # With time ^ this should go away and be replaced
 # by proper tokens-to-AdAccount management API
 
@@ -28,7 +27,6 @@ class PlatformToken(BaseModel):
     When these structural parts are put in,
     remove this table and migrate code to rely on other sources of token data
     """
-
     Meta = BaseMeta(dynamodb_config.TOKEN_TABLE)
 
     token_id = attributes.UnicodeAttribute(hash_key=True, attr_name='tid')
@@ -46,7 +44,6 @@ class AssetScope(BaseModel, MemoizeMixin):
     Initially used for tracking / managing the per-sweep sync of Ad Account IDs from
     Console into our internal store for later iteration over that collection.
     """
-
     Meta = BaseMeta(dynamodb_config.AD_ACCOUNT_SCOPE_TABLE)
 
     # scope is an ephemeral scoping element
@@ -81,7 +78,12 @@ class AssetScope(BaseModel, MemoizeMixin):
         Returns a set of actual FB tokens that token_ids attribute point to by ids
         :return:
         """
-        return {record.token for record in PlatformToken.scan(PlatformToken.token_id.is_in(*self.platform_token_ids))}
+        return {
+            record.token
+            for record in PlatformToken.scan(
+                PlatformToken.token_id.is_in(*self.platform_token_ids)
+            )
+        }
 
     @property
     def platform_token(self):
@@ -91,7 +93,7 @@ class AssetScope(BaseModel, MemoizeMixin):
             return None
 
 
-def sync_schema(brute_force: bool = False):
+def sync_schema(brute_force=False):
     """
     In order to push fidelity and maintenance of table "migrations"
     closer to the code where the models are migrated, this is where
@@ -100,7 +102,10 @@ def sync_schema(brute_force: bool = False):
     """
     from pynamodb.exceptions import TableError, TableDoesNotExist
 
-    tables = [AssetScope, PlatformToken]
+    tables = [
+        AssetScope,
+        PlatformToken
+    ]
 
     for table in tables:
         # create_table does NOTHING if table already exists - bad

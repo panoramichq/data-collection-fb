@@ -1,8 +1,8 @@
-from typing import List, Optional
+from typing import List
 
 from common.job_signature import JobSignature
 
-from sweep_builder.data_containers.reality_claim import RealityClaim
+from .reality_claim import RealityClaim
 
 
 class ExpectationClaim(RealityClaim):
@@ -22,10 +22,10 @@ class ExpectationClaim(RealityClaim):
     # see base attrs on RealityClaim.
     # here we just top that off with more
 
-    job_signatures: List[JobSignature] = []
+    job_signatures = []  # type: List[JobSignature]
 
     @property
-    def normative_job_signature(self) -> Optional[JobSignature]:
+    def normative_job_signature(self):
         try:
             return self.job_signatures[0]
         except IndexError:

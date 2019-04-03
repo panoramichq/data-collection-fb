@@ -1,5 +1,3 @@
-# flake8: noqa: E722
-
 # https://github.com/pynamodb/PynamoDB/blob/master/docs/settings.rst
 # Overriding defaults to increase connection pool size
 # from default 10 to hundreds
@@ -22,13 +20,12 @@ from botocore.vendored.requests import adapters
 # (the gevent-forked ones per process) as setting for this.
 POOL_SIZE = 300
 
-
 class CustomPynamoSession(requests.Session):
+
     def __init__(self):
         super().__init__()
         self.mount('http://', adapters.HTTPAdapter(pool_maxsize=POOL_SIZE))
         self.mount('https://', adapters.HTTPAdapter(pool_maxsize=POOL_SIZE))
         # logging.getLogger().warning("!!!!!!! We are inside custom")
-
 
 session_cls = CustomPynamoSession

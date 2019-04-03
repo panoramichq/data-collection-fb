@@ -1,5 +1,3 @@
-# flake8: noqa: E722
-
 STATSD_SERVER = 'localhost'
 """
 The address of the statsd server you will be sending measurements to
@@ -20,10 +18,10 @@ PREFIX_GAUGE = 'gauges'
 PREFIX_HISTOGRAM = 'histogram'
 PREFIX_SET = 'sets'
 PREFIX_TIMING = 'timers'
+
 """
 Prefixes for individual metric types
 """
 
 from common.updatefromenv import update_from_env
-
 update_from_env(__name__)

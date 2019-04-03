@@ -1,5 +1,4 @@
 # must be first, as it does event loop patching and other "first" things
-from oozer.common.enum import ColdStoreBucketType
 from tests.base.testcase import TestCase, mock, skip
 
 from common.enums.entity import Entity
@@ -7,11 +6,16 @@ from common.enums.reporttype import ReportType
 from oozer.common.job_scope import JobScope
 from tests.base.random import gen_string_id
 
-from oozer.common.cold_storage.batch_store import ChunkDumpStore, NormalStore
-from oozer.common.cold_storage.base_store import load_data
+from oozer.common.cold_storage.batch_store import (
+    ChunkDumpStore,
+    MemorySpoolStore,
+    NormalStore,
+)
+from oozer.common.cold_storage.base_store import load_data, load
 
 
 class TestBatchStore(TestCase):
+
     def setUp(self):
 
         self.job_scope = JobScope(
@@ -38,11 +42,15 @@ class TestBatchStore(TestCase):
         with NormalStore(self.job_scope) as store:
             key = store(data)
 
-        assert load_data(key) == [data]  # data auto-packaged into array in store()
+        assert load_data(key) == [data] #data auto-packaged into array in store()
 
     def test_chunked_dump_store(self):
 
-        data_iter = [{'id': 1}, {'id': 2}, {'id': 3}]
+        data_iter = [
+            {'id': 1},
+            {'id': 2},
+            {'id': 3},
+        ]
 
         with mock.patch.object(ChunkDumpStore, '_store') as _store:
 
@@ -55,8 +63,16 @@ class TestBatchStore(TestCase):
 
         aa, kk = sig1
         assert not kk
-        assert aa == ([{'id': 1}, {'id': 2}], self.job_scope, 0, ColdStoreBucketType.ORIGINAL_BUCKET, None)  # chunk ID
+        assert aa == (
+            [{'id': 1}, {'id': 2}],
+            self.job_scope,
+            0 # chunk ID
+        )
 
         aa, kk = sig2
         assert not kk
-        assert aa == ([{'id': 3}], self.job_scope, 1, ColdStoreBucketType.ORIGINAL_BUCKET, None)  # chunk ID
+        assert aa == (
+            [{'id': 3}],
+            self.job_scope,
+            1 # chunk ID
+        )

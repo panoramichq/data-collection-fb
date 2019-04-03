@@ -3,16 +3,14 @@ from facebook_business.adobjects import (
     adaccount,
     adset,
     campaign,
-    comment,
     adcreative,
     advideo,
     customaudience,
-    page,
-    pagepost,
 )
 
 from common.enums.entity import Entity
 from common.enums.failure_bucket import FailureBucket
+
 
 FB_ADACCOUNT_MODEL = adaccount.AdAccount
 FB_CAMPAIGN_MODEL = campaign.Campaign
@@ -21,30 +19,24 @@ FB_AD_MODEL = ad.Ad
 FB_AD_CREATIVE_MODEL = adcreative.AdCreative
 FB_AD_VIDEO_MODEL = advideo.AdVideo
 FB_CUSTOM_AUDIENCE_MODEL = customaudience.CustomAudience
-FB_PAGE_MODEL = page.Page
-FB_PAGE_POST_MODEL = pagepost.PagePost
-FB_COMMENT_MODEL = comment.Comment
 
 FB_MODEL_ENUM_VALUE_MAP = {
-    FB_ADACCOUNT_MODEL: (Entity.AdAccount,),
-    FB_CAMPAIGN_MODEL: (Entity.Campaign,),
-    FB_ADSET_MODEL: (Entity.AdSet,),
-    FB_AD_MODEL: (Entity.Ad,),
-    FB_AD_CREATIVE_MODEL: (Entity.AdCreative,),
-    FB_AD_VIDEO_MODEL: (Entity.AdVideo, Entity.PageVideo),
-    FB_CUSTOM_AUDIENCE_MODEL: (Entity.CustomAudience,),
-    FB_PAGE_MODEL: (Entity.Page,),
-    FB_PAGE_POST_MODEL: (Entity.PagePost, Entity.PagePostPromotable),
-    FB_COMMENT_MODEL: (Entity.Comment,),
+    FB_ADACCOUNT_MODEL: Entity.AdAccount,
+    FB_CAMPAIGN_MODEL: Entity.Campaign,
+    FB_ADSET_MODEL: Entity.AdSet,
+    FB_AD_MODEL: Entity.Ad,
+    FB_AD_CREATIVE_MODEL: Entity.AdCreative,
+    FB_AD_VIDEO_MODEL: Entity.AdVideo,
+    FB_CUSTOM_AUDIENCE_MODEL: Entity.CustomAudience,
 }
 
-ENUM_VALUE_FB_MODEL_MAP = {}
-for Model, values in FB_MODEL_ENUM_VALUE_MAP.items():
-    for value in values:
-        ENUM_VALUE_FB_MODEL_MAP[value] = Model
+ENUM_VALUE_FB_MODEL_MAP = {
+    value: Model
+    for Model, value in FB_MODEL_ENUM_VALUE_MAP.items()
+}
 
 
-def to_fb_model(entity_id: str, entity_type: str, api=None):
+def to_fb_model(entity_id, entity_type, api=None):
     assert entity_type in Entity.ALL
 
     if entity_type == Entity.AdAccount:
@@ -53,6 +45,7 @@ def to_fb_model(entity_id: str, entity_type: str, api=None):
         fbid = entity_id
 
     return ENUM_VALUE_FB_MODEL_MAP[entity_type](fbid=fbid, api=api)
+
 
 
 class JobStatus:
@@ -115,18 +108,5 @@ class ExternalPlatformJobStatus(JobStatus):
         TooMuchData: FailureBucket.TooLarge,
         ThrottlingError: FailureBucket.Throttling,
         GenericPlatformError: FailureBucket.Other,
-        JobStatus.GenericError: FailureBucket.Other,
+        JobStatus.GenericError: FailureBucket.Other
     }
-
-
-class ReportEntityApiKind:
-
-    Ad = 'ads'
-    Page = 'page'
-    Video = 'video'
-    Post = 'post'
-
-
-class ColdStoreBucketType:
-    ORIGINAL_BUCKET = 'orig'
-    RAW_BUCKET = 'raw'
