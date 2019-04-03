@@ -70,6 +70,9 @@ def build_sweep_slice_per_ad_account_task(sweep_id: str, ad_account_reality_clai
 
         logger.info(f"#{sweep_id}-AA<{ad_account_reality_claim.ad_account_id}>: Queued up a total of {cnt} tasks")
 
+        Measure.counter(_measurement_name_base + 'queued_tasks', {'type': 'ad_account', **_measurement_tags}).increment(
+            cnt
+        )
         return cnt
 
 
@@ -110,6 +113,7 @@ def build_sweep_slice_per_page(sweep_id: str, page_reality_claim: RealityClaim, 
 
         logger.info(f"#{sweep_id}-#{page_reality_claim.entity_id}: Queued up a total of {cnt} tasks")
 
+        Measure.counter(_measurement_name_base + 'queued_tasks', {'type': 'page', **_measurement_tags}).increment(cnt)
         return cnt
 
 
