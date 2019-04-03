@@ -227,7 +227,7 @@ def run_tasks(
     cnt = 0
     _pulse_refresh_interval = 5  # seconds
     sweep_tracker = SweepStatusTracker(sweep_id)
-    sweep_tracker.start_metrics_collector()
+    sweep_tracker.start_metrics_collector(_pulse_refresh_interval)
 
     tasks_iter = iter_tasks(sweep_id)
     if limit:

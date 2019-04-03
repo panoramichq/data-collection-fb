@@ -13,6 +13,8 @@ from common.measurement import Measure
 
 Pulse = namedtuple('Pulse', list(FailureBucket.attr_name_enum_value_map.keys()) + ['Total'])
 
+AGGREGATE_RECORD_MARKER = 'aggregate'
+
 
 class SweepStatusTracker:
     def __init__(self, sweep_id: str):
@@ -31,8 +33,6 @@ class SweepStatusTracker:
     @staticmethod
     def now_in_minutes() -> int:
         return int(time.time() / 60)
-
-    _aggregate_record_marker = 'aggregate'
 
     def report_status(self, failure_bucket: int = FailureBucket.Success):
         """
@@ -58,7 +58,7 @@ class SweepStatusTracker:
             # as that would result in double-counting jobs
             pass
         else:
-            key = self._gen_key(self._aggregate_record_marker)
+            key = self._gen_key(AGGREGATE_RECORD_MARKER)
             get_redis().hincrby(key, failure_bucket)
 
     def _get_aggregate_data(self, redis) -> Dict[int, int]:
@@ -66,7 +66,7 @@ class SweepStatusTracker:
         # of beating what used to be ints as keys AND values
         # back into ints from strings (into which Redis beats non-string
         # keys and values)
-        return {int(k): int(v) for k, v in redis.hgetall(self._gen_key(self._aggregate_record_marker)).items()}
+        return {int(k): int(v) for k, v in redis.hgetall(self._gen_key(AGGREGATE_RECORD_MARKER)).items()}
 
     def _get_trailing_minutes_data(self, minute: int, redis) -> List[Dict[int, int]]:
         # This mess is here just to get through the annoyance
@@ -97,17 +97,7 @@ class SweepStatusTracker:
         for k, v in m0.items():
             m1[k] = m1.get(k, 0) + v
 
-        result = {
-            FailureBucket.Success: 0,
-            FailureBucket.Other: 0,
-            FailureBucket.Throttling: 0,
-            FailureBucket.UserThrottling: 0,
-            FailureBucket.ApplicationThrottling: 0,
-            FailureBucket.AdAccountThrottling: 0,
-            FailureBucket.TooLarge: 0,
-            FailureBucket.WorkingOnIt: 0,
-        }
-
+        result = {key: 0 for key in FailureBucket.attr_name_enum_value_map}
         # Now the proportion of successes, failure
         # is calculated per each minute. Then those
         # proportions are weighted by ratio related to recency
@@ -143,11 +133,11 @@ class SweepStatusTracker:
 
         return pulse
 
-    def start_metrics_collector(self):
+    def start_metrics_collector(self, interval: int):
         """Start reporting metrics to Datadog in a regular interval."""
-        gevent.spawn(self._report_metrics)
+        gevent.spawn(self._report_metrics, interval)
 
-    def _report_metrics(self):
+    def _report_metrics(self, interval: int):
         """Regularly report pulse metrics for previous minute to Datadog."""
         redis = get_redis()
         name_map = {
@@ -162,7 +152,7 @@ class SweepStatusTracker:
         }
 
         while True:
-            gevent.sleep(5)
+            gevent.sleep(interval)
             prev_minute = self.now_in_minutes() - 1
             pulse_values = {int(k): int(v) for k, v in redis.hgetall(self._gen_key(prev_minute)).items()}
 
