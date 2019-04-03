@@ -113,7 +113,10 @@ def build_sweep_slice_per_page(sweep_id: str, page_reality_claim: RealityClaim, 
 
         logger.info(f"#{sweep_id}-#{page_reality_claim.entity_id}: Queued up a total of {cnt} tasks")
 
-        Measure.counter(_measurement_name_base + 'queued_tasks', {'type': 'page', **_measurement_tags}).increment(cnt)
+        Measure.counter(
+            _measurement_name_base + 'queued_tasks',
+            {'type': 'page', 'sweep_id': sweep_id, 'ad_account_id': page_reality_claim.entity_id},
+        ).increment(cnt)
         return cnt
 
 
