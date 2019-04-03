@@ -1,5 +1,4 @@
 # must be first, as it does event loop patching and other "first" things
-from oozer.entities.collect_entities_iterators import iter_collect_entities_per_adaccount
 from tests.base.testcase import TestCase, mock
 
 from common.enums.entity import Entity
@@ -7,20 +6,15 @@ from common.enums.reporttype import ReportType
 from common.id_tools import generate_universal_id
 from oozer.common.cold_storage.batch_store import ChunkDumpStore
 from oozer.common.job_scope import JobScope
-from oozer.common.enum import (
-    FB_AD_VIDEO_MODEL,
-    FB_AD_CREATIVE_MODEL,
-    FB_AD_MODEL,
-    FB_ADSET_MODEL,
-    FB_CAMPAIGN_MODEL,
-    FB_ADACCOUNT_MODEL,
-    FB_CUSTOM_AUDIENCE_MODEL,
-)
+from oozer.entities.collect_entities_per_adaccount import iter_collect_entities_per_adaccount
+from oozer.entities.collect_entities_per_adaccount import \
+    FB_AD_VIDEO_MODEL, FB_AD_CREATIVE_MODEL, FB_AD_MODEL, FB_ADSET_MODEL, FB_CAMPAIGN_MODEL, FB_ADACCOUNT_MODEL, FB_CUSTOM_AUDIENCE_MODEL
 
 from tests.base import random
 
 
 class TestCollectEntitiesPerAdAccount(TestCase):
+
     def setUp(self):
         super().setUp()
         self.sweep_id = random.gen_string_id()
@@ -29,14 +23,7 @@ class TestCollectEntitiesPerAdAccount(TestCase):
 
     def test_correct_vendor_data_inserted_into_cold_store_payload_campaigns(self):
 
-        entity_types = [
-            Entity.Campaign,
-            Entity.AdSet,
-            Entity.Ad,
-            Entity.AdCreative,
-            Entity.AdVideo,
-            Entity.CustomAudience,
-        ]
+        entity_types = [Entity.Campaign, Entity.AdSet, Entity.Ad, Entity.AdCreative, Entity.AdVideo, Entity.CustomAudience]
         fb_model_map = {
             Entity.Campaign: FB_CAMPAIGN_MODEL,
             Entity.AdSet: FB_ADSET_MODEL,
@@ -65,11 +52,14 @@ class TestCollectEntitiesPerAdAccount(TestCase):
                 ad_account_id=self.ad_account_id,
                 report_type=ReportType.entity,
                 report_variant=entity_type,
-                tokens=['blah'],
+                tokens=['blah']
             )
 
             universal_id_should_be = generate_universal_id(
-                ad_account_id=self.ad_account_id, report_type=ReportType.entity, entity_id=fbid, entity_type=entity_type
+                ad_account_id=self.ad_account_id,
+                report_type=ReportType.entity,
+                entity_id=fbid,
+                entity_type=entity_type
             )
 
             fb_data = FB_MODEL(fbid=fbid)
@@ -82,11 +72,10 @@ class TestCollectEntitiesPerAdAccount(TestCase):
                 fb_data[FB_MODEL.Field.account_id] = self.ad_account_id
 
             entities_data = [fb_data]
-            with mock.patch.object(FB_ADACCOUNT_MODEL, get_method_name, return_value=entities_data), mock.patch.object(
-                ChunkDumpStore, 'store'
-            ) as store:
+            with mock.patch.object(FB_ADACCOUNT_MODEL, get_method_name, return_value=entities_data), \
+                 mock.patch.object(ChunkDumpStore, 'store') as store:
 
-                list(iter_collect_entities_per_adaccount(job_scope))
+                data_received = list(iter_collect_entities_per_adaccount(job_scope, None))
 
             assert store.called
             store_args, store_keyword_args = store.call_args
@@ -97,9 +86,7 @@ class TestCollectEntitiesPerAdAccount(TestCase):
 
             vendor_data_key = '__oprm'
 
-            assert (
-                vendor_data_key in data_actual and type(data_actual[vendor_data_key]) == dict
-            ), 'Special vendor key is present in the returned data'
+            assert vendor_data_key in data_actual and type(data_actual[vendor_data_key]) == dict, 'Special vendor key is present in the returned data'
             assert data_actual[vendor_data_key] == {
                 'id': universal_id_should_be
             }, 'Vendor data is set with the right universal id'

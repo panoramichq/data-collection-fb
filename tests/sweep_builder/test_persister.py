@@ -14,6 +14,7 @@ from tests.base import random
 
 
 class PersisterSavesJobScopeData(TestCase):
+
     def test_persister_saves_job_scope_auxiliary_data_to_data_flower(self):
         # There is a need to save some context data that does not fit on JobIS
         # Persister should store that on the Data Flower.
@@ -23,7 +24,9 @@ class PersisterSavesJobScopeData(TestCase):
         ad_account_id = random.gen_string_id()
 
         job_id = generate_id(
-            ad_account_id=ad_account_id, report_type=ReportType.lifetime, report_variant=Entity.Campaign
+            ad_account_id=ad_account_id,
+            report_type=ReportType.lifetime,
+            report_variant=Entity.Campaign,
         )
 
         prioritized_iter = [
@@ -50,11 +53,14 @@ class PersisterSavesJobScopeData(TestCase):
                     #       but not implemented because saving each job's data
                     #       individually to Data Flower was too slow)
                 ],
-                job_scores=[100],
+                job_scores=[100]
             )
         ]
 
-        persisted = persister.iter_persist_prioritized(sweep_id, prioritized_iter)
+        persisted = persister.iter_persist_prioritized(
+            sweep_id,
+            prioritized_iter
+        )
         cnt = 0
         for item in persisted:
             cnt += 1
@@ -67,7 +73,9 @@ class PersisterSavesJobScopeData(TestCase):
         jobs_queued_actual = []
         with SortedJobsQueue(sweep_id).JobsReader() as jobs_iter:
             for job_id, job_scope_data, score in jobs_iter:
-                jobs_queued_actual.append((job_id, job_scope_data, score))
+                jobs_queued_actual.append(
+                    (job_id, job_scope_data, score)
+                )
 
         jobs_queued_should_be = [
             (
@@ -76,10 +84,10 @@ class PersisterSavesJobScopeData(TestCase):
                 dict(
                     # comes from Persister code
                     # manually peeled off *Claim and injected into Data Flower
-                    ad_account_timezone_name='Europe/London'
+                    ad_account_timezone_name='Europe/London',
                 ),
-                100,
-            )
+                100
+            ),
         ]
 
         assert jobs_queued_actual == jobs_queued_should_be

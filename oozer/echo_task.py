@@ -1,6 +1,7 @@
 from common.celeryapp import get_celery_app
 from common.measurement import Measure
 
+
 app = get_celery_app()
 
 

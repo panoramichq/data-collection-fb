@@ -7,23 +7,31 @@ from oozer.common.expecations_store import JobExpectationsWriter, iter_expectati
 
 
 class JobExpectationsStoreTests(TestCase):
+
     def test_expectations_store(self):
 
         all_job_ids_should_be = set()
         job_id_template = 'fb|{ad_account_id}|{job_variant}'.format
 
         sweep_id = random.gen_string_id()
-        ad_account_ids = ['1', '2', '3']
-        job_variants = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l']
+        ad_account_ids = ['1','2','3']
+        job_variants = ['a','b','c','d','e','f','g','h','i','j','k','l']
 
         with JobExpectationsWriter(sweep_id=sweep_id) as add_expectation:
             for ad_account_id in ad_account_ids:
                 for job_variant in job_variants:
-                    job_id = job_id_template(ad_account_id=ad_account_id, job_variant=job_variant)
+                    job_id = job_id_template(
+                        ad_account_id=ad_account_id,
+                        job_variant=job_variant
+                    )
 
                     all_job_ids_should_be.add(job_id)
 
-                    add_expectation(job_id, ad_account_id, None)  # we don't care about entity ID at this time.
+                    add_expectation(
+                        job_id,
+                        ad_account_id,
+                        None  # we don't care about entity ID at this time.
+                    )
 
         all_job_ids_actual = list(iter_expectations(sweep_id))
 

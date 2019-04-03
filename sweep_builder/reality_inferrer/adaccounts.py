@@ -20,9 +20,11 @@ from typing import Generator
 from common.store import entities, scope
 
 
-def iter_scopes() -> Generator[scope.AssetScope, None, None]:
+def iter_scopes():
+    # type: () -> Generator[scope.AssetScope]
     """
     :return: a generator of pairs of: tuple of scope id and its associated set of FB tokens
+    :rtype: Generator[scope.AssetScope]
     """
     # when we get real API that pairs AAs to their tokens,
     # throw all of this away
@@ -32,11 +34,14 @@ def iter_scopes() -> Generator[scope.AssetScope, None, None]:
     yield from scope.AssetScope.scan()
 
 
-def iter_active_ad_accounts_per_scope(scope: str) -> Generator[entities.AdAccountEntity, None, None]:
+def iter_active_ad_accounts_per_scope(scope):
+    # type: (str) -> Generator[entities.AdAccountEntity]
     """
-    :param scope: The AdAccountScope id
+    :param str scope: The AdAccountScope id
     :return: A generator of AdAccount IDs for AdAccounts marked "active" in our system
+    :rtype: Generator[entities.AdAccountEntity]
     """
+    aa_record = None  # type: entities.AdAccountEntity
     for aa_record in entities.AdAccountEntity.query(scope):
         # note that we can filter by this server-side,
         # but this involves setting up an index on the partition,
@@ -44,3 +49,4 @@ def iter_active_ad_accounts_per_scope(scope: str) -> Generator[entities.AdAccoun
         # TODO: investigate the risk and move this filter DB-side
         if aa_record.is_active and aa_record.manually_disabled is not True:
             yield aa_record
+

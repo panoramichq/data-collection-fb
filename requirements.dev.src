@@ -8,5 +8,3 @@ ipython
 pip-tools
 pytest
 freezegun
-flake8
-black

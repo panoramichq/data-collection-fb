@@ -1,7 +1,7 @@
 import math
 
 
-def adapt_decay_rate_to_population(n: float) -> float:
+def adapt_decay_rate_to_population(n):
     """
     Approximates a value to be used for `rate` argument in
     exponential decay function
@@ -29,12 +29,15 @@ def adapt_decay_rate_to_population(n: float) -> float:
     10,000 0.001
     100,000 0.0001
     10,000,000 0.000..001
+
+    :param n:
+    :return:
     """
     assert n > 10, "This formula's answer makes no sense for values at 10 or under"
-    return 0.1 ** (math.log10(n) - 1)
+    return 0.1**(math.log10(n)-1)
 
 
-def get_decay_proportion(x: float, rate: float, decay_floor: float = 0.0) -> float:
+def get_decay_proportion(x, rate, decay_floor=0.0):
     """
     Returns a number in the range from 1 to zero, indicating
     remaining portion of whole (range from 1 to 0) to keep given value of x.
@@ -50,14 +53,15 @@ def get_decay_proportion(x: float, rate: float, decay_floor: float = 0.0) -> flo
     :param x: Number of units.
     :param decay_floor: Proportion lower than which the score will NOT be reduced
     :param rate: Decay rate
+    :return:
     """
     # decay_floor=0.15, rate=0.05
     # with above rate + floor, loses about half the score
     # in about 15 units, approaching the floor by about 50th unit
-    return decay_floor + (1 - decay_floor) * (1 - rate) ** x
+    return decay_floor + (1-decay_floor) * (1-rate) ** x
 
 
-def get_fade_in_proportion(x: float, rate: float, fade_in_ceiling: float = 0.0) -> float:
+def get_fade_in_proportion(x, rate, fade_in_ceiling=0.0):
     """
     Returns a number in range between zero and 1 indicating
     what portion of blah to keep given the we are in some spot on
@@ -70,5 +74,9 @@ def get_fade_in_proportion(x: float, rate: float, fade_in_ceiling: float = 0.0) 
     ||
     ----------------
     0              X
+
+    :param x:
+    :param rate:
+    :return:
     """
     return 1 - get_decay_proportion(x, rate, fade_in_ceiling)
