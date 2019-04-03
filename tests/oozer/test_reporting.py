@@ -1,5 +1,3 @@
-import pytest
-
 from unittest.mock import patch, call, Mock
 
 from facebook_business.exceptions import FacebookError
