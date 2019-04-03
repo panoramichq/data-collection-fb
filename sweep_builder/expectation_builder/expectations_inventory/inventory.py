@@ -11,8 +11,11 @@ from common.enums.entity import Entity
 from common.enums.reporttype import ReportType
 from sweep_builder.expectation_builder.expectations_inventory.metrics.breakdowns import (
     day_metrics_per_ads_under_ad_account,
-    day_metrics_per_adsets_under_ad_account,
-    day_metrics_per_campaigns_under_ad_account,
+)
+from sweep_builder.expectation_builder.expectations_inventory.metrics.lifetime import (
+    lifetime_metrics_per_ads_under_ad_account,
+    lifetime_metrics_per_adsets_under_ad_account,
+    lifetime_metrics_per_campaigns_under_ad_account,
 )
 from sweep_builder.expectation_builder.expectations_inventory.page import pages_per_scope
 from sweep_builder.types import ExpectationGeneratorType
@@ -61,6 +64,7 @@ entity_expectation_generator_map: Dict[str, List[ExpectationGeneratorType]] = {
                 None if jobs_config.ENTITY_AV_DISABLED else ad_video_entities_per_ad_account,
                 None if jobs_config.ENTITY_CA_DISABLED else custom_audience_entities_per_ad_account,
                 # Insights
+                None if jobs_config.INSIGHTS_LIFETIME_A_DISABLED else lifetime_metrics_per_ads_under_ad_account,
                 functools.partial(
                     day_metrics_per_ads_under_ad_account,
                     list(
@@ -72,19 +76,12 @@ entity_expectation_generator_map: Dict[str, List[ExpectationGeneratorType]] = {
                                 None if jobs_config.INSIGHTS_AGE_GENDER_A_DISABLED else ReportType.day_age_gender,
                                 None if jobs_config.INSIGHTS_DMA_A_DISABLED else ReportType.day_dma,
                                 None if jobs_config.INSIGHTS_PLATFORM_A_DISABLED else ReportType.day_platform,
-                                None if jobs_config.INSIGHTS_LIFETIME_A_DISABLED else ReportType.lifetime,
                             ],
                         )
                     ),
                 ),
-                functools.partial(
-                    day_metrics_per_adsets_under_ad_account,
-                    list(filter(None, [None if jobs_config.INSIGHTS_LIFETIME_AS_DISABLED else ReportType.lifetime])),
-                ),
-                functools.partial(
-                    day_metrics_per_campaigns_under_ad_account,
-                    list(filter(None, [None if jobs_config.INSIGHTS_LIFETIME_AS_DISABLED else ReportType.lifetime])),
-                ),
+                None if jobs_config.INSIGHTS_LIFETIME_AS_DISABLED else lifetime_metrics_per_adsets_under_ad_account,
+                None if jobs_config.INSIGHTS_LIFETIME_C_DISABLED else lifetime_metrics_per_campaigns_under_ad_account,
             ],
         )
     ),
