@@ -11,6 +11,7 @@ from oozer.common.report_job_status_task import report_job_status_task
 from oozer.common.enum import ExternalPlatformJobStatus
 from oozer.common.facebook_api import FacebookApiErrorInspector
 from oozer.common.errors import CollectionError, TaskOutsideSweepException
+from oozer.common.sweep_status_tracker import SweepStatusTracker
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +28,8 @@ def _report_failure(job_scope: JobScope, start_time: float, exc: Exception, **kw
     token = job_scope.token
     failure_status, failure_bucket = FacebookApiErrorInspector(exc).get_status_and_bucket()
     report_job_status_task.delay(failure_status, job_scope)
-    token_manager.report_usage_per_failure_bucket(token, failure_bucket)
+    PlatformTokenManager.from_job_scope(job_scope).report_usage_per_failure_bucket(token, failure_bucket)
+    SweepStatusTracker(job_scope.sweep_id).report_status(failure_bucket)
 
 
 def _report_success(job_scope: JobScope, start_time: float, retval: Any):
@@ -39,6 +41,7 @@ def _report_success(job_scope: JobScope, start_time: float, retval: Any):
         job_scope.datapoint_count = retval
 
     report_job_status_task.delay(ExternalPlatformJobStatus.Done, job_scope)
+    SweepStatusTracker(job_scope.sweep_id).report_status(FailureBucket.Success)
 
 
 def reported_task(func: Callable) -> Callable:

@@ -1,11 +1,10 @@
-from typing import List, Optional
+from datetime import date
+from typing import Any, Dict, Optional
 
 from common.job_signature import JobSignature
 
-from sweep_builder.data_containers.reality_claim import RealityClaim
 
-
-class ExpectationClaim(RealityClaim):
+class ExpectationClaim:
     """
     Used to express a bundle of data representing realization of
     need to have certain data point filled.
@@ -19,14 +18,48 @@ class ExpectationClaim(RealityClaim):
     to add more data to context from the very bottom of the stack. Just extend this object.)
     """
 
-    # see base attrs on RealityClaim.
-    # here we just top that off with more
+    # Keeping signatures for lifetime reports (only ones using effective)
+    normative_job_signature: JobSignature
+    effective_job_signature: JobSignature
 
-    job_signatures: List[JobSignature] = []
+    entity_id: str
+    entity_type: str
+    ad_account_id: str
+    timezone: str
+
+    entity_id_map: Dict[str, Any]
+    range_start: date
+    report_type: str
+    report_variant: str
+
+    def __init__(
+        self,
+        entity_id: str,
+        entity_type: str,
+        ad_account_id: str = None,
+        timezone: str = None,
+        normative_job_signature: JobSignature = None,
+        effective_job_signature: JobSignature = None,
+        entity_id_map: Dict[str, Any] = None,
+        range_start: str = None,
+        report_type: str = None,
+        report_variant: str = None,
+    ):
+        self.entity_id = entity_id
+        self.entity_type = entity_type
+        self.ad_account_id = ad_account_id
+        self.timezone = timezone
+        self.normative_job_signature = normative_job_signature
+        self.effective_job_signature = effective_job_signature
+        self.entity_id_map = entity_id_map
+        self.range_start = range_start
+        self.report_type = report_type
+        self.report_variant = report_variant
 
     @property
-    def normative_job_signature(self) -> Optional[JobSignature]:
-        try:
-            return self.job_signatures[0]
-        except IndexError:
-            return None
+    def is_divisible(self) -> bool:
+        return self.entity_id_map is not None
+
+    @property
+    def normative_job_id(self) -> Optional[str]:
+        return None if self.normative_job_signature is None else self.normative_job_signature.job_id

@@ -1,4 +1,4 @@
-from typing import List, Type, Any, Dict, Optional, Tuple
+from typing import List, Type, Any, Dict, Tuple, Optional
 
 from facebook_business.adobjects.adaccount import AdAccount
 from facebook_business.adobjects.comment import Comment
@@ -55,113 +55,49 @@ class FacebookApiErrorInspector:
     cna throw at us and we're interested in them
     """
 
-    GENERIC_ERROR_CODE = 1
+    ERROR_CODE_MAP: Dict[Tuple[int, int], Tuple[int, int]] = {
+        # Application request limit reached
+        (4, None): (ExternalPlatformJobStatus.ApplicationThrottlingError, FailureBucket.ApplicationThrottling),
+        # User request limit reached
+        (17, None): (ExternalPlatformJobStatus.UserThrottlingError, FailureBucket.UserThrottling),
+        # User request limit reached
+        (17, 2446079): (ExternalPlatformJobStatus.UserThrottlingError, FailureBucket.UserThrottling),
+        # AdAccount request limit reached
+        (613, 1487742): (ExternalPlatformJobStatus.AdAccountThrottlingError, FailureBucket.AdAccountThrottling),
+        # Too big a report
+        (100, 1487534): (ExternalPlatformJobStatus.TooMuchData, FailureBucket.TooLarge),
+    }
 
-    APP_THROTTLING_CODES = {(4, None)}
-    AD_ACCOUNT_THROTTLING_CODES = {(613, 1487742)}
-    USER_THROTTLING_CODES = {(17, None), (17, 2446079)}
-    THROTTLING_CODES = set.union(APP_THROTTLING_CODES, AD_ACCOUNT_THROTTLING_CODES, USER_THROTTLING_CODES)
-
-    """
-    List of known codes (subcodes) where FB starts throttling us
-    """
-
-    TOO_MUCH_DATA_CODES = {(100, 1487534)}  # Too big a report
-    """
-    List of known codes (subcodes) where FB complains about us asking for too
-    much data
-    """
-
-    TOO_MUCH_DATA_MESSAGES = {"Please reduce the amount of data you're asking for, then retry your request"}
+    ERROR_MESSAGE_MAP = {
+        (1, "Please reduce the amount of data you're asking for, then retry your request"): (
+            ExternalPlatformJobStatus.TooMuchData,
+            FailureBucket.TooLarge,
+        )
+    }
 
     _exception = None
 
     def __init__(self, exception):
-        """
-        Store the exception we want to test
-
-        :param exception: The Facebook Exception
-        """
+        """Store the exception we want to test."""
         self._exception = exception
 
-    @property
-    def _is_generic_error(self) -> bool:
-        """Check if exception is a generic error."""
-        return self.GENERIC_ERROR_CODE == self._exception.api_error_code()
-
-    def _is_exception_code_in_set(self, values) -> bool:
-        """
-        Check the exception code and subcode a given set.
-
-        :param set values: List of individual codes or tuples of (code, subcode)
-        :return bool: The exception conforms to our excepted list
-        """
-        codes = self.get_throttling_error_codes()
-        if not codes:
-            return False
-
-        code, subcode = codes
-
-        return (code, subcode) in values
-
-    def _is_exception_message_in_set(self, values) -> bool:
-        """
-        Check the exception error message against a given set.
-        """
+    def get_status_and_bucket(self) -> Optional[Tuple[int, int]]:
+        """Extract status and bucket from inspected exception."""
         if not isinstance(self._exception, FacebookRequestError):
-            return False
-
-        return self._exception.api_error_message() in values
-
-    def is_throttling_exception(self) -> bool:
-        """
-        Checks whether given Facebook Exception is of throttling type
-
-        :return bool: If True, the exception is of type throttling
-        """
-        return self._is_exception_code_in_set(self.THROTTLING_CODES)
-
-    def get_throttling_error_codes(self) -> Optional[Tuple[int, Optional[int]]]:
-        """
-        Examines request error and returns its code and subvode
-        """
-        if not isinstance(self._exception, FacebookRequestError):
-            return
+            return None
 
         code = self._exception.api_error_code()
         subcode = self._exception.api_error_subcode()
+        error_message = self._exception.api_error_message()
 
-        return code, subcode
+        status_bucket = self.ERROR_CODE_MAP.get((code, subcode))
+        if status_bucket is None:
+            status_bucket = self.ERROR_MESSAGE_MAP.get((code, error_message))
 
-    def is_too_large_data_exception(self) -> bool:
-        """
-        Checks whether given Facebook Exception is of a type that says "you are
-        asking me to do / calculate too much"
+        if status_bucket is None:
+            status_bucket = ExternalPlatformJobStatus.GenericPlatformError, FailureBucket.Other
 
-        :return bool: If True, the exception is of type "too much data"
-        """
-        return self._is_exception_code_in_set(self.TOO_MUCH_DATA_CODES) or (
-            self._is_generic_error and self._is_exception_message_in_set(self.TOO_MUCH_DATA_MESSAGES)
-        )
-
-    def get_status_and_bucket(self) -> (int, int):
-        """Extract status and bucket from inspected exception."""
-        # Is this a throttling error?
-        if self.is_throttling_exception():
-            failure_status = ExternalPlatformJobStatus.ThrottlingError
-            failure_bucket = FailureBucket.Throttling
-
-        # Did we ask for too much data?
-        elif self.is_too_large_data_exception():
-            failure_status = ExternalPlatformJobStatus.TooMuchData
-            failure_bucket = FailureBucket.TooLarge
-
-        # It's something else which we don't understand
-        else:
-            failure_status = ExternalPlatformJobStatus.GenericPlatformError
-            failure_bucket = FailureBucket.Other
-
-        return failure_status, failure_bucket
+        return status_bucket
 
 
 _default_fields_map = {
@@ -643,6 +579,14 @@ _default_fields_map = {
             # Error message: "(#200) The page does not have READ_PAGE_MAILBOXES or PAGES_MESSAGING permission."
             # 'private_reply_conversation',
             'user_likes',
+            # Reactions
+            'reactions.type(LIKE).summary(true).limit(0).as(reaction_like)',
+            'reactions.type(LOVE).summary(true).limit(0).as(reaction_love)',
+            'reactions.type(WOW).summary(true).limit(0).as(reaction_wow)',
+            'reactions.type(HAHA).summary(true).limit(0).as(reaction_haha)',
+            'reactions.type(SAD).summary(true).limit(0).as(reaction_sad)',
+            'reactions.type(ANGRY).summary(true).limit(0).as(reaction_angry)',
+            'reactions.type(THANKFUL).summary(true).limit(0).as(reaction_thankful)',
         ]
     ),
 }
@@ -766,8 +710,6 @@ def get_default_status(model_klass: Type['Model']) -> List[str]:
     What we are trying to solve here is remove the default filter for Archived
     from all calls by repeating all possible fetch-able effective status values
     per that FB Entity Level, including Archived
-
-    NOTE: never used
     """
     assert issubclass(model_klass, abstractcrudobject.AbstractCrudObject)
     return _default_fetch_statuses.get(model_klass)
