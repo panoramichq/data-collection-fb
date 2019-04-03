@@ -8,6 +8,7 @@ from typing import List
 from common.bugsnag import BugSnagContextData
 from common.connect.redis import get_redis
 from common.id_tools import parse_id_parts
+from common.measurement import Measure
 
 logger = logging.getLogger(__name__)
 
@@ -117,6 +118,10 @@ class _JobsWriter:
     def __exit__(self, exc_type, exc_val, exc_tb):
         if self.batch:  # some sub-batch_size leftovers
             self.flush()
+
+        Measure.counter(
+            __name__ + '.' + self.__class__.__name__ + '.unique_tasks', {'sweep_id': self.sweep_id}
+        ).increment(self.cnt)
         logger.info(f"#{self.sweep_id}: Redis SortedSet Batcher wrote a total of {self.cnt} *unique* tasks")
 
 
