@@ -4,6 +4,7 @@ import math
 import time
 from typing import Any, Callable
 
+from common.enums.failure_bucket import FailureBucket
 from common.error_inspector import ErrorInspector, ErrorTypesReport
 from common.tokens import PlatformTokenManager
 from oozer.common.job_scope import JobScope
@@ -24,7 +25,6 @@ def _report_failure(job_scope: JobScope, start_time: float, exc: Exception, **kw
 
     ErrorInspector.inspect(exc, job_scope.ad_account_id, {'job_scope': job_scope})
 
-    token_manager = PlatformTokenManager.from_job_scope(job_scope)
     token = job_scope.token
     failure_status, failure_bucket = FacebookApiErrorInspector(exc).get_status_and_bucket()
     report_job_status_task.delay(failure_status, job_scope)
