@@ -1,8 +1,9 @@
 import logging
 import itertools
 import time
+from typing import Dict
 
-from celery import chord, group
+from celery import group
 
 from common.celeryapp import get_celery_app, RoutingKey
 from common.enums.entity import Entity
@@ -14,56 +15,41 @@ app = get_celery_app()
 logger = logging.getLogger(__name__)
 
 
-def extract_tags_for_build_sweep_slice(sweep_id, ad_account_reality_claim, *args, **kwargs):
-    return {
-        'sweep_id': sweep_id,
-        'ad_account_id': ad_account_reality_claim.ad_account_id,
-    }
+def extract_tags_for_build_sweep_slice(
+    sweep_id: str, ad_account_reality_claim: RealityClaim, *args, **kwargs
+) -> Dict[str, str]:
+    return {'sweep_id': sweep_id, 'ad_account_id': ad_account_reality_claim.ad_account_id}
 
 
 @app.task(routing_key=RoutingKey.longrunning)
 @Measure.timer(__name__, function_name_as_metric=True)
 @Measure.counter(__name__, function_name_as_metric=True, count_once=True)
-def echo(message='This is Long-Running queue'):
+def echo(message: str = 'This is Long-Running queue'):
     print(message)
 
 
 @app.task(routing_key=RoutingKey.longrunning, ignore_result=False)
-@Measure.timer(
-    __name__,
-    function_name_as_metric=True,
-    extract_tags_from_arguments=extract_tags_for_build_sweep_slice
-)
+@Measure.timer(__name__, function_name_as_metric=True, extract_tags_from_arguments=extract_tags_for_build_sweep_slice)
 @Measure.counter(
     __name__,
     function_name_as_metric=True,
     count_once=True,
-    extract_tags_from_arguments=extract_tags_for_build_sweep_slice
+    extract_tags_from_arguments=extract_tags_for_build_sweep_slice,
 )
-def build_sweep_slice_per_ad_account_task(sweep_id, ad_account_reality_claim, task_id=None):
-    """
+def build_sweep_slice_per_ad_account_task(sweep_id: str, ad_account_reality_claim: RealityClaim, task_id: str = None):
+    from sweep_builder.pipeline import iter_pipeline
+    from sweep_builder.reality_inferrer.reality import iter_reality_per_ad_account_claim
 
-    :param sweep_id:
-    :param RealityClaim ad_account_reality_claim:
-    :param task_id: When "task done" control is done manually,
-        we need to know our ID to report being done.
-        When this is set, we'll use TaskGroup API to report progress / done-ness
-    :return:
-    """
-    from .pipeline import iter_pipeline
-    from .reality_inferrer.reality import iter_reality_per_ad_account_claim
+    with TaskGroup.task_context(task_id):
 
-    with TaskGroup.task_context(task_id) as __:
-
-        _measurement_name_base = __name__ + '.build_sweep_per_ad_account.'  # <- function name. adjust if changed
-        _measurement_tags = dict(
-            sweep_id=sweep_id,
-            ad_account_id=ad_account_reality_claim.ad_account_id
-        )
+        _measurement_name_base = __name__ + '.' + build_sweep_slice_per_ad_account_task.__name__ + '.'
+        _measurement_tags = {'sweep_id': sweep_id, 'ad_account_id': ad_account_reality_claim.ad_account_id}
 
         reality_claims_iter = itertools.chain(
             [ad_account_reality_claim],
-            iter_reality_per_ad_account_claim(ad_account_reality_claim, entity_types=[Entity.Campaign, Entity.AdSet, Entity.Ad])
+            iter_reality_per_ad_account_claim(
+                ad_account_reality_claim, entity_types=[Entity.Campaign, Entity.AdSet, Entity.Ad]
+            ),
         )
         cnt = 0
 
@@ -72,12 +58,9 @@ def build_sweep_slice_per_ad_account_task(sweep_id, ad_account_reality_claim, ta
         for claim in iter_pipeline(sweep_id, reality_claims_iter):
             Measure.timing(
                 _measurement_name_base + 'next_persisted',
-                tags=dict(
-                    entity_type=claim.entity_type,
-                    **_measurement_tags
-                ),
-                sample_rate=0.01
-            )((time.time() - _before_fetch)*1000)
+                tags={'entity_type': claim.entity_type, **_measurement_tags},
+                sample_rate=0.01,
+            )((time.time() - _before_fetch) * 1000)
             cnt += 1
 
             if cnt % _step == 0:
@@ -90,18 +73,55 @@ def build_sweep_slice_per_ad_account_task(sweep_id, ad_account_reality_claim, ta
         return cnt
 
 
+@app.task(routing_key=RoutingKey.longrunning, ignore_result=False)
+@Measure.timer(__name__, function_name_as_metric=True, extract_tags_from_arguments=extract_tags_for_build_sweep_slice)
+@Measure.counter(
+    __name__,
+    function_name_as_metric=True,
+    count_once=True,
+    extract_tags_from_arguments=extract_tags_for_build_sweep_slice,
+)
+def build_sweep_slice_per_page(sweep_id: str, page_reality_claim: RealityClaim, task_id: str = None):
+    from sweep_builder.pipeline import iter_pipeline
+    from sweep_builder.reality_inferrer.reality import iter_reality_per_page_claim
+
+    with TaskGroup.task_context(task_id):
+
+        _measurement_name_base = __name__ + '.' + build_sweep_slice_per_page.__name__ + '.'
+        _measurement_tags = {'sweep_id': sweep_id, 'page_id': page_reality_claim.entity_id}
+
+        reality_claims_iter = itertools.chain([page_reality_claim], iter_reality_per_page_claim(page_reality_claim))
+        cnt = 0
+
+        _step = 1000
+        _before_fetch = time.time()
+        for claim in iter_pipeline(sweep_id, reality_claims_iter):
+            Measure.timing(
+                _measurement_name_base + 'next_persisted',
+                tags={'entity_type': claim.entity_type, **_measurement_tags},
+                sample_rate=0.01,
+            )((time.time() - _before_fetch) * 1000)
+            cnt += 1
+
+            if cnt % _step == 0:
+                logger.info(f'#{sweep_id}-#{page_reality_claim.entity_id}: Queueing up #{cnt}')
+
+            _before_fetch = time.time()
+
+        logger.info(f"#{sweep_id}-#{page_reality_claim.entity_id}: Queued up a total of {cnt} tasks")
+
+        return cnt
+
+
 @Measure.timer(__name__, function_name_as_metric=True)
 @Measure.counter(__name__, function_name_as_metric=True, count_once=True)
-def build_sweep(sweep_id):
+def build_sweep(sweep_id: str):
+    from sweep_builder.init_tokens import init_tokens
+    from sweep_builder.pipeline import iter_pipeline
+    from sweep_builder.reality_inferrer.reality import iter_reality_base
 
-    from .init_tokens import init_tokens
-    from .pipeline import iter_pipeline
-    from .reality_inferrer.reality import iter_reality_base
-
-    _measurement_name_base = __name__ + '.build_sweep.'  # <- function name. adjust if changed
-    _measurement_tags = dict(
-        sweep_id=sweep_id
-    )
+    _measurement_name_base = __name__ + '.' + build_sweep.__name__ + '.'
+    _measurement_tags = {'sweep_id': sweep_id}
 
     # In the jobs persister we purposefully avoid persisting
     # anything besides the Job ID. This means that things like tokens
@@ -145,10 +165,12 @@ def build_sweep(sweep_id):
                         # task_id=child_task_id
                     )
                 )
+            elif reality_claim.entity_type == Entity.Page:
+                delayed_tasks.append(build_sweep_slice_per_page.si(sweep_id, reality_claim))
             else:
                 cnt = 1
                 _step = 1000
-                for claim in iter_pipeline(sweep_id, [reality_claim]):
+                for _ in iter_pipeline(sweep_id, [reality_claim]):
                     cnt += 1
                     if cnt % _step == 0:
                         cntr += _step
@@ -157,7 +179,6 @@ def build_sweep(sweep_id):
                 # because above counter communicates only increments of _step,
                 # we need to report remainder --- amount under _step
                 cntr += cnt % _step
-
 
     logger.info(f"#{sweep_id}-root: Queued up a total of {cnt} tasks")
 
@@ -175,10 +196,7 @@ def build_sweep(sweep_id):
     # You will nee
     should_be_done_by = time.time() + (60 * 20)
 
-    Measure.gauge(
-        f'{_measurement_name_base}per_account_sweep.total',
-        tags=_measurement_tags)(len(group_result.results)
-    )
+    Measure.gauge(f'{_measurement_name_base}per_account_sweep.total', tags=_measurement_tags)(len(group_result.results))
 
     # Monitor the progress. Although this obviously can be achieved with
     # group_result.join(), we need to "see" into the task group progress
@@ -210,12 +228,8 @@ def build_sweep(sweep_id):
             # The last line of defense. Workers did not finish in time we
             # expected, no point waiting, kill it.
             if time.time() > should_be_done_by:
-                Measure.gauge(
-                    f'{_measurement_name_base}per_account_sweep.early_exits',
-                    tags=_measurement_tags)(1)
-                logger.warning(
-                    "Exiting incomplete sweep build, it's taking too long"
-                )
+                Measure.gauge(f'{_measurement_name_base}per_account_sweep.early_exits', tags=_measurement_tags)(1)
+                logger.warning("Exiting incomplete sweep build, it's taking too long")
                 return
 
     logger.info("Waiting on results join")

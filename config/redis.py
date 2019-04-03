@@ -1,3 +1,5 @@
+# flake8: noqa: E722
+
 # Bear in mind this URL is a redis cluster instance. This will not work with
 # normal redis at all
 
@@ -5,6 +7,6 @@
 # visible in the AWS console (hence we don't need multiple host addresses)
 URL = 'redis://redis-cluster:7000'
 
-
 from common.updatefromenv import update_from_env
+
 update_from_env(__name__)

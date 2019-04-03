@@ -15,12 +15,14 @@ Example:
 s3://operam-reports/facebook/2d700d-1629501014003404/fb_insights_campaign_daily/2018/02/08/2018-02-08T11:00:00Z-aef8b404-68c7-41f0-a82b-8f7d529d049c.json  # noqa
 
 """
+from typing import Optional, Dict, Any
+
 import boto3
 import xxhash
 import io
 import logging
-import time
 import uuid
+
 # ujson is faster for massive amounts of small data units
 # which is actually the pattern we have - yielding small datum per normative
 # task or small batches of small datums.
@@ -39,9 +41,9 @@ from common.measurement import Measure
 import config.aws
 import config.build
 import common.tztools
+from oozer.common.enum import ColdStoreBucketType
 
 from oozer.common.job_scope import JobScope
-
 
 logger = logging.getLogger(__name__)
 
@@ -49,14 +51,28 @@ logger = logging.getLogger(__name__)
 # the faked S3 service, which we contact based on a specific endpoint_url
 _s3 = boto3.resource('s3', endpoint_url=config.aws.S3_ENDPOINT)
 _bucket = _s3.Bucket(config.aws.S3_BUCKET_NAME)
+_bucket_raw = _s3.Bucket(config.aws.S3_BUCKET_RAW_NAME)
 
 
-def _job_scope_to_storage_key(job_scope, chunk_marker=0):
+BUCKET_MAP = {ColdStoreBucketType.ORIGINAL_BUCKET: _bucket, ColdStoreBucketType.RAW_BUCKET: _bucket_raw}
+DEFAULT_CHUNK_NUMBER = 0
+
+
+def get_bucket_by_type(bucket_type: str = ColdStoreBucketType.ORIGINAL_BUCKET):
+    bucket = BUCKET_MAP.get(bucket_type)
+    return bucket
+
+
+def _job_scope_to_storage_key(
+    job_scope: JobScope, chunk_marker: Optional[int] = DEFAULT_CHUNK_NUMBER, custom_namespace: Optional[str] = None
+) -> str:
     """
     Puts together the S3 object key we need for given report data. This is
     just a helper function
 
-    :param JobScope job_scope: The job scope (dict representation)
+    :param job_scope: The job scope (dict representation)
+    :param chunk_marker: Order number of written chunk
+    :param custom_namespace: Custom job namespace
     :return string: The full S3 key to use
     """
     assert isinstance(job_scope, JobScope)
@@ -72,22 +88,24 @@ def _job_scope_to_storage_key(job_scope, chunk_marker=0):
         # long import line to allow mocking of call to now() in tests.
         report_datetime = common.tztools.now()
 
-    key = f'{job_scope.namespace}/' \
-          f'{prefix}-{job_scope.ad_account_id}/' \
-          f'{job_scope.report_type}/' \
-          f'{report_datetime.strftime("%Y")}/' \
-          f'{report_datetime.strftime("%m")}/' \
-          f'{report_datetime.strftime("%d")}/' \
-          f'{report_datetime.strftime("%Y-%m-%dT%H:%M:%SZ")}-' \
-          f'{job_scope.job_id}-' \
-          f'{str(chunk_marker)+"-" if chunk_marker else ""}' \
-          f'{uuid.uuid4()}' \
-          f'.json'
+    key = (
+        f'{custom_namespace or job_scope.namespace}/'
+        f'{prefix}-{job_scope.ad_account_id}/'
+        f'{job_scope.report_type}/'
+        f'{report_datetime.strftime("%Y")}/'
+        f'{report_datetime.strftime("%m")}/'
+        f'{report_datetime.strftime("%d")}/'
+        f'{report_datetime.strftime("%Y-%m-%dT%H:%M:%SZ")}-'
+        f'{job_scope.job_id}-'
+        f'{str(chunk_marker)+"-" if chunk_marker else ""}'
+        f'{uuid.uuid4()}'
+        f'.json'
+    )
 
     return key
 
 
-def _job_scope_to_metadata(job_scope):
+def _job_scope_to_metadata(job_scope: JobScope) -> Dict[str, str]:
     """
     Metadata written to S3 (or any other provider) is a little different from
     data we store on the JobScope. Along with *some* data from JobScope
@@ -104,9 +122,6 @@ def _job_scope_to_metadata(job_scope):
     We also compute entity_type value to look like a "normative" report value
     because for all code starting with S3 the difference is irrelevant and all data
     looks like it's "normative."
-
-    :param job_scope:
-    :return:
     """
     if job_scope.ad_account_id == '23845179':
         # We download campaign/adset entity but report on variant
@@ -140,9 +155,21 @@ def _job_scope_to_metadata(job_scope):
     }
 
 
-@Measure.timer(__name__, function_name_as_metric=True)
-@Measure.counter(__name__, function_name_as_metric=True, count_once=True)
-def store(data, job_scope, chunk_marker=0):
+def _extract_tags_for_store(_: Any, job_scope: JobScope, *__, **___):
+    return {'entity_type': job_scope.entity_type, 'ad_account_id': job_scope.ad_account_id}
+
+
+@Measure.timer(__name__, function_name_as_metric=True, extract_tags_from_arguments=_extract_tags_for_store)
+@Measure.counter(
+    __name__, function_name_as_metric=True, count_once=True, extract_tags_from_arguments=_extract_tags_for_store
+)
+def store(
+    data: Any,
+    job_scope: JobScope,
+    chunk_marker: Optional[int] = DEFAULT_CHUNK_NUMBER,
+    bucket_type: str = ColdStoreBucketType.ORIGINAL_BUCKET,
+    custom_namespace: str = None,
+) -> str:
     """
     Adds the item to the current buffer (by JSON dumping it) and Uploads the
     buffer to S3 under a constructed key
@@ -157,19 +184,20 @@ def store(data, job_scope, chunk_marker=0):
     :param chunk_marker: indicator / label hinting that this payload is
         just some portion of this job's total returned data and that this
         particular chunk must be saved under an ID that includes the chunk_marker.
+    :param bucket_type: Defines destination bucket
+    :param custom_namespace: Defines custom job namespace
     :return string: The key used to store the data
     """
-    key = _job_scope_to_storage_key(job_scope, chunk_marker)
+    key = _job_scope_to_storage_key(job_scope, chunk_marker, custom_namespace)
 
     # per discussion with Mike C, to make Lambda code behind S3 simpler
     # ALL payloads are lists, even those that are single datum.
     if not isinstance(data, (list, tuple, set)):
         data = [data]
 
-    _bucket.put_object(
-        Key=key,
-        Body=json.dumps(data, ensure_ascii=False).encode(),
-        Metadata=_job_scope_to_metadata(job_scope)
+    bucket = get_bucket_by_type(bucket_type)
+    bucket.put_object(
+        Key=key, Body=json.dumps(data, ensure_ascii=False).encode(), Metadata=_job_scope_to_metadata(job_scope)
     )
 
     return key
@@ -183,6 +211,4 @@ def load(key):
 
 
 def load_data(key):
-    return json.load(
-        load(key)
-    )
+    return json.load(load(key))

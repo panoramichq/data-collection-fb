@@ -1,7 +1,6 @@
 import os
 import sys
 
-
 CONFIG_ENV_VAR_PREFIX = 'APP_'
 
 
@@ -9,7 +8,7 @@ class NotSet:
     pass
 
 
-def update_from_env(module_path, config_root_module='config', env_var_prefix=CONFIG_ENV_VAR_PREFIX):
+def update_from_env(module_path: str, config_root_module: str = 'config', env_var_prefix: str = CONFIG_ENV_VAR_PREFIX):
     """
     This function, when ran against some module containing attributes that we treat as config attributes,
     allows us to override deep config module attributes with env vars.
@@ -33,13 +32,7 @@ def update_from_env(module_path, config_root_module='config', env_var_prefix=CON
 
     This approach also simplifies splits / namespacing of env vars and config module hives
     into thematic config trees (as opposed to one long flat file for all configs in the system)
-
-    :param module_path:
-    :param config_root_module:
-    :param env_var_prefix:
-    :return:
     """
-
     try:
         config_module = sys.modules[module_path]
     except KeyError:
@@ -54,18 +47,16 @@ def update_from_env(module_path, config_root_module='config', env_var_prefix=CON
     # `api.config.` config_module_prefix value should NOT work.
     #  as that allows values in some other module (not that one calling
     #  this code) to be updated by accident
-    if affected_module_path_parts[:len(config_root_module_path_prefix_parts)] != config_root_module_path_prefix_parts:
-        raise ValueError(
-            f'Module "{module_path}" is outside of config module "{config_root_module}" tree.'
-        )
+    if affected_module_path_parts[: len(config_root_module_path_prefix_parts)] != config_root_module_path_prefix_parts:
+        raise ValueError(f'Module "{module_path}" is outside of config module "{config_root_module}" tree.')
 
-    env_var_prefix_with_full_module_path = '_'.join(
-        [env_var_prefix.strip('_').upper()] +
-        [
-            part.upper()
-            for part in affected_module_path_parts[len(config_root_module_path_prefix_parts):]
-        ]
-    ) + '_'
+    env_var_prefix_with_full_module_path = (
+        '_'.join(
+            [env_var_prefix.strip('_').upper()]
+            + [part.upper() for part in affected_module_path_parts[len(config_root_module_path_prefix_parts) :]]
+        )
+        + '_'
+    )
 
     env_var_prefix_len = len(env_var_prefix_with_full_module_path)
     env_vars_found = [
@@ -107,7 +98,7 @@ def update_from_env(module_path, config_root_module='config', env_var_prefix=CON
                 setattr(
                     config_module,
                     key_variant,
-                    value if ExistingValueType in no_conversion else ExistingValueType(value)
+                    value if ExistingValueType in no_conversion else ExistingValueType(value),
                 )
                 # note that ExistingValueType(value) does not work for complex value types like lists
                 # no, if we run into that problem, will need to rethink this.
