@@ -3,7 +3,7 @@ import logging
 from typing import Generator, Iterable
 
 from sweep_builder.data_containers.reality_claim import RealityClaim
-from sweep_builder.selector import iter_select_signature
+from sweep_builder.scorable import iter_scorable
 from sweep_builder.data_containers.prioritization_claim import PrioritizationClaim
 
 from sweep_builder.persister import iter_persist_prioritized
@@ -22,5 +22,5 @@ def iter_pipeline(
     prioritization claims and associated processing steps.
     """
     yield from iter_persist_prioritized(
-        sweep_id, iter_prioritized(iter_select_signature(iter_expectations(reality_claims_iter)))
+        sweep_id, iter_prioritized(iter_scorable(iter_expectations(reality_claims_iter)))
     )
