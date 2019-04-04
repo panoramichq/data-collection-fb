@@ -54,7 +54,7 @@ def iter_tasks(sweep_id: str) -> Generator[Tuple[CeleryTask, JobScope, JobContex
                 logger.info(f"#{sweep_id}: Scheduling job_id {job_id} with score {score}.")
 
 
-def create_decay_function(num_accounts: int, num_tasks: int) -> Callable[[float, int], Union[float, int]]:
+def create_decay_function(num_accounts: int, num_tasks: int) -> Callable[[Union[float, int]], Union[float, int]]:
     a = max(MIN_STARTING_FREQUENCY, math.sqrt(num_accounts) + math.sqrt(num_tasks / num_accounts))
     b = -1 / (2 * math.log(num_tasks))
     cut_off = a / -b
