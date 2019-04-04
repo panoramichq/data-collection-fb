@@ -1,7 +1,6 @@
 from typing import Dict, Any, Generator, Union
 
 from facebook_business.adobjects.insightsresult import InsightsResult
-from facebook_business.api import FacebookRequest
 
 from common.enums.entity import Entity
 from common.id_tools import NAMESPACE_RAW
@@ -15,7 +14,7 @@ from oozer.common.enum import (
     FB_PAGE_MODEL,
     FB_PAGE_POST_MODEL,
 )
-from oozer.common.facebook_api import PlatformApiContext, DEFAULT_PAGE_ACCESS_TOKEN_LIMIT
+from oozer.common.facebook_api import PlatformApiContext
 from oozer.common.job_scope import JobScope
 from oozer.common.vendor_data import add_vendor_data
 
