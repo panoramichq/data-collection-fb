@@ -91,7 +91,9 @@ class _JobsWriter:
 
         if job_id_parts.ad_account_id and job_id_parts.ad_account_id not in self.processed_ad_account_ids:
             self.processed_ad_account_ids.add(job_id_parts.ad_account_id)
-            self.redis_client.sadd(self.sorted_jobs_queue_interface.get_queue_key_ad_account(), job_id_parts.ad_account_id)
+            self.redis_client.sadd(
+                self.sorted_jobs_queue_interface.get_queue_key_ad_account(), job_id_parts.ad_account_id
+            )
 
         if job_id_parts.entity_id:
             # if entity ID is present, there is no way

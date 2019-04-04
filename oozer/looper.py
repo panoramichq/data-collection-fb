@@ -51,9 +51,7 @@ def iter_tasks(sweep_id: str) -> Generator[Tuple[CeleryTask, JobScope, JobContex
                 logger.info(f"#{sweep_id}: Scheduling job_id {job_id} with score {score}.")
 
 
-def create_decay_function(
-    num_accounts: int, num_tasks: int
-) -> Callable[[float], Union[float, int]]:
+def create_decay_function(num_accounts: int, num_tasks: int) -> Callable[[float], Union[float, int]]:
     @functools.lru_cache()
     def calculate_a() -> Union[float, int]:
         return math.sqrt(num_accounts) + math.sqrt(num_accounts / num_tasks)
@@ -406,7 +404,7 @@ def run_tasks(
         # as far as tasks oozing is concerned and "the very beginning" of the loop in terms of time.
         # this value is "half_time" only if the next for loop has any items to process.
         # So, don't do any "half" logic here. Do it inside this next for loop.
-        cut_off_at_cnt = n
+        cut_off_at_cnt = num_tasks
 
         for celery_task, job_scope, job_context in tasks_iter:
             # If we are here, exactly start of 2nd half of our total time slice
@@ -465,11 +463,11 @@ def run_tasks(
                 cntr += _step
 
             if cnt > cut_off_at_cnt:
-                if cnt < n:
-                    logger.info(f"#{sweep_id}: Queueing cut at {cnt} jobs of total {n}")
+                if cnt < num_tasks:
+                    logger.info(f"#{sweep_id}: Queueing cut at {cnt} jobs of total {num_tasks}")
                 break
 
-            logger.info(f"#{sweep_id}: Queued up all jobs {n}")
+            logger.info(f"#{sweep_id}: Queued up all jobs {num_tasks}")
 
     cntr += cnt % _step
 
