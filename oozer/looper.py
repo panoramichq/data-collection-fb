@@ -17,6 +17,7 @@ from common.math import adapt_decay_rate_to_population, get_decay_proportion
 from common.measurement import Measure
 from common.timeout import timeout
 from config import looper as looper_config
+from config.looper import MIN_STARTING_FREQUENCY
 from oozer.common.job_context import JobContext
 from oozer.common.job_scope import JobScope
 from oozer.common.sorted_jobs_queue import SortedJobsQueue
@@ -52,15 +53,21 @@ def iter_tasks(sweep_id: str) -> Generator[Tuple[CeleryTask, JobScope, JobContex
 
 
 def create_decay_function(num_accounts: int, num_tasks: int) -> Callable[[float], Union[float, int]]:
-    @functools.lru_cache()
-    def calculate_a() -> Union[float, int]:
-        return math.sqrt(num_accounts) + math.sqrt(num_accounts / num_tasks)
+    a = max(MIN_STARTING_FREQUENCY, math.sqrt(num_accounts) + math.sqrt(num_tasks / num_accounts))
+    b = -1 / (2 * math.log(num_tasks))
 
-    @functools.lru_cache()
-    def calculate_b() -> Union[float, int]:
-        return -1 / 2 * math.log2(num_tasks)
+    def calculate(x: Union[float, int]) -> Union[float, int]:
+        if x >= _calculate_point_crossing_axis_x(a, b):
+            raise ValueError(f'Exceeded graph => {x}')
 
-    return lambda x: math.ceil(calculate_a() + calculate_b() * x)
+        return a + b * x
+
+    return calculate
+
+
+@functools.lru_cache()
+def _calculate_point_crossing_axis_x(a: float, b: float) -> float:
+    return a / -b
 
 
 def find_area_covered_so_far(fn: Callable[[float], Union[float, int]], x: float) -> int:
@@ -286,7 +293,7 @@ def run_tasks(
     _step = 100
 
     num_accounts = SortedJobsQueue(sweep_id).get_ad_accounts_count()
-    num_tasks = limit or SortedJobsQueue(sweep_id).get_ad_accounts_count()
+    num_tasks = limit or SortedJobsQueue(sweep_id).get_queue_length()
 
     start_of_run_seconds = time.time()
     max_normal_running_time_seconds = time_slices * time_slice_length

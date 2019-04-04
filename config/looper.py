@@ -5,6 +5,7 @@ RUN_TASKS_TIMEOUT = 20 * 60  # seconds
 
 FB_THROTTLING_WINDOW = 10 * 60  # seconds
 ALLOW_RECURSION = False
+MIN_STARTING_FREQUENCY = 10
 
 # Hour, DMA, AgeGender * about 2 years back + 3 levels of lifetime + 3 levels of Entities
 _number_of_long_tasks_per_aa = 3 * 600 + 3 + 3

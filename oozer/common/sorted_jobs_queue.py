@@ -18,6 +18,8 @@ class NotSet:
 
 
 class _JobsWriter:
+    GLOBAL_ACCOUNT_ID: str = 'global'
+
     def __init__(self, sorted_jobs_queue_interface: 'SortedJobsQueue', batch_size: int = 30):
         """
         Closure that exposes a callable that gets repeatedly called with item to add to one and same
@@ -119,6 +121,8 @@ class _JobsWriter:
 
                 if job_id_parts.ad_account_id:
                     self.cnts[job_id_parts.ad_account_id] += 1
+                else:
+                    self.cnts[self.GLOBAL_ACCOUNT_ID] += 1
 
         if len(self.batch) == self.batch_size:
             self.flush()
@@ -131,11 +135,12 @@ class _JobsWriter:
             self.flush()
 
         cnt = 0
-        for ad_account_id in self.cnts:
+        for ad_account_id, cnts in self.cnts.items():
             Measure.counter(
                 __name__ + '.' + self.__class__.__name__ + '.unique_tasks',
                 {'sweep_id': self.sweep_id, 'ad_account_id': ad_account_id},
-            ).increment(self.cnts[ad_account_id])
+            ).increment(cnts)
+            cnt += cnts
         logger.info(f"#{self.sweep_id}: Redis SortedSet Batcher wrote a total of {cnt} *unique* tasks")
 
 
@@ -318,8 +323,7 @@ class SortedJobsQueue:
         return cnt
 
     def get_ad_accounts_count(self) -> int:
-        redis = get_redis()
-        return len(redis.smembers(self.get_queue_key_ad_account()))
+        return int(get_redis().scard(self.get_queue_key_ad_account()))
 
     def JobsWriter(self):
         """
