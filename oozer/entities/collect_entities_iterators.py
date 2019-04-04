@@ -2,6 +2,7 @@ from typing import List, Generator, Callable, Dict, Union, Tuple, Any
 
 from common.enums.entity import Entity
 from common.id_tools import generate_universal_id
+from common.page_tokens import PageTokenManager
 from common.tokens import PlatformTokenManager
 from oozer.common.cold_storage import ChunkDumpStore
 from oozer.common.enum import (
@@ -26,7 +27,6 @@ from oozer.common.facebook_api import (
 from oozer.common.job_scope import JobScope
 from oozer.common.vendor_data import add_vendor_data
 from oozer.entities.feedback_entity_task import feedback_entity_task
-from oozer.metrics.collect_organic_insights import InsightsOrganic
 
 DEFAULT_CHUNK_SIZE = 200
 
@@ -249,10 +249,8 @@ def iter_collect_entities_per_page_graph(job_scope: JobScope) -> Generator[Dict[
     """
     Collects an arbitrary entity for a page using graph API
     """
-    with PlatformApiContext(job_scope.token) as fb_ctx:
-        page_token = InsightsOrganic.fetch_page_token(fb_ctx, job_scope.ad_account_id)
-
-    with PlatformApiContext(page_token) as fb_ctx:
+    page_token_manager = PageTokenManager.from_job_scope(job_scope)
+    with PlatformApiContext(page_token_manager.get_best_token(job_scope.ad_account_id)) as fb_ctx:
         page_root_fb_entity = fb_ctx.to_fb_model(job_scope.ad_account_id, Entity.Page)
 
     entity_type = job_scope.report_variant

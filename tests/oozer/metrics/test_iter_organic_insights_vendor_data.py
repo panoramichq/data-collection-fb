@@ -154,11 +154,7 @@ class VendorOrganicDataInjectionTests(TestCase):
 
                 with mock.patch.object(
                     collect_organic_insights.InsightsOrganic, 'iter_other_insights', return_value=input_data
-                ), mock.patch.object(
-                    collect_organic_insights.InsightsOrganic, 'fetch_page_token', return_value='token'
-                ), mock.patch.object(
-                    NormalStore, 'store'
-                ) as store:
+                ), mock.patch.object(NormalStore, 'store') as store:
 
                     data_iter = collect_organic_insights.InsightsOrganic.iter_collect_insights(job_scope)
                     assert len(list(data_iter)) == 1
