@@ -4,7 +4,6 @@ RUN_SWEEP_TIMEOUT = 60 * 60  # seconds
 RUN_TASKS_TIMEOUT = 20 * 60  # seconds
 
 FB_THROTTLING_WINDOW = 10 * 60  # seconds
-DECAY_FN_START_MULTIPLIER = 3  # value of 'z' used in linear decay formulas
 ALLOW_RECURSION = False
 
 # Hour, DMA, AgeGender * about 2 years back + 3 levels of lifetime + 3 levels of Entities

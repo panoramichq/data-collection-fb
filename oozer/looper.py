@@ -1,3 +1,5 @@
+import functools
+
 import gevent
 import logging
 import math
@@ -31,7 +33,7 @@ def iter_tasks(sweep_id: str) -> Generator[Tuple[CeleryTask, JobScope, JobContex
     with SortedJobsQueue(sweep_id).JobsReader() as jobs_iter:
         for job_id, job_scope_additional_data, score in jobs_iter:
 
-            job_id_parts = parse_id(job_id)  # type: dict
+            job_id_parts = parse_id(job_id)
             job_scope = JobScope(job_scope_additional_data, job_id_parts, sweep_id=sweep_id, score=score)
 
             celery_task = resolve_job_scope_to_celery_task(job_scope)
@@ -50,78 +52,17 @@ def iter_tasks(sweep_id: str) -> Generator[Tuple[CeleryTask, JobScope, JobContex
 
 
 def create_decay_function(
-    n: float, t: float, z: float = looper_config.DECAY_FN_START_MULTIPLIER
+    num_accounts: int, num_tasks: int
 ) -> Callable[[float], Union[float, int]]:
-    """
-    A function that crates a linear decay function y = F(x), where a *smooth* rationing
-    (k per time slice) of population (n) of units of work into discrete time slices (t)
-    is converted into decay-based allocation with larger allocations of work units per slice
-    in early time slices and tapering off of work unit allocation in later time slices
+    @functools.lru_cache()
+    def calculate_a() -> Union[float, int]:
+        return math.sqrt(num_accounts) + math.sqrt(num_accounts / num_tasks)
 
-    Note that at z=2 there are no remaining empty time slices at the end. With z higher than 2
-    you are building a comfy padding of empty time slices at the end. With z < 2 you overshoot
-    t and will not have enough slices at the end to burn off entire population of tasks.
-    In order to prevent silly values of z, see assert further below
+    @functools.lru_cache()
+    def calculate_b() -> Union[float, int]:
+        return -1 / 2 * math.log2(num_tasks)
 
-    Used to allow aggressive-from-start oozing out of tasks in the beginning of
-    processing period. Also allows for a gap of time (between r and t) where
-    long-trailing tasks can finish and API throttling threshold to recover.
-
-    zk|                      |
-      |`-,_                  |
-    y |----i-,_              |
-    k |----|-----------------|
-      |    |       `-,_      |
-      |____|___________`-,___|
-     0     x             r   t
-
-    Homework (please check my homework and poke me in the eye. DDotsenko):
-
-    The task was to derive computationally-efficient decay function (exponential would be cool,
-    but too much CPU for little actual gain, so settled on linear) for flushing out tasks.
-
-    What's known in the beginning:
-    - Total number of tasks - n
-    - total number of periods we'd like to push the tasks over - t
-      (say, we want to push out tasks over 10 minutes, and we want to do it
-       every second, so 10*60=600 total periods)
-
-    The approach taken is to jack up by multiplier z the original number of pushed out tasks
-    in the very fist time slice compared to - k = n / t - what would have been pushed out if all the tasks
-    were evenly allocated over all time slices.
-
-    This becomes a simple "find slope of hypotenuse (zk-r)" problem, where we know only two things about
-    that triangle:
-    - rise is k*z (kz for short)
-    - area of the triangle (must be same as area of k-t rectangle) - n - the total population
-
-    To find out r let's express the area of that triangle as half-area of a rectangle zk-r
-        n = zkr / 2
-
-    From which we derive r:
-        r = 2n / zk
-
-    Thus, equation for slope of the hypotenuse can be computed as:
-        y = zk - zk/r * x
-
-    Which reduces to:
-        y = zk - (zk^2 / 2n) * x
-
-    :param n: Total number of jobs to process
-    :param t: Total number of time periods we are expecting to have
-    :param z: Coefficient (?)
-    :return: A function that computes number of tasks to release
-        in a given time slice given that time slice's index (from 0 to t)
-    """
-    assert z >= 2
-
-    k = n / t
-    zk = z * k
-
-    a = zk
-    b = -1 * zk * zk / (2 * n)
-
-    return lambda x: math.ceil(a + b * x)
+    return lambda x: math.ceil(calculate_a() + calculate_b() * x)
 
 
 def find_area_covered_so_far(fn: Callable[[float], Union[float, int]], x: float) -> int:
@@ -150,10 +91,10 @@ def find_area_covered_so_far(fn: Callable[[float], Union[float, int]], x: float)
 
 
 class TaskOozer:
-    def __init__(self, n: int, t: int, time_slice_length: int = 1, z: int = looper_config.DECAY_FN_START_MULTIPLIER):
+    def __init__(self, num_accounts: int, num_tasks: int, time_slice_length: int = 1):
         """
-        :param n: Number of tasks to release
-        :param t: Time slices to release the tasks over
+        :param num_accounts: Number of accounts to work with
+        :param num_tasks: Number of tasks to release
         :param time_slice_length: in seconds. can be fractional.
         """
         self.actual_processed: int = 0
@@ -161,7 +102,7 @@ class TaskOozer:
 
         # doing this odd way of creating a method to trap decay_fn in the closure
         start_time: int = round(time.time()) - 1
-        decay_fn = create_decay_function(n, t, z)
+        decay_fn = create_decay_function(num_accounts, num_tasks)
 
         def fn():
             return find_area_covered_so_far(decay_fn, (round(time.time()) - start_time) / time_slice_length)
@@ -346,14 +287,8 @@ def run_tasks(
     _measurement_tags = {'sweep_id': sweep_id}
     _step = 100
 
-    n = limit or SortedJobsQueue(sweep_id).get_queue_length()
-    if n < time_slices:
-        # you will have very few tasks released per period. Annoying
-        # let's model oozer such that population is at least 10 tasks per time slice
-        # If we burn through tasks earlier as a result of that assumption - fine.
-        n = time_slices * 10
-
-    z = looper_config.DECAY_FN_START_MULTIPLIER
+    num_accounts = SortedJobsQueue(sweep_id).get_ad_accounts_count()
+    num_tasks = limit or SortedJobsQueue(sweep_id).get_ad_accounts_count()
 
     start_of_run_seconds = time.time()
     max_normal_running_time_seconds = time_slices * time_slice_length
@@ -385,7 +320,7 @@ def run_tasks(
 
     tasks_iter = task_iter_score_gate(tasks_iter)
 
-    with TaskOozer(n, time_slices, time_slice_length, z) as ooze_task, Measure.counter(
+    with TaskOozer(num_accounts, num_tasks, time_slice_length) as ooze_task, Measure.counter(
         _measurement_name_base + 'oozed', tags=_measurement_tags
     ) as cntr:
 
