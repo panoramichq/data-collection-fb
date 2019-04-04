@@ -137,7 +137,7 @@ class _JobsWriter:
         cnt = 0
         for ad_account_id, cnts in self.cnts.items():
             Measure.counter(
-                __name__ + '.' + self.__class__.__name__ + '.unique_tasks',
+                f'{__name__}.{self.__class__.__name__}.unique_tasks',
                 {'sweep_id': self.sweep_id, 'ad_account_id': ad_account_id},
             ).increment(cnts)
             cnt += cnts
