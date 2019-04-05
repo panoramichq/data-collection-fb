@@ -26,7 +26,8 @@ class ErrorTypesReport:
     DYNAMO_PROVISIONING = 'dynamo-provisioning'
 
 
-MAPPING_THROTTLING_ERRORS = {
+MAPPING_FACEBOOK_ERRORS = {
+    FailureBucket.TooLarge: ErrorTypesReport.TOO_MUCH_DATA,
     FailureBucket.Throttling: ErrorTypesReport.THROTTLING_ERROR,
     FailureBucket.AdAccountThrottling: ErrorTypesReport.ACCOUNT_RATE_LIMIT,
     FailureBucket.ApplicationThrottling: ErrorTypesReport.APP_RATE_LIMIT,
@@ -36,7 +37,7 @@ MAPPING_THROTTLING_ERRORS = {
 
 class ErrorInspector:
     @staticmethod
-    def _detect_dynamo_error(exc: Exception) -> bool:
+    def _is_dynamo_error(exc: Exception) -> bool:
         return (
             isinstance(exc, UpdateError)
             or isinstance(exc, GetError)
@@ -59,16 +60,13 @@ class ErrorInspector:
             fb_error_inspector = FacebookApiErrorInspector(exc)
 
             _, failure_bucket = fb_error_inspector.get_status_and_bucket()
-            if failure_bucket == FailureBucket.TooLarge:
-                error_type = ErrorTypesReport.TOO_MUCH_DATA
-            elif failure_bucket in MAPPING_THROTTLING_ERRORS:
-                error_type = MAPPING_THROTTLING_ERRORS[failure_bucket]
+            error_type = MAPPING_FACEBOOK_ERRORS.get(failure_bucket, ErrorTypesReport.UNKNOWN)
 
         elif isinstance(exc, Timeout) or isinstance(exc, TimeoutError):
             error_type = ErrorTypesReport.TIMEOUT
             report_to_bugsnag = False
 
-        elif ErrorInspector._detect_dynamo_error(exc):
+        elif ErrorInspector._is_dynamo_error(exc):
             error_type = ErrorTypesReport.DYNAMO_PROVISIONING
             report_to_bugsnag = False
 
