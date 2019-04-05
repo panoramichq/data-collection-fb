@@ -72,7 +72,7 @@ def build_sweep_slice_per_ad_account_task(sweep_id: str, ad_account_reality_clai
 
             logger.info(f"#{sweep_id}-AA<{ad_account_reality_claim.ad_account_id}>: Queued up a total of {cnt} tasks")
     except Exception as ex:
-        ErrorInspector.inspect(ex, ad_account_reality_claim.ad_account_id, {'sweep_ud': sweep_id})
+        ErrorInspector.inspect(ex, ad_account_reality_claim.ad_account_id, {'sweep_id': sweep_id})
 
     return cnt
 
@@ -115,7 +115,7 @@ def build_sweep_slice_per_page(sweep_id: str, page_reality_claim: RealityClaim, 
 
             logger.info(f"#{sweep_id}-#{page_reality_claim.entity_id}: Queued up a total of {cnt} tasks")
     except Exception as ex:
-        ErrorInspector.inspect(ex, page_reality_claim.ad_account_id, {'sweep_ud': sweep_id})
+        ErrorInspector.inspect(ex, page_reality_claim.ad_account_id, {'sweep_id': sweep_id})
 
     return cnt
 
