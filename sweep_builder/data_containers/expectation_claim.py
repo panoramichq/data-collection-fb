@@ -1,7 +1,9 @@
 from datetime import date
-from typing import Any, Dict, Optional
+from typing import Optional
 
 from common.job_signature import JobSignature
+from common.util import convert_class_with_props_to_str
+from sweep_builder.data_containers.entity_node import EntityNode
 
 
 class ExpectationClaim:
@@ -18,48 +20,51 @@ class ExpectationClaim:
     to add more data to context from the very bottom of the stack. Just extend this object.)
     """
 
-    # Keeping signatures for lifetime reports (only ones using effective)
-    normative_job_signature: JobSignature
-    effective_job_signature: JobSignature
-
     entity_id: str
     entity_type: str
-    ad_account_id: str
-    timezone: str
-
-    entity_id_map: Dict[str, Any]
-    range_start: date
     report_type: str
-    report_variant: str
+    job_signature: JobSignature
+
+    ad_account_id: str = None
+    timezone: str = None
+    entity_hierarchy: EntityNode = None
+    range_start: date = None
+    report_variant: str = None
 
     def __init__(
         self,
         entity_id: str,
         entity_type: str,
+        report_type: str,
+        job_signature: JobSignature,
+        *,
         ad_account_id: str = None,
         timezone: str = None,
-        normative_job_signature: JobSignature = None,
-        effective_job_signature: JobSignature = None,
-        entity_id_map: Dict[str, Any] = None,
-        range_start: str = None,
-        report_type: str = None,
+        entity_hierarchy: EntityNode = None,
+        range_start: date = None,
         report_variant: str = None,
     ):
         self.entity_id = entity_id
         self.entity_type = entity_type
+        self.report_type = report_type
+        self.job_signature = job_signature
         self.ad_account_id = ad_account_id
         self.timezone = timezone
-        self.normative_job_signature = normative_job_signature
-        self.effective_job_signature = effective_job_signature
-        self.entity_id_map = entity_id_map
+        self.entity_hierarchy = entity_hierarchy
         self.range_start = range_start
-        self.report_type = report_type
         self.report_variant = report_variant
+
+    def __eq__(self, other):
+        return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+    def __repr__(self):
+        return convert_class_with_props_to_str(self)
 
     @property
     def is_divisible(self) -> bool:
-        return self.entity_id_map is not None
+        """Can this task be divided into subtasks."""
+        return bool(self.entity_hierarchy)
 
     @property
-    def normative_job_id(self) -> Optional[str]:
-        return None if self.normative_job_signature is None else self.normative_job_signature.job_id
+    def job_id(self) -> Optional[str]:
+        return self.job_signature.job_id
