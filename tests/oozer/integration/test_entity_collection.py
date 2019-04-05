@@ -5,7 +5,8 @@ from oozer.entities.collect_entities_iterators import (
     iter_native_entities_per_page,
     iter_collect_entities_per_adaccount,
     iter_collect_entities_per_page,
-    iter_native_entities_per_page_post)
+    iter_native_entities_per_page_post,
+)
 from tests.base.testcase import TestCase, integration
 
 from common.enums.entity import Entity
