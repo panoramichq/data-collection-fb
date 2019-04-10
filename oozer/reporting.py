@@ -62,7 +62,7 @@ def reported_task(func: Callable) -> Callable:
             _report_success(job_scope, start_time, retval)
         except TaskOutsideSweepException as e:
             logger.info(f'{e.job_scope} skipped because sweep {e.job_scope.sweep_id} is done')
-            ErrorInspector.send_measurement_error(ErrorTypesReport.SWEEP_ALREADY_ENDED, job_scope.ad_account_id)
+            ErrorInspector.send_measurement_error(job_scope.ad_account_id, ErrorTypesReport.SWEEP_ALREADY_ENDED)
         except CollectionError as e:
             _report_failure(job_scope, start_time, e.inner, partial_datapoint_count=e.partial_datapoint_count)
         except Exception as e:

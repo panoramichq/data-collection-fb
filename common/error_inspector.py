@@ -76,4 +76,4 @@ class ErrorInspector:
             logger.warning(f'We encountered exception in tasks with following extra_data ->  {extra_data}')
             logger.warning(str(exc))
 
-        ErrorInspector.send_measurement_error(error_type, ad_account_id)
+        ErrorInspector.send_measurement_error(ad_account_id, error_type)
