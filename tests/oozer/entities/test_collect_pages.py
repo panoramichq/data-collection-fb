@@ -1,4 +1,3 @@
-from common.bugsnag import SEVERITY_ERROR
 from common.enums.entity import Entity
 from common.enums.reporttype import ReportType
 from datetime import datetime
@@ -6,7 +5,6 @@ from facebook_business.adobjects.business import Business
 from facebook_business.adobjects.page import Page
 from facebook_business.api import FacebookRequest
 
-from oozer.common.job_context import JobContext
 from oozer.common.sweep_running_flag import SweepRunningFlag
 from tests.base import random
 from tests.base.testcase import TestCase, mock
@@ -29,16 +27,10 @@ class TestCollectPages(TestCase):
 
         with SweepRunningFlag(job_scope.sweep_id), mock.patch.object(
             report_job_status_task, 'delay'
-        ) as status_task, mock.patch('common.error_inspector.BugSnagContextData.notify') as bugsnag_notify:
-            collect_pages_from_business_task(job_scope, JobContext())
+        ) as status_task, self.assertRaises(ValueError) as ex_trap:
+            collect_pages_from_business_task(job_scope, None)
 
-            assert bugsnag_notify.called
-            actual_args, actual_kwargs = bugsnag_notify.call_args
-            assert (
-                isinstance(actual_args[0], ValueError)
-                and str(actual_args[0]) == 'Report level None specified is not: P'
-            ), 'Notify bugsnag correctly using correct Exception'
-            assert {'severity': SEVERITY_ERROR, 'job_scope': job_scope} == actual_kwargs, 'Notify bugsnag correctly'
+            assert 'Report level' in str(ex_trap.exception)
             assert status_task.called
             parameters, _ = status_task.call_args
             assert (JobStatus.GenericError, job_scope) == parameters, 'Must report status correctly on failure'
@@ -50,16 +42,10 @@ class TestCollectPages(TestCase):
 
         with SweepRunningFlag(job_scope.sweep_id), mock.patch.object(
             report_job_status_task, 'delay'
-        ) as status_task, mock.patch('common.error_inspector.BugSnagContextData.notify') as bugsnag_notify:
-            collect_pages_from_business_task(job_scope, JobContext())
+        ) as status_task, self.assertRaises(ValueError) as ex_trap:
+            collect_pages_from_business_task(job_scope, None)
 
-            assert bugsnag_notify.called
-            actual_args, actual_kwargs = bugsnag_notify.call_args
-            assert (
-                isinstance(actual_args[0], ValueError)
-                and str(actual_args[0]) == 'Job fb||||entity|P cannot proceed. No platform tokens provided.'
-            ), 'Notify bugsnag correctly using correct Exception'
-            assert {'severity': SEVERITY_ERROR, 'job_scope': job_scope} == actual_kwargs, 'Notify bugsnag correctly'
+            assert 'token' in str(ex_trap.exception)
             assert status_task.called
 
             status_task_args, _ = status_task.call_args
@@ -96,7 +82,7 @@ class TestCollectPages(TestCase):
         ), mock.patch.object(
             report_job_status_task, 'delay'
         ) as status_task:
-            collect_pages_from_business_task(job_scope, JobContext())
+            collect_pages_from_business_task(job_scope, None)
 
             assert gp.called
 
