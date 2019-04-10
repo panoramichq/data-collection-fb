@@ -1,4 +1,3 @@
-from common.page_tokens import PageTokenManager
 from common.tokens import PlatformTokenManager
 from sweep_builder.reality_inferrer.adaccounts import iter_scopes
 
@@ -66,4 +65,3 @@ def init_tokens(sweep_id):
     """
     for scope_record in iter_scopes():
         PlatformTokenManager.populate_from_scope_entity(scope_record, sweep_id)
-        PageTokenManager.populate_from_scope_entity(scope_record, sweep_id)

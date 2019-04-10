@@ -1,9 +1,9 @@
 # must be first, as it does event loop patching and other "first" things
-from common.page_tokens import PageTokenManager
 from oozer.entities.collect_entities_iterators import (
     iter_collect_entities_per_page,
     iter_collect_entities_per_page_graph,
 )
+from oozer.metrics.collect_organic_insights import InsightsOrganic
 from tests.base.testcase import TestCase, mock
 
 from common.enums.entity import Entity
@@ -115,9 +115,10 @@ class TestCollectEntitiesPerPageGraph(TestCase):
                 fb_data['account_id'] = '0'
 
                 entities_data = [fb_data]
+                page_token = 'page-token'
                 with mock.patch.object(
-                    PageTokenManager, 'get_best_token', return_value=None
-                ) as get_best_token, mock.patch.object(
+                    InsightsOrganic, 'fetch_page_token', return_value=page_token
+                ) as fetch_page_token, mock.patch.object(
                     FB_PAGE_MODEL, get_method_name, return_value=entities_data
                 ), mock.patch.object(
                     ChunkDumpStore, 'store'
@@ -125,8 +126,17 @@ class TestCollectEntitiesPerPageGraph(TestCase):
 
                     list(iter_collect_entities_per_page_graph(job_scope))
 
-                assert get_best_token.called
+                assert fetch_page_token.called
                 assert store.called
+                fetch_page_token_args, fetch_page_token_keyword_args = fetch_page_token.call_args
+                assert not fetch_page_token_keyword_args
+                assert len(fetch_page_token_args) == 2, 'fetch_page_token method should be called with just 1 parameter'
+
+                fb_ctx_called, page_id_called = fetch_page_token_args
+                assert (
+                    fb_ctx_called.token == job_scope.tokens[0]
+                ), 'Firstly, request page access token using user access token'
+                assert page_id_called == self.ad_account_id
 
                 store_args, store_keyword_args = store.call_args
                 assert not store_keyword_args
