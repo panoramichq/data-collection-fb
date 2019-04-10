@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 def should_persist(job_score: int) -> bool:
     """Determine whether job with score should be persisted."""
-    return job_score > JobGateKeeper.JOB_NOT_PASSED_SCORE
+    return job_score > JobGateKeeper.LOW_SCORE
 
 
 def iter_persist_prioritized(

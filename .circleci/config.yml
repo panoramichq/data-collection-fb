@@ -219,9 +219,8 @@ workflows:
               only:
                 - master
                 - production
-
-#      - run_flake8
-#      - run_black
+      - run_flake8
+      - run_black
 
       # - hold_for_deploy_staging:
       #     type: approval
