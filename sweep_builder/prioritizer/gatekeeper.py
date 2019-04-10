@@ -1,13 +1,10 @@
 from datetime import datetime
 from typing import Optional
 
-from common.enums.entity import Entity
 from common.enums.reporttype import ReportType
 from common.id_tools import JobIdParts
 from common.tztools import now
-from config.jobs import REPORT_TYPE_ENTITY_FREQUENCY, REPORT_TYPE_LIFETIME_FREQUENCY, \
-    REPORT_TYPE_ENTITY_COMMENTS_FREQUENCY, REPORT_TYPE_LIFETIME_PAGE_VIDEOS_FREQUENCY, \
-    REPORT_TYPE_LIFETIME_PAGE_POSTS_FREQUENCY
+from config.jobs import REPORT_TYPE_ENTITY_FREQUENCY, REPORT_TYPE_LIFETIME_FREQUENCY
 
 SECONDS_IN_DAY = 60 * 60 * 24
 
@@ -28,17 +25,10 @@ class JobGateKeeper:
 
         # lifetime data should be attempted to collect at least 6 hours apart
         if job.report_type == ReportType.lifetime:
-            if job.report_variant == Entity.PageVideo:
-                return JobGateKeeper._every_x_hours(minutes_since_success, REPORT_TYPE_LIFETIME_PAGE_VIDEOS_FREQUENCY)
-            elif job.report_variant in {Entity.PagePost, Entity.PagePostPromotable}:
-                return JobGateKeeper._every_x_hours(minutes_since_success, REPORT_TYPE_LIFETIME_PAGE_POSTS_FREQUENCY)
             return JobGateKeeper._every_x_hours(minutes_since_success, REPORT_TYPE_LIFETIME_FREQUENCY)
 
-        # entity collection every 2 hours (and comments every 4 hours)
+        # entity collection every 24 hours
         if job.report_type == ReportType.entity:
-            if job.report_variant == Entity.Comment:
-                return JobGateKeeper._every_x_hours(minutes_since_success, REPORT_TYPE_ENTITY_COMMENTS_FREQUENCY)
-
             return JobGateKeeper._every_x_hours(minutes_since_success, REPORT_TYPE_ENTITY_FREQUENCY)
 
         # Single-day jobs have no range_end
