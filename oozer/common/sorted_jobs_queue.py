@@ -51,7 +51,7 @@ class _JobsWriter:
         #  margin of comfort (say, 3)
         #  ========
         #  ~20k
-        self.cache_max_size = 20000
+        self.cache_max_size = 300000
         self.cnts = defaultdict(int)
         self.redis_client = get_redis()
         self.sweep_id = sorted_jobs_queue_interface.sweep_id
