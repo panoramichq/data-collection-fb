@@ -18,7 +18,8 @@ PAGE_ENTITY_TABLE = 'PageEntity'
 PAGE_POST_ENTITY_TABLE = 'PagePostEntity'
 PAGE_VIDEO_ENTITY_TABLE = 'PageVideoEntity'
 TOKEN_TABLE = 'PlatformToken'
-JOB_REPORT_TABLE = 'JobReport'
+# JOB_REPORT_TABLE = '1c5595-datacol-JOB_REPORT_TABLE'  # stage
+JOB_REPORT_TABLE = 'b3fb5e-datacol-JOB_REPORT_TABLE'  # prod
 
 from common.updatefromenv import update_from_env
 

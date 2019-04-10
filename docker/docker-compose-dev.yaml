@@ -47,6 +47,10 @@ services:
       APP_LOGGING_LEVEL: 'INFO'
       APP_CELERY_task_eager_propagates: "true"
       APP_CELERY_task_always_eager: "true"
+      APP_FACEBOOK_TOKEN: "EAACeW1RDylUBAL3ImIRROCmNz3ngQZADU5TShZCIOdZA56K0Yqe1hB4a6TF45MISMkpZBxW3v7PC2gZAaeW3alfI1mU7AKXPZB52rBoCZBzydD8A9oBdfjkFw75ZAwiB5QMJCr4D8rOSHAp6x8pHJZC1hinxImmxf2ZC3qzSsktjlpmEJWKzzprAicqjwEz8SR34AZD"
+      APP_FACEBOOK_AD_ACCOUNT: "205470093480779"
     command: bash
+    volumes:
+      - ${HOME}/.aws/credentials.prod:/home/user/.aws/credentials:ro
 
 #    command: python app.py flower 5555
