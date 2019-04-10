@@ -71,13 +71,12 @@ class _JobsWriter:
             key_index = 0
         self._last_used_key_index = key_index
 
+        # fmt: off
         args = [
             item
             for pair in self.batch.items()
             for item in pair
         ]
-
-        self.cnt += len(self.batch)
 
         self.batch.clear()
 
@@ -120,32 +119,24 @@ class _JobsWriter:
                 self.sorted_jobs_queue_interface.get_queue_key_ad_account(), job_id_parts.ad_account_id
             )
 
-        if job_id_parts.entity_id:
-            # if entity ID is present, there is no way
-            # this could be a reused job
-            # (as only per-Parent jobs can be reused by children)
-            # Thus, we just add to the batch and move on
+        # Per-parent jobs (per Ad Account or per AdSet or Campaign parent)
+        # may have already been saved.
+        if (self.cache.get(job_id) or 0) > score:
+            # it was already flushed out
+            # No point adding it to batch.
+            pass
+        else:
+            # the job is either there with lower score, or not there,
+            # but either way we need to write it out with a new score
             self.batch[job_id] = score
+            self.cache[job_id] = score
+            while len(self.cache) > self.cache_max_size:
+                self.cache.popitem()  # oldest
+
             if job_id_parts.ad_account_id:
                 self.cnts[job_id_parts.ad_account_id] += 1
-        else:  # this is some per-Parent job
-            # There is a chance it's in the larger cache with same exact score
-            if self.cache.get(job_id) == score:
-                # if it's there with same score, it was already flushed out
-                # as such. No point even adding it to batch.
-                pass
             else:
-                # the job is either there with different score, or not there,
-                # but either way we need to write it out with a new score
-                self.batch[job_id] = score
-                self.cache[job_id] = score
-                while len(self.cache) > self.cache_max_size:
-                    self.cache.popitem()  # oldest
-
-                if job_id_parts.ad_account_id:
-                    self.cnts[job_id_parts.ad_account_id] += 1
-                else:
-                    self.cnts[self.GLOBAL_ACCOUNT_ID] += 1
+                self.cnts[self.GLOBAL_ACCOUNT_ID] += 1
 
         if len(self.batch) == self.batch_size:
             self.flush(asynchronous=True)
