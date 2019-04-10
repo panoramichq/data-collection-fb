@@ -1,5 +1,7 @@
 from unittest.mock import patch, sentinel, Mock
 
+import pytest
+
 import config.application
 
 from common.enums.entity import Entity
@@ -27,6 +29,7 @@ def test_aa_import_expectation_not_generated_on_nontoken():
     assert not results
 
 
+@pytest.mark.skip
 def test_aa_import_expectation_generated_on_token():
     entity_id = gen_string_id()
 
