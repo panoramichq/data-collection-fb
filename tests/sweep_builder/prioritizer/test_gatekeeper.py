@@ -9,12 +9,12 @@ from sweep_builder.prioritizer.assign_score import JobGateKeeper
 
 
 def test_shall_pass_last_success_dt_none_returns_true():
-    assert JobGateKeeper.shall_pass(Mock(), None)
+    assert JobGateKeeper.allow_normal_score(Mock(), None)
 
 
 def test_shall_pass_range_end_less_than_three_days_ago_returns_true():
     parts = Mock(range_end=None, range_start=(now() - timedelta(days=2)).date())
-    assert JobGateKeeper.shall_pass(parts, now())
+    assert JobGateKeeper.allow_normal_score(parts, now())
 
 
 @pytest.mark.parametrize(
@@ -36,7 +36,7 @@ def test_shall_pass_range_end_less_than_seven_days_true(range_start_delta, last_
     """Check range_start now - delta and last_success now - delta returns expected."""
     parts = Mock(range_end=None, range_start=(now() - range_start_delta).date())
 
-    assert expected == JobGateKeeper.shall_pass(parts, now() - last_success_delta)
+    assert expected == JobGateKeeper.allow_normal_score(parts, now() - last_success_delta)
 
 
 @pytest.mark.parametrize(['last_success_delta', 'expected'], [(timedelta(hours=7), True), (timedelta(hours=5), False)])
@@ -44,7 +44,7 @@ def test_shall_pass_lifetime_report_type(last_success_delta, expected):
     """Check behaviour for lifetime report type"""
     parts = Mock(range_start=None, range_end=None, report_type=ReportType.lifetime)
 
-    assert expected == JobGateKeeper.shall_pass(parts, now() - last_success_delta)
+    assert expected == JobGateKeeper.allow_normal_score(parts, now() - last_success_delta)
 
 
 @pytest.mark.parametrize(['last_success_delta', 'expected'], [(timedelta(hours=3), True), (timedelta(hours=1), False)])
@@ -52,4 +52,4 @@ def test_shall_pass_entity_report_type(last_success_delta, expected):
     """Check behaviour for entity report type"""
     parts = Mock(range_start=None, range_end=None, report_type=ReportType.entity)
 
-    assert expected == JobGateKeeper.shall_pass(parts, now() - last_success_delta)
+    assert expected == JobGateKeeper.allow_normal_score(parts, now() - last_success_delta)
