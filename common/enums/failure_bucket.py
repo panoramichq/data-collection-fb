@@ -20,9 +20,6 @@ class FailureBucket:
     # any of the throttling errors (App ID, Ad Account ID, User ID)
     # Typical action here is to wait it out.
     Throttling = 100
-    UserThrottling = 200
-    AdAccountThrottling = 300
-    ApplicationThrottling = 400
 
     # errors indicating that our use of API causes vendor to error out
     # due to very large computation / memory / time needs to process such request

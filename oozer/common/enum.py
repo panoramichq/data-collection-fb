@@ -100,22 +100,20 @@ class ExternalPlatformJobStatus(JobStatus):
     DataFetched = 200
     InColdStore = 500
 
+    # Various error states
+
     # Indicates FB hinting us that API call failed because we might have asked for too much data
     TooMuchData = -500
-
-    AdAccountThrottlingError = -600
-    UserThrottlingError = -700
-    ApplicationThrottlingError = -800
-
+    # FB API throttling kicked in. At this point we don't diff if its App vs AdAccount vs User throttling.
+    # TODO: plan for splitting this into 3: App | AdAccount | User
+    ThrottlingError = -700
     GenericPlatformError = -900
 
     failure_bucket_map = {
         DataFetched: FailureBucket.WorkingOnIt,
         JobStatus.Done: FailureBucket.Success,
         TooMuchData: FailureBucket.TooLarge,
-        AdAccountThrottlingError: FailureBucket.AdAccountThrottling,
-        UserThrottlingError: FailureBucket.UserThrottling,
-        ApplicationThrottlingError: FailureBucket.ApplicationThrottling,
+        ThrottlingError: FailureBucket.Throttling,
         GenericPlatformError: FailureBucket.Other,
         JobStatus.GenericError: FailureBucket.Other,
     }

@@ -1,10 +1,10 @@
 from typing import Dict, Any, Generator, Union
 
 from facebook_business.adobjects.insightsresult import InsightsResult
+from facebook_business.api import FacebookRequest
 
 from common.enums.entity import Entity
 from common.id_tools import NAMESPACE_RAW
-from common.page_tokens import PageTokenManager
 from common.tokens import PlatformTokenManager
 from oozer.common.cold_storage import batch_store
 from oozer.common.enum import (
@@ -14,7 +14,7 @@ from oozer.common.enum import (
     FB_PAGE_MODEL,
     FB_PAGE_POST_MODEL,
 )
-from oozer.common.facebook_api import PlatformApiContext
+from oozer.common.facebook_api import PlatformApiContext, DEFAULT_PAGE_ACCESS_TOKEN_LIMIT
 from oozer.common.job_scope import JobScope
 from oozer.common.vendor_data import add_vendor_data
 
@@ -27,6 +27,31 @@ from oozer.metrics.vendor_data_extractor import (
 
 
 class InsightsOrganic:
+    @staticmethod
+    def fetch_page_token(fb_ctx: PlatformApiContext, page_id: str) -> str:
+        # In ideal world, this logic is moved to the beginning of the pipeline so each task does not need to fetch it
+        # Their AdAccountUser object is missing `get_accounts` method
+
+        request = FacebookRequest(node_id='me', method='GET', endpoint='/accounts', api=fb_ctx.api, api_type='NODE')
+        request.add_params({'limit': DEFAULT_PAGE_ACCESS_TOKEN_LIMIT})
+
+        while True:
+            # I assume that there's a better way to do paginate over this, but I wasn't able to find the corresponding
+            # target class in SDK :/
+            response = request.execute()
+            response_json = response.json()
+
+            selected_pages = [entry for entry in response_json['data'] if entry['id'] == page_id]
+            if selected_pages:
+                return selected_pages[0]['access_token']
+
+            if 'next' in response_json['paging']:
+                request._path = response_json['paging']['next']
+            else:
+                break
+
+        raise ValueError(f'Cannot generate Page Access token for page_id "{page_id}"')
+
     @staticmethod
     def _detect_report_api_kind(job_scope: JobScope) -> str:
         if job_scope.entity_type == Entity.Page:
@@ -83,7 +108,6 @@ class InsightsOrganic:
         token = job_scope.token
         token_manager = PlatformTokenManager.from_job_scope(job_scope)
         report_entity_kind = InsightsOrganic._detect_report_api_kind(job_scope)
-        page_token_manager = PageTokenManager.from_job_scope(job_scope)
 
         if report_entity_kind == ReportEntityApiKind.Video:
             with PlatformApiContext(job_scope.token) as fb_ctx:
@@ -92,7 +116,10 @@ class InsightsOrganic:
             data_iter = cls.iter_video_insights(report_root_fb_entity)
 
         elif report_entity_kind in {ReportEntityApiKind.Page, ReportEntityApiKind.Post}:
-            with PlatformApiContext(page_token_manager.get_best_token(job_scope.ad_account_id)) as fb_ctx:
+            with PlatformApiContext(job_scope.token) as fb_ctx:
+                page_token = InsightsOrganic.fetch_page_token(fb_ctx, job_scope.ad_account_id)
+
+            with PlatformApiContext(page_token) as fb_ctx:
                 report_root_fb_entity = fb_ctx.to_fb_model(job_scope.entity_id, job_scope.report_variant)
 
             data_iter = cls.iter_other_insights(report_root_fb_entity, report_entity_kind)

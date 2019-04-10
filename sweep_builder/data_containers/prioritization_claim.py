@@ -1,9 +1,11 @@
-from typing import Optional
+from typing import List, Iterable, Tuple
+from itertools import zip_longest
 
 from common.job_signature import JobSignature
+from sweep_builder.data_containers.expectation_claim import ExpectationClaim
 
 
-class PrioritizationClaim:
+class PrioritizationClaim(ExpectationClaim):
     """
     Used to express a bundle of data representing scored realization of
     need to have certain data point filled.
@@ -14,31 +16,11 @@ class PrioritizationClaim:
     to add more data to context from the very bottom of the stack. Just extend this object.)
     """
 
-    entity_id: str
-    entity_type: str
-    job_signature: JobSignature
-    score: int
-
-    ad_account_id: Optional[str]
-    timezone: Optional[str]
-
-    def __init__(
-        self,
-        entity_id: str,
-        entity_type: str,
-        selected_job_signature: JobSignature,
-        score: int,
-        *,
-        ad_account_id: str = None,
-        timezone: str = None,
-    ):
-        self.entity_id = entity_id
-        self.entity_type = entity_type
-        self.job_signature = selected_job_signature
-        self.score = score
-        self.ad_account_id = ad_account_id
-        self.timezone = timezone
+    # structure matching job_signatures on underlying class
+    # here score for each element in original list is matched in
+    # position in job_scores list.
+    job_scores: List[int] = []
 
     @property
-    def selected_job_id(self) -> str:
-        return self.job_signature.job_id
+    def score_job_pairs(self) -> Iterable[Tuple[int, JobSignature]]:
+        return zip_longest(self.job_scores, self.job_signatures)

@@ -2,13 +2,12 @@ import logging
 import random
 import ujson as json
 
-from collections import namedtuple, OrderedDict, defaultdict
+from collections import namedtuple, OrderedDict
 from typing import List
 
 from common.bugsnag import BugSnagContextData
 from common.connect.redis import get_redis
 from common.id_tools import parse_id_parts
-from common.measurement import Measure
 
 logger = logging.getLogger(__name__)
 
@@ -18,8 +17,6 @@ class NotSet:
 
 
 class _JobsWriter:
-    GLOBAL_ACCOUNT_ID: str = 'global'
-
     def __init__(self, sorted_jobs_queue_interface: 'SortedJobsQueue', batch_size: int = 30):
         """
         Closure that exposes a callable that gets repeatedly called with item to add to one and same
@@ -41,7 +38,6 @@ class _JobsWriter:
         self.batch_size = batch_size
         self.cache = OrderedDict()
         self.processed_job_scope_data_ad_account_ids = set()
-        self.processed_ad_account_ids = set()
         # cache_max_size allows us to avoid writing same score
         # for same jobID when given objects rely on same JobID
         # for collection.
@@ -52,7 +48,7 @@ class _JobsWriter:
         #  ========
         #  ~20k
         self.cache_max_size = 20000
-        self.cnts = defaultdict(int)
+        self.cnt = 0
         self.redis_client = get_redis()
         self.sweep_id = sorted_jobs_queue_interface.sweep_id
         self.sorted_jobs_queue_interface = sorted_jobs_queue_interface
@@ -68,6 +64,7 @@ class _JobsWriter:
             self.sorted_jobs_queue_interface.get_queue_key(),
             *args,
         )
+        self.cnt += len(self.batch)
         self.batch.clear()
 
     def write_job_scope_data(self, job_scope_data, job_id_parts):
@@ -84,18 +81,12 @@ class _JobsWriter:
                 self.sorted_jobs_queue_interface.get_payload_key(job_id_parts.ad_account_id), json.dumps(job_scope_data)
             )
 
-    def add_to_queue(self, job_id: str, score: int, **job_scope_data):
+    def add_to_queue(self, job_id, score, **job_scope_data):
         job_id_parts = parse_id_parts(job_id)
 
         if job_scope_data:
             with BugSnagContextData(job_id=job_id, job_scope_data=job_scope_data):
                 self.write_job_scope_data(job_scope_data, job_id_parts)
-
-        if job_id_parts.ad_account_id and job_id_parts.ad_account_id not in self.processed_ad_account_ids:
-            self.processed_ad_account_ids.add(job_id_parts.ad_account_id)
-            self.redis_client.sadd(
-                self.sorted_jobs_queue_interface.get_queue_key_ad_account(), job_id_parts.ad_account_id
-            )
 
         if job_id_parts.entity_id:
             # if entity ID is present, there is no way
@@ -103,8 +94,6 @@ class _JobsWriter:
             # (as only per-Parent jobs can be reused by children)
             # Thus, we just add to the batch and move on
             self.batch[job_id] = score
-            if job_id_parts.ad_account_id:
-                self.cnts[job_id_parts.ad_account_id] += 1
         else:  # this is some per-Parent job
             # There is a chance it's in the larger cache with same exact score
             if self.cache.get(job_id) == score:
@@ -119,11 +108,6 @@ class _JobsWriter:
                 while len(self.cache) > self.cache_max_size:
                     self.cache.popitem()  # oldest
 
-                if job_id_parts.ad_account_id:
-                    self.cnts[job_id_parts.ad_account_id] += 1
-                else:
-                    self.cnts[self.GLOBAL_ACCOUNT_ID] += 1
-
         if len(self.batch) == self.batch_size:
             self.flush()
 
@@ -133,15 +117,7 @@ class _JobsWriter:
     def __exit__(self, exc_type, exc_val, exc_tb):
         if self.batch:  # some sub-batch_size leftovers
             self.flush()
-
-        cnt = 0
-        for ad_account_id, cnts in self.cnts.items():
-            Measure.counter(
-                f'{__name__}.{self.__class__.__name__}.unique_tasks',
-                {'sweep_id': self.sweep_id, 'ad_account_id': ad_account_id},
-            ).increment(cnts)
-            cnt += cnts
-        logger.info(f"#{self.sweep_id}: Redis SortedSet Batcher wrote a total of {cnt} *unique* tasks")
+        logger.info(f"#{self.sweep_id}: Redis SortedSet Batcher wrote a total of {self.cnt} *unique* tasks")
 
 
 FrontRowParticipant = namedtuple('FrontRowParticipant', ['score', 'job_id', 'gen'])
@@ -308,9 +284,6 @@ class SortedJobsQueue:
         # same here - 10 possible shards
         return self._queue_key_base + str(random.randint(0, 9))
 
-    def get_queue_key_ad_account(self) -> str:
-        return f'{self._queue_key_base}-ad_account_id'
-
     def get_queue_keys_range(self) -> List[str]:
         # still same 10 shards
         return [self.get_queue_key(shard_id=i) for i in range(0, 10)]  # last arg is exclusive not inclusive
@@ -321,9 +294,6 @@ class SortedJobsQueue:
         for key in self.get_queue_keys_range():
             cnt += redis.zcount(key, '-inf', '+inf') or 0
         return cnt
-
-    def get_ad_accounts_count(self) -> int:
-        return int(get_redis().scard(self.get_queue_key_ad_account()))
 
     def JobsWriter(self):
         """
