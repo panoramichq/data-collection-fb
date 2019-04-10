@@ -66,11 +66,7 @@ def assign_score(claim: ScorableClaim) -> int:
         return 1000
 
     # if we are here, we have Platform-flavored job
-
-    # report_variant value is required only when focus of job is some other sub-child level
-    # under ad_account level (if entity_id+type are empty) or of entity_id+type.
-    # fb|111|222|C|day|A|2019-03-22 or fb|111|||day|A|2019-03-22
-    is_per_parent_job = bool(report_variant)
+    is_per_parent_job = bool(report_variant and (not entity_type or entity_type == Entity.PagePost))
     is_per_page_metrics_job = bool(report_variant and report_variant in Entity.NON_AA_SCOPED)
 
     if not is_per_parent_job and ad_account_id != '23845179' and not is_per_page_metrics_job:
@@ -82,12 +78,17 @@ def assign_score(claim: ScorableClaim) -> int:
             'report_type': report_type,
         }
 
+        # at this time, it's impossible to have per-entity_id
+        # jobs here because sweep builder specifically avoids
+        # scoring and releasing per-entity_id jobs
+        # TODO: when we get per-entity_id jobs back, do some scoring for these
+        # Until then, we are making sure per-parent jobs get out first
         Measure.counter(_measurement_name_base + 'skipped_not_parent_jobs', _measurement_tags).increment()
         return 0
 
     last_success_dt = None if last_report is None else last_report.last_success_dt
-    if ACTIVATE_JOB_GATEKEEPER and not JobGateKeeper.allow_normal_score(job_id_parts, last_success_dt=last_success_dt):
-        return JobGateKeeper.LOW_SCORE
+    if ACTIVATE_JOB_GATEKEEPER and not JobGateKeeper.shall_pass(job_id_parts, last_success_dt=last_success_dt):
+        return JobGateKeeper.JOB_NOT_PASSED_SCORE
 
     score = 0
 

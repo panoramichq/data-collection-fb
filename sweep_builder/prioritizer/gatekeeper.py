@@ -10,16 +10,13 @@ from config.jobs import REPORT_TYPE_ENTITY_FREQUENCY, REPORT_TYPE_LIFETIME_FREQU
     REPORT_TYPE_LIFETIME_PAGE_POSTS_FREQUENCY
 
 
-SECONDS_IN_DAY = 60 * 60 * 24
-
-
 class JobGateKeeper:
     """Prevent over-collection of datapoints."""
 
-    LOW_SCORE = 1
+    JOB_NOT_PASSED_SCORE = 1
 
     @staticmethod
-    def allow_normal_score(job: JobIdParts, last_success_dt: Optional[datetime]):
+    def shall_pass(job: JobIdParts, last_success_dt: Optional[datetime]):
         """Return true if job should be re-collected."""
         # never collected before so you have to try to collect it
         if last_success_dt is None:
@@ -48,8 +45,7 @@ class JobGateKeeper:
         # just in case we generate job without range_end, we better let it go :)
         if job_range_end is None:
             return True
-
-        datapoint_age_in_days = (now().date() - job_range_end).total_seconds() / SECONDS_IN_DAY
+        datapoint_age_in_days = (now().date() - job_range_end).total_seconds() / (60 * 60 * 24)
 
         if datapoint_age_in_days < 3:
             return True
