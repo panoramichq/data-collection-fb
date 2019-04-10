@@ -38,10 +38,7 @@ def test_reported_task_on_failure_facebook_error(
 ):
     exc = FacebookError('test')
     mock_job_scope = Mock(token='token')
-    mock_get_status_and_bucket.return_value = (
-        ExternalPlatformJobStatus.UserThrottlingError,
-        FailureBucket.UserThrottling,
-    )
+    mock_get_status_and_bucket.return_value = (ExternalPlatformJobStatus.ThrottlingError, FailureBucket.Throttling)
 
     @reported_task
     def test_task(*_, **__):
@@ -56,12 +53,12 @@ def test_reported_task_on_failure_facebook_error(
     assert mock_job_scope.running_time is not None
     assert mock_report.delay.call_args_list == [
         call(ExternalPlatformJobStatus.Start, mock_job_scope),
-        call(ExternalPlatformJobStatus.UserThrottlingError, mock_job_scope),
+        call(ExternalPlatformJobStatus.ThrottlingError, mock_job_scope),
     ]
 
     mock_notify.assert_called_once_with(exc, job_scope=mock_job_scope, severity=SEVERITY_WARNING)
     mock_from_job_scope.return_value.report_usage_per_failure_bucket.assert_called_once_with(
-        'token', FailureBucket.UserThrottling
+        'token', FailureBucket.Throttling
     )
 
 
