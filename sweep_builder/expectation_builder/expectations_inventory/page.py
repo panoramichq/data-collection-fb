@@ -27,8 +27,7 @@ def pages_per_scope(reality_claim: RealityClaim) -> Generator[ExpectationClaim, 
     yield ExpectationClaim(
         reality_claim.entity_id,
         reality_claim.entity_type,
-        ReportType.import_pages,
-        JobSignature(
+        normative_job_signature=JobSignature(
             generate_id(
                 namespace=config.application.UNIVERSAL_ID_SYSTEM_NAMESPACE,
                 # Note absence of value for Page
@@ -57,8 +56,8 @@ def sync_expectations_per_page(reality_claim: RealityClaim) -> Generator[Expecta
     yield ExpectationClaim(
         reality_claim.entity_id,
         reality_claim.entity_type,
-        ReportType.sync_expectations,
-        JobSignature(
+        ad_account_id=reality_claim.ad_account_id,
+        normative_job_signature=JobSignature(
             generate_id(
                 ad_account_id=reality_claim.ad_account_id,
                 entity_id=reality_claim.ad_account_id,
@@ -66,5 +65,4 @@ def sync_expectations_per_page(reality_claim: RealityClaim) -> Generator[Expecta
                 report_type=ReportType.sync_expectations,
             )
         ),
-        ad_account_id=reality_claim.ad_account_id,
     )

@@ -27,8 +27,7 @@ def ad_accounts_per_scope(reality_claim: RealityClaim) -> Generator[ExpectationC
     yield ExpectationClaim(
         reality_claim.entity_id,
         reality_claim.entity_type,
-        ReportType.import_accounts,
-        JobSignature(
+        normative_job_signature=JobSignature(
             generate_id(
                 namespace=config.application.UNIVERSAL_ID_SYSTEM_NAMESPACE,
                 # Note absence of value for AdAccount
@@ -57,8 +56,9 @@ def sync_expectations_per_ad_account(reality_claim: RealityClaim) -> Generator[E
     yield ExpectationClaim(
         reality_claim.entity_id,
         reality_claim.entity_type,
-        ReportType.sync_expectations,
-        JobSignature(
+        ad_account_id=reality_claim.ad_account_id,
+        timezone=reality_claim.timezone,
+        normative_job_signature=JobSignature(
             generate_id(
                 ad_account_id=reality_claim.ad_account_id,
                 entity_id=reality_claim.ad_account_id,
@@ -66,6 +66,4 @@ def sync_expectations_per_ad_account(reality_claim: RealityClaim) -> Generator[E
                 report_type=ReportType.sync_expectations,
             )
         ),
-        ad_account_id=reality_claim.ad_account_id,
-        timezone=reality_claim.timezone,
     )

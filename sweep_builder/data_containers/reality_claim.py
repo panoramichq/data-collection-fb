@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Set, Tuple
+from typing import Set
 
 from common.enums.entity import Entity
 
@@ -55,16 +55,3 @@ class RealityClaim:
 
     def to_dict(self):
         return self.__dict__.copy()
-
-    @property
-    def is_divisible(self) -> bool:
-        return all(id_ is not None for id_ in self.parent_entity_ids)
-
-    @property
-    def parent_entity_ids(self) -> Tuple[str, ...]:
-        if self.entity_type == Entity.Ad:
-            return self.campaign_id, self.adset_id
-        elif self.entity_type == Entity.AdSet:
-            return (self.campaign_id,)
-        elif self.entity_type == Entity.Campaign:
-            return ()
