@@ -9,7 +9,6 @@ from config.jobs import REPORT_TYPE_ENTITY_FREQUENCY, REPORT_TYPE_LIFETIME_FREQU
     REPORT_TYPE_ENTITY_COMMENTS_FREQUENCY, REPORT_TYPE_LIFETIME_PAGE_VIDEOS_FREQUENCY, \
     REPORT_TYPE_LIFETIME_PAGE_POSTS_FREQUENCY
 
-
 SECONDS_IN_DAY = 60 * 60 * 24
 
 
@@ -48,7 +47,6 @@ class JobGateKeeper:
         # just in case we generate job without range_end, we better let it go :)
         if job_range_end is None:
             return True
-
         datapoint_age_in_days = (now().date() - job_range_end).total_seconds() / SECONDS_IN_DAY
 
         if datapoint_age_in_days < 3:
