@@ -97,7 +97,16 @@ class SweepStatusTracker:
         for k, v in m0.items():
             m1[k] = m1.get(k, 0) + v
 
-        result = {key: 0 for key in FailureBucket.attr_name_enum_value_map}
+        result = {
+            FailureBucket.Success: 0,
+            FailureBucket.Other: 0,
+            FailureBucket.Throttling: 0,
+            FailureBucket.UserThrottling: 0,
+            FailureBucket.ApplicationThrottling: 0,
+            FailureBucket.AdAccountThrottling: 0,
+            FailureBucket.TooLarge: 0,
+            FailureBucket.WorkingOnIt: 0,
+        }
         # Now the proportion of successes, failure
         # is calculated per each minute. Then those
         # proportions are weighted by ratio related to recency
