@@ -88,7 +88,6 @@ def find_area_covered_so_far(fn: Callable[[float], Union[float, int]], x: float)
 
     NOTE: This only works for cases when f(x) > 0
 
-    :param n: Total area (total number of tasks)
     :param fn: linear equation y = F(x)
     :param x: value of x
     :return: Total population ("area") of zk-P-x-0
@@ -198,10 +197,10 @@ def run_tasks(
     if limit:
         tasks_iter = islice(tasks_iter, 0, limit)
 
-    def task_iter_score_gate(tasks_iter):
+    def task_iter_score_gate(inner_tasks_iter):
         global last_processed_score
 
-        for celery_task, job_scope, job_context, score in tasks_iter:
+        for inner_celery_task, inner_job_scope, inner_job_context, score in inner_tasks_iter:
             # this is ugly, but it is easier than adding this line to evert branch in this spaghetti function
             last_processed_score = score
             if score < 2:  # arbitrary
@@ -211,10 +210,10 @@ def run_tasks(
             # We need to see into the jobs scoring state per sweep
             Measure.counter(
                 _measurement_name_base + 'job_scores',
-                tags={'score': score, 'ad_account_id': job_scope.ad_account_id, **_measurement_tags},
+                tags={'score': score, 'ad_account_id': inner_job_scope.ad_account_id, **_measurement_tags},
             ).increment()
 
-            yield celery_task, job_scope, job_context
+            yield inner_celery_task, inner_job_scope, inner_job_context
 
     tasks_iter = task_iter_score_gate(tasks_iter)
 
@@ -416,14 +415,16 @@ def run_tasks(
                         if cnt < num_tasks:
                             logger.warning(f"#{sweep_id}: Queueing cut at {cnt} jobs of total {num_tasks}")
                         logger.warning(
-                            f'[oozer-run][{sweep_id}][breaking-reason][{sweep_id}] Breaking early due to reaching limit on tasks'
+                            f'[oozer-run][{sweep_id}][breaking-reason][{sweep_id}] Breaking early'
+                            ' due to reaching limit on tasks'
                             f' with following pulse: {sweep_tracker.get_pulse()}'
                             f' and last score {last_processed_score}'
                         )
                         break
                 else:
                     logger.warning(
-                        f'[oozer-run][{sweep_id}][breaking-reason][{sweep_id}] Breaking early due to problem with oozing in the last phase'
+                        f'[oozer-run][{sweep_id}][breaking-reason][{sweep_id}] Breaking early '
+                        'due to problem with oozing in the last phase'
                         f' with following pulse: {sweep_tracker.get_pulse()}'
                         f' and last score {last_processed_score}'
                     )
@@ -467,35 +468,35 @@ def run_tasks(
 
     really_really_kill_it_by = max(should_be_done_by, start_of_run_seconds + 60 * 30)  # half hour
 
-    def its_time_to_quit(pulse: Pulse) -> bool:
+    def its_time_to_quit(inner_pulse: Pulse) -> bool:
         # must have anything at all done
         # otherwise logic below makes no sense
         # This stops us from quitting in very beginning of the loop
         # global dont_even_look_at_clock_until_done_cnt, really_really_kill_it_by, should_be_done_cnt
 
-        if should_be_done_cnt <= pulse.Total:
+        if should_be_done_cnt <= inner_pulse.Total:
             # Yey! all done!
             logger.warning(
                 f'[oozer-run][{sweep_id}][stop-reason] Stopping due to completing all tasks'
-                f' with following pulse: {pulse}'
+                f' with following pulse: {inner_pulse}'
                 f' and last score {last_processed_score}'
             )
             return True
 
-        if pulse.Total:
+        if inner_pulse.Total:
             # all other pulse types are "final" and are not good indicators of
             # us still doing something. pulse.WorkingOnIt is the only one that may
             # suggest that there is a reason to stay
-            if dont_even_look_at_clock_until_done_cnt > pulse.Total and pulse.WorkingOnIt:
+            if dont_even_look_at_clock_until_done_cnt > inner_pulse.Total and inner_pulse.WorkingOnIt:
                 return False
             # no "else" Falling through on other conditionals
 
             # This is some 10 minute mark. Hence us checking if we are still doing something
             # long-running in the last 3 minutes.
-            if should_be_done_by < time.time() and not pulse.WorkingOnIt:
+            if should_be_done_by < time.time() and not inner_pulse.WorkingOnIt:
                 logger.warning(
                     f'[oozer-run][{sweep_id}][stop-reason] Stopping due to running out of time on first checkpoint'
-                    f' with following pulse: {pulse}'
+                    f' with following pulse: {inner_pulse}'
                     f' and last score {last_processed_score}'
                 )
                 return True
@@ -505,7 +506,7 @@ def run_tasks(
             if really_really_kill_it_by < time.time():
                 logger.warning(
                     f'[oozer-run][{sweep_id}][stop-reason] Stopping due to running out of time on last checkpoint'
-                    f' with following pulse: {pulse}'
+                    f' with following pulse: {inner_pulse}'
                     f' and last score {last_processed_score}'
                 )
                 return True
