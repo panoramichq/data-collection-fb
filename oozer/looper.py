@@ -198,8 +198,6 @@ def run_tasks(
         tasks_iter = islice(tasks_iter, 0, limit)
 
     def task_iter_score_gate(inner_tasks_iter):
-        global last_processed_score
-
         for inner_celery_task, inner_job_scope, inner_job_context, inner_score in inner_tasks_iter:
             if inner_score < 2:  # arbitrary
                 # cut the flow of tasks
