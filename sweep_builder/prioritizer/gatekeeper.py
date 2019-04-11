@@ -5,9 +5,13 @@ from common.enums.entity import Entity
 from common.enums.reporttype import ReportType
 from common.id_tools import JobIdParts
 from common.tztools import now
-from config.jobs import REPORT_TYPE_ENTITY_FREQUENCY, REPORT_TYPE_LIFETIME_FREQUENCY, \
-    REPORT_TYPE_ENTITY_COMMENTS_FREQUENCY, REPORT_TYPE_LIFETIME_PAGE_VIDEOS_FREQUENCY, \
-    REPORT_TYPE_LIFETIME_PAGE_POSTS_FREQUENCY
+from config.jobs import (
+    REPORT_TYPE_ENTITY_FREQUENCY,
+    REPORT_TYPE_LIFETIME_FREQUENCY,
+    REPORT_TYPE_ENTITY_COMMENTS_FREQUENCY,
+    REPORT_TYPE_LIFETIME_PAGE_VIDEOS_FREQUENCY,
+    REPORT_TYPE_LIFETIME_PAGE_POSTS_FREQUENCY,
+)
 
 
 class JobGateKeeper:
