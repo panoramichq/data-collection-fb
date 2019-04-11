@@ -4,16 +4,15 @@ import math
 import time
 from typing import Any, Callable
 
-from facebook_business.exceptions import FacebookError
-
-from common.bugsnag import BugSnagContextData, SEVERITY_WARNING, SEVERITY_ERROR
 from common.enums.failure_bucket import FailureBucket
+from common.error_inspector import ErrorInspector, ErrorTypesReport
 from common.tokens import PlatformTokenManager
 from oozer.common.job_scope import JobScope
 from oozer.common.report_job_status_task import report_job_status_task
 from oozer.common.enum import ExternalPlatformJobStatus
 from oozer.common.facebook_api import FacebookApiErrorInspector
 from oozer.common.errors import CollectionError, TaskOutsideSweepException
+from oozer.common.sweep_status_tracker import SweepStatusTracker
 
 logger = logging.getLogger(__name__)
 
@@ -24,20 +23,21 @@ def _report_failure(job_scope: JobScope, start_time: float, exc: Exception, **kw
     job_scope.running_time = math.ceil(end_time - start_time)
     job_scope.datapoint_count = kwargs.get('partial_datapoint_count')
 
-    token_manager = PlatformTokenManager.from_job_scope(job_scope)
     token = job_scope.token
 
-    severity = SEVERITY_ERROR
-    failure_bucket = FailureBucket.Other
-    failure_status = ExternalPlatformJobStatus.GenericError
+    ErrorInspector.inspect(exc, job_scope.ad_account_id, {'job_scope': job_scope})
 
-    if isinstance(exc, FacebookError):
-        severity = SEVERITY_WARNING
-        failure_status, failure_bucket = FacebookApiErrorInspector(exc).get_status_and_bucket()
+    token = job_scope.token
+    failure_description = FacebookApiErrorInspector(exc).get_status_and_bucket()
+    if failure_description:
+        failure_status, failure_bucket = failure_description
+    else:
+        failure_status = ExternalPlatformJobStatus.GenericError
+        failure_bucket = FailureBucket.Other
 
-    BugSnagContextData.notify(exc, severity=severity, job_scope=job_scope)
     report_job_status_task.delay(failure_status, job_scope)
-    token_manager.report_usage_per_failure_bucket(token, failure_bucket)
+    PlatformTokenManager.from_job_scope(job_scope).report_usage_per_failure_bucket(token, failure_bucket)
+    SweepStatusTracker(job_scope.sweep_id).report_status(failure_bucket)
 
 
 def _report_success(job_scope: JobScope, start_time: float, retval: Any):
@@ -49,6 +49,7 @@ def _report_success(job_scope: JobScope, start_time: float, retval: Any):
         job_scope.datapoint_count = retval
 
     report_job_status_task.delay(ExternalPlatformJobStatus.Done, job_scope)
+    SweepStatusTracker(job_scope.sweep_id).report_status(FailureBucket.Success)
 
 
 def reported_task(func: Callable) -> Callable:
@@ -63,11 +64,10 @@ def reported_task(func: Callable) -> Callable:
             _report_success(job_scope, start_time, retval)
         except TaskOutsideSweepException as e:
             logger.info(f'{e.job_scope} skipped because sweep {e.job_scope.sweep_id} is done')
+            ErrorInspector.send_measurement_error(job_scope.ad_account_id, ErrorTypesReport.SWEEP_ALREADY_ENDED)
         except CollectionError as e:
             _report_failure(job_scope, start_time, e.inner, partial_datapoint_count=e.partial_datapoint_count)
-            raise
         except Exception as e:
             _report_failure(job_scope, start_time, e)
-            raise
 
     return wrapper
