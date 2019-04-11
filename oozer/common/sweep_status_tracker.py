@@ -14,11 +14,13 @@ from common.measurement import Measure
 Pulse = namedtuple('Pulse', list(FailureBucket.attr_name_enum_value_map.keys()) + ['Total'])
 
 AGGREGATE_RECORD_MARKER = 'aggregate'
+IN_PROGRESS_RECORD_MARKER = 'in_progress'
 
 
 class SweepStatusTracker:
     def __init__(self, sweep_id: str):
         self.sweep_id = sweep_id
+        self.redis = get_redis()
 
     def __enter__(self) -> 'SweepStatusTracker':
         return self
@@ -49,31 +51,30 @@ class SweepStatusTracker:
         # Thus, within given minute, various tasks' status reports will fall into same
         # outter key, inside of which value for each of inner keys will be growing,
         # until we fall onto next minute, when we start fresh.
-        key = self._gen_key(self.now_in_minutes())
-        get_redis().hincrby(key, failure_bucket)
+        self.redis.hincrby(self._gen_key(self.now_in_minutes()), failure_bucket)
         if failure_bucket < 0:
             # it's one of those temporary "i am still doing work" status types
             # like WorkingOnIt = -100
             # we don't roll those into aggregate numbers
             # as that would result in double-counting jobs
-            pass
+            self.redis.incrby(self._gen_key(IN_PROGRESS_RECORD_MARKER), 1)
         else:
-            key = self._gen_key(AGGREGATE_RECORD_MARKER)
-            get_redis().hincrby(key, failure_bucket)
+            self.redis.hincrby(self._gen_key(AGGREGATE_RECORD_MARKER), failure_bucket)
+            self.redis.incrby(self._gen_key(IN_PROGRESS_RECORD_MARKER), -1)
 
-    def _get_aggregate_data(self, redis) -> Dict[int, int]:
+    def _get_aggregate_data(self) -> Dict[int, int]:
         # This mess is here just to get through the annoyance
         # of beating what used to be ints as keys AND values
         # back into ints from strings (into which Redis beats non-string
         # keys and values)
-        return {int(k): int(v) for k, v in redis.hgetall(self._gen_key(AGGREGATE_RECORD_MARKER)).items()}
+        return {int(k): int(v) for k, v in self.redis.hgetall(self._gen_key(AGGREGATE_RECORD_MARKER)).items()}
 
-    def _get_trailing_minutes_data(self, minute: int, redis) -> List[Dict[int, int]]:
+    def _get_trailing_minutes_data(self, minute: int) -> List[Dict[int, int]]:
         # This mess is here just to get through the annoyance
         # of beating what used to be ints as keys AND values
         # back into ints from strings (into which Redis beats non-string
         # keys and values)
-        return [{int(k): int(v) for k, v in redis.hgetall(self._gen_key(minute - i)).items()} for i in range(0, 4)]
+        return [{int(k): int(v) for k, v in self.redis.hgetall(self._gen_key(minute - i)).items()} for i in range(0, 4)]
 
     def get_pulse(self, minute: int = None, ignore_cache: bool = False) -> Pulse:
         """
@@ -86,9 +87,7 @@ class SweepStatusTracker:
         """
         minute = minute or self.now_in_minutes()
 
-        redis = get_redis()
-
-        m0, m1, m2, m3 = self._get_trailing_minutes_data(minute, redis)
+        m0, m1, m2, m3 = self._get_trailing_minutes_data(minute)
 
         # merge data from minute zero and minute one
         # because minute zero might have only started
@@ -127,7 +126,7 @@ class SweepStatusTracker:
                     contributor = ratio * data.get(k, 0) / minute_total
                     result[k] = result[k] + contributor
 
-        aggregate_data = self._get_aggregate_data(redis)
+        aggregate_data = self._get_aggregate_data()
 
         # Again, note the split:
         # - total is Done COUNT per entire sweep.
@@ -148,7 +147,6 @@ class SweepStatusTracker:
 
     def _report_metrics(self, interval: int):
         """Regularly report pulse metrics for previous minute to Datadog."""
-        redis = get_redis()
         name_map = {
             FailureBucket.Success: 'success',
             FailureBucket.Other: 'other',
@@ -163,7 +161,7 @@ class SweepStatusTracker:
         while True:
             gevent.sleep(interval)
             prev_minute = self.now_in_minutes() - 1
-            pulse_values = {int(k): int(v) for k, v in redis.hgetall(self._gen_key(prev_minute)).items()}
+            pulse_values = {int(k): int(v) for k, v in self.redis.hgetall(self._gen_key(prev_minute)).items()}
 
             total = 0
             for bucket, name in name_map.items():
@@ -173,3 +171,8 @@ class SweepStatusTracker:
 
             if total:
                 Measure.histogram(f'{__name__}.pulse_stats', tags={'sweep_id': self.sweep_id, 'bucket': 'total'})(total)
+
+            in_progress = int(self.redis.get(self._gen_key(IN_PROGRESS_RECORD_MARKER)) or 0)
+            Measure.histogram(f'{__name__}.pulse_stats', tags={'sweep_id': self.sweep_id, 'bucket': 'in_progress'})(
+                in_progress
+            )
