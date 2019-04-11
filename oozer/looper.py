@@ -88,7 +88,6 @@ def find_area_covered_so_far(fn: Callable[[float], Union[float, int]], x: float)
 
     NOTE: This only works for cases when f(x) > 0
 
-    :param n: Total area (total number of tasks)
     :param fn: linear equation y = F(x)
     :param x: value of x
     :return: Total population ("area") of zk-P-x-0
@@ -117,7 +116,15 @@ class TaskOozer:
 
         self.get_normative_processed: Callable[[], int] = fn
 
-    def ooze_task(self, task: CeleryTask, job_scope: JobScope, job_context: JobContext) -> bool:
+    def ooze_task(
+        self,
+        task: CeleryTask,
+        job_scope: JobScope,
+        job_context: JobContext,
+        sweep_id: str,
+        job_score: int,
+        sweep_tracker: SweepStatusTracker,
+    ) -> bool:
         """
         Tracks the number of calls
         """
@@ -135,6 +142,11 @@ class TaskOozer:
             return True
         except OozingDecayOverflow as ex:
             logger.warning(str(ex))
+            logger.warning(
+                f'[oozer-run][{sweep_id}][breaking-reason] Breaking due to reaching end of decay fn'
+                f' with following pulse: {sweep_tracker.get_pulse()}'
+                f' and last score {job_score}'
+            )
             return False
 
     def __enter__(self):
@@ -179,13 +191,18 @@ def run_tasks(
     _pulse_refresh_interval = 5  # seconds
     sweep_tracker = SweepStatusTracker(sweep_id)
     sweep_tracker.start_metrics_collector(_pulse_refresh_interval)
+    last_processed_score = None
 
     tasks_iter = iter_tasks(sweep_id)
     if limit:
         tasks_iter = islice(tasks_iter, 0, limit)
 
-    def task_iter_score_gate(tasks_iter):
-        for celery_task, job_scope, job_context, score in tasks_iter:
+    def task_iter_score_gate(inner_tasks_iter):
+        global last_processed_score
+
+        for inner_celery_task, inner_job_scope, inner_job_context, score in inner_tasks_iter:
+            # this is ugly, but it is easier than adding this line to evert branch in this spaghetti function
+            last_processed_score = score
             if score < 2:  # arbitrary
                 # cut the flow of tasks
                 return
@@ -193,10 +210,10 @@ def run_tasks(
             # We need to see into the jobs scoring state per sweep
             Measure.counter(
                 _measurement_name_base + 'job_scores',
-                tags={'score': score, 'ad_account_id': job_scope.ad_account_id, **_measurement_tags},
+                tags={'score': score, 'ad_account_id': inner_job_scope.ad_account_id, **_measurement_tags},
             ).increment()
 
-            yield celery_task, job_scope, job_context
+            yield inner_celery_task, inner_job_scope, inner_job_context
 
     tasks_iter = task_iter_score_gate(tasks_iter)
 
@@ -221,8 +238,13 @@ def run_tasks(
         for celery_task, job_scope, job_context in islice(tasks_iter, 0, 100):
             # FYI: ooze_task blocks if we pushed too many tasks in the allotted time
             # It will unblock by itself when it's time to release the task
-            keep_going = ooze_task(celery_task, job_scope, job_context)
+            keep_going = ooze_task(celery_task, job_scope, job_context, sweep_id, last_processed_score, sweep_tracker)
             if not keep_going:
+                logger.warning(
+                    f'[oozer-run][{sweep_id}][breaking-reason] Breaking very early without checking pulse '
+                    f'with following pulse: {sweep_tracker.get_pulse()}'
+                    f' and last score {last_processed_score}'
+                )
                 break
             cnt += 1
 
@@ -231,7 +253,9 @@ def run_tasks(
 
             # if there are 1st quarter tasks left in queue, burn them out
             for celery_task, job_scope, job_context in tasks_iter:
-                keep_going = ooze_task(celery_task, job_scope, job_context)
+                keep_going = ooze_task(
+                    celery_task, job_scope, job_context, sweep_id, last_processed_score, sweep_tracker
+                )
                 if keep_going:
                     cnt += 1
 
@@ -239,7 +263,12 @@ def run_tasks(
                         cntr += _step
 
                 if time.time() > quarter_time or not keep_going:
-                    logger.info(f"Breaking early in 1st quarter time, I am too slow {time.time()} / {quarter_time}")
+                    logger.warning(
+                        f'[oozer-run][{sweep_id}][breaking-reason] Breaking early in 1st quarter time, '
+                        f'I am too slow {time.time()} / {quarter_time}'
+                        f' with following pulse: {sweep_tracker.get_pulse()}'
+                        f' and last score {last_processed_score}'
+                    )
                     break  # to next for-loop
 
         if keep_going:
@@ -251,26 +280,35 @@ def run_tasks(
 
                 now = time.time()
                 if next_pulse_review_second < now:
-                    pulse = sweep_tracker.get_pulse()  # type: Pulse
+                    pulse = sweep_tracker.get_pulse()
                     if pulse.Total > 20:
                         if pulse.Success < 0.10:  # percent
                             # failures across the board
                             # return cnt, pulse
-                            logger.info(
-                                "Breaking early in 2nd quarter time, due to too many failures of any kind "
-                                + "(more than 10 percent)"
+                            logger.warning(
+                                f'[oozer-run][{sweep_id}][breaking-reason] Breaking early in 2nd quarter time, '
+                                'due to too many failures of any kind '
+                                f'(more than 10 percent) with following pulse: {sweep_tracker.get_pulse()}'
+                                f' and last score {last_processed_score}'
                             )
                             break
                         if pulse.Throttling > 0.40:  # percent
                             # time to give it a rest
                             # return cnt, pulse
-                            logger.info("Breaking early in 2nd quarter time, due to throttling (more than 40 percent)")
+                            logger.info(
+                                f'[oozer-run][{sweep_id}][breaking-reason] Breaking early in 2nd quarter time, '
+                                'due to throttling (more than 40 percent)'
+                                f' with following pulse: {sweep_tracker.get_pulse()}'
+                                f' and last score {last_processed_score}'
+                            )
                             break
                     next_pulse_review_second = now + _pulse_refresh_interval
 
                 # FYI: ooze_task blocks if we pushed too many tasks in the allotted time
                 # It will unblock by itself when it's time to release the task
-                keep_going = ooze_task(celery_task, job_scope, job_context)
+                keep_going = ooze_task(
+                    celery_task, job_scope, job_context, sweep_id, last_processed_score, sweep_tracker
+                )
                 if keep_going:
                     cnt += 1
 
@@ -278,7 +316,11 @@ def run_tasks(
                         cntr += _step
 
                     if now > half_time:
-                        logger.info(f"Breaking early in 2nd quarter time, I am too slow {now}/{half_time}")
+                        logger.info(
+                            f'[oozer-run][{sweep_id}][breaking-reason] Breaking early in 2nd quarter time, '
+                            f'I am too slow {now}/{half_time} with following pulse: {sweep_tracker.get_pulse()}'
+                            f' and last score {last_processed_score}'
+                        )
                         break
                 else:
                     break
@@ -309,7 +351,9 @@ def run_tasks(
 
                 cut_off_at_cnt = min(cut_off_at_cnt, half_time_done_cnt * 2)
 
-                keep_going = ooze_task(celery_task, job_scope, job_context)
+                keep_going = ooze_task(
+                    celery_task, job_scope, job_context, sweep_id, last_processed_score, sweep_tracker
+                )
                 if keep_going:
                     cnt += 1
 
@@ -337,20 +381,30 @@ def run_tasks(
                         if pulse.Success < 0.20:  # percent
                             # failures across the board
                             # return cnt, pulse
-                            logger.info(
-                                "Breaking 2nd halif time, due to too many failures of any kind (more than 20 percent)"
+                            logger.warning(
+                                f'[oozer-run][{sweep_id}][breaking-reason] Breaking 2nd halif time, '
+                                'due to too many failures of any kind '
+                                f'(more than 20 percent) with following pulse: {pulse}'
+                                f' and last score {last_processed_score}'
                             )
                             break
                         if pulse.Throttling > 0.40:  # percent
                             # time to give it a rest
                             # return cnt, pulse
-                            logger.info("Breaking early in 2nd quarter time, due to throttling (more than 40 percent)")
+                            logger.warning(
+                                f'[oozer-run][{sweep_id}][breaking-reason] Breaking early in 2nd quarter time, '
+                                'due to throttling (more than 40 percent)'
+                                f' with following pulse: {pulse}'
+                                f' and last score {last_processed_score}'
+                            )
                             break
                     next_pulse_review_second = time.time() + _pulse_refresh_interval
 
                 # FYI: ooze_task blocks if we pushed too many tasks in the allotted time
                 # It will unblock by itself when it's time to release the task
-                keep_going = ooze_task(celery_task, job_scope, job_context)
+                keep_going = ooze_task(
+                    celery_task, job_scope, job_context, sweep_id, last_processed_score, sweep_tracker
+                )
                 if keep_going:
                     cnt += 1
 
@@ -359,12 +413,24 @@ def run_tasks(
 
                     if cnt > cut_off_at_cnt:
                         if cnt < num_tasks:
-                            logger.info(f"#{sweep_id}: Queueing cut at {cnt} jobs of total {num_tasks}")
+                            logger.warning(f"#{sweep_id}: Queueing cut at {cnt} jobs of total {num_tasks}")
+                        logger.warning(
+                            f'[oozer-run][{sweep_id}][breaking-reason][{sweep_id}] Breaking early'
+                            ' due to reaching limit on tasks'
+                            f' with following pulse: {sweep_tracker.get_pulse()}'
+                            f' and last score {last_processed_score}'
+                        )
                         break
                 else:
+                    logger.warning(
+                        f'[oozer-run][{sweep_id}][breaking-reason][{sweep_id}] Breaking early '
+                        'due to problem with oozing in the last phase'
+                        f' with following pulse: {sweep_tracker.get_pulse()}'
+                        f' and last score {last_processed_score}'
+                    )
                     break
 
-                logger.info(f"#{sweep_id}: Queued up all jobs {num_tasks}")
+                logger.warning(f"#{sweep_id}: Queued up all jobs {num_tasks}")
 
     cntr += cnt % _step
 
@@ -402,32 +468,47 @@ def run_tasks(
 
     really_really_kill_it_by = max(should_be_done_by, start_of_run_seconds + 60 * 30)  # half hour
 
-    def its_time_to_quit(pulse: Pulse) -> bool:
+    def its_time_to_quit(inner_pulse: Pulse) -> bool:
         # must have anything at all done
         # otherwise logic below makes no sense
         # This stops us from quitting in very beginning of the loop
         # global dont_even_look_at_clock_until_done_cnt, really_really_kill_it_by, should_be_done_cnt
 
-        if should_be_done_cnt <= pulse.Total:
+        if should_be_done_cnt <= inner_pulse.Total:
             # Yey! all done!
+            logger.warning(
+                f'[oozer-run][{sweep_id}][stop-reason] Stopping due to completing all tasks'
+                f' with following pulse: {inner_pulse}'
+                f' and last score {last_processed_score}'
+            )
             return True
 
-        if pulse.Total:
+        if inner_pulse.Total:
             # all other pulse types are "final" and are not good indicators of
             # us still doing something. pulse.WorkingOnIt is the only one that may
             # suggest that there is a reason to stay
-            if dont_even_look_at_clock_until_done_cnt > pulse.Total and pulse.WorkingOnIt:
+            if dont_even_look_at_clock_until_done_cnt > inner_pulse.Total and inner_pulse.WorkingOnIt:
                 return False
             # no "else" Falling through on other conditionals
 
             # This is some 10 minute mark. Hence us checking if we are still doing something
             # long-running in the last 3 minutes.
-            if should_be_done_by < time.time() and not pulse.WorkingOnIt:
+            if should_be_done_by < time.time() and not inner_pulse.WorkingOnIt:
+                logger.warning(
+                    f'[oozer-run][{sweep_id}][stop-reason] Stopping due to running out of time on first checkpoint'
+                    f' with following pulse: {inner_pulse}'
+                    f' and last score {last_processed_score}'
+                )
                 return True
 
             # This is half-hour mark. No point waiting longer than this
             # even if there are still workers there. They will die off at some point
             if really_really_kill_it_by < time.time():
+                logger.warning(
+                    f'[oozer-run][{sweep_id}][stop-reason] Stopping due to running out of time on last checkpoint'
+                    f' with following pulse: {inner_pulse}'
+                    f' and last score {last_processed_score}'
+                )
                 return True
 
         return False
