@@ -117,7 +117,15 @@ class TaskOozer:
 
         self.get_normative_processed: Callable[[], int] = fn
 
-    def ooze_task(self, task: CeleryTask, job_scope: JobScope, job_context: JobContext) -> bool:
+    def ooze_task(
+        self,
+        task: CeleryTask,
+        job_scope: JobScope,
+        job_context: JobContext,
+        sweep_id: str,
+        job_score: int,
+        sweep_tracker: SweepStatusTracker,
+    ) -> bool:
         """
         Tracks the number of calls
         """
@@ -135,6 +143,11 @@ class TaskOozer:
             return True
         except OozingDecayOverflow as ex:
             logger.warning(str(ex))
+            logger.warning(
+                f'[oozer-run][{sweep_id}][breaking-reason] Breaking due to reaching end of decay fn'
+                f' with following pulse: {sweep_tracker.get_pulse()}'
+                f' and last score {job_score}'
+            )
             return False
 
     def __enter__(self):
@@ -226,10 +239,10 @@ def run_tasks(
         for celery_task, job_scope, job_context in islice(tasks_iter, 0, 100):
             # FYI: ooze_task blocks if we pushed too many tasks in the allotted time
             # It will unblock by itself when it's time to release the task
-            keep_going = ooze_task(celery_task, job_scope, job_context)
+            keep_going = ooze_task(celery_task, job_scope, job_context, sweep_id, last_processed_score, sweep_tracker)
             if not keep_going:
                 logger.warning(
-                    f'[breaking-reason][{sweep_id}] Breaking very early without checking pulse '
+                    f'[oozer-run][{sweep_id}][breaking-reason] Breaking very early without checking pulse '
                     f'with following pulse: {sweep_tracker.get_pulse()}'
                     f' and last score {last_processed_score}'
                 )
@@ -241,7 +254,9 @@ def run_tasks(
 
             # if there are 1st quarter tasks left in queue, burn them out
             for celery_task, job_scope, job_context in tasks_iter:
-                keep_going = ooze_task(celery_task, job_scope, job_context)
+                keep_going = ooze_task(
+                    celery_task, job_scope, job_context, sweep_id, last_processed_score, sweep_tracker
+                )
                 if keep_going:
                     cnt += 1
 
@@ -250,7 +265,7 @@ def run_tasks(
 
                 if time.time() > quarter_time or not keep_going:
                     logger.warning(
-                        f'[breaking-reason][{sweep_id}] Breaking early in 1st quarter time, '
+                        f'[oozer-run][{sweep_id}][breaking-reason] Breaking early in 1st quarter time, '
                         f'I am too slow {time.time()} / {quarter_time}'
                         f' with following pulse: {sweep_tracker.get_pulse()}'
                         f' and last score {last_processed_score}'
@@ -266,13 +281,13 @@ def run_tasks(
 
                 now = time.time()
                 if next_pulse_review_second < now:
-                    pulse = sweep_tracker.get_pulse()  # type: Pulse
+                    pulse = sweep_tracker.get_pulse()
                     if pulse.Total > 20:
                         if pulse.Success < 0.10:  # percent
                             # failures across the board
                             # return cnt, pulse
                             logger.warning(
-                                f'[breaking-reason][{sweep_id}] Breaking early in 2nd quarter time, '
+                                f'[oozer-run][{sweep_id}][breaking-reason] Breaking early in 2nd quarter time, '
                                 'due to too many failures of any kind '
                                 f'(more than 10 percent) with following pulse: {sweep_tracker.get_pulse()}'
                                 f' and last score {last_processed_score}'
@@ -282,7 +297,7 @@ def run_tasks(
                             # time to give it a rest
                             # return cnt, pulse
                             logger.info(
-                                f'[breaking-reason][{sweep_id}] Breaking early in 2nd quarter time, '
+                                f'[oozer-run][{sweep_id}][breaking-reason] Breaking early in 2nd quarter time, '
                                 'due to throttling (more than 40 percent)'
                                 f' with following pulse: {sweep_tracker.get_pulse()}'
                                 f' and last score {last_processed_score}'
@@ -292,7 +307,9 @@ def run_tasks(
 
                 # FYI: ooze_task blocks if we pushed too many tasks in the allotted time
                 # It will unblock by itself when it's time to release the task
-                keep_going = ooze_task(celery_task, job_scope, job_context)
+                keep_going = ooze_task(
+                    celery_task, job_scope, job_context, sweep_id, last_processed_score, sweep_tracker
+                )
                 if keep_going:
                     cnt += 1
 
@@ -301,7 +318,7 @@ def run_tasks(
 
                     if now > half_time:
                         logger.info(
-                            f'[breaking-reason][{sweep_id}] Breaking early in 2nd quarter time, '
+                            f'[oozer-run][{sweep_id}][breaking-reason] Breaking early in 2nd quarter time, '
                             f'I am too slow {now}/{half_time} with following pulse: {sweep_tracker.get_pulse()}'
                             f' and last score {last_processed_score}'
                         )
@@ -335,7 +352,9 @@ def run_tasks(
 
                 cut_off_at_cnt = min(cut_off_at_cnt, half_time_done_cnt * 2)
 
-                keep_going = ooze_task(celery_task, job_scope, job_context)
+                keep_going = ooze_task(
+                    celery_task, job_scope, job_context, sweep_id, last_processed_score, sweep_tracker
+                )
                 if keep_going:
                     cnt += 1
 
@@ -364,7 +383,7 @@ def run_tasks(
                             # failures across the board
                             # return cnt, pulse
                             logger.warning(
-                                f'[breaking-reason][{sweep_id}] Breaking 2nd halif time, '
+                                f'[oozer-run][{sweep_id}][breaking-reason] Breaking 2nd halif time, '
                                 'due to too many failures of any kind '
                                 f'(more than 20 percent) with following pulse: {pulse}'
                                 f' and last score {last_processed_score}'
@@ -374,7 +393,7 @@ def run_tasks(
                             # time to give it a rest
                             # return cnt, pulse
                             logger.warning(
-                                f'[breaking-reason][{sweep_id}] Breaking early in 2nd quarter time, '
+                                f'[oozer-run][{sweep_id}][breaking-reason] Breaking early in 2nd quarter time, '
                                 'due to throttling (more than 40 percent)'
                                 f' with following pulse: {pulse}'
                                 f' and last score {last_processed_score}'
@@ -384,7 +403,9 @@ def run_tasks(
 
                 # FYI: ooze_task blocks if we pushed too many tasks in the allotted time
                 # It will unblock by itself when it's time to release the task
-                keep_going = ooze_task(celery_task, job_scope, job_context)
+                keep_going = ooze_task(
+                    celery_task, job_scope, job_context, sweep_id, last_processed_score, sweep_tracker
+                )
                 if keep_going:
                     cnt += 1
 
@@ -395,14 +416,14 @@ def run_tasks(
                         if cnt < num_tasks:
                             logger.warning(f"#{sweep_id}: Queueing cut at {cnt} jobs of total {num_tasks}")
                         logger.warning(
-                            f'[breaking-reason][{sweep_id}] Breaking early due to reaching limit on tasks'
+                            f'[oozer-run][{sweep_id}][breaking-reason][{sweep_id}] Breaking early due to reaching limit on tasks'
                             f' with following pulse: {sweep_tracker.get_pulse()}'
                             f' and last score {last_processed_score}'
                         )
                         break
                 else:
                     logger.warning(
-                        f'[breaking-reason][{sweep_id}] Breaking early due to problem with oozing in the last phase'
+                        f'[oozer-run][{sweep_id}][breaking-reason][{sweep_id}] Breaking early due to problem with oozing in the last phase'
                         f' with following pulse: {sweep_tracker.get_pulse()}'
                         f' and last score {last_processed_score}'
                     )
@@ -455,7 +476,7 @@ def run_tasks(
         if should_be_done_cnt <= pulse.Total:
             # Yey! all done!
             logger.warning(
-                f'[stop-reason][{sweep_id}] Stopping due to completing all tasks'
+                f'[oozer-run][{sweep_id}][stop-reason] Stopping due to completing all tasks'
                 f' with following pulse: {pulse}'
                 f' and last score {last_processed_score}'
             )
@@ -473,7 +494,7 @@ def run_tasks(
             # long-running in the last 3 minutes.
             if should_be_done_by < time.time() and not pulse.WorkingOnIt:
                 logger.warning(
-                    f'[stop-reason][{sweep_id}] Stopping due to running out of time on first checkpoint'
+                    f'[oozer-run][{sweep_id}][stop-reason] Stopping due to running out of time on first checkpoint'
                     f' with following pulse: {pulse}'
                     f' and last score {last_processed_score}'
                 )
@@ -483,7 +504,7 @@ def run_tasks(
             # even if there are still workers there. They will die off at some point
             if really_really_kill_it_by < time.time():
                 logger.warning(
-                    f'[stop-reason][{sweep_id}] Stopping due to running out of time on last checkpoint'
+                    f'[oozer-run][{sweep_id}][stop-reason] Stopping due to running out of time on last checkpoint'
                     f' with following pulse: {pulse}'
                     f' and last score {last_processed_score}'
                 )
