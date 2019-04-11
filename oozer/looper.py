@@ -27,6 +27,9 @@ class OozingDecayOverflow(BaseException):
     pass
 
 
+OOZER_CUT_OFF_SCORE = 2
+
+
 def iter_tasks(sweep_id: str) -> Generator[Tuple[CeleryTask, JobScope, JobContext, int], None, None]:
     """
     Persist prioritized jobs and pass-through context objects for inspection
@@ -199,7 +202,7 @@ def run_tasks(
 
     def task_iter_score_gate(inner_tasks_iter):
         for inner_celery_task, inner_job_scope, inner_job_context, inner_score in inner_tasks_iter:
-            if inner_score < 2:  # arbitrary
+            if inner_score < OOZER_CUT_OFF_SCORE:  # arbitrary
                 # cut the flow of tasks
                 return
 
@@ -230,14 +233,14 @@ def run_tasks(
         # thinking about pulse or failures.
         # This makes sure that seed rounds that have so few
         # tasks get all COMPLETELY pushed out.
-        for celery_task, job_scope, job_context, score in islice(tasks_iter, 0, 5):
+        for celery_task, job_scope, job_context, score in islice(tasks_iter, 0, 100):
             # FYI: ooze_task blocks if we pushed too many tasks in the allotted time
             # It will unblock by itself when it's time to release the task
             keep_going = ooze_task(celery_task, job_scope, job_context, sweep_id, last_processed_score, sweep_tracker)
 
             if keep_going:
                 last_processed_score = score
-            if not keep_going:
+            else:
                 logger.warning(
                     f'[oozer-run][{sweep_id}][breaking-reason] Breaking very early without checking pulse '
                     f'with following pulse: {sweep_tracker.get_pulse()}'
@@ -364,7 +367,7 @@ def run_tasks(
                 break
 
         if keep_going:
-            for celery_task, job_scope, job_context, scroe in tasks_iter:
+            for celery_task, job_scope, job_context, score in tasks_iter:
                 # If we are here, we are a little bit into 2nd half of our total time slice
                 # and we still have tasks to push out.
 
