@@ -179,13 +179,18 @@ def run_tasks(
     _pulse_refresh_interval = 5  # seconds
     sweep_tracker = SweepStatusTracker(sweep_id)
     sweep_tracker.start_metrics_collector(_pulse_refresh_interval)
+    last_processed_score = None
 
     tasks_iter = iter_tasks(sweep_id)
     if limit:
         tasks_iter = islice(tasks_iter, 0, limit)
 
     def task_iter_score_gate(tasks_iter):
+        global last_processed_score
+
         for celery_task, job_scope, job_context, score in tasks_iter:
+            # this is ugly, but it is easier than adding this line to evert branch in this spaghetti function
+            last_processed_score = score
             if score < 2:  # arbitrary
                 # cut the flow of tasks
                 return
@@ -223,6 +228,11 @@ def run_tasks(
             # It will unblock by itself when it's time to release the task
             keep_going = ooze_task(celery_task, job_scope, job_context)
             if not keep_going:
+                logger.warning(
+                    f'[breaking-reason][{sweep_id}] Breaking very early without checking pulse '
+                    f'with following pulse: {sweep_tracker.get_pulse()}'
+                    f' and last score {last_processed_score}'
+                )
                 break
             cnt += 1
 
@@ -239,7 +249,12 @@ def run_tasks(
                         cntr += _step
 
                 if time.time() > quarter_time or not keep_going:
-                    logger.info(f"Breaking early in 1st quarter time, I am too slow {time.time()} / {quarter_time}")
+                    logger.warning(
+                        f'[breaking-reason][{sweep_id}] Breaking early in 1st quarter time, '
+                        f'I am too slow {time.time()} / {quarter_time}'
+                        f' with following pulse: {sweep_tracker.get_pulse()}'
+                        f' and last score {last_processed_score}'
+                    )
                     break  # to next for-loop
 
         if keep_going:
@@ -256,15 +271,22 @@ def run_tasks(
                         if pulse.Success < 0.10:  # percent
                             # failures across the board
                             # return cnt, pulse
-                            logger.info(
-                                "Breaking early in 2nd quarter time, due to too many failures of any kind "
-                                + "(more than 10 percent)"
+                            logger.warning(
+                                f'[breaking-reason][{sweep_id}] Breaking early in 2nd quarter time, '
+                                'due to too many failures of any kind '
+                                f'(more than 10 percent) with following pulse: {sweep_tracker.get_pulse()}'
+                                f' and last score {last_processed_score}'
                             )
                             break
                         if pulse.Throttling > 0.40:  # percent
                             # time to give it a rest
                             # return cnt, pulse
-                            logger.info("Breaking early in 2nd quarter time, due to throttling (more than 40 percent)")
+                            logger.info(
+                                f'[breaking-reason][{sweep_id}] Breaking early in 2nd quarter time, '
+                                'due to throttling (more than 40 percent)'
+                                f' with following pulse: {sweep_tracker.get_pulse()}'
+                                f' and last score {last_processed_score}'
+                            )
                             break
                     next_pulse_review_second = now + _pulse_refresh_interval
 
@@ -278,7 +300,11 @@ def run_tasks(
                         cntr += _step
 
                     if now > half_time:
-                        logger.info(f"Breaking early in 2nd quarter time, I am too slow {now}/{half_time}")
+                        logger.info(
+                            f'[breaking-reason][{sweep_id}] Breaking early in 2nd quarter time, '
+                            f'I am too slow {now}/{half_time} with following pulse: {sweep_tracker.get_pulse()}'
+                            f' and last score {last_processed_score}'
+                        )
                         break
                 else:
                     break
@@ -337,14 +363,22 @@ def run_tasks(
                         if pulse.Success < 0.20:  # percent
                             # failures across the board
                             # return cnt, pulse
-                            logger.info(
-                                "Breaking 2nd halif time, due to too many failures of any kind (more than 20 percent)"
+                            logger.warning(
+                                f'[breaking-reason][{sweep_id}] Breaking 2nd halif time, '
+                                'due to too many failures of any kind '
+                                f'(more than 20 percent) with following pulse: {pulse}'
+                                f' and last score {last_processed_score}'
                             )
                             break
                         if pulse.Throttling > 0.40:  # percent
                             # time to give it a rest
                             # return cnt, pulse
-                            logger.info("Breaking early in 2nd quarter time, due to throttling (more than 40 percent)")
+                            logger.warning(
+                                f'[breaking-reason][{sweep_id}] Breaking early in 2nd quarter time, '
+                                'due to throttling (more than 40 percent)'
+                                f' with following pulse: {pulse}'
+                                f' and last score {last_processed_score}'
+                            )
                             break
                     next_pulse_review_second = time.time() + _pulse_refresh_interval
 
@@ -359,12 +393,22 @@ def run_tasks(
 
                     if cnt > cut_off_at_cnt:
                         if cnt < num_tasks:
-                            logger.info(f"#{sweep_id}: Queueing cut at {cnt} jobs of total {num_tasks}")
+                            logger.warning(f"#{sweep_id}: Queueing cut at {cnt} jobs of total {num_tasks}")
+                        logger.warning(
+                            f'[breaking-reason][{sweep_id}] Breaking early due to reaching limit on tasks'
+                            f' with following pulse: {sweep_tracker.get_pulse()}'
+                            f' and last score {last_processed_score}'
+                        )
                         break
                 else:
+                    logger.warning(
+                        f'[breaking-reason][{sweep_id}] Breaking early due to problem with oozing in the last phase'
+                        f' with following pulse: {sweep_tracker.get_pulse()}'
+                        f' and last score {last_processed_score}'
+                    )
                     break
 
-                logger.info(f"#{sweep_id}: Queued up all jobs {num_tasks}")
+                logger.warning(f"#{sweep_id}: Queued up all jobs {num_tasks}")
 
     cntr += cnt % _step
 
@@ -410,6 +454,11 @@ def run_tasks(
 
         if should_be_done_cnt <= pulse.Total:
             # Yey! all done!
+            logger.warning(
+                f'[stop-reason][{sweep_id}] Stopping due to completing all tasks'
+                f' with following pulse: {pulse}'
+                f' and last score {last_processed_score}'
+            )
             return True
 
         if pulse.Total:
@@ -423,11 +472,21 @@ def run_tasks(
             # This is some 10 minute mark. Hence us checking if we are still doing something
             # long-running in the last 3 minutes.
             if should_be_done_by < time.time() and not pulse.WorkingOnIt:
+                logger.warning(
+                    f'[stop-reason][{sweep_id}] Stopping due to running out of time on first checkpoint'
+                    f' with following pulse: {pulse}'
+                    f' and last score {last_processed_score}'
+                )
                 return True
 
             # This is half-hour mark. No point waiting longer than this
             # even if there are still workers there. They will die off at some point
             if really_really_kill_it_by < time.time():
+                logger.warning(
+                    f'[stop-reason][{sweep_id}] Stopping due to running out of time on last checkpoint'
+                    f' with following pulse: {pulse}'
+                    f' and last score {last_processed_score}'
+                )
                 return True
 
         return False
