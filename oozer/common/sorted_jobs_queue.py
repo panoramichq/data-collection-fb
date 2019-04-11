@@ -18,7 +18,7 @@ class NotSet:
 
 
 class _JobsWriter:
-    GLOBAL_ACCOUNT_ID: str = 'global'
+    GLOBAL_SHARD_NAME: str = 'global'
 
     def __init__(self, sorted_jobs_queue_interface: 'SortedJobsQueue', batch_size: int = 30):
         """
@@ -122,7 +122,7 @@ class _JobsWriter:
                 if job_id_parts.ad_account_id:
                     self.cnts[job_id_parts.ad_account_id] += 1
                 else:
-                    self.cnts[self.GLOBAL_ACCOUNT_ID] += 1
+                    self.cnts[self.GLOBAL_SHARD_NAME] += 1
 
         if len(self.batch) == self.batch_size:
             self.flush()
