@@ -242,7 +242,7 @@ def run_tasks(
             if not keep_going:
                 logger.warning(
                     f'[oozer-run][{sweep_id}][breaking-reason] Breaking very early without checking pulse '
-                    f'with following pulse: {sweep_tracker.get_pulse()}'
+                    f'with following pulse: {sweep_tracker.get_pulse()} at minute {sweep_tracker.now_in_minutes()}'
                     f' and last score {last_processed_score}'
                 )
                 break
@@ -266,7 +266,7 @@ def run_tasks(
                     logger.warning(
                         f'[oozer-run][{sweep_id}][breaking-reason] Breaking early in 1st quarter time, '
                         f'I am too slow {time.time()} / {quarter_time}'
-                        f' with following pulse: {sweep_tracker.get_pulse()}'
+                        f' with following pulse: {sweep_tracker.get_pulse()} at minute {sweep_tracker.now_in_minutes()}'
                         f' and last score {last_processed_score}'
                     )
                     break  # to next for-loop
@@ -289,6 +289,7 @@ def run_tasks(
                                 f'[oozer-run][{sweep_id}][breaking-reason] Breaking early in 2nd quarter time, '
                                 'due to too many failures of any kind '
                                 f'(more than 10 percent) with following pulse: {sweep_tracker.get_pulse()}'
+                                f' at minute {sweep_tracker.now_in_minutes()}'
                                 f' and last score {last_processed_score}'
                             )
                             break
@@ -299,6 +300,7 @@ def run_tasks(
                                 f'[oozer-run][{sweep_id}][breaking-reason] Breaking early in 2nd quarter time, '
                                 'due to throttling (more than 40 percent)'
                                 f' with following pulse: {sweep_tracker.get_pulse()}'
+                                f' at minute {sweep_tracker.now_in_minutes()}'
                                 f' and last score {last_processed_score}'
                             )
                             break
@@ -319,6 +321,7 @@ def run_tasks(
                         logger.info(
                             f'[oozer-run][{sweep_id}][breaking-reason] Breaking early in 2nd quarter time, '
                             f'I am too slow {now}/{half_time} with following pulse: {sweep_tracker.get_pulse()}'
+                            f' at minute {sweep_tracker.now_in_minutes()}'
                             f' and last score {last_processed_score}'
                         )
                         break
@@ -385,6 +388,7 @@ def run_tasks(
                                 f'[oozer-run][{sweep_id}][breaking-reason] Breaking 2nd halif time, '
                                 'due to too many failures of any kind '
                                 f'(more than 20 percent) with following pulse: {pulse}'
+                                f' at minute {sweep_tracker.now_in_minutes()}'
                                 f' and last score {last_processed_score}'
                             )
                             break
@@ -418,6 +422,7 @@ def run_tasks(
                             f'[oozer-run][{sweep_id}][breaking-reason][{sweep_id}] Breaking early'
                             ' due to reaching limit on tasks'
                             f' with following pulse: {sweep_tracker.get_pulse()}'
+                            f' at minute {sweep_tracker.now_in_minutes()}'
                             f' and last score {last_processed_score}'
                         )
                         break
@@ -426,6 +431,7 @@ def run_tasks(
                         f'[oozer-run][{sweep_id}][breaking-reason][{sweep_id}] Breaking early '
                         'due to problem with oozing in the last phase'
                         f' with following pulse: {sweep_tracker.get_pulse()}'
+                        f' at minute {sweep_tracker.now_in_minutes()}'
                         f' and last score {last_processed_score}'
                     )
                     break
