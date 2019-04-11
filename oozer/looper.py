@@ -27,7 +27,10 @@ class OozingDecayOverflow(BaseException):
     pass
 
 
-def iter_tasks(sweep_id: str) -> Generator[Tuple[CeleryTask, JobScope, JobContext], None, None]:
+OOZER_CUT_OFF_SCORE = 2
+
+
+def iter_tasks(sweep_id: str) -> Generator[Tuple[CeleryTask, JobScope, JobContext, int], None, None]:
     """
     Persist prioritized jobs and pass-through context objects for inspection
     """
@@ -198,29 +201,24 @@ def run_tasks(
         tasks_iter = islice(tasks_iter, 0, limit)
 
     def task_iter_score_gate(inner_tasks_iter):
-        global last_processed_score
-
-        for inner_celery_task, inner_job_scope, inner_job_context, score in inner_tasks_iter:
-            # this is ugly, but it is easier than adding this line to evert branch in this spaghetti function
-            last_processed_score = score
-            if score < 2:  # arbitrary
+        for inner_celery_task, inner_job_scope, inner_job_context, inner_score in inner_tasks_iter:
+            if inner_score < OOZER_CUT_OFF_SCORE:  # arbitrary
                 # cut the flow of tasks
                 return
 
             # We need to see into the jobs scoring state per sweep
             Measure.counter(
                 _measurement_name_base + 'job_scores',
-                tags={'score': score, 'ad_account_id': inner_job_scope.ad_account_id, **_measurement_tags},
+                tags={'score': inner_score, 'ad_account_id': inner_job_scope.ad_account_id, **_measurement_tags},
             ).increment()
 
-            yield inner_celery_task, inner_job_scope, inner_job_context
+            yield inner_celery_task, inner_job_scope, inner_job_context, inner_score
 
     tasks_iter = task_iter_score_gate(tasks_iter)
 
     with TaskOozer(num_accounts, num_tasks, time_slice_length) as ooze_task, Measure.counter(
         _measurement_name_base + 'oozed', tags=_measurement_tags
     ) as cntr:
-
         keep_going = True
         next_pulse_review_second = time.time() + _pulse_refresh_interval
 
@@ -235,11 +233,14 @@ def run_tasks(
         # thinking about pulse or failures.
         # This makes sure that seed rounds that have so few
         # tasks get all COMPLETELY pushed out.
-        for celery_task, job_scope, job_context in islice(tasks_iter, 0, 100):
+        for celery_task, job_scope, job_context, score in islice(tasks_iter, 0, 100):
             # FYI: ooze_task blocks if we pushed too many tasks in the allotted time
             # It will unblock by itself when it's time to release the task
             keep_going = ooze_task(celery_task, job_scope, job_context, sweep_id, last_processed_score, sweep_tracker)
-            if not keep_going:
+
+            if keep_going:
+                last_processed_score = score
+            else:
                 logger.warning(
                     f'[oozer-run][{sweep_id}][breaking-reason] Breaking very early without checking pulse '
                     f'with following pulse: {sweep_tracker.get_pulse()} at minute {sweep_tracker.now_in_minutes()}'
@@ -252,12 +253,13 @@ def run_tasks(
             cntr += cnt
 
             # if there are 1st quarter tasks left in queue, burn them out
-            for celery_task, job_scope, job_context in tasks_iter:
+            for celery_task, job_scope, job_context, score in tasks_iter:
                 keep_going = ooze_task(
                     celery_task, job_scope, job_context, sweep_id, last_processed_score, sweep_tracker
                 )
                 if keep_going:
                     cnt += 1
+                    last_processed_score = score
 
                     if cnt % _step == 0:
                         cntr += _step
@@ -272,7 +274,7 @@ def run_tasks(
                     break  # to next for-loop
 
         if keep_going:
-            for celery_task, job_scope, job_context in tasks_iter:
+            for celery_task, job_scope, job_context, score in tasks_iter:
                 # If we are here, it's start of 2nd quarter of our total time slice
                 # and we still have tasks to push out.
                 # At this point we should start caring about results
@@ -313,6 +315,7 @@ def run_tasks(
                 )
                 if keep_going:
                     cnt += 1
+                    last_processed_score = score
 
                     if cnt % _step == 0:
                         cntr += _step
@@ -332,7 +335,7 @@ def run_tasks(
         # we might need to cut the tail of the task queue if we now realize we will not
         # burn through it all.
         # For that we need this:
-        pulse = sweep_tracker.get_pulse()  # type: Pulse
+        pulse = sweep_tracker.get_pulse()
         half_time_done_cnt = pulse.Total
         # Note, that we may be here in the first second of the sweep loop if we have
         # some very few seed tasks. So, this is NOT guaranteed to be exactly the middle
@@ -343,7 +346,7 @@ def run_tasks(
         cut_off_at_cnt = num_tasks
 
         if keep_going:
-            for celery_task, job_scope, job_context in tasks_iter:
+            for celery_task, job_scope, job_context, score in tasks_iter:
                 # If we are here, exactly start of 2nd half of our total time slice
                 # and we still have tasks to push out.
 
@@ -359,6 +362,7 @@ def run_tasks(
                 )
                 if keep_going:
                     cnt += 1
+                    last_processed_score = score
 
                     if cnt % _step == 0:
                         cntr += _step
@@ -366,7 +370,7 @@ def run_tasks(
                 break
 
         if keep_going:
-            for celery_task, job_scope, job_context in tasks_iter:
+            for celery_task, job_scope, job_context, score in tasks_iter:
                 # If we are here, we are a little bit into 2nd half of our total time slice
                 # and we still have tasks to push out.
 
@@ -379,7 +383,7 @@ def run_tasks(
                 now = time.time()
 
                 if next_pulse_review_second < now:
-                    pulse = sweep_tracker.get_pulse()  # type: Pulse
+                    pulse = sweep_tracker.get_pulse()
                     if pulse.Total > 20:
                         if pulse.Success < 0.20:  # percent
                             # failures across the board
@@ -411,6 +415,7 @@ def run_tasks(
                 )
                 if keep_going:
                     cnt += 1
+                    last_processed_score = score
 
                     if cnt % _step == 0:
                         cntr += _step
