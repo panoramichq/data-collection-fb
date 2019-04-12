@@ -171,6 +171,7 @@ def iter_persist_prioritized(
             with Measure.timer(
                 f'{_measurement_name_base}.add_to_queue', tags=_measurement_tags, sample_rate=_measurement_sample_rate
             ):
+                Measure.counter(f'{_measurement_name_base}.add_to_queue_cnt', tags=_measurement_tags).increment()
                 add_to_queue(job_id_effective, score, **extra_data)
 
             # This is our cheap way of ensuring that we are dealing
