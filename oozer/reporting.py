@@ -6,6 +6,7 @@ from typing import Any, Callable
 
 from common.enums.failure_bucket import FailureBucket
 from common.error_inspector import ErrorInspector, ErrorTypesReport
+from common.measurement import Measure
 from common.tokens import PlatformTokenManager
 from oozer.common.job_scope import JobScope
 from oozer.common.report_job_status_task import report_job_status_task
@@ -23,8 +24,6 @@ def _report_failure(job_scope: JobScope, start_time: float, exc: Exception, **kw
     job_scope.running_time = math.ceil(end_time - start_time)
     job_scope.datapoint_count = kwargs.get('partial_datapoint_count')
 
-    token = job_scope.token
-
     ErrorInspector.inspect(exc, job_scope.ad_account_id, {'job_scope': job_scope})
 
     token = job_scope.token
@@ -38,23 +37,41 @@ def _report_failure(job_scope: JobScope, start_time: float, exc: Exception, **kw
     report_job_status_task.delay(failure_status, job_scope)
     PlatformTokenManager.from_job_scope(job_scope).report_usage_per_failure_bucket(token, failure_bucket)
     SweepStatusTracker(job_scope.sweep_id).report_status(failure_bucket)
+    _send_measurement_task_runtime(job_scope, failure_bucket)
 
 
-def _report_success(job_scope: JobScope, start_time: float, retval: Any):
+def _report_success(job_scope: JobScope, start_time: float, ret_value: Any):
     """Report task stats when successful."""
     end_time = time.time()
     job_scope.running_time = math.ceil(end_time - start_time)
 
-    if isinstance(retval, int):
-        job_scope.datapoint_count = retval
+    if isinstance(ret_value, int):
+        job_scope.datapoint_count = ret_value
 
     report_job_status_task.delay(ExternalPlatformJobStatus.Done, job_scope)
     SweepStatusTracker(job_scope.sweep_id).report_status(FailureBucket.Success)
+    _send_measurement_task_runtime(job_scope, FailureBucket.Success)
 
 
 def _report_start(job_scope: JobScope):
     """Report task started."""
     SweepStatusTracker(job_scope.sweep_id).report_status(FailureBucket.WorkingOnIt)
+
+
+def _send_measurement_task_runtime(job_scope: JobScope, bucket: int):
+    _measurement_base_name = f'{__name__}.report_tasks_outcome'
+    _measurement_tags = {
+        'ad_account_id': job_scope.ad_account_id,
+        'sweep_id': job_scope.sweep_id,
+        'report_type': job_scope.report_type,
+        'report_variant': job_scope.report_variant,
+        'bucket': bucket,
+        'job_type': job_scope.job_type,
+    }
+    if job_scope.datapoint_count and job_scope.datapoint_count > 0:
+        Measure.counter(f'{_measurement_base_name}.data_points', _measurement_tags).increment(job_scope.datapoint_count)
+
+    Measure.gauge(f'{_measurement_base_name}.running_time', _measurement_tags)(job_scope.running_time)
 
 
 def reported_task(func: Callable) -> Callable:
@@ -66,8 +83,8 @@ def reported_task(func: Callable) -> Callable:
         report_job_status_task.delay(ExternalPlatformJobStatus.Start, job_scope)
         _report_start(job_scope)
         try:
-            retval = func(job_scope, *args, **kwargs)
-            _report_success(job_scope, start_time, retval)
+            ret_value = func(job_scope, *args, **kwargs)
+            _report_success(job_scope, start_time, ret_value)
         except TaskOutsideSweepException as e:
             logger.info(f'{e.job_scope} skipped because sweep {e.job_scope.sweep_id} is done')
             ErrorInspector.send_measurement_error(job_scope.ad_account_id, ErrorTypesReport.SWEEP_ALREADY_ENDED)
