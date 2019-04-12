@@ -67,7 +67,7 @@ def entities_per_page(entity_type: str, reality_claim: RealityClaim) -> Generato
 def entities_per_page_post(entity_type: str, reality_claim: RealityClaim) -> Generator[ExpectationClaim, None, None]:
     """
     Generates "fetch EntityType entities metadata per given Page" job call sig
-    """
+        """
     assert entity_type in Entity.NON_AA_SCOPED
 
     yield ExpectationClaim(
