@@ -17,8 +17,13 @@ failure_bucket_count_map = {
 
 
 class PlatformTokenManager:
-    def __init__(self, asset_scope: str, sweep_id: str):
-        self.queue_key = f'{asset_scope}-{sweep_id}-sorted-token-queue'
+    def __init__(self, asset_scope_namespace: str, sweep_id: str):
+        """
+
+        :param asset_scope_namespace: Namespace used to isolate platform or scope tied tokens
+        :param sweep_id:
+        """
+        self.queue_key = f'{asset_scope_namespace}-{sweep_id}-sorted-token-queue'
         self._redis = get_redis()
 
     @classmethod
@@ -42,18 +47,13 @@ class PlatformTokenManager:
         "read" sides right next to each other to ensure they are in sync.
         Otherwise, yeah, this feels like it should be elsewhere.
         """
-        # for Scope-centric refresh jobs, entity_id element is the Scope ID
-        asset_scope = scope_entity.scope
-        tokens = [scope_entity.scope_api_token]
+        # For Scope-centric jobs, entity_id is the Scope ID and we persist the tokens to
+        # communicate with the remote scope API (for example our Console)
+        PlatformTokenManager(scope_entity.scope, sweep_id).add(scope_entity.scope_api_token)
 
-        PlatformTokenManager(asset_scope, sweep_id).add(*tokens)
-
-        # for FB-centric refresh jobs, job namespace is default value on JobScope.namespace
+        # for platform specific jobs, job namespace is default value on JobScope.namespace
         # and tokens are one or more platform tokens from Scope object
-        asset_scope = JobScope.namespace
-        tokens = scope_entity.platform_tokens
-
-        PlatformTokenManager(asset_scope, sweep_id).add(*tokens)
+        PlatformTokenManager(JobScope.namespace, sweep_id).add(*scope_entity.platform_tokens)
 
     @classmethod
     def from_job_scope(cls, job_scope: JobScope) -> 'PlatformTokenManager':
