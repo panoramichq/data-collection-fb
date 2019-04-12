@@ -58,7 +58,7 @@ def _report_start(job_scope: JobScope):
     SweepStatusTracker(job_scope.sweep_id).report_status(FailureBucket.WorkingOnIt)
 
 
-def _send_measurement_task_runtime(job_scope: JobScope, bucket: str):
+def _send_measurement_task_runtime(job_scope: JobScope, bucket: int):
     _measurement_base_name = f'{__name__}.report_tasks_outcome'
     _measurement_tags = {
         'ad_account_id': job_scope.ad_account_id,
