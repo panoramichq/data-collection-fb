@@ -52,6 +52,11 @@ def _report_success(job_scope: JobScope, start_time: float, retval: Any):
     SweepStatusTracker(job_scope.sweep_id).report_status(FailureBucket.Success)
 
 
+def _report_start(job_scope: JobScope):
+    """Report task started."""
+    SweepStatusTracker(job_scope.sweep_id).report_status(FailureBucket.WorkingOnIt)
+
+
 def reported_task(func: Callable) -> Callable:
     """Report task stats."""
 
@@ -59,6 +64,7 @@ def reported_task(func: Callable) -> Callable:
     def wrapper(job_scope: JobScope, *args: Any, **kwargs: Any):
         start_time = time.time()
         report_job_status_task.delay(ExternalPlatformJobStatus.Start, job_scope)
+        _report_start(job_scope)
         try:
             retval = func(job_scope, *args, **kwargs)
             _report_success(job_scope, start_time, retval)
