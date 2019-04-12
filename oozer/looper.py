@@ -69,7 +69,7 @@ def create_decay_function(num_accounts: int, num_tasks: int) -> Callable[[Union[
         if x >= cut_off:
             raise OozingDecayOverflow(f'Oozing part ran out of time (time={x}) defined by decay function - {cut_off}')
 
-        return a + b * x
+        return a / 2 + b * x
 
     return calculate
 
