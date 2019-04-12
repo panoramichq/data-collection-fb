@@ -68,6 +68,8 @@ class _JobsWriter:
             self.sorted_jobs_queue_interface.get_queue_key(),
             *args,
         )
+        for job_id, score in self.batch.items():
+            logger.warning(f'[job-writer][job-id][{self.sweep_id}] ID "{job_id}" with score "{score}"')
         self.batch.clear()
 
     def write_job_scope_data(self, job_scope_data, job_id_parts):
