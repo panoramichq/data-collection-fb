@@ -79,7 +79,7 @@ class JobScope:
     @property
     def job_type(self) -> str:
         if not self.report_variant and self.report_type in self._OTHER_JOB_REPORT_TYPES:
-            return JobType.OTHER
+            return JobType.GLOBAL
         elif self.report_variant in Entity.AA_SCOPED:
             return JobType.PAID_DATA
         elif self.report_variant in Entity.NON_AA_SCOPED:
