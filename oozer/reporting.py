@@ -69,9 +69,11 @@ def _send_measurement_task_runtime(job_scope: JobScope, bucket: int):
         'job_type': job_scope.job_type,
     }
     if job_scope.datapoint_count and job_scope.datapoint_count > 0:
-        Measure.counter(f'{_measurement_base_name}.data_points', _measurement_tags).increment(job_scope.datapoint_count)
+        Measure.counter(f'{_measurement_base_name}.data_points', tags=_measurement_tags).increment(
+            job_scope.datapoint_count
+        )
 
-    Measure.gauge(f'{_measurement_base_name}.running_time', _measurement_tags)(job_scope.running_time)
+    Measure.gauge(f'{_measurement_base_name}.running_time', tags=_measurement_tags)(job_scope.running_time)
 
 
 def reported_task(func: Callable) -> Callable:
