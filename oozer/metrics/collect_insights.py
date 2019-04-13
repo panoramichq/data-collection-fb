@@ -4,12 +4,13 @@ import gevent
 from datetime import datetime, date
 from facebook_business.adobjects.adreportrun import AdReportRun
 from facebook_business.adobjects.adsinsights import AdsInsights
-from typing import Callable, Dict, Any, Generator
+from typing import Dict, Any, Generator
 
 from common.enums.entity import Entity
 from common.enums.reporttype import ReportType
 from common.tokens import PlatformTokenManager
 from oozer.common.cold_storage import batch_store
+from oozer.common.cold_storage.batch_store import BaseStoreHandler
 from oozer.common.enum import ReportEntityApiKind
 from oozer.common.facebook_api import PlatformApiContext
 from oozer.common.facebook_async_report import FacebookAsyncReportStatus
@@ -40,7 +41,7 @@ def _convert_and_validate_date_format(dt) -> str:
 
 class JobScopeParsed:
     report_params: Dict[str, Any] = None
-    datum_handler: Callable[[Dict[str, Any]], None] = None
+    datum_handler: BaseStoreHandler = None
     report_root_fb_entity = None
     report_entity_kind: str = None
 
