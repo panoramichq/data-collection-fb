@@ -20,7 +20,7 @@ OTHER_JOB_REPORT_TYPES = (
 )
 
 
-def detect_job_type(report_type: Optional[str], report_variant: Optional[str]) -> str:
+def detect_job_type(report_type: Optional[str] = None, report_variant: Optional[str] = None) -> str:
     if not report_variant and report_type in OTHER_JOB_REPORT_TYPES:
         return JobType.GLOBAL
     elif report_variant in Entity.AA_SCOPED:
