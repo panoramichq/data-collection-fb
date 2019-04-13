@@ -4,6 +4,7 @@ from collections import defaultdict
 
 from typing import Generator
 
+from common.enums.jobtype import detect_job_type
 from common.measurement import Measure
 from common.enums.entity import Entity
 from oozer.common.expecations_store import JobExpectationsWriter
@@ -44,12 +45,17 @@ def iter_persist_prioritized(
         _measurement_sample_rate = 1
 
         _before_next_prioritized = time.time()
-        skipped_jobs = defaultdict(int)
+        skipped_jobs = defaultdict(lambda _: defaultdict(int))
         for prioritization_claim in prioritized_iter:
-
+            # this is hacky, because we play "I know that you know" game here for performance reason
+            # In ideal case, we should also add report_type here as well, because it is present in selected jobId.
+            # However, parsing jobId is expensive so let's avoid it here and change the logic
+            # once we have that information available directly
+            job_type = detect_job_type(None, prioritization_claim.entity_type)
             _measurement_tags = {
                 'entity_type': prioritization_claim.entity_type,
                 'ad_account_id': prioritization_claim.ad_account_id,
+                'job_type': job_type,
                 'sweep_id': sweep_id,
             }
 
@@ -144,7 +150,7 @@ def iter_persist_prioritized(
             if not should_persist(score):
                 logger.info(f'Not persisting job {job_id_effective} due to low score: {score}')
                 ad_account_id = prioritization_claim.ad_account_id
-                skipped_jobs[ad_account_id] += 1
+                skipped_jobs[job_type][ad_account_id] += 1
                 continue
 
             # Following are JobScope attributes we don't store on JobID
@@ -211,8 +217,9 @@ def iter_persist_prioritized(
             _before_next_prioritized = time.time()
 
         if skipped_jobs:
-            for ad_account_id in skipped_jobs:
-                measurement_tags = {'sweep_id': sweep_id, 'ad_account_id': ad_account_id}
-                Measure.gauge(f'{_measurement_name_base}.gatekeeper_stop_jobs', tags=measurement_tags)(
-                    skipped_jobs[ad_account_id]
-                )
+            for job_type in skipped_jobs:
+                for ad_account_id in skipped_jobs[job_type]:
+                    measurement_tags = {'sweep_id': sweep_id, 'ad_account_id': ad_account_id, 'job_type': job_type}
+                    Measure.gauge(f'{_measurement_name_base}.gatekeeper_stop_jobs', tags=measurement_tags)(
+                        skipped_jobs[ad_account_id]
+                    )
