@@ -74,7 +74,7 @@ def _get_good_token(job_scope: JobScope):
         raise ValueError(f"Job {job_scope.job_id} cannot proceed. No tokens provided.")
 
 
-def _have_entity_access(entity_type, entity_id, access_token):
+def _have_entity_access(entity_type: str, entity_id: str, access_token: str) -> bool:
     """
     Test if we have access to that entity. Returns True or throws fb request error.
     """
