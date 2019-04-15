@@ -230,5 +230,5 @@ def iter_persist_prioritized(
                             'report_type': report_type,
                         }
                         Measure.gauge(f'{_measurement_name_base}.gatekeeper_stop_jobs', tags=measurement_tags)(
-                            skipped_jobs[ad_account_id]
+                            skipped_jobs[job_type][ad_account_id][report_type]
                         )
