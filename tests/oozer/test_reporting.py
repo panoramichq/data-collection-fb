@@ -4,6 +4,7 @@ from facebook_business.exceptions import FacebookError
 
 from common.bugsnag import SEVERITY_ERROR
 from common.enums.failure_bucket import FailureBucket
+from common.error_inspector import ErrorTypesReport
 from oozer.common.enum import ExternalPlatformJobStatus
 from oozer.reporting import reported_task
 
@@ -31,6 +32,7 @@ def test_reported_task_on_success(mock_report):
 @patch('oozer.reporting.report_job_status_task')
 @patch('common.error_inspector.BugSnagContextData.notify')
 @patch('oozer.reporting.FacebookApiErrorInspector.get_status_and_bucket')
+@patch('common.error_inspector.API_KEY', 'something')
 def test_reported_task_on_failure_facebook_error(
     mock_get_status_and_bucket, mock_notify, mock_report, mock_from_job_scope
 ):
@@ -62,6 +64,7 @@ def test_reported_task_on_failure_facebook_error(
 @patch('oozer.reporting.PlatformTokenManager.from_job_scope')
 @patch('oozer.reporting.report_job_status_task')
 @patch('common.error_inspector.BugSnagContextData.notify')
+@patch('common.error_inspector.API_KEY', 'something')
 def test_reported_task_on_failure_generic_error(mock_notify, mock_report, mock_from_job_scope):
     exc = Exception('test')
     mock_job_scope = Mock(token='token')
@@ -78,7 +81,9 @@ def test_reported_task_on_failure_generic_error(mock_notify, mock_report, mock_f
         call(ExternalPlatformJobStatus.GenericError, mock_job_scope),
     ]
 
-    mock_notify.assert_called_once_with(exc, job_scope=mock_job_scope, severity=SEVERITY_ERROR)
+    mock_notify.assert_called_once_with(
+        exc, job_scope=mock_job_scope, severity=SEVERITY_ERROR, error_type=ErrorTypesReport.UNKNOWN
+    )
     mock_from_job_scope.return_value.report_usage_per_failure_bucket.assert_called_once_with(
         'token', FailureBucket.Other
     )
