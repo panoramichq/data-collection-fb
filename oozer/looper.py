@@ -207,9 +207,15 @@ def run_tasks(
                 return
 
             # We need to see into the jobs scoring state per sweep
+            additional_tags = {
+                'score': inner_score,
+                'ad_account_id': inner_job_scope.ad_account_id,
+                'report_type': inner_job_scope.report_type,
+                'report_variant': inner_job_scope.report_variant,
+                'job_type': inner_job_scope.job_type,
+            }
             Measure.counter(
-                _measurement_name_base + 'job_scores',
-                tags={'score': inner_score, 'ad_account_id': inner_job_scope.ad_account_id, **_measurement_tags},
+                _measurement_name_base + 'job_scores', tags={**additional_tags, **_measurement_tags}
             ).increment()
 
             yield inner_celery_task, inner_job_scope, inner_job_context, inner_score

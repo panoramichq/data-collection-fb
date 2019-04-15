@@ -38,6 +38,7 @@ def lifecycle_metrics_per_entity(
 
     yield ExpectationClaim(
         reality_claim.to_dict(),
+        report_type=day_breakdown,
         job_signatures=[
             JobSignature.bind(
                 generate_id(
@@ -79,6 +80,7 @@ def daily_metrics_per_entity(
     for day in date_range(range_start, range_end):
         yield ExpectationClaim(
             reality_claim.to_dict(),
+            report_type=day_breakdown,
             job_signatures=[
                 JobSignature.bind(
                     generate_id(
@@ -153,6 +155,7 @@ def day_metrics_per_entities_under_ad_account(
                 for report_type in report_types:
                     yield ExpectationClaim(
                         reality_claim_data,
+                        report_type=report_type,
                         job_signatures=[
                             JobSignature.bind(
                                 generate_id(

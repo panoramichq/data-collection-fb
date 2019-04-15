@@ -6,6 +6,7 @@ from facebook_business.adobjects.business import Business
 from facebook_business.adobjects.page import Page
 from facebook_business.api import FacebookRequest
 
+from common.error_inspector import ErrorTypesReport
 from oozer.common.job_context import JobContext
 from oozer.common.sweep_running_flag import SweepRunningFlag
 from tests.base import random
@@ -29,7 +30,9 @@ class TestCollectPages(TestCase):
 
         with SweepRunningFlag(job_scope.sweep_id), mock.patch.object(
             report_job_status_task, 'delay'
-        ) as status_task, mock.patch('common.error_inspector.BugSnagContextData.notify') as bugsnag_notify:
+        ) as status_task, mock.patch('common.error_inspector.BugSnagContextData.notify') as bugsnag_notify, mock.patch(
+            'common.error_inspector.API_KEY', 'something'
+        ):
             collect_pages_from_business_task(job_scope, JobContext())
 
             assert bugsnag_notify.called
@@ -38,7 +41,11 @@ class TestCollectPages(TestCase):
                 isinstance(actual_args[0], ValueError)
                 and str(actual_args[0]) == 'Report level None specified is not: P'
             ), 'Notify bugsnag correctly using correct Exception'
-            assert {'severity': SEVERITY_ERROR, 'job_scope': job_scope} == actual_kwargs, 'Notify bugsnag correctly'
+            assert {
+                'severity': SEVERITY_ERROR,
+                'job_scope': job_scope,
+                'error_type': ErrorTypesReport.UNKNOWN,
+            } == actual_kwargs, 'Notify bugsnag correctly'
             assert status_task.called
             parameters, _ = status_task.call_args
             assert (JobStatus.GenericError, job_scope) == parameters, 'Must report status correctly on failure'
@@ -50,16 +57,21 @@ class TestCollectPages(TestCase):
 
         with SweepRunningFlag(job_scope.sweep_id), mock.patch.object(
             report_job_status_task, 'delay'
-        ) as status_task, mock.patch('common.error_inspector.BugSnagContextData.notify') as bugsnag_notify:
+        ) as status_task, mock.patch('common.error_inspector.BugSnagContextData.notify') as bugsnag_notify, mock.patch(
+            'common.error_inspector.API_KEY', 'something'
+        ):
             collect_pages_from_business_task(job_scope, JobContext())
 
             assert bugsnag_notify.called
             actual_args, actual_kwargs = bugsnag_notify.call_args
             assert (
-                isinstance(actual_args[0], ValueError)
-                and str(actual_args[0]) == 'Job fb||||entity|P cannot proceed. No platform tokens provided.'
+                str(actual_args[0]) == 'Job fb||||entity|P cannot proceed. No platform tokens provided.'
             ), 'Notify bugsnag correctly using correct Exception'
-            assert {'severity': SEVERITY_ERROR, 'job_scope': job_scope} == actual_kwargs, 'Notify bugsnag correctly'
+            assert {
+                'severity': SEVERITY_ERROR,
+                'job_scope': job_scope,
+                'error_type': ErrorTypesReport.UNKNOWN,
+            } == actual_kwargs, 'Notify bugsnag correctly'
             assert status_task.called
 
             status_task_args, _ = status_task.call_args

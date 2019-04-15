@@ -7,6 +7,7 @@ from typing import List
 
 from common.bugsnag import BugSnagContextData
 from common.connect.redis import get_redis
+from common.enums.jobtype import detect_job_type
 from common.id_tools import parse_id_parts
 from common.measurement import Measure
 
@@ -51,6 +52,8 @@ class _JobsWriter:
         #  margin of comfort (say, 3)
         #  ========
         #  ~20k
+
+        self._measurement_base = f'{__name__}.{_JobsWriter.__class__.__name__}'
         self.cache_max_size = 20000
         self.cnts = defaultdict(int)
         self.redis_client = get_redis()
@@ -70,6 +73,22 @@ class _JobsWriter:
         )
         for job_id, score in self.batch.items():
             logger.warning(f'[job-writer][job-id][{self.sweep_id}] ID "{job_id}" with score "{score}"')
+            # this is not ideal, but for now, we can get away with it (we have very few jobs)
+            # in ideal case, we would have access to something like JobScope, because parsing jobId is expensive
+            parts_id = parse_id_parts(job_id)
+
+            Measure.counter(
+                f'{self._measurement_base}.flushed_scores',
+                tags={
+                    'sweep_id': self.sweep_id,
+                    'score': score,
+                    'ad_account_id': parts_id.ad_account_id,
+                    'report_variant': parts_id.report_variant,
+                    'report_type': parts_id.report_type,
+                    'job_type': detect_job_type(parts_id.report_type, parts_id.report_variant),
+                },
+            ).increment()
+
         self.batch.clear()
 
     def write_job_scope_data(self, job_scope_data, job_id_parts):
@@ -139,8 +158,7 @@ class _JobsWriter:
         cnt = 0
         for ad_account_id, cnts in self.cnts.items():
             Measure.counter(
-                f'{__name__}.{self.__class__.__name__}.unique_tasks',
-                {'sweep_id': self.sweep_id, 'ad_account_id': ad_account_id},
+                f'{self._measurement_base}.unique_tasks', {'sweep_id': self.sweep_id, 'ad_account_id': ad_account_id}
             ).increment(cnts)
             cnt += cnts
         logger.info(f"#{self.sweep_id}: Redis SortedSet Batcher wrote a total of {cnt} *unique* tasks")
