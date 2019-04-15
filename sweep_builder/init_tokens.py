@@ -68,7 +68,7 @@ def init_tokens(sweep_id):
     for scope_record in iter_scopes():
         # FIXME: This is a temporary solution to split tokens between organic and paid.
         #  To do so we abuse AssetScope class to "clone" it with a subset of platform tokens
-        paid_tokens = [scope_record.platform_token_ids[0]]
+        paid_tokens = scope_record.platform_token_ids[:-1]
         paid_data_scope = AssetScope.clone_from(scope_record, platform_token_ids=paid_tokens)
         PlatformTokenManager.populate_from_scope_entity(paid_data_scope, sweep_id)
 
