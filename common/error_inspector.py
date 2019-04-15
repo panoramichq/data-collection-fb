@@ -39,8 +39,8 @@ MAPPING_FACEBOOK_ERRORS = {
 
 class ErrorInspector:
     @staticmethod
-    def _is_dynamo_error(exc: Exception) -> bool:
-        return (
+    def is_dynamo_throughput_error(exc: Exception) -> bool:
+        return 'ProvisionedThroughputExceededException' in str(exc) and (
             isinstance(exc, UpdateError)
             or isinstance(exc, GetError)
             or isinstance(exc, PutError)
@@ -74,7 +74,7 @@ class ErrorInspector:
             error_type = ErrorTypesReport.TIMEOUT
             report_to_bugsnag = False
 
-        elif ErrorInspector._is_dynamo_error(exc):
+        elif ErrorInspector.is_dynamo_throughput_error(exc):
             error_type = ErrorTypesReport.DYNAMO_PROVISIONING
             report_to_bugsnag = False
 
