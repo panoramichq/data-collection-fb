@@ -65,8 +65,7 @@ class TestCollectPages(TestCase):
             assert bugsnag_notify.called
             actual_args, actual_kwargs = bugsnag_notify.call_args
             assert (
-                isinstance(actual_args[0], ValueError)
-                and str(actual_args[0]) == 'Job fb||||entity|P cannot proceed. No platform tokens provided.',
+                str(actual_args[0]) == 'Job fb||||entity|P cannot proceed. No platform tokens provided.'
             ), 'Notify bugsnag correctly using correct Exception'
             assert {
                 'severity': SEVERITY_ERROR,
