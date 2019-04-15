@@ -26,6 +26,7 @@ def pages_per_scope(reality_claim: RealityClaim) -> Generator[ExpectationClaim, 
 
     yield ExpectationClaim(
         reality_claim.to_dict(),
+        report_type=ReportType.import_pages,
         job_signatures=[
             JobSignature.bind(
                 generate_id(
@@ -56,6 +57,7 @@ def sync_expectations_per_page(reality_claim: RealityClaim) -> Generator[Expecta
 
     yield ExpectationClaim(
         reality_claim.to_dict(),
+        report_type=ReportType.sync_expectations,
         job_signatures=[
             JobSignature.bind(
                 generate_id(
