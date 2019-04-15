@@ -1,9 +1,7 @@
 from datetime import datetime, date
 from typing import List, Union
 
-from common.enums.entity import Entity
-from common.enums.jobtype import JobType
-from common.enums.reporttype import ReportType
+from common.enums.jobtype import detect_job_type
 from common.id_tools import generate_id
 from common.util import convert_class_with_props_to_str
 
@@ -47,13 +45,6 @@ class JobScope:
     # as if it counted them, the "successful" count would be greatly exaggerated
     is_derivative: bool = False
 
-    _OTHER_JOB_REPORT_TYPES = (
-        ReportType.sync_expectations,
-        ReportType.sync_status,
-        ReportType.import_accounts,
-        ReportType.import_pages,
-    )
-
     def __init__(self, *args, **kwargs):
         self.update(*args, **kwargs)
 
@@ -78,14 +69,7 @@ class JobScope:
 
     @property
     def job_type(self) -> str:
-        if not self.report_variant and self.report_type in self._OTHER_JOB_REPORT_TYPES:
-            return JobType.GLOBAL
-        elif self.report_variant in Entity.AA_SCOPED:
-            return JobType.PAID_DATA
-        elif self.report_variant in Entity.NON_AA_SCOPED:
-            return JobType.ORGANIC_DATA
-
-        return JobType.UNKNOWN
+        return detect_job_type(self.report_type, self.report_variant)
 
     @property
     def token(self) -> str:

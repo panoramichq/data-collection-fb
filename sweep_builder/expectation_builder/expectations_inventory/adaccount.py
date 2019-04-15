@@ -26,6 +26,7 @@ def ad_accounts_per_scope(reality_claim: RealityClaim) -> Generator[ExpectationC
 
     yield ExpectationClaim(
         reality_claim.to_dict(),
+        report_type=ReportType.import_accounts,
         job_signatures=[
             JobSignature.bind(
                 generate_id(
@@ -56,6 +57,7 @@ def sync_expectations_per_ad_account(reality_claim: RealityClaim) -> Generator[E
 
     yield ExpectationClaim(
         reality_claim.to_dict(),
+        report_type=ReportType.sync_expectations,
         job_signatures=[
             JobSignature.bind(
                 generate_id(

@@ -23,6 +23,7 @@ class ExpectationClaim(RealityClaim):
     # here we just top that off with more
 
     job_signatures: List[JobSignature] = []
+    report_type: str = None
 
     @property
     def normative_job_signature(self) -> Optional[JobSignature]:
