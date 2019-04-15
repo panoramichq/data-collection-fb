@@ -71,9 +71,10 @@ def init_tokens(sweep_id):
 
         token_id_list = list(scope_record.platform_token_ids)
         paid_tokens = token_id_list[:-1] if len(token_id_list) > 1 else [token_id_list[0]]
+        organic_tokens = [token_id_list[-1]]
+
         paid_data_scope = AssetScope.clone_from(scope_record, platform_token_ids=paid_tokens)
         PlatformTokenManager.populate_from_scope_entity(paid_data_scope, sweep_id)
 
-        organic_tokens = [token_id_list[-1]]
         organic_data_scope = AssetScope.clone_from(scope_record, platform_token_ids=organic_tokens)
         PageTokenManager.populate_from_scope_entity(organic_data_scope, sweep_id)
