@@ -1,4 +1,6 @@
 # must be first, as it does event loop patching and other "first" things
+from common.bugsnag import SEVERITY_ERROR
+from common.error_inspector import ErrorTypesReport
 from tests.base.testcase import TestCase, mock
 
 from common.enums.entity import Entity
@@ -39,13 +41,24 @@ class TestAdAccountImportTask(TestCase):
 
         with mock.patch.object(report_job_status_task, 'delay') as status_task, mock.patch.object(
             PlatformTokenManager, 'get_best_token', return_value=None
-        ) as get_best_token, self.assertRaises(ValueError) as ex_trap:
+        ) as get_best_token, mock.patch(
+            'common.error_inspector.BugSnagContextData.notify'
+        ) as bugsnag_notify, mock.patch(
+            'common.error_inspector.API_KEY', 'something'
+        ):
 
             # and code that falls back on PlatformTokenManager.get_best_token() gets nothing.
             import_ad_accounts_task(job_scope, None)
-
-        # so, it must complain specifically about tokens
-        assert 'cannot proceed. No tokens' in str(ex_trap.exception)
+            assert bugsnag_notify.called
+            actual_args, actual_kwargs = bugsnag_notify.call_args
+            assert ' cannot proceed. No tokens provided.' in str(
+                actual_args[0]
+            ), 'Notify bugsnag correctly using correct Exception'
+            assert {
+                'severity': SEVERITY_ERROR,
+                'job_scope': job_scope,
+                'error_type': ErrorTypesReport.UNKNOWN,
+            } == actual_kwargs, 'Notify bugsnag correctly'
 
         assert get_best_token.called
 
@@ -76,7 +89,9 @@ class TestAdAccountImportTask(TestCase):
 
         with mock.patch.object(ConsoleApi, 'get_accounts', return_value=accounts) as gaa, mock.patch.object(
             AdAccountEntity, 'upsert'
-        ) as aa_upsert, mock.patch.object(report_job_status_task, 'delay') as status_task:
+        ) as aa_upsert, mock.patch.object(report_job_status_task, 'delay') as status_task, mock.patch(
+            'oozer.entities.import_scope_entities_task._have_entity_access', return_value=True
+        ) as _have_entity_access_mock:
 
             import_ad_accounts_task(job_scope, None)
 
@@ -123,7 +138,9 @@ class TestAdAccountImportTask(TestCase):
 
         with mock.patch.object(ConsoleApi, 'get_pages', return_value=pages) as gp, mock.patch.object(
             PageEntity, 'upsert'
-        ) as pg_upsert, mock.patch.object(report_job_status_task, 'delay') as status_task:
+        ) as pg_upsert, mock.patch.object(report_job_status_task, 'delay') as status_task, mock.patch(
+            'oozer.entities.import_scope_entities_task._have_entity_access', return_value=True
+        ) as _have_entity_access_mock:
 
             import_pages_task(job_scope, None)
 

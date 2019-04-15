@@ -2,23 +2,26 @@ import logging
 
 from pynamodb.exceptions import PutError
 
+from common.error_inspector import ErrorInspector
 from common.measurement import Measure
-from common.bugsnag import BugSnagContextData
 from common.celeryapp import get_celery_app
 from common.enums.entity import Entity
+from facebook_business.exceptions import FacebookRequestError
+from common.page_tokens import PageTokenManager
 from common.store.entities import AdAccountEntity, PageEntity
 from common.tokens import PlatformTokenManager
 from oozer.common.console_api import ConsoleApi
-from oozer.common.enum import JobStatus
+from oozer.common.facebook_api import PlatformApiContext, get_default_fields
 from oozer.common.helpers import extract_tags_for_celery_fb_task
 from oozer.common.job_scope import JobScope
-from oozer.common.report_job_status_task import report_job_status_task
+from oozer.reporting import reported_task
 
 app = get_celery_app()
 logger = logging.getLogger(__name__)
 
 
 @app.task
+@reported_task
 @Measure.timer(__name__, function_name_as_metric=True, extract_tags_from_arguments=extract_tags_for_celery_fb_task)
 @Measure.counter(
     __name__, function_name_as_metric=True, count_once=True, extract_tags_from_arguments=extract_tags_for_celery_fb_task
@@ -27,19 +30,17 @@ def import_ad_accounts_task(job_scope: JobScope, _):
     """
     Collect all facebook ad accounts that are active in the console api
     """
-    try:
-        assert job_scope.entity_type == Entity.Scope
-        _get_good_token(job_scope)
 
-        logger.info(f'{job_scope} started')
-    except Exception:
-        report_job_status_task.delay(JobStatus.GenericError, job_scope)
-        raise
+    assert job_scope.entity_type == Entity.Scope
+    _get_good_token(job_scope)
 
-    _import_entities_from_console(Entity.AdAccount, job_scope)
+    logger.info(f'{job_scope} started')
+
+    return _import_entities_from_console(Entity.AdAccount, job_scope)
 
 
 @app.task
+@reported_task
 @Measure.timer(__name__, function_name_as_metric=True, extract_tags_from_arguments=extract_tags_for_celery_fb_task)
 @Measure.counter(
     __name__, function_name_as_metric=True, count_once=True, extract_tags_from_arguments=extract_tags_for_celery_fb_task
@@ -48,16 +49,13 @@ def import_pages_task(job_scope: JobScope, _):
     """
     Collect all facebook ad accounts that are active in the console api
     """
-    try:
-        assert job_scope.entity_type == Entity.Scope
-        _get_good_token(job_scope)
 
-        logger.info(f'{job_scope} started')
-    except Exception:
-        report_job_status_task.delay(JobStatus.GenericError, job_scope)
-        raise
+    assert job_scope.entity_type == Entity.Scope
+    _get_good_token(job_scope)
 
-    _import_entities_from_console(Entity.Page, job_scope)
+    logger.info(f'{job_scope} started')
+
+    return _import_entities_from_console(Entity.Page, job_scope)
 
 
 def _get_good_token(job_scope: JobScope):
@@ -71,16 +69,32 @@ def _get_good_token(job_scope: JobScope):
         raise ValueError(f"Job {job_scope.job_id} cannot proceed. No tokens provided.")
 
 
+def _have_entity_access(entity_type: str, entity_id: str, access_token: str) -> bool:
+    """
+    Test if we have access to that entity. Returns True or throws fb request error.
+    """
+    with PlatformApiContext(access_token) as fb_ctx:
+        entity = fb_ctx.to_fb_model(entity_id, entity_type)
+        fields = get_default_fields(entity.__class__)
+        entity_data = entity.remote_read(fields=fields)
+        return True
+
+
 def _import_entities_from_console(entity_type: str, job_scope: JobScope):
+    page_token_manager = PageTokenManager(JobScope.namespace, job_scope.sweep_id)
+    ad_account_token_manager = PlatformTokenManager(JobScope.namespace, job_scope.sweep_id)
+
     # TODO: Rethink registration of these.
     # effectively, even though we store scopes in DB, unless they are added
     # to code below, they don't exist. Seems kinda silly
     entity_type_map = {
-        Entity.AdAccount: (ConsoleApi.get_accounts, AdAccountEntity),
-        Entity.Page: (ConsoleApi.get_pages, PageEntity),
+        Entity.AdAccount: (
+            ConsoleApi.get_accounts,
+            AdAccountEntity,
+            lambda account_id: ad_account_token_manager.get_best_token(),
+        ),
+        Entity.Page: (ConsoleApi.get_pages, PageEntity, lambda page_id: page_token_manager.get_best_token(page_id)),
     }
-
-    report_job_status_task.delay(JobStatus.Start, job_scope)
 
     if entity_type not in entity_type_map:
         # logging.warning(f'No registered AdAccount extractor API for scope "{job_scope.entity_id}"')
@@ -88,29 +102,38 @@ def _import_entities_from_console(entity_type: str, job_scope: JobScope):
         raise ValueError(
             f'No registered entity extractor API for scope "{job_scope.entity_id}" and entity "{entity_type}"'
         )
-    entity_extractor, entity_model = entity_type_map[entity_type]
+    entity_extractor, entity_model, get_access_token = entity_type_map[entity_type]
 
-    try:
-        entities = entity_extractor(job_scope.token)
-        for entity in _get_entities_to_import(entities, 'ad_account_id'):
-            # TODO: maybe create a normative job scope that says ("extracting ad account")
+    entities = entity_extractor(job_scope.token)
+    imported_entities = 0
+    for entity in _get_entities_to_import(entities, 'ad_account_id'):
+        entity_id = entity['ad_account_id']
+        access_token = get_access_token(entity_id)
+        is_accessible = False
+        try:
+            is_accessible = _have_entity_access(entity_type, entity_id, access_token)
+        except FacebookRequestError as e:
+            #  On purpose not sending to inspector, since that would result in 'unknown' exceptions in ddog.
+            # We use other metric for tracking accounts that were not imported.
+            logger.exception(f'Error when testing account accessibility {entity_type} {entity_id}')
+        tags = {'entity_type': entity_type, 'entity_id': entity_id, 'is_accessible': is_accessible}
+        Measure.counter('console_entity_import', tags=tags).increment()
+
+        if is_accessible:
+            logger.warning(f'Importing {entity_type} {entity_id}')
             try:
                 # TODO: maybe rather get the entity first and update insert accordingly / if it has change
                 entity_model.upsert_entity_from_console(job_scope, entity)
+                imported_entities += 1
             except PutError as ex:
-                # TODO: ? report_job_status_task.delay(ConsoleExtractionJobStatus.UpsertError, normative_job_scope)
-                ex_str = str(ex)
-                if 'ProvisionedThroughputExceededException' in ex_str:
+                if ErrorInspector.is_dynamo_throughput_error(ex):
                     # just log and get out. Next time around we'll pick it up
-                    logger.info(ex_str)
+                    ErrorInspector.inspect(ex)
                 else:
                     raise
-
-        report_job_status_task.delay(JobStatus.Done, job_scope)
-    except Exception as ex:
-        BugSnagContextData.notify(ex, job_scope=job_scope)
-        logger.error(str(ex))
-        report_job_status_task.delay(JobStatus.GenericError, job_scope)
+        else:
+            logger.warning(f'Not importing {entity_type} {entity_id} because don\'t have acccess to it.')
+    return imported_entities
 
 
 def _get_entities_to_import(entities, entity_id_key):
