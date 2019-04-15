@@ -76,10 +76,9 @@ class TestAdAccountImportTask(TestCase):
 
         with mock.patch.object(ConsoleApi, 'get_accounts', return_value=accounts) as gaa, mock.patch.object(
             AdAccountEntity, 'upsert'
-        ) as aa_upsert, \
-            mock.patch.object(report_job_status_task, 'delay') as status_task, \
-            mock.patch('oozer.entities.import_scope_entities_task._have_entity_access') as _have_entity_access_mock:
-            _have_entity_access_mock.return_value = True
+        ) as aa_upsert, mock.patch.object(report_job_status_task, 'delay') as status_task, mock.patch(
+            'oozer.entities.import_scope_entities_task._have_entity_access', return_value=True
+        ) as _have_entity_access_mock:
 
             import_ad_accounts_task(job_scope, None)
 
@@ -126,9 +125,9 @@ class TestAdAccountImportTask(TestCase):
 
         with mock.patch.object(ConsoleApi, 'get_pages', return_value=pages) as gp, mock.patch.object(
             PageEntity, 'upsert'
-        ) as pg_upsert, mock.patch.object(report_job_status_task, 'delay') as status_task, \
-            mock.patch('oozer.entities.import_scope_entities_task._have_entity_access') as _have_entity_access_mock:
-            _have_entity_access_mock.return_value = True
+        ) as pg_upsert, mock.patch.object(report_job_status_task, 'delay') as status_task, mock.patch(
+            'oozer.entities.import_scope_entities_task._have_entity_access', return_value=True
+        ) as _have_entity_access_mock:
 
             import_pages_task(job_scope, None)
 
