@@ -1,4 +1,5 @@
 import logging
+import traceback
 from typing import Any, Dict
 
 from gevent import Timeout
@@ -8,6 +9,7 @@ from pynamodb.exceptions import UpdateError, GetError, PutError, QueryError
 from common.bugsnag import SEVERITY_ERROR, BugSnagContextData
 from common.enums.failure_bucket import FailureBucket
 from common.measurement import Measure
+from config.bugsnag import API_KEY
 from oozer.common.facebook_api import FacebookApiErrorInspector
 
 logger = logging.getLogger(__name__)
@@ -50,6 +52,12 @@ class ErrorInspector:
         Measure.counter(__name__ + '.errors', {'ad_account_id': ad_account_id, 'error_type': error_type}).increment()
 
     @staticmethod
+    def _get_trackback_exception(exception: Exception) -> str:
+        return ''.join(
+            traceback.format_exception(etype=type(exception), value=exception, tb=exception.__traceback__)
+        ).replace('\n', '\\n')
+
+    @staticmethod
     def inspect(exc: Exception, ad_account_id: str = None, extra_data: Dict[str, Any] = None):
         error_type = ErrorTypesReport.UNKNOWN
         report_to_bugsnag = True
@@ -70,12 +78,14 @@ class ErrorInspector:
             error_type = ErrorTypesReport.DYNAMO_PROVISIONING
             report_to_bugsnag = False
 
-        if report_to_bugsnag:
-            BugSnagContextData.notify(exc, severity=severity, **extra_data)
+        final_extra_data = {'error_type': error_type, **extra_data}
+
+        if report_to_bugsnag and API_KEY:
+            BugSnagContextData.notify(exc, severity=severity, **final_extra_data)
 
         logger.warning(
-            f'[error-inspector] We encountered exception in tasks with following extra_data ->  {extra_data}'
+            f'[error-inspector] We encountered exception in tasks with following extra_data ->  {final_extra_data}'
         )
-        logger.warning(str(exc))
+        logger.warning(ErrorInspector._get_trackback_exception(exc))
 
         ErrorInspector.send_measurement_error(error_type, ad_account_id)
