@@ -1,4 +1,5 @@
 from common.page_tokens import PageTokenManager
+from common.store.scope import AssetScope
 from common.tokens import PlatformTokenManager
 from sweep_builder.reality_inferrer.adaccounts import iter_scopes
 
@@ -65,5 +66,12 @@ def init_tokens(sweep_id):
           as this off-on-the-side band-aid looper code feels redundant since we have a loop already
     """
     for scope_record in iter_scopes():
-        PlatformTokenManager.populate_from_scope_entity(scope_record, sweep_id)
-        PageTokenManager.populate_from_scope_entity(scope_record, sweep_id)
+        # FIXME: This is a temporary solution to split tokens between organic and paid.
+        #  To do so we abuse AssetScope class to "clone" it with a subset of platform tokens
+        paid_tokens = [scope_record.platform_token_ids[0]]
+        paid_data_scope = AssetScope.clone_from(scope_record, platform_token_ids=paid_tokens)
+        PlatformTokenManager.populate_from_scope_entity(paid_data_scope, sweep_id)
+
+        organic_tokens = [scope_record.platform_token_ids[-1]]
+        organic_data_scope = AssetScope.clone_from(scope_record, platform_token_ids=organic_tokens)
+        PageTokenManager.populate_from_scope_entity(organic_data_scope, sweep_id)

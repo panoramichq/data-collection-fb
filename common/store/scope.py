@@ -90,6 +90,15 @@ class AssetScope(BaseModel, MemoizeMixin):
         except IndexError:
             return None
 
+    @classmethod
+    def clone_from(cls, other: 'AssetScope', **attrs) -> 'AssetScope':
+        return AssetScope(
+            scope=other.scope,
+            scope_api_token=other.scope_api_token,
+            platform_token_ids=other.platform_token_ids,
+            **attrs,
+        )
+
 
 def sync_schema(brute_force: bool = False):
     """
