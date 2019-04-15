@@ -36,7 +36,7 @@ def import_ad_accounts_task(job_scope: JobScope, _):
 
     logger.info(f'{job_scope} started')
 
-    _import_entities_from_console(Entity.AdAccount, job_scope)
+    return _import_entities_from_console(Entity.AdAccount, job_scope)
 
 
 @app.task
@@ -55,7 +55,7 @@ def import_pages_task(job_scope: JobScope, _):
 
     logger.info(f'{job_scope} started')
 
-    _import_entities_from_console(Entity.Page, job_scope)
+    return _import_entities_from_console(Entity.Page, job_scope)
 
 
 def _get_good_token(job_scope: JobScope):
@@ -109,6 +109,7 @@ def _import_entities_from_console(entity_type: str, job_scope: JobScope):
     entity_extractor, entity_model, get_access_token = entity_type_map[entity_type]
 
     entities = entity_extractor(job_scope.token)
+    imported_entities = 0
     for entity in _get_entities_to_import(entities, 'ad_account_id'):
         entity_id = entity['ad_account_id']
         access_token = get_access_token(entity_id)
@@ -127,15 +128,16 @@ def _import_entities_from_console(entity_type: str, job_scope: JobScope):
             try:
                 # TODO: maybe rather get the entity first and update insert accordingly / if it has change
                 entity_model.upsert_entity_from_console(job_scope, entity)
+                imported_entities += 1
             except PutError as ex:
-                ex_str = str(ex)
-                if 'ProvisionedThroughputExceededException' in ex_str:
+                if ErrorInspector.is_dynamo_throughput_error(ex):
                     # just log and get out. Next time around we'll pick it up
                     ErrorInspector.inspect(ex)
                 else:
                     raise
         else:
             logger.warning(f'Not importing {entity_type} {entity_id} because don\'t have acccess to it.')
+    return imported_entities
 
 
 def _get_entities_to_import(entities, entity_id_key):
