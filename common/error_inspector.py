@@ -72,8 +72,10 @@ class ErrorInspector:
 
         if report_to_bugsnag:
             BugSnagContextData.notify(exc, severity=severity, **extra_data)
-        else:
-            logger.warning(f'We encountered exception in tasks with following extra_data ->  {extra_data}')
-            logger.warning(str(exc))
+
+        logger.warning(
+            f'[error-inspector] We encountered exception in tasks with following extra_data ->  {extra_data}'
+        )
+        logger.warning(str(exc))
 
         ErrorInspector.send_measurement_error(error_type, ad_account_id)
