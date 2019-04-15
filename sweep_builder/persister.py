@@ -45,7 +45,7 @@ def iter_persist_prioritized(
         _measurement_sample_rate = 1
 
         _before_next_prioritized = time.time()
-        skipped_jobs = defaultdict(lambda _: defaultdict(lambda __: defaultdict(int)))
+        skipped_jobs = defaultdict(lambda: defaultdict(lambda: defaultdict(int)))
         for prioritization_claim in prioritized_iter:
             job_type = detect_job_type(prioritization_claim.report_type, prioritization_claim.entity_type)
             _measurement_tags = {
