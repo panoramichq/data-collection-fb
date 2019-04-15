@@ -4,7 +4,7 @@ import math
 import time
 
 from itertools import islice
-from typing import Generator, Tuple, Union, Callable
+from typing import Generator, Tuple, Union, Callable, Any
 
 from common.celeryapp import CeleryTask
 from common.id_tools import parse_id
@@ -12,7 +12,16 @@ from common.math import adapt_decay_rate_to_population, get_decay_proportion
 from common.measurement import Measure
 from common.timeout import timeout
 from config import looper as looper_config
-from config.looper import MIN_STARTING_FREQUENCY
+from config.looper import (
+    MIN_STARTING_FREQUENCY,
+    OOZER_TYPE,
+    OOZER_REVIEW_INTERVAL,
+    OOZER_MAX_RATE,
+    OOZER_MIN_RATE,
+    OOZER_LEARNING_RATE,
+    OOZER_ENABLE_LEARNING,
+    OOZER_START_RATE,
+)
 from oozer.common.job_context import JobContext
 from oozer.common.job_scope import JobScope
 from oozer.common.sorted_jobs_queue import SortedJobsQueue
@@ -100,13 +109,94 @@ def find_area_covered_so_far(fn: Callable[[float], Union[float, int]], x: float)
     return math.ceil(y * x + (fn(0) - y) * x / 2)
 
 
+class AdaptiveTaskOozer:
+
+    type = 'ADAPTIVE'
+
+    sweep_status_tracker: SweepStatusTracker
+    actual_processed: int
+    start_time: int
+    rate_review_time: int
+    tasks_since_review: int
+    wait_time: int
+    oozing_rate: float
+
+    def __init__(self, sweep_status_tracker: SweepStatusTracker, *_: Any, time_slice_length: int = 1, **__: Any):
+        self.sweep_status_tracker = sweep_status_tracker
+        self.actual_processed = 0
+        self.start_time = self.rate_review_time = round(time.time()) - 1
+        self.tasks_since_review = 0
+        self.wait_time = time_slice_length
+        self.oozing_rate = OOZER_START_RATE
+
+    def __enter__(self):
+        return self.ooze_task
+
+    def __exit__(self, *args):
+        # kill outstanding tasks?
+        pass
+
+    @property
+    def should_review_rate(self):
+        """Oozing rate should be reviewed every X seconds."""
+        return round(time.time()) - 1 - self.rate_review_time >= OOZER_REVIEW_INTERVAL
+
+    @staticmethod
+    def error_function(pulse: Pulse):
+        """Returns error rate [0, 1) used to adapt oozing rate."""
+        # + 1 to avoid division by zero
+        return pulse.Counts.UserThrottling / (pulse.Total + 1)
+
+    @staticmethod
+    def clamp_oozing_rate(rate: float):
+        """Ensure rate between min and max value."""
+        return max(OOZER_MIN_RATE, min(rate, OOZER_MAX_RATE))
+
+    @staticmethod
+    def calculate_rate(current_rate: float, pulse: Pulse):
+        """Calculate new oozing rate based on current rate and oozing pulse."""
+        error_rate = AdaptiveTaskOozer.error_function(pulse)
+        # Larger error rate => larger step
+        if error_rate == 0:
+            error_rate = -1
+        rate_change = -error_rate * OOZER_LEARNING_RATE
+        return AdaptiveTaskOozer.clamp_oozing_rate(current_rate + (rate_change * current_rate))
+
+    def ooze_task(self, task: CeleryTask, job_scope: JobScope, job_context: JobContext, *_: Any, **__: Any):
+        """Tracks the number of calls"""
+        if OOZER_ENABLE_LEARNING and self.should_review_rate:
+            pulse = self.sweep_status_tracker.get_pulse()
+            old_rate = self.oozing_rate
+            secs_elapsed = round(time.time()) - 1 - self.rate_review_time
+            logger.warning(f'Completed {self.tasks_since_review} tasks in {secs_elapsed} seconds')
+            self.oozing_rate = self.calculate_rate(old_rate, pulse)
+            self.rate_review_time = round(time.time()) - 1
+            self.tasks_since_review = 0
+            logger.warning(f'Updated oozing rate from {old_rate:.2f} to {self.oozing_rate:.2f}')
+
+        if self.tasks_since_review > self.oozing_rate:
+            gevent.sleep(self.wait_time)
+
+        task.delay(job_scope, job_context)
+        self.tasks_since_review += 1
+        self.actual_processed += 1
+
+        return True
+
+
 class TaskOozer:
-    def __init__(self, num_accounts: int, num_tasks: int, time_slice_length: int = 1):
+
+    TYPE = 'BASIC'
+
+    def __init__(
+        self, sweep_tracker: SweepStatusTracker, num_accounts: int, num_tasks: int, time_slice_length: int = 1
+    ):
         """
         :param num_accounts: Number of accounts to work with
         :param num_tasks: Number of tasks to release
         :param time_slice_length: in seconds. can be fractional.
         """
+        self.sweep_tracker = sweep_tracker
         self.actual_processed: int = 0
         self.time_slice_length: int = time_slice_length
 
@@ -120,13 +210,7 @@ class TaskOozer:
         self.get_normative_processed: Callable[[], int] = fn
 
     def ooze_task(
-        self,
-        task: CeleryTask,
-        job_scope: JobScope,
-        job_context: JobContext,
-        sweep_id: str,
-        job_score: int,
-        sweep_tracker: SweepStatusTracker,
+        self, task: CeleryTask, job_scope: JobScope, job_context: JobContext, sweep_id: str, job_score: int
     ) -> bool:
         """
         Tracks the number of calls
@@ -147,7 +231,7 @@ class TaskOozer:
             logger.warning(str(ex))
             logger.warning(
                 f'[oozer-run][{sweep_id}][breaking-reason] Breaking due to reaching end of decay fn'
-                f' with following pulse: {sweep_tracker.get_pulse()}'
+                f' with following pulse: {self.sweep_tracker.get_pulse()}'
                 f' and last score {job_score}'
             )
             return False
@@ -222,9 +306,11 @@ def run_tasks(
 
     tasks_iter = task_iter_score_gate(tasks_iter)
 
-    with TaskOozer(num_accounts, num_tasks, time_slice_length) as ooze_task, Measure.counter(
-        _measurement_name_base + 'oozed', tags=_measurement_tags
-    ) as cntr:
+    oozer_factory = AdaptiveTaskOozer if OOZER_TYPE == AdaptiveTaskOozer.type else TaskOozer
+
+    with oozer_factory(
+        sweep_tracker, num_accounts, num_tasks, time_slice_length=time_slice_length
+    ) as ooze_task, Measure.counter(_measurement_name_base + 'oozed', tags=_measurement_tags) as cntr:
         keep_going = True
         next_pulse_review_second = time.time() + _pulse_refresh_interval
 
@@ -242,7 +328,7 @@ def run_tasks(
         for celery_task, job_scope, job_context, score in islice(tasks_iter, 0, 100):
             # FYI: ooze_task blocks if we pushed too many tasks in the allotted time
             # It will unblock by itself when it's time to release the task
-            keep_going = ooze_task(celery_task, job_scope, job_context, sweep_id, last_processed_score, sweep_tracker)
+            keep_going = ooze_task(celery_task, job_scope, job_context, sweep_id, last_processed_score)
 
             if keep_going:
                 last_processed_score = score
@@ -260,9 +346,7 @@ def run_tasks(
 
             # if there are 1st quarter tasks left in queue, burn them out
             for celery_task, job_scope, job_context, score in tasks_iter:
-                keep_going = ooze_task(
-                    celery_task, job_scope, job_context, sweep_id, last_processed_score, sweep_tracker
-                )
+                keep_going = ooze_task(celery_task, job_scope, job_context, sweep_id, last_processed_score)
                 if keep_going:
                     cnt += 1
                     last_processed_score = score
@@ -316,9 +400,7 @@ def run_tasks(
 
                 # FYI: ooze_task blocks if we pushed too many tasks in the allotted time
                 # It will unblock by itself when it's time to release the task
-                keep_going = ooze_task(
-                    celery_task, job_scope, job_context, sweep_id, last_processed_score, sweep_tracker
-                )
+                keep_going = ooze_task(celery_task, job_scope, job_context, sweep_id, last_processed_score)
                 if keep_going:
                     cnt += 1
                     last_processed_score = score
@@ -363,9 +445,7 @@ def run_tasks(
 
                 cut_off_at_cnt = min(cut_off_at_cnt, half_time_done_cnt * 2)
 
-                keep_going = ooze_task(
-                    celery_task, job_scope, job_context, sweep_id, last_processed_score, sweep_tracker
-                )
+                keep_going = ooze_task(celery_task, job_scope, job_context, sweep_id, last_processed_score)
                 if keep_going:
                     cnt += 1
                     last_processed_score = score
@@ -416,9 +496,7 @@ def run_tasks(
 
                 # FYI: ooze_task blocks if we pushed too many tasks in the allotted time
                 # It will unblock by itself when it's time to release the task
-                keep_going = ooze_task(
-                    celery_task, job_scope, job_context, sweep_id, last_processed_score, sweep_tracker
-                )
+                keep_going = ooze_task(celery_task, job_scope, job_context, sweep_id, last_processed_score)
                 if keep_going:
                     cnt += 1
                     last_processed_score = score
