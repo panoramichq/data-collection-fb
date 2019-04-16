@@ -94,7 +94,7 @@ class AdAccountEntity(ConsoleEntityMixin, BaseModel):
             entity['ad_account_id'],
             is_active=entity.get('active', True),
             updated_by_sweep_id=job_scope.sweep_id,
-            is_accessible=is_accessible
+            is_accessible=is_accessible,
         )
 
 
@@ -254,7 +254,7 @@ class PageEntity(ConsoleEntityMixin, BaseModel):
             entity['ad_account_id'],
             is_active=entity.get('active', True),
             updated_by_sweep_id=job_scope.sweep_id,
-            is_accessible=is_accessible
+            is_accessible=is_accessible,
         )
 
 
