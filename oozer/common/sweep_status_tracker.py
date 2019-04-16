@@ -11,8 +11,10 @@ from common.enums.failure_bucket import FailureBucket
 # attr names are same as names of attrs in FailureBucket enum
 from common.measurement import Measure
 
-StatusCounts = namedtuple('Counts', list(FailureBucket.attr_name_enum_value_map.keys()))
-Pulse = namedtuple('Pulse', list(FailureBucket.attr_name_enum_value_map.keys()) + ['InProgress', 'Counts', 'Total'])
+StatusCounts = namedtuple('StatusCounts', list(FailureBucket.attr_name_enum_value_map.keys()) + ['Total'])
+Pulse = namedtuple(
+    'Pulse', list(FailureBucket.attr_name_enum_value_map.keys()) + ['InProgress', 'CurrentCounts', 'Total']
+)
 
 AGGREGATE_RECORD_MARKER = 'aggregate'
 IN_PROGRESS_RECORD_MARKER = 'in_progress'
@@ -135,7 +137,7 @@ class SweepStatusTracker:
         # Again, note the split:
         # - total is Done COUNT per entire sweep.
         # - in progress is # of tasks running in parallel
-        # - Counts contains counts of outcomes -1 minute ago
+        # - CurrentCounts contains counts of outcomes -1 minute ago
         # - rest of values are proportion of 1 (percentage as decimal)
         #   of specific outcomes in the last ~3 minutes of the run.
         #   These ratios are not representative of entire sweep so far.
@@ -143,8 +145,9 @@ class SweepStatusTracker:
         return Pulse(
             InProgress=self._get_in_progress_count(),
             Total=sum(aggregate_data.values()),
-            Counts=StatusCounts(
-                **{name: m1.get(enum_value, 0) for name, enum_value in FailureBucket.attr_name_enum_value_map.items()}
+            CurrentCounts=StatusCounts(
+                Total=sum(m1.values()),
+                **{name: m1.get(enum_value, 0) for name, enum_value in FailureBucket.attr_name_enum_value_map.items()},
             ),
             **{name: result.get(enum_value, 0) for name, enum_value in FailureBucket.attr_name_enum_value_map.items()},
         )

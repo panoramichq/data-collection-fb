@@ -121,12 +121,12 @@ class AdaptiveTaskOozer:
     wait_time: int
     oozing_rate: float
 
-    def __init__(self, sweep_status_tracker: SweepStatusTracker, *_: Any, time_slice_length: int = 1, **__: Any):
+    def __init__(self, sweep_status_tracker: SweepStatusTracker, wait_time: int = 1):
         self.sweep_status_tracker = sweep_status_tracker
         self.actual_processed = 0
         self.start_time = self.rate_review_time = round(time.time()) - 1
         self.tasks_since_review = 0
-        self.wait_time = time_slice_length
+        self.wait_time = wait_time
         self.oozing_rate = OOZER_START_RATE
 
     def __enter__(self):
@@ -137,40 +137,44 @@ class AdaptiveTaskOozer:
         pass
 
     @property
-    def should_review_rate(self):
+    def should_review_rate(self) -> bool:
         """Oozing rate should be reviewed every X seconds."""
-        return round(time.time()) - 1 - self.rate_review_time >= OOZER_REVIEW_INTERVAL
+        return self.current_time() - self.rate_review_time >= OOZER_REVIEW_INTERVAL
 
     @property
-    def secs_since_review(self):
+    def secs_since_review(self) -> int:
         """Seconds elapsed since last review."""
-        return round(time.time()) - 1 - self.rate_review_time
+        return self.current_time() - self.rate_review_time
 
     @property
-    def normative_tasks_since_review(self):
-        """Number of tasks expected to be completed with current rate."""
+    def normative_tasks_since_review(self) -> float:
+        """Tasks expected to be completed with current rate since review."""
         return self.oozing_rate * self.secs_since_review
 
     @staticmethod
-    def error_function(pulse: Pulse):
-        """Returns error rate [0, 1) used to adapt oozing rate."""
-        # + 1 to avoid division by zero
-        return pulse.Counts.UserThrottling / (pulse.Total + 1)
+    def current_time() -> int:
+        return round(time.time()) - 1
 
     @staticmethod
-    def clamp_oozing_rate(rate: float):
+    def error_function(pulse: Pulse) -> float:
+        """Returns error rate [0, 1) used to adapt oozing rate."""
+        # + 1 to avoid division by zero
+        return pulse.CurrentCounts.UserThrottling / (pulse.CurrentCounts.Total + 1)
+
+    @staticmethod
+    def clamp_oozing_rate(rate: float) -> float:
         """Ensure rate between min and max value."""
         return max(OOZER_MIN_RATE, min(rate, OOZER_MAX_RATE))
 
-    @staticmethod
-    def calculate_rate(current_rate: float, pulse: Pulse):
+    @classmethod
+    def calculate_rate(cls: 'AdaptiveTaskOozer', current_rate: float, pulse: Pulse) -> float:
         """Calculate new oozing rate based on current rate and oozing pulse."""
-        error_rate = AdaptiveTaskOozer.error_function(pulse)
+        error_rate = cls.error_function(pulse)
         # Larger error rate => larger step
         if error_rate == 0:
             error_rate = -1
         rate_change = -error_rate * OOZER_LEARNING_RATE
-        return AdaptiveTaskOozer.clamp_oozing_rate(current_rate + (rate_change * current_rate))
+        return cls.clamp_oozing_rate(current_rate + (rate_change * current_rate))
 
     def ooze_task(self, task: CeleryTask, job_scope: JobScope, job_context: JobContext, *_: Any, **__: Any):
         """Tracks the number of calls"""
@@ -253,6 +257,13 @@ class TaskOozer:
         pass
 
 
+def oozer_factory(sweep_tracker: SweepStatusTracker, num_accounts: int, num_tasks: int, time_slice_length: int = 1):
+    if OOZER_TYPE == AdaptiveTaskOozer.type:
+        return AdaptiveTaskOozer(sweep_tracker, wait_time=time_slice_length)
+
+    return TaskOozer(sweep_tracker, num_accounts, num_tasks, time_slice_length=time_slice_length)
+
+
 @Measure.timer(__name__, function_name_as_metric=True)
 @Measure.counter(__name__, function_name_as_metric=True, count_once=True)
 @timeout(looper_config.RUN_TASKS_TIMEOUT)
@@ -314,8 +325,6 @@ def run_tasks(
             yield inner_celery_task, inner_job_scope, inner_job_context, inner_score
 
     tasks_iter = task_iter_score_gate(tasks_iter)
-
-    oozer_factory = AdaptiveTaskOozer if OOZER_TYPE == AdaptiveTaskOozer.type else TaskOozer
 
     with oozer_factory(
         sweep_tracker, num_accounts, num_tasks, time_slice_length=time_slice_length
