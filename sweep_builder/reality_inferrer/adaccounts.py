@@ -42,5 +42,5 @@ def iter_active_ad_accounts_per_scope(scope: str) -> Generator[entities.AdAccoun
         # but this involves setting up an index on the partition,
         # which may limit the size of the partition.
         # TODO: investigate the risk and move this filter DB-side
-        if aa_record.is_active and aa_record.manually_disabled is not True and aa_record.is_accessible:
+        if aa_record.is_active and not aa_record.manually_disabled and aa_record.is_accessible:
             yield aa_record
