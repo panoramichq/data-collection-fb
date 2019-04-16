@@ -91,13 +91,9 @@ def _import_entities_from_console(entity_type: str, job_scope: JobScope):
         Entity.AdAccount: (
             ConsoleApi.get_accounts,
             AdAccountEntity,
-            lambda account_id: ad_account_token_manager.get_best_token()
+            lambda account_id: ad_account_token_manager.get_best_token(),
         ),
-        Entity.Page: (
-            ConsoleApi.get_pages,
-            PageEntity,
-            lambda page_id: page_token_manager.get_best_token(page_id)
-        ),
+        Entity.Page: (ConsoleApi.get_pages, PageEntity, lambda page_id: page_token_manager.get_best_token(page_id)),
     }
 
     if entity_type not in entity_type_map:
@@ -120,7 +116,7 @@ def _import_entities_from_console(entity_type: str, job_scope: JobScope):
             #  On purpose not sending to inspector, since that would result in 'unknown' exceptions in ddog.
             # We use other metric for tracking accounts that were not imported.
             logger.exception(f'Error when testing account accessibility {entity_type} {entity_id}')
-        tags = dict(entity_type=entity_type, entity_id=entity_id, is_accessible=is_accessible)
+        tags = {'entity_type': entity_type, 'entity_id': entity_id, 'is_accessible': is_accessible}
         Measure.counter('console_entity_import', tags=tags).increment()
 
         if is_accessible:

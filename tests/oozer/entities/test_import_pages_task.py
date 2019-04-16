@@ -1,4 +1,6 @@
 # must be first, as it does event loop patching and other "first" things
+from common.bugsnag import SEVERITY_ERROR
+from common.error_inspector import ErrorTypesReport
 from oozer.common.console_api import ConsoleApi
 from oozer.entities.import_scope_entities_task import import_pages_task
 from tests.base.testcase import TestCase, mock
@@ -32,14 +34,25 @@ class TestPageImportTask(TestCase):
 
         with mock.patch.object(report_job_status_task, 'delay') as status_task, mock.patch.object(
             PlatformTokenManager, 'get_best_token', return_value=None
-        ) as get_best_token, self.assertRaises(ValueError) as ex_trap:
+        ) as get_best_token, mock.patch(
+            'common.error_inspector.BugSnagContextData.notify'
+        ) as bugsnag_notify, mock.patch(
+            'common.error_inspector.API_KEY', 'something'
+        ):
 
             # and code that falls back on PlatformTokenManager.get_best_token() gets nothing.
 
             import_pages_task(job_scope, None)
-
-        # so, it must complain specifically about tokens
-        assert 'cannot proceed. No tokens' in str(ex_trap.exception)
+            assert bugsnag_notify.called
+            actual_args, actual_kwargs = bugsnag_notify.call_args
+            assert ' cannot proceed. No tokens provided.' in str(
+                actual_args[0]
+            ), 'Notify bugsnag correctly using correct Exception'
+            assert {
+                'severity': SEVERITY_ERROR,
+                'job_scope': job_scope,
+                'error_type': ErrorTypesReport.UNKNOWN,
+            } == actual_kwargs, 'Notify bugsnag correctly'
 
         assert get_best_token.called
 
@@ -64,11 +77,11 @@ class TestPageImportTask(TestCase):
             tokens=['token'],
         )
 
-        with mock.patch.object(ConsoleApi, 'get_pages', return_value=pages) as gp, \
-            mock.patch.object(PageEntity, 'upsert') as page_upsert, \
-            mock.patch.object(report_job_status_task, 'delay') as status_task, \
-            mock.patch('oozer.entities.import_scope_entities_task._have_entity_access') as _have_entity_access_mock:
-            _have_entity_access_mock.return_value = True
+        with mock.patch.object(ConsoleApi, 'get_pages', return_value=pages) as gp, mock.patch.object(
+            PageEntity, 'upsert'
+        ) as page_upsert, mock.patch.object(report_job_status_task, 'delay') as status_task, mock.patch(
+            'oozer.entities.import_scope_entities_task._have_entity_access', return_value=True
+        ) as _have_entity_access_mock:
             import_pages_task(job_scope, None)
 
         assert gp.called

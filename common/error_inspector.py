@@ -78,7 +78,7 @@ class ErrorInspector:
             error_type = ErrorTypesReport.DYNAMO_PROVISIONING
             report_to_bugsnag = False
 
-        final_extra_data = {'error_type': error_type, **extra_data}
+        final_extra_data = {'error_type': error_type, **(extra_data or {})}
 
         if report_to_bugsnag and API_KEY:
             BugSnagContextData.notify(exc, severity=severity, **final_extra_data)
