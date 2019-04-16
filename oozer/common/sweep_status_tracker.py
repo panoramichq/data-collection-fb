@@ -11,7 +11,7 @@ from common.enums.failure_bucket import FailureBucket
 # attr names are same as names of attrs in FailureBucket enum
 from common.measurement import Measure
 
-Counts = namedtuple('Counts', list(FailureBucket.attr_name_enum_value_map.keys()))
+StatusCounts = namedtuple('Counts', list(FailureBucket.attr_name_enum_value_map.keys()))
 Pulse = namedtuple('Pulse', list(FailureBucket.attr_name_enum_value_map.keys()) + ['InProgress', 'Counts', 'Total'])
 
 AGGREGATE_RECORD_MARKER = 'aggregate'
@@ -143,7 +143,7 @@ class SweepStatusTracker:
         return Pulse(
             InProgress=self._get_in_progress_count(),
             Total=sum(aggregate_data.values()),
-            Counts=Counts(
+            Counts=StatusCounts(
                 **{name: m1.get(enum_value, 0) for name, enum_value in FailureBucket.attr_name_enum_value_map.items()}
             ),
             **{name: result.get(enum_value, 0) for name, enum_value in FailureBucket.attr_name_enum_value_map.items()},
