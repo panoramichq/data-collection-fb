@@ -40,7 +40,7 @@ class PageTokenManager:
                     response = request.execute()
                     response_json = response.json()
                     for page in response_json['data']:
-                        manager.add(page['id'], [page['access_token']])
+                        manager.add(page['id'], page['access_token'])
                         cnt += 1
 
                     if 'next' in response_json['paging']:
