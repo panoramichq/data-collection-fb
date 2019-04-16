@@ -6,7 +6,6 @@ from typing import Generator, Iterable
 
 from common.enums.jobtype import detect_job_type
 from common.measurement import Measure
-from oozer.common.expecations_store import JobExpectationsWriter
 from oozer.common.sorted_jobs_queue import SortedJobsQueue
 from sweep_builder.prioritizer.gatekeeper import JobGateKeeper
 from sweep_builder.data_containers.prioritization_claim import PrioritizationClaim
@@ -23,9 +22,7 @@ def iter_persist_prioritized(
     sweep_id: str, prioritized_iter: Iterable[PrioritizationClaim]
 ) -> Generator[PrioritizationClaim, None, None]:
     """Persist prioritized jobs and pass-through context objects for inspection."""
-    with SortedJobsQueue(sweep_id).JobsWriter() as add_to_queue, JobExpectationsWriter(
-        sweep_id, cache_max_size=200000
-    ) as expectation_add:
+    with SortedJobsQueue(sweep_id).JobsWriter() as add_to_queue:
 
         _measurement_name_base = f'{__name__}.{iter_persist_prioritized.__name__}'
 
@@ -86,15 +83,6 @@ def iter_persist_prioritized(
             with Measure.timer(f'{_measurement_name_base}.add_to_queue', tags=_measurement_tags):
                 Measure.counter(f'{_measurement_name_base}.add_to_queue_cnt', tags=_measurement_tags).increment()
                 add_to_queue(selected_job_id, score, **extra_data)
-
-            # This is our cheap way of ensuring that we are dealing
-            # with platform-bound job that we need to report our expectations for
-            if prioritization_claim.is_subject_to_expectation_publication:
-                # TODO: contemplate parsing these instead and making sure they are norm vs eff
-                # at this point all this checks is that we have more than one job_id scheduled
-                if prioritization_claim.normative_job_id != selected_job_id:
-                    with Measure.timer(f'{_measurement_name_base}.expectation_add', tags=_measurement_tags):
-                        expectation_add(selected_job_id, ad_account_id, prioritization_claim.entity_id)
 
             # This time includes the time consumer of this generator wastes
             # between reads from us. Good way to measure how quickly we are

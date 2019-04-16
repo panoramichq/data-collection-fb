@@ -43,7 +43,7 @@ def test_aa_import_expectation_generated_on_token():
     assert expectation_claim.entity_id == reality_claim.entity_id
     assert expectation_claim.entity_type == reality_claim.entity_type
 
-    assert expectation_claim.normative_job_id == generate_id(
+    assert expectation_claim.job_id == generate_id(
         namespace=config.application.UNIVERSAL_ID_SYSTEM_NAMESPACE,
         entity_type=Entity.Scope,
         entity_id=entity_id,
@@ -60,7 +60,7 @@ def test_aa_collection_expectation():
     )
 
     def is_adaccount_entity_job(expectation_claim):
-        parsed_id_parts = parse_id_parts(expectation_claim.normative_job_id)
+        parsed_id_parts = parse_id_parts(expectation_claim.job_id)
         return parsed_id_parts.report_type == ReportType.entity and parsed_id_parts.report_variant == Entity.AdAccount
 
     adaccount_entity_expectations = list(filter(is_adaccount_entity_job, iter_expectations([reality_claim])))
@@ -71,7 +71,7 @@ def test_aa_collection_expectation():
     assert expectation_claim.entity_id == reality_claim.ad_account_id
     assert expectation_claim.entity_type == reality_claim.entity_type
 
-    assert expectation_claim.normative_job_id == generate_id(
+    assert expectation_claim.job_id == generate_id(
         ad_account_id=ad_account_id,
         entity_id=ad_account_id,
         report_type=ReportType.entity,

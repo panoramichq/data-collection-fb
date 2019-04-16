@@ -38,13 +38,13 @@ def entities_per_ad_account(entity_type: str, reality_claim: RealityClaim) -> Ge
         reality_claim.entity_id,
         reality_claim.entity_type,
         ReportType.entity,
-        ad_account_id=reality_claim.ad_account_id,
-        timezone=reality_claim.timezone,
-        normative_job_signature=JobSignature(
+        JobSignature(
             generate_id(
                 ad_account_id=reality_claim.ad_account_id, report_type=ReportType.entity, report_variant=entity_type
             )
         ),
+        ad_account_id=reality_claim.ad_account_id,
+        timezone=reality_claim.timezone,
     )
 
 
@@ -58,12 +58,12 @@ def entities_per_page(entity_type: str, reality_claim: RealityClaim) -> Generato
         reality_claim.entity_id,
         reality_claim.entity_type,
         ReportType.entity,
-        ad_account_id=reality_claim.ad_account_id,
-        normative_job_signature=JobSignature(
+        JobSignature(
             generate_id(
                 ad_account_id=reality_claim.ad_account_id, report_type=ReportType.entity, report_variant=entity_type
             )
         ),
+        ad_account_id=reality_claim.ad_account_id,
     )
 
 
@@ -77,8 +77,7 @@ def entities_per_page_post(entity_type: str, reality_claim: RealityClaim) -> Gen
         reality_claim.entity_id,
         reality_claim.entity_type,
         ReportType.entity,
-        ad_account_id=reality_claim.ad_account_id,
-        normative_job_signature=JobSignature(
+        JobSignature(
             generate_id(
                 ad_account_id=reality_claim.ad_account_id,
                 report_type=ReportType.entity,
@@ -86,6 +85,7 @@ def entities_per_page_post(entity_type: str, reality_claim: RealityClaim) -> Gen
                 entity_id=reality_claim.entity_id,
             )
         ),
+        ad_account_id=reality_claim.ad_account_id,
     )
 
 
@@ -96,8 +96,7 @@ def page_entity(reality_claim: RealityClaim) -> Generator[ExpectationClaim, None
         reality_claim.entity_id,
         reality_claim.entity_type,
         ReportType.entity,
-        ad_account_id=reality_claim.ad_account_id,
-        normative_job_signature=JobSignature(
+        JobSignature(
             generate_id(
                 ad_account_id=reality_claim.ad_account_id,
                 entity_id=reality_claim.entity_id,
@@ -105,6 +104,7 @@ def page_entity(reality_claim: RealityClaim) -> Generator[ExpectationClaim, None
                 report_variant=Entity.Page,
             )
         ),
+        ad_account_id=reality_claim.ad_account_id,
     )
 
 
@@ -117,9 +117,7 @@ def ad_account_entity(reality_claim: RealityClaim) -> Generator[ExpectationClaim
         reality_claim.entity_id,
         reality_claim.entity_type,
         ReportType.entity,
-        ad_account_id=reality_claim.ad_account_id,
-        timezone=reality_claim.timezone,
-        normative_job_signature=JobSignature(
+        JobSignature(
             generate_id(
                 ad_account_id=reality_claim.ad_account_id,
                 entity_id=reality_claim.entity_id,
@@ -127,6 +125,8 @@ def ad_account_entity(reality_claim: RealityClaim) -> Generator[ExpectationClaim
                 report_variant=Entity.AdAccount,
             )
         ),
+        ad_account_id=reality_claim.ad_account_id,
+        timezone=reality_claim.timezone,
     )
 
 

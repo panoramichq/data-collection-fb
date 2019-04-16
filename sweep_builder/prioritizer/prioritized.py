@@ -24,7 +24,7 @@ def iter_prioritized(claims: Iterable[ScorableClaim]) -> Generator[Prioritizatio
             (time.time() - _before_next_expectation) * 1000
         )
 
-        selected_signature = claim.selected_job_signature
+        selected_signature = claim.job_signature
 
         # Cache already seen job_ids
         cached_score = assigned_scores.get(selected_signature)
@@ -34,7 +34,6 @@ def iter_prioritized(claims: Iterable[ScorableClaim]) -> Generator[Prioritizatio
                 claim.entity_type,
                 claim.report_type,
                 selected_signature,
-                claim.normative_job_signature,
                 cached_score,
                 ad_account_id=claim.ad_account_id,
                 timezone=claim.timezone,
@@ -49,7 +48,6 @@ def iter_prioritized(claims: Iterable[ScorableClaim]) -> Generator[Prioritizatio
                 claim.entity_type,
                 claim.report_type,
                 selected_signature,
-                claim.normative_job_signature,
                 score,
                 ad_account_id=claim.ad_account_id,
                 timezone=claim.timezone,

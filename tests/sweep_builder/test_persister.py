@@ -31,16 +31,15 @@ class PersisterSavesJobScopeData(TestCase):
                 entity_id,
                 Entity.Campaign,
                 ReportType.lifetime,
+                JobSignature(job_id),
+                100,
                 ad_account_id=ad_account_id,
                 timezone='Europe/London',
-                normative_job_signature=JobSignature(job_id),
-                selected_job_signature=JobSignature(job_id),
                 # TODO: contemplate moving auxiliary data formation to
                 #       place where JobSignatures are generated and use that
                 #       data for Data Flower (as it was originally intended
                 #       but not implemented because saving each job's data
                 #       individually to Data Flower was too slow)
-                score=100,
             )
         ]
 

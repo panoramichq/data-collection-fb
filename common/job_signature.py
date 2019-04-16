@@ -9,8 +9,9 @@ class JobSignature:
     def __hash__(self):
         return hash(self.job_id)
 
-    def __ne__(self, other):
-        return not self == other
-
     def __eq__(self, other):
         return isinstance(other, JobSignature) and other.job_id == self.job_id
+
+    def __repr__(self):
+        props = {'job_id': self.job_id}
+        return f'<{self.__class__.__name__} {props}>'
