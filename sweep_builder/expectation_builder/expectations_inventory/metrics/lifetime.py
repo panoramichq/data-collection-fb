@@ -31,27 +31,28 @@ def lifetime_metrics_per_entity(
     if reality_claim.ad_account_id == '23845179':
         # Use normative job for ad account 23845179
         yield ExpectationClaim(
-            reality_claim.to_dict(),
-            report_type=ReportType.lifetime,
-            job_signatures=[JobSignature.bind(normative_job_id)],
+            reality_claim.entity_id,
+            reality_claim.entity_type,
+            ReportType.lifetime,
+            ad_account_id=reality_claim.ad_account_id,
+            timezone=reality_claim.timezone,
+            normative_job_signature=JobSignature(normative_job_id),
         )
     else:
         yield ExpectationClaim(
-            reality_claim.to_dict(),
-            report_type=ReportType.lifetime,
-            job_signatures=[
-                # normative job signature
-                JobSignature.bind(normative_job_id),
-                # possible alternative "effective" job signatures:
-                JobSignature.bind(
-                    generate_id(
-                        ad_account_id=reality_claim.ad_account_id,
-                        report_type=ReportType.lifetime,
-                        report_variant=entity_type,
-                    ),
-                    normative_job_id=normative_job_id,
-                ),
-            ],
+            reality_claim.entity_id,
+            reality_claim.entity_type,
+            ReportType.lifetime,
+            ad_account_id=reality_claim.ad_account_id,
+            timezone=reality_claim.timezone,
+            normative_job_signature=JobSignature(normative_job_id),
+            effective_job_signature=JobSignature(
+                generate_id(
+                    ad_account_id=reality_claim.ad_account_id,
+                    report_type=ReportType.lifetime,
+                    report_variant=entity_type,
+                )
+            ),
         )
 
 
@@ -68,12 +69,11 @@ def lifetime_page_metrics_per_entity(
         report_variant=entity_type,
     )
     yield ExpectationClaim(
-        reality_claim.to_dict(),
-        report_type=ReportType.lifetime,
-        job_signatures=[
-            # normative job signature
-            JobSignature.bind(normative_job_id)
-        ],
+        reality_claim.entity_id,
+        reality_claim.entity_type,
+        ReportType.lifetime,
+        ad_account_id=reality_claim.ad_account_id,
+        normative_job_signature=JobSignature(normative_job_id),
     )
 
 

@@ -25,21 +25,20 @@ def pages_per_scope(reality_claim: RealityClaim) -> Generator[ExpectationClaim, 
         return
 
     yield ExpectationClaim(
-        reality_claim.to_dict(),
-        report_type=ReportType.import_pages,
-        job_signatures=[
-            JobSignature.bind(
-                generate_id(
-                    namespace=config.application.UNIVERSAL_ID_SYSTEM_NAMESPACE,
-                    # Note absence of value for Page
-                    # This is "all Pages per scope X" job.
-                    entity_id=reality_claim.entity_id,
-                    entity_type=reality_claim.entity_type,
-                    report_type=ReportType.import_pages,
-                    report_variant=Entity.Page,
-                )
+        reality_claim.entity_id,
+        reality_claim.entity_type,
+        ReportType.import_pages,
+        normative_job_signature=JobSignature(
+            generate_id(
+                namespace=config.application.UNIVERSAL_ID_SYSTEM_NAMESPACE,
+                # Note absence of value for Page
+                # This is "all Pages per scope X" job.
+                entity_id=reality_claim.entity_id,
+                entity_type=reality_claim.entity_type,
+                report_type=ReportType.import_pages,
+                report_variant=Entity.Page,
             )
-        ],
+        ),
     )
 
 
@@ -56,16 +55,16 @@ def sync_expectations_per_page(reality_claim: RealityClaim) -> Generator[Expecta
         ValueError("Only Page-level expectations may generate this job signature")
 
     yield ExpectationClaim(
-        reality_claim.to_dict(),
-        report_type=ReportType.sync_expectations,
-        job_signatures=[
-            JobSignature.bind(
-                generate_id(
-                    ad_account_id=reality_claim.ad_account_id,
-                    entity_id=reality_claim.ad_account_id,
-                    entity_type=reality_claim.entity_type,
-                    report_type=ReportType.sync_expectations,
-                )
+        reality_claim.entity_id,
+        reality_claim.entity_type,
+        ReportType.sync_expectations,
+        ad_account_id=reality_claim.ad_account_id,
+        normative_job_signature=JobSignature(
+            generate_id(
+                ad_account_id=reality_claim.ad_account_id,
+                entity_id=reality_claim.ad_account_id,
+                entity_type=reality_claim.entity_type,
+                report_type=ReportType.sync_expectations,
             )
-        ],
+        ),
     )

@@ -1,28 +1,20 @@
-from common.enums.entity import Entity
 from typing import Optional
+
 from common.job_signature import JobSignature
+from common.store.jobreport import JobReport
 
-SUBJECT_TO_EXPECTATION_PUBLICATION = {Entity.Campaign, Entity.AdSet, Entity.Ad}
 
-
-class PrioritizationClaim:
-    """
-    Used to express a bundle of data representing scored realization of
-    need to have certain data point filled.
-
-    Think of it as "context" object - a dumping ground of data pertinent to entity's existence
-
-    (Used to avoid the need to change all functions in the stack if you need
-    to add more data to context from the very bottom of the stack. Just extend this object.)
-    """
+class ScorableClaim:
+    """Expectation claim ready for scoring."""
 
     entity_id: str
     entity_type: str
     report_type: str
     selected_job_signature: JobSignature
+    last_report: Optional[JobReport]
 
-    ad_account_id: str
-    score: int = None
+    ad_account_id: Optional[str]
+    timezone: [str]
 
     def __init__(
         self,
@@ -31,7 +23,7 @@ class PrioritizationClaim:
         report_type: str,
         selected_job_signature: JobSignature,
         normative_job_signature: JobSignature,
-        score: int,
+        last_report: Optional[JobReport],
         ad_account_id: str = None,
         timezone: str = None,
     ):
@@ -40,17 +32,9 @@ class PrioritizationClaim:
         self.report_type = report_type
         self.selected_job_signature = selected_job_signature
         self.normative_job_signature = normative_job_signature
-        self.score = score
+        self.last_report = last_report
         self.ad_account_id = ad_account_id
         self.timezone = timezone
-
-    @property
-    def is_subject_to_expectation_publication(self) -> bool:
-        return (
-            self.ad_account_id is not None
-            and self.entity_id is not None
-            and self.entity_type in SUBJECT_TO_EXPECTATION_PUBLICATION
-        )
 
     @property
     def selected_job_id(self) -> str:
