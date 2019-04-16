@@ -141,6 +141,16 @@ class AdaptiveTaskOozer:
         """Oozing rate should be reviewed every X seconds."""
         return round(time.time()) - 1 - self.rate_review_time >= OOZER_REVIEW_INTERVAL
 
+    @property
+    def secs_since_review(self):
+        """Seconds elapsed since last review."""
+        return round(time.time()) - 1 - self.rate_review_time
+
+    @property
+    def normative_tasks_since_review(self):
+        """Number of tasks expected to be completed with current rate."""
+        return self.oozing_rate * self.secs_since_review
+
     @staticmethod
     def error_function(pulse: Pulse):
         """Returns error rate [0, 1) used to adapt oozing rate."""
@@ -167,14 +177,13 @@ class AdaptiveTaskOozer:
         if OOZER_ENABLE_LEARNING and self.should_review_rate:
             pulse = self.sweep_status_tracker.get_pulse()
             old_rate = self.oozing_rate
-            secs_elapsed = round(time.time()) - 1 - self.rate_review_time
-            logger.warning(f'Completed {self.tasks_since_review} tasks in {secs_elapsed} seconds')
+            logger.warning(f'Completed {self.tasks_since_review} tasks in {self.secs_since_review} seconds')
             self.oozing_rate = self.calculate_rate(old_rate, pulse)
             self.rate_review_time = round(time.time()) - 1
             self.tasks_since_review = 0
             logger.warning(f'Updated oozing rate from {old_rate:.2f} to {self.oozing_rate:.2f}')
 
-        if self.tasks_since_review > self.oozing_rate:
+        if self.tasks_since_review > self.normative_tasks_since_review:
             gevent.sleep(self.wait_time)
 
         task.delay(job_scope, job_context)
