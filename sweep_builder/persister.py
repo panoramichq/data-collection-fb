@@ -1,7 +1,6 @@
 import logging
 import time
 
-from collections import defaultdict
 from typing import Generator, Iterable
 
 from common.enums.jobtype import detect_job_type

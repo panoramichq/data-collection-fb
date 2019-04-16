@@ -6,7 +6,7 @@ from typing import Iterable, Generator, Optional
 
 from pynamodb.exceptions import DoesNotExist
 
-from config.jobs import FAILS_IN_ROW_BREAKDOWN_LIMIT
+from config.jobs import FAILS_IN_ROW_BREAKDOWN_LIMIT, TASK_BREAKDOWN_ENABLED
 from common.enums.failure_bucket import FailureBucket
 from common.measurement import Measure
 from common.store.jobreport import JobReport
@@ -67,7 +67,7 @@ def should_select(report: JobReport) -> bool:
 def generate_scorable(claim: ExpectationClaim) -> Generator[ScorableClaim, None, None]:
     """Select job signature for single expectation claim."""
     last_report = _fetch_job_report(claim.job_id)
-    if not claim.is_divisible or last_report is None or should_select(last_report):
+    if not TASK_BREAKDOWN_ENABLED or not claim.is_divisible or last_report is None or should_select(last_report):
         yield ScorableClaim(
             claim.entity_id,
             claim.entity_type,

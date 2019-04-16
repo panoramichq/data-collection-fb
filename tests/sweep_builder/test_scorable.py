@@ -13,6 +13,12 @@ from sweep_builder.data_containers.expectation_claim import ExpectationClaim
 from sweep_builder.scorable import should_select, generate_scorable, generate_child_claims
 
 
+@pytest.yield_fixture(autouse=True)
+def patch_config_enabled_flag():
+    with patch('sweep_builder.scorable.TASK_BREAKDOWN_ENABLED', True) as _:
+        yield
+
+
 def test_generate_child_claims():
     entity_hierarchy = EntityNode('adset-id', Entity.AdSet)
     ad1, ad2 = EntityNode('ad-id1', Entity.Ad), EntityNode('ad-id2', Entity.Ad)
