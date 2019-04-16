@@ -107,12 +107,12 @@ class TestAdAccountImportTask(TestCase):
 
         active_account_upsert_args = (
             (self.scope_id, active_ad_account_id),
-            {'is_active': True, 'updated_by_sweep_id': self.sweep_id},
+            {'is_active': True, 'updated_by_sweep_id': self.sweep_id, 'is_accessible': True},
         )
 
         inactive_account_upsert_args = (
             (self.scope_id, inactive_ad_account_id),
-            {'is_active': False, 'updated_by_sweep_id': self.sweep_id},
+            {'is_active': False, 'updated_by_sweep_id': self.sweep_id, 'is_accessible': True},
         )
 
         args1, args2 = aa_upsert.call_args_list
@@ -156,12 +156,12 @@ class TestAdAccountImportTask(TestCase):
 
         active_page_upsert_args = (
             (self.scope_id, active_page_id),
-            {'is_active': True, 'updated_by_sweep_id': self.sweep_id},
+            {'is_active': True, 'updated_by_sweep_id': self.sweep_id, 'is_accessible': True},
         )
 
         inactive_account_upsert_args = (
             (self.scope_id, inactive_page_id),
-            {'is_active': False, 'updated_by_sweep_id': self.sweep_id},
+            {'is_active': False, 'updated_by_sweep_id': self.sweep_id, 'is_accessible': True},
         )
 
         args1, args2 = pg_upsert.call_args_list

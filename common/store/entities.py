@@ -11,7 +11,7 @@ from oozer.common.job_scope import JobScope
 
 class ConsoleEntityMixin:
     @classmethod
-    def upsert_entity_from_console(cls, job_scope: JobScope, entity: Any):
+    def upsert_entity_from_console(cls, job_scope: JobScope, entity: Any, is_accessible: bool):
         pass
 
 
@@ -40,6 +40,8 @@ class AdAccountEntity(ConsoleEntityMixin, BaseModel):
     # copied indicator of activity from Console DB per each sync
     # (alternative to deletion. To be discussed later if deletion is better)
     is_active = attributes.BooleanAttribute(default=False, attr_name='a')
+
+    is_accessible = attributes.BooleanAttribute(default=True, attr_name='is_accessible')
 
     # Provides an option to manually disable accounts from syncing, even if they are imported as active from console.
     manually_disabled = attributes.BooleanAttribute(default=False, attr_name='man_dis')
@@ -86,12 +88,13 @@ class AdAccountEntity(ConsoleEntityMixin, BaseModel):
         return AdAccount(fbid=f'act_{self.ad_account_id}', api=api)
 
     @classmethod
-    def upsert_entity_from_console(cls, job_scope: JobScope, entity: Any):
+    def upsert_entity_from_console(cls, job_scope: JobScope, entity: Any, is_accessible: bool):
         cls.upsert(
             job_scope.entity_id,  # scope ID
             entity['ad_account_id'],
             is_active=entity.get('active', True),
             updated_by_sweep_id=job_scope.sweep_id,
+            is_accessible=is_accessible,
         )
 
 
@@ -229,6 +232,8 @@ class PageEntity(ConsoleEntityMixin, BaseModel):
     # (alternative to deletion. To be discussed later if deletion is better)
     is_active = attributes.BooleanAttribute(default=False, attr_name='a')
 
+    is_accessible = attributes.BooleanAttribute(default=True, attr_name='is_accessible')
+
     # utilized by logic that prunes out Ad Accounts
     # that are switched to "inactive" on Console
     # Expectation is that after a long-running update job
@@ -243,12 +248,13 @@ class PageEntity(ConsoleEntityMixin, BaseModel):
     _default_bol = True
 
     @classmethod
-    def upsert_entity_from_console(cls, job_scope: JobScope, entity: Any):
+    def upsert_entity_from_console(cls, job_scope: JobScope, entity: Any, is_accessible: bool):
         cls.upsert(
             job_scope.entity_id,  # scope ID
             entity['ad_account_id'],
             is_active=entity.get('active', True),
             updated_by_sweep_id=job_scope.sweep_id,
+            is_accessible=is_accessible,
         )
 
 
