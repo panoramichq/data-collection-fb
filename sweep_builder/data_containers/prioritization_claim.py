@@ -28,8 +28,7 @@ class PrioritizationClaim:
         entity_id: str,
         entity_type: str,
         report_type: str,
-        # TODO: rename below
-        selected_job_signature: JobSignature,
+        job_signature: JobSignature,
         score: int,
         *,
         ad_account_id: str = None,
@@ -38,11 +37,11 @@ class PrioritizationClaim:
         self.entity_id = entity_id
         self.entity_type = entity_type
         self.report_type = report_type
-        self.job_signature = selected_job_signature
+        self.job_signature = job_signature
         self.score = score
         self.ad_account_id = ad_account_id
         self.timezone = timezone
 
     @property
-    def selected_job_id(self) -> str:
+    def job_id(self) -> str:
         return self.job_signature.job_id

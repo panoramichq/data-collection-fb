@@ -38,16 +38,13 @@ def iter_persist_prioritized(
                 'sweep_id': sweep_id,
             }
 
-            Measure.timing(
-                f'{_measurement_name_base}.next_prioritized',
-                tags=_measurement_tags,
-            )((time.time() - _before_next_prioritized) * 1000)
+            Measure.timing(f'{_measurement_name_base}.next_prioritized', tags=_measurement_tags)(
+                (time.time() - _before_next_prioritized) * 1000
+            )
 
             score = prioritization_claim.score
-            selected_job_id = prioritization_claim.selected_job_id
-
             if not should_persist(score):
-                logger.info(f'Not persisting job {prioritization_claim.selected_job_id} due to low score: {score}')
+                logger.info(f'Not persisting job {prioritization_claim.job_id} due to low score: {score}')
                 ad_account_id = prioritization_claim.ad_account_id
                 if job_type not in skipped_jobs:
                     skipped_jobs[job_type] = {}
@@ -82,7 +79,7 @@ def iter_persist_prioritized(
 
             with Measure.timer(f'{_measurement_name_base}.add_to_queue', tags=_measurement_tags):
                 Measure.counter(f'{_measurement_name_base}.add_to_queue_cnt', tags=_measurement_tags).increment()
-                add_to_queue(selected_job_id, score, **extra_data)
+                add_to_queue(prioritization_claim.job_id, score, **extra_data)
 
             # This time includes the time consumer of this generator wastes
             # between reads from us. Good way to measure how quickly we are

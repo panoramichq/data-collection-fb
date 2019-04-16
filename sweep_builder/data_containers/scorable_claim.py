@@ -21,8 +21,7 @@ class ScorableClaim:
         entity_id: str,
         entity_type: str,
         report_type: str,
-        # TODO: Rename below
-        selected_job_signature: JobSignature,
+        job_signature: JobSignature,
         last_report: Optional[JobReport],
         *,
         ad_account_id: str = None,
@@ -31,7 +30,7 @@ class ScorableClaim:
         self.entity_id = entity_id
         self.entity_type = entity_type
         self.report_type = report_type
-        self.job_signature = selected_job_signature
+        self.job_signature = job_signature
         self.last_report = last_report
         self.ad_account_id = ad_account_id
         self.timezone = timezone
