@@ -1,6 +1,4 @@
 # must be first, as it does event loop patching and other "first" things
-import pytest
-
 from tests.base.testcase import TestCase
 
 import config.application
@@ -22,7 +20,6 @@ class ScopeJobsExpectationsTests(TestCase):
 
         assert not results
 
-    @pytest.mark.skip
     def test_aa_import_expectation_generated_on_token(self):
 
         entity_id = gen_string_id()
