@@ -119,20 +119,16 @@ def _import_entities_from_console(entity_type: str, job_scope: JobScope):
         tags = {'entity_type': entity_type, 'entity_id': entity_id, 'is_accessible': is_accessible}
         Measure.counter('console_entity_import', tags=tags).increment()
 
-        if is_accessible:
-            logger.warning(f'Importing {entity_type} {entity_id}')
-            try:
-                # TODO: maybe rather get the entity first and update insert accordingly / if it has change
-                entity_model.upsert_entity_from_console(job_scope, entity)
-                imported_entities += 1
-            except PutError as ex:
-                if ErrorInspector.is_dynamo_throughput_error(ex):
-                    # just log and get out. Next time around we'll pick it up
-                    ErrorInspector.inspect(ex)
-                else:
-                    raise
-        else:
-            logger.warning(f'Not importing {entity_type} {entity_id} because don\'t have acccess to it.')
+        try:
+            logger.warning(f'Importing {entity_type} {entity_id} is_accessible: {is_accessible}')
+            entity_model.upsert_entity_from_console(job_scope, entity, is_accessible)
+            imported_entities += 1
+        except PutError as ex:
+            if ErrorInspector.is_dynamo_throughput_error(ex):
+                # just log and get out. Next time around we'll pick it up
+                ErrorInspector.inspect(ex)
+            else:
+                raise
     return imported_entities
 
 
