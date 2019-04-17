@@ -108,6 +108,7 @@ def _import_entities_from_console(entity_type: str, job_scope: JobScope):
     imported_entities = 0
     for entity in _get_entities_to_import(entities, 'ad_account_id'):
         entity_id = entity['ad_account_id']
+        is_active = entity.get('active', True)
         access_token = get_access_token(entity_id)
         is_accessible = False
         try:
@@ -116,23 +117,24 @@ def _import_entities_from_console(entity_type: str, job_scope: JobScope):
             #  On purpose not sending to inspector, since that would result in 'unknown' exceptions in ddog.
             # We use other metric for tracking accounts that were not imported.
             logger.exception(f'Error when testing account accessibility {entity_type} {entity_id}')
-        tags = {'entity_type': entity_type, 'entity_id': entity_id, 'is_accessible': is_accessible}
+        tags = {
+            'entity_type': entity_type,
+            'entity_id': entity_id,
+            'is_accessible': is_accessible,
+            'is_active': is_active,
+        }
         Measure.counter('console_entity_import', tags=tags).increment()
 
-        if is_accessible:
-            logger.warning(f'Importing {entity_type} {entity_id}')
-            try:
-                # TODO: maybe rather get the entity first and update insert accordingly / if it has change
-                entity_model.upsert_entity_from_console(job_scope, entity)
-                imported_entities += 1
-            except PutError as ex:
-                if ErrorInspector.is_dynamo_throughput_error(ex):
-                    # just log and get out. Next time around we'll pick it up
-                    ErrorInspector.inspect(ex)
-                else:
-                    raise
-        else:
-            logger.warning(f'Not importing {entity_type} {entity_id} because don\'t have acccess to it.')
+        try:
+            logger.warning(f'Importing {entity_type} {entity_id} is_accessible: {is_accessible} is_active: {is_active}')
+            entity_model.upsert_entity_from_console(job_scope, entity, is_accessible)
+            imported_entities += 1
+        except PutError as ex:
+            if ErrorInspector.is_dynamo_throughput_error(ex):
+                # just log and get out. Next time around we'll pick it up
+                ErrorInspector.inspect(ex)
+            else:
+                raise
     return imported_entities
 
 

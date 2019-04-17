@@ -7,6 +7,7 @@ from typing import Iterable, Generator, Optional
 from pynamodb.exceptions import DoesNotExist
 
 from common.enums.jobtype import detect_job_type
+from config.application import PERMANENTLY_FAILING_JOB_THRESHOLD
 from config.jobs import FAILS_IN_ROW_BREAKDOWN_LIMIT, TASK_BREAKDOWN_ENABLED
 from common.enums.failure_bucket import FailureBucket
 from common.measurement import Measure
@@ -23,7 +24,12 @@ logger = logging.getLogger(__name__)
 def _fetch_job_report(job_id: str) -> Optional[JobReport]:
     """Retrieve job report from job report table (cached)."""
     try:
-        return JobReport.get(job_id)
+        report = JobReport.get(job_id)
+        if report.fails_in_row and report.fails_in_row >= PERMANENTLY_FAILING_JOB_THRESHOLD:
+            logger.warning(
+                f'[permanently-failing-job] Job with id {job_id} failed {report.fails_in_row}' f' times in a row.'
+            )
+        return report
     except DoesNotExist:
         return None
 

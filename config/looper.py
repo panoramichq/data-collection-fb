@@ -7,6 +7,14 @@ FB_THROTTLING_WINDOW = 10 * 60  # seconds
 ALLOW_RECURSION = False
 MIN_STARTING_FREQUENCY = 10
 
+OOZER_TYPE = 'ADAPTIVE'
+OOZER_ENABLE_LEARNING = False
+OOZER_LEARNING_RATE = 0.05
+OOZER_REVIEW_INTERVAL = 30
+OOZER_START_RATE = 10
+OOZER_MAX_RATE = 100.0
+OOZER_MIN_RATE = 5.0
+
 # Hour, DMA, AgeGender * about 2 years back + 3 levels of lifetime + 3 levels of Entities
 _number_of_long_tasks_per_aa = 3 * 600 + 3 + 3
 

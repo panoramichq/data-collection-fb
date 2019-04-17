@@ -94,7 +94,10 @@ class TestPageImportTask(TestCase):
 
         assert page_upsert.call_count == 1
 
-        page_upsert_args = ((self.scope_id, page_id), {'is_active': True, 'updated_by_sweep_id': self.sweep_id})
+        page_upsert_args = (
+            (self.scope_id, page_id),
+            {'is_active': True, 'updated_by_sweep_id': self.sweep_id, 'is_accessible': True},
+        )
 
         args1 = page_upsert.call_args_list[0]
 

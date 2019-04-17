@@ -1,3 +1,4 @@
+import logging
 import random
 from typing import Dict
 
@@ -22,6 +23,8 @@ from sweep_builder.prioritizer.gatekeeper import JobGateKeeper
 
 DAYS_BACK_DECAY_RATE = adapt_decay_rate_to_population(365 * 2)
 MINUTES_AWAY_FROM_WHOLE_HOUR_DECAY_RATE = adapt_decay_rate_to_population(30)
+
+logger = logging.getLogger(__name__)
 
 
 def _extract_tags_from_claim(claim: ScorableClaim, *_, **__) -> Dict[str, str]:
