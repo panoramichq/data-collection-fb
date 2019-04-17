@@ -1,7 +1,9 @@
 import functools
 import logging
 import random
-from config.application import PERMANENTLY_FAILING_JOB_THRESHOLD
+
+import config.application
+
 from common.enums.entity import Entity
 
 from common.enums.failure_bucket import FailureBucket
@@ -76,7 +78,10 @@ def assign_score(job_id: str, timezone: str) -> int:
 
     try:
         collection_record = JobReport.get(job_id)  # type: JobReport
-        if collection_record.fails_in_row >= PERMANENTLY_FAILING_JOB_THRESHOLD:
+        if (
+            collection_record.fails_in_row
+            and collection_record.fails_in_row >= config.application.PERMANENTLY_FAILING_JOB_THRESHOLD
+        ):
             tags = {'report_type': report_type, 'report_variant': report_variant, 'ad_account_id': ad_account_id}
             Measure.counter('permanently_failing_job', tags=tags).increment()
             logger.warning(
