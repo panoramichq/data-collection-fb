@@ -20,6 +20,11 @@ for deterministic generation of compound object (and job) IDs
 See https://operam.atlassian.net/wiki/spaces/EN/pages/160596078/Universal+IDs
 """
 
+PERMANENTLY_FAILING_JOB_THRESHOLD = 10
+"""
+Jobs with more fails than this value are considered to be permanently failing.
+"""
+
 from common.updatefromenv import update_from_env
 
 update_from_env(__name__)

@@ -1,9 +1,7 @@
 import functools
 import logging
 import random
-
-import config.application
-
+from config.application import PERMANENTLY_FAILING_JOB_THRESHOLD
 from common.enums.entity import Entity
 
 from common.enums.failure_bucket import FailureBucket
@@ -24,6 +22,7 @@ DAYS_BACK_DECAY_RATE = adapt_decay_rate_to_population(365 * 2)
 MINUTES_AWAY_FROM_WHOLE_HOUR_DECAY_RATE = adapt_decay_rate_to_population(30)
 
 logger = logging.getLogger(__name__)
+
 
 def get_minutes_away_from_whole_hour() -> int:
     minute = now().minute
@@ -77,11 +76,12 @@ def assign_score(job_id: str, timezone: str) -> int:
 
     try:
         collection_record = JobReport.get(job_id)  # type: JobReport
-        if collection_record.fails_in_row >= 10:
+        if collection_record.fails_in_row >= PERMANENTLY_FAILING_JOB_THRESHOLD:
             tags = {'report_type': report_type, 'report_variant': report_variant, 'ad_account_id': ad_account_id}
-            Measure.counter('permanently_failing_jobs', tags=tags).increment()
+            Measure.counter('permanently_failing_job', tags=tags).increment()
             logger.warning(
-                f'[failing-job] Job with id {job_id} failed {collection_record.fails_in_row} times in a row.')
+                f'[permanently-failing-job] Job with id {job_id} failed {collection_record.fails_in_row} times in a row.'
+            )
     except:  # TODO: proper error catching here
         collection_record = None  # type: JobReport
 
