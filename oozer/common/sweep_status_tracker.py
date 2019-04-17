@@ -35,6 +35,9 @@ class SweepStatusTracker:
     def _gen_key(self, minute_or_marker: Union[int, str]) -> str:
         return f'{self.sweep_id}:{minute_or_marker}:{self.__class__.__name__}'
 
+    def _gen_global_key(self, minute_or_marker: Union[int, str]) -> str:
+        return f'{minute_or_marker}:{self.__class__.__name__}'
+
     @staticmethod
     def now_in_minutes() -> int:
         return int(time.time() / 60)
@@ -61,9 +64,11 @@ class SweepStatusTracker:
             # we don't roll those into aggregate numbers
             # as that would result in double-counting jobs
             self.redis.incrby(self._gen_key(IN_PROGRESS_RECORD_MARKER), 1)
+            self.redis.incrby(self._gen_global_key(IN_PROGRESS_RECORD_MARKER), 1)
         else:
             self.redis.hincrby(self._gen_key(AGGREGATE_RECORD_MARKER), failure_bucket)
             self.redis.incrby(self._gen_key(IN_PROGRESS_RECORD_MARKER), -1)
+            self.redis.incrby(self._gen_global_key(IN_PROGRESS_RECORD_MARKER), -1)
 
     def _get_aggregate_data(self) -> Dict[int, int]:
         # This mess is here just to get through the annoyance
@@ -187,3 +192,8 @@ class SweepStatusTracker:
             Measure.histogram(f'{__name__}.pulse_stats', tags={'sweep_id': self.sweep_id, 'bucket': 'in_progress'})(
                 in_progress
             )
+
+            global_in_progress = int(self.redis.get(self._gen_global_key(IN_PROGRESS_RECORD_MARKER)) or 0)
+            Measure.histogram(
+                f'{__name__}.pulse_stats', tags={'sweep_id': self.sweep_id, 'bucket': 'global_in_progress'}
+            )(global_in_progress)
