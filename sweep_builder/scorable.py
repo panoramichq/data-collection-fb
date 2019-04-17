@@ -79,7 +79,7 @@ def generate_scorable(claim: ExpectationClaim) -> Generator[ScorableClaim, None,
         )
         return
 
-    logger.info(f'Performing task breakdown for job_id: {claim.job_id}')
+    logger.warning(f'Performing task breakdown for job_id: {claim.job_id}')
     Measure.increment(
         f'{__name__}.{generate_scorable.__name__}.task_broken_down',
         tags={'ad_account_id': claim.ad_account_id, 'entity_type': claim.entity_type},
