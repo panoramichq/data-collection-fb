@@ -6,6 +6,7 @@ from typing import Iterable, Generator, Optional
 
 from pynamodb.exceptions import DoesNotExist
 
+from common.enums.jobtype import detect_job_type
 from config.jobs import FAILS_IN_ROW_BREAKDOWN_LIMIT, TASK_BREAKDOWN_ENABLED
 from common.enums.failure_bucket import FailureBucket
 from common.measurement import Measure
@@ -95,11 +96,12 @@ def iter_scorable(claims: Iterable[ExpectationClaim]) -> Generator[ScorableClaim
     histogram_counter = defaultdict(int)
     for claim in claims:
         for scorable_claim in generate_scorable(claim):
-            histogram_counter[(claim.ad_account_id, claim.entity_type)] += 1
+            job_type = detect_job_type(claim.report_type, claim.entity_type)
+            histogram_counter[(claim.ad_account_id, claim.entity_type, job_type)] += 1
             yield scorable_claim
 
-    for ((ad_account_id, entity_type), count) in histogram_counter.items():
+    for ((ad_account_id, entity_type, job_type), count) in histogram_counter.items():
         Measure.histogram(
             f'{__name__}.{iter_scorable.__name__}.scorable_claims_per_expectation_claim',
-            tags={'ad_account_id': ad_account_id, 'entity_type': entity_type},
+            tags={'ad_account_id': ad_account_id, 'entity_type': entity_type, 'job_type': job_type},
         )(count)

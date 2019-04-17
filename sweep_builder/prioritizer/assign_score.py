@@ -6,6 +6,7 @@ import config.application
 from common.enums.entity import Entity
 
 from common.enums.failure_bucket import FailureBucket
+from common.enums.jobtype import detect_job_type
 from common.enums.reporttype import ReportType
 from common.id_tools import parse_id_parts
 from common.measurement import Measure
@@ -71,11 +72,13 @@ def assign_score(claim: ScorableClaim) -> int:
 
     if not is_per_parent_job and ad_account_id != '23845179' and not is_per_page_metrics_job:
         _measurement_name_base = __name__ + '.' + assign_score.__name__ + '.'
+        job_type = detect_job_type(claim.report_type, claim.entity_type)
         _measurement_tags = {
             'ad_account_id': ad_account_id,
             'entity_type': entity_type,
             'report_variant': report_variant,
             'report_type': report_type,
+            'job_type': job_type,
         }
 
         # at this time, it's impossible to have per-entity_id
