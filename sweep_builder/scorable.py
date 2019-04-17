@@ -26,6 +26,7 @@ def _fetch_job_report(job_id: str) -> Optional[JobReport]:
     try:
         report = JobReport.get(job_id)
         if report.fails_in_row and report.fails_in_row >= PERMANENTLY_FAILING_JOB_THRESHOLD:
+            Measure.counter('permanently_failing_job').increment()
             logger.warning(
                 f'[permanently-failing-job] Job with id {job_id} failed {report.fails_in_row}' f' times in a row.'
             )
