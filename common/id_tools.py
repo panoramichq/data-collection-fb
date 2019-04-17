@@ -2,7 +2,6 @@
 The purpose of this module is to handle mapping of various naming conventions we
 are giving to actionable items in the system back and forth.
 """
-
 from collections import namedtuple
 from datetime import date, datetime
 from itertools import zip_longest, chain
@@ -135,7 +134,7 @@ def generate_id(fields: List[str] = None, trailing_parts: List[str] = None, use_
     converted_trail_parts = (_id_parts_default_converter(part) for part in trailing_parts or [])
     converted_parts = chain(converted_base_parts, converted_trail_parts)
 
-    return ID_DELIMITER.join([quote_plus(part) for part in converted_parts]).strip(ID_DELIMITER)
+    return ID_DELIMITER.join(quote_plus(part) for part in converted_parts).strip(ID_DELIMITER)
 
 
 def generate_universal_id(
