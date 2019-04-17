@@ -80,7 +80,8 @@ def assign_score(job_id: str, timezone: str) -> int:
             tags = {'report_type': report_type, 'report_variant': report_variant, 'ad_account_id': ad_account_id}
             Measure.counter('permanently_failing_job', tags=tags).increment()
             logger.warning(
-                f'[permanently-failing-job] Job with id {job_id} failed {collection_record.fails_in_row} times in a row.'
+                f'[permanently-failing-job] Job with id {job_id} failed {collection_record.fails_in_row}'
+                f' times in a row.'
             )
     except:  # TODO: proper error catching here
         collection_record = None  # type: JobReport
