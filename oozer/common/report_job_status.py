@@ -107,4 +107,4 @@ def report_job_status(stage_id: int, job_scope: JobScope):
     if is_done and job_scope.namespace == JobScope.namespace:
         _report_job_done_to_cold_store(job_scope)
 
-    log_celery_task_status(job_scope, reported_state, stage_id)
+    log_celery_task_status(job_scope, reported_state, status_bucket)

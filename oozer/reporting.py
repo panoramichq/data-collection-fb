@@ -78,7 +78,7 @@ def _send_measurement_task_runtime(job_scope: JobScope, bucket: int):
 
 def log_celery_task_status(job_scope: JobScope, status: Optional[str], failure_bucket: Optional[int]):
     logger.warning(
-        f'[reported-task][{job_scope.sweep_id}] Job "{job_scope.job_id}" '
+        f'[job-status][{job_scope.sweep_id}] Job "{job_scope.job_id}" '
         f'changed to status "{status}" with bucket {failure_bucket}'
     )
 
@@ -98,7 +98,6 @@ def reported_task(func: Callable) -> Callable:
             logger.info(f'{e.job_scope} skipped because sweep {e.job_scope.sweep_id} is done')
             log_celery_task_status(job_scope, 'sweep-ended', FailureBucket.Other)
             ErrorInspector.send_measurement_error(ErrorTypesReport.SWEEP_ALREADY_ENDED, job_scope.ad_account_id)
-            logger.warning(f'[reported-task][{job_scope.sweep_id}] Job "{job_scope.job_id}" succeeded')
         except CollectionError as e:
             _report_failure(job_scope, start_time, e.inner, partial_datapoint_count=e.partial_datapoint_count)
         except Exception as e:
