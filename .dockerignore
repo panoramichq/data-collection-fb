@@ -1,5 +1,7 @@
 .env
 .*/
+!.flake8
+!.style.yapf
 
 # used for building imagew, but not needed inside the images
 docker

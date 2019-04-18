@@ -1,249 +1,165 @@
 # CircleCI Data Collection config
 
-version: 2
+version: 2.0
+
+references:
+  workspace_root: &workspace_root
+    /tmp/workspace
+
+  attach_workspace: &attach_workspace
+    attach_workspace:
+      at: *workspace_root
+
 
 jobs:
-  build_image:
+  publish_image:
     docker:
       - image: circleci/python:3.6-jessie-node
 
     environment:
-      - PUSH_IMAGE_NAME_PREFIX: "897117390337.dkr.ecr.us-east-1.amazonaws.com/operam/data-collection-fb"
+      - AWS_ACCOUNT_PROD: "583912811210"
+      - AWS_ACCOUNT_STAGE: "897117390337"
+      - AWS_ACCOUNT_ASSETS: "936368275341"
+      - AWS_REGION: "us-east-1"
 
     steps:
+      - *attach_workspace
       - setup_remote_docker:
           docker_layer_caching: true
 
-      # Install AWS CLI
-      - run: sudo pip install awscli --upgrade
+      - run:
+          name: install AWS Cli
+          command: sudo pip install awscli --upgrade
 
       - checkout
 
       # Setup workspace directory
       - run: mkdir -p /tmp/workspace
 
-      # build and push Docker image & record data in workspace
+      # For builds we use base images hosted at Docker Hub, private repo
+      - run :
+          name: auth AWS ECR and Docker Hub
+          command: |
+            set -exu
+            docker login -u ${DOCKERHUB_USER} -p ${DOCKERHUB_PASS}
+            eval $(aws ecr get-login --region ${AWS_REGION} --no-include-email --registry-ids ${AWS_ACCOUNT_ASSETS})
+
+      # build and push Docker image
       # Note that this will push 2 images, one tagged with the branch name and the other with the build ID
-      - run: |
-          export PUSH_IMAGE_NAME_BUILD=${PUSH_IMAGE_NAME_PREFIX}:${CIRCLE_BUILD_NUM}-$(git rev-parse --short HEAD)
-          echo ${PUSH_IMAGE_NAME_BUILD} > /tmp/workspace/image_url
-          echo ${CIRCLE_BUILD_NUM}-$(git rev-parse --short HEAD) > /tmp/workspace/image_name
-          echo $(git rev-parse --abbrev-ref HEAD) > /tmp/workspace/branch_name
-          docker login -u ${DOCKERHUB_USER} -p ${DOCKERHUB_PASS}
-          eval $(aws ecr get-login --region us-east-1 --no-include-email)
-          eval $(aws ecr get-login --region us-west-2 --no-include-email)
-          make push_image
+      #
+      # Long Term we are shifting to one, central image repository under Assets AWS account,
+      # but for transitional reasons, still pushing to Prod and Stage AWS accounts too.
+      - run:
+          name: Build and publish image
+          command: |
+            set -exu
+            export REPOSITORY_URL=${AWS_ACCOUNT_ASSETS}.dkr.ecr.${AWS_REGION}.amazonaws.com/
+            make print_image_name_build > /tmp/workspace/image_url
+            echo Image URL: `cat /tmp/workspace/image_url`
+            make push_image
+
+      # Remove this once deploy logic is fully adapted to Assets repos
+      - run:
+          name: push image to Prod repo
+          command: |
+            export AWS_ACCOUNT=${AWS_ACCOUNT_PROD}
+            eval $(aws ecr get-login --region ${AWS_REGION} --no-include-email --registry-ids ${AWS_ACCOUNT})
+            export REPOSITORY_URL=${AWS_ACCOUNT}.dkr.ecr.${AWS_REGION}.amazonaws.com/
+            make push_image
+
+      # Remove this once deploy logic is fully adapted to Assets repos
+      - run:
+          name: push image to Stage repo
+          command: |
+            export AWS_ACCOUNT=${AWS_ACCOUNT_STAGE}
+            eval $(aws ecr get-login --region ${AWS_REGION} --no-include-email --registry-ids ${AWS_ACCOUNT})
+            export REPOSITORY_URL=${AWS_ACCOUNT}.dkr.ecr.${AWS_REGION}.amazonaws.com/
+            make push_image
 
       # Persist the specified paths (workspace/image*) into the workspace for use in downstream job.
       - persist_to_workspace:
           # Must be absolute path or relative path from working_directory
-          root: /tmp/workspace
+          root: *workspace_root
           # Must be relative path from root
           paths:
             - image_url
-            - image_name
-            - branch_name
 
-  publish_to_docker_hub_and_prod:
-    docker:
-      - image: circleci/python:3.6-jessie-node
-
+  # These two tasks - flake & black - run super fast.
+  # makes sense to reuse same exact instance in CI,
+  # since prep takes longer than run of both.
+  run_lint:
+    machine:
+      image: circleci/classic:latest
     environment:
-      - PUSH_IMAGE_NAME_PREFIX: "operam/data-collection-fb"
-      - PUSH_IMAGE_NAME_PREFIX2: "583912811210.dkr.ecr.us-east-1.amazonaws.com/operam/data-collection-fb"
-
+      - AWS_ACCOUNT_PROD: "583912811210"
+      - AWS_ACCOUNT_STAGE: "897117390337"
+      - AWS_ACCOUNT_ASSETS: "936368275341"
+      - AWS_REGION: "us-east-1"
     steps:
-      - setup_remote_docker
-
-      - attach_workspace:
-          at: /tmp/workspace
-
-      # Install AWS CLI
-      - run: sudo pip install awscli --upgrade
-
-      # Auth all the docker sources and pull the original source
-      - run : |
-          export IMAGE_NAME_FULL=`cat /tmp/workspace/image_url`
-          docker login -u ${DOCKERHUB_USER} -p ${DOCKERHUB_PASS}
-          eval $(aws ecr get-login --region us-east-1 --no-include-email)
-          eval $(aws ecr get-login --region us-east-1 --no-include-email --registry-ids 583912811210)
-          eval $(aws ecr get-login --region us-west-2 --no-include-email)
-          docker pull ${IMAGE_NAME_FULL}
-
-      # Tag & push images to Docker Hub
-      - run : |
-          export IMAGE_URL=`cat /tmp/workspace/image_url`
-          export IMAGE_NAME=`cat /tmp/workspace/image_name`
-          export IMAGE_BRANCH_NAME=`cat /tmp/workspace/branch_name`
-          docker tag ${IMAGE_URL} ${PUSH_IMAGE_NAME_PREFIX}:${IMAGE_NAME}
-          docker tag ${IMAGE_URL} ${PUSH_IMAGE_NAME_PREFIX}:${IMAGE_BRANCH_NAME}
-          docker tag ${IMAGE_URL} ${PUSH_IMAGE_NAME_PREFIX2}:${IMAGE_NAME}
-          docker tag ${IMAGE_URL} ${PUSH_IMAGE_NAME_PREFIX2}:${IMAGE_BRANCH_NAME}
-          docker push ${PUSH_IMAGE_NAME_PREFIX}:${IMAGE_NAME}
-          docker push ${PUSH_IMAGE_NAME_PREFIX}:${IMAGE_BRANCH_NAME}
-          docker push ${PUSH_IMAGE_NAME_PREFIX2}:${IMAGE_NAME}
-          docker push ${PUSH_IMAGE_NAME_PREFIX2}:${IMAGE_BRANCH_NAME}
-
-  publish_image_id_to_ssm:
-    docker:
-      - image: circleci/python:3.6-jessie-node
-
-    steps:
-      - attach_workspace:
-          at: /tmp/workspace
-
+      - *attach_workspace
       - checkout
+      - run :
+          name: auth AWS ECR and Docker Hub
+          command: |
+            set -exu
+            docker login -u ${DOCKERHUB_USER} -p ${DOCKERHUB_PASS}
+            eval $(aws ecr get-login --region ${AWS_REGION} --no-include-email --registry-ids ${AWS_ACCOUNT_ASSETS})
+      - run :
+          name: check flake8
+          command: docker run --rm `cat /tmp/workspace/image_url` sh -c "flake8 --filename=*.py"
+      - run :
+          name: check black
+          command: docker run --rm `cat /tmp/workspace/image_url` sh -c "black --skip-string-normalization --diff --check --line-length 120 --target-version py36 ."
 
-      # Install AWS CLI
-      - run: sudo pip install awscli --upgrade
-
-      - run : |
-          export AWS_REGION=us-east-1
-          export IMAGE_NAME=`cat /tmp/workspace/image_name`
-          export IMAGE_BRANCH_NAME=`cat /tmp/workspace/branch_name`
-
-            if [ $IMAGE_BRANCH_NAME = "master" ] # Master branch is deployed to staging aws account.
-            then
-                export SSM_PARAM_SUFFIX="staging"
-            else
-                export SSM_PARAM_SUFFIX=$IMAGE_BRANCH_NAME
-            fi
-
-          export AWS_ACCESS_KEY_ID=AKIAIEALXSNAAK2QWY4Q
-          export AWS_SECRET_ACCESS_KEY=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
-          aws configure set default.region $AWS_REGION
-          aws ssm put-parameter --overwrite --name "data-collection-fb-${SSM_PARAM_SUFFIX}" --type "String" --value ${IMAGE_NAME}
-
-  run_flake8:
-    docker:
-    - image: circleci/python:3.6-jessie-node
-    steps:
-    - checkout
-    - run: sudo pip install -r requirements.dev.txt
-    - run: flake8 --filename=*.py
-
-  run_black:
-    docker:
-    - image: circleci/python:3.6-jessie-node
-    steps:
-    - checkout
-    - run: sudo pip install -r requirements.dev.txt
-    - run: black --skip-string-normalization --diff --line-length 120 --target-version py36 .
 
   run_tests:
     machine:
       image: circleci/classic:latest
-
+    environment:
+      - AWS_ACCOUNT_PROD: "583912811210"
+      - AWS_ACCOUNT_STAGE: "897117390337"
+      - AWS_ACCOUNT_ASSETS: "936368275341"
+      - AWS_REGION: "us-east-1"
     steps:
-      - attach_workspace:
-          at: /tmp/workspace
-
+      - *attach_workspace
       - checkout
 
       # Get the latest supported Docker Compose from Circle S3 repo & remove old copy
       # https://github.com/CircleCI-Public/circleci-dockerfiles/blob/master/python/images/3.6.4-jessie/Dockerfile#L60
-      - run : |
-          export COMPOSE_URL="https://circle-downloads.s3.amazonaws.com/circleci-images/cache/linux-amd64/docker-compose-latest"
-          sudo rm -fr /usr/local/bin/docker-compose
-          sudo curl --silent --show-error --location --fail --retry 3 --output /usr/bin/docker-compose $COMPOSE_URL
-          sudo chmod +x /usr/bin/docker-compose
+      - run :
+          name: update docker-compose
+          command: |
+            set -exu
+            export COMPOSE_URL="https://circle-downloads.s3.amazonaws.com/circleci-images/cache/linux-amd64/docker-compose-latest"
+            sudo rm -fr /usr/local/bin/docker-compose
+            sudo curl --silent --show-error --location --fail --retry 3 --output /usr/bin/docker-compose $COMPOSE_URL
+            sudo chmod +x /usr/bin/docker-compose
 
-      - run : |
-          export IMAGE_NAME_FULL=`cat /tmp/workspace/image_url`
-          eval $(aws ecr get-login --region us-east-1 --no-include-email)
-          eval $(aws ecr get-login --region us-west-2 --no-include-email)
-          make test
+      - run :
+          name: auth AWS ECR and Docker Hub
+          command: |
+            set -exu
+            docker login -u ${DOCKERHUB_USER} -p ${DOCKERHUB_PASS}
+            eval $(aws ecr get-login --region ${AWS_REGION} --no-include-email --registry-ids ${AWS_ACCOUNT_ASSETS})
 
-  deploy_staging:
-    docker:
-      - image: circleci/python:3.6-jessie-node
+      - run :
+          name: run tests
+          command: |
+            set -exu
+            export IMAGE_NAME_FULL=`cat /tmp/workspace/image_url`
+            make test
 
-    steps:
-      - attach_workspace:
-          at: /tmp/workspace
-
-      - checkout
-
-      # Install AWS CLI
-      - run: sudo pip install awscli --upgrade
-
-      - run : |
-          export AWS_REGION=us-east-1
-          export IMAGE_NAME_FULL=`cat /tmp/workspace/image_url`
-          bash .circleci/deploy.sh --cluster 1c5595_data_collection --service celery --task 1c5595_datacol_celery ${IMAGE_NAME_FULL}
-          bash .circleci/deploy.sh --cluster 1c5595_data_collection --service celery-long --task 1c5595_datacol_celery_long ${IMAGE_NAME_FULL}
-
-  deploy_production:
-    docker:
-      - image: circleci/python:3.6-jessie-node
-
-    steps:
-      - attach_workspace:
-          at: /tmp/workspace
-
-      - checkout
-
-      # Install AWS CLI
-      - run: sudo pip install awscli --upgrade
-
-      # Assume role in prod account then deploy
-      - run : |
-          export AWS_REGION=us-east-1
-          export IMAGE_NAME_FULL=`cat /tmp/workspace/image_url | sed 's/897117390337/583912811210/'`
-          aws --output json sts assume-role --role-arn arn:aws:iam::583912811210:role/circleci --role-session-name "CirleCI" > /tmp/awsauth
-          export AWS_ACCESS_KEY_ID=`cat /tmp/awsauth | jq -r -e .Credentials.AccessKeyId`
-          export AWS_SECRET_ACCESS_KEY=`cat /tmp/awsauth | jq -r -e .Credentials.SecretAccessKey`
-          export AWS_SESSION_TOKEN=`cat /tmp/awsauth | jq -r -e .Credentials.SessionToken`
-          bash .circleci/deploy.sh --cluster b3fb5e_data_collection --service celery --task b3fb5e_datacol_celery ${IMAGE_NAME_FULL}
-          bash .circleci/deploy.sh --cluster b3fb5e_data_collection --service celery-long --task b3fb5e_datacol_celery_long ${IMAGE_NAME_FULL}
 
 workflows:
   version: 2
   build:
     jobs:
-      - build_image
+      - publish_image
 
       - run_tests:
           requires:
-            - build_image
+            - publish_image
 
-      - publish_to_docker_hub_and_prod:
+      - run_lint:
           requires:
-            - build_image
-
-      - publish_image_id_to_ssm:
-          requires:
-            - build_image
-          filters:
-            branches:
-              only:
-                - master
-                - production
-      - run_flake8
-      - run_black
-
-      # - hold_for_deploy_staging:
-      #     type: approval
-      #     requires:
-      #       - run_tests
-      #     filters:
-      #       branches:
-      #         only:
-      #           - staging
-
-      # - deploy_staging:
-      #     requires:
-      #       - hold_for_deploy_staging
-
-      # - hold_for_deploy_production:
-      #     type: approval
-      #     requires:
-      #       - run_tests
-      #     filters:
-      #       branches:
-      #         only:
-      #           - production
-
-      # - deploy_production:
-      #     requires:
-      #       - hold_for_deploy_production
+            - publish_image
