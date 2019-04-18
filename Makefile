@@ -13,15 +13,16 @@ clean:
 # Operam Python base image from Docker Hub
 BASE_IMAGE_NAME:=operam/base-images:python3.6-latest
 
-VENDOR_NAME:=metrics
-IMAGE_NAME:=collection-system
+APP_SLUG:=data-collection-fb
+
+VENDOR_NAME:=operam
+IMAGE_NAME?=$(APP_SLUG)
 IMAGE_NAME_FULL?=$(VENDOR_NAME)/$(IMAGE_NAME)
 
 # When we are building through Circle CI, use the
 BRANCH_NAME:=$(if $(CIRCLE_BRANCH),$(CIRCLE_BRANCH),$(shell git rev-parse --abbrev-ref HEAD))
-BUILD_ID?=latest
-BUILD_ID:=$(if $(CIRCLE_BUILD_NUM),$(CIRCLE_BUILD_NUM),$(BUILD_ID))
-COMMIT_ID=$(if $(CIRCLE_SHA1),$(CIRCLE_SHA1),$(shell git rev-parse --short HEAD))
+COMMIT_ID?=$(shell git rev-parse --short HEAD)
+BUILD_ID?=$(if $(CIRCLE_BUILD_NUM),$(CIRCLE_BUILD_NUM),latest)
 
 # Datadog instrumentation agent
 DDOG_IMAGE_NAME:=datadog/docker-dd-agent
@@ -34,9 +35,19 @@ DDOG_API_KEY:=$(if $(DDOG_API_KEY),$(DDOG_API_KEY),__none__)
 PYTHONUSERBASE_INNER=/usr/src/lib
 WORKDIR=/usr/src/app
 
-PUSH_IMAGE_NAME_PREFIX=897117390337.dkr.ecr.us-east-1.amazonaws.com/operam/data-collection-fb
+# intentionally empty. Simulates url-less treatment of Docker Hub push.
+# Inject something like:
+# 936368275341.dkr.ecr.us-east-1.amazonaws.com/
+# !!!!!!! Note the trailing slash !!!!!!!!!!! ^
+REPOSITORY_URL?=
+
+PUSH_IMAGE_NAME_PREFIX?=$(REPOSITORY_URL)$(IMAGE_NAME_FULL)
 PUSH_IMAGE_NAME_BRANCH?=$(PUSH_IMAGE_NAME_PREFIX):$(BRANCH_NAME)
-PUSH_IMAGE_NAME_BUILD?=$(PUSH_IMAGE_NAME_PREFIX):$(BUILD_ID)-$(COMMIT_ID)
+# Docker image tags size limit is 128 characters.
+# Normal Commit ID is 40 chars. We use short commit IDs - 7 chars
+# Should be enough.
+PUSH_IMAGE_TAG?=$(BUILD_ID)-$(COMMIT_ID)
+PUSH_IMAGE_NAME_BUILD?=$(PUSH_IMAGE_NAME_PREFIX):$(PUSH_IMAGE_TAG)
 
 image:
 	docker build \
@@ -56,6 +67,9 @@ push_image: image
 		$(PUSH_IMAGE_NAME_BRANCH)
 	docker push \
 		$(PUSH_IMAGE_NAME_BUILD)
+
+print_image_name_build:
+	@printf "$(PUSH_IMAGE_NAME_BUILD)"
 
 .PHONY: image push_image
 
