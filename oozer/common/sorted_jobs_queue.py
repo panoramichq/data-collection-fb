@@ -7,7 +7,7 @@ from typing import List
 
 from common.bugsnag import BugSnagContextData
 from common.connect.redis import get_redis
-from common.enums.jobtype import detect_job_type, JobType
+from common.enums.jobtype import detect_job_type
 from common.id_tools import parse_id_parts
 from common.measurement import Measure
 
