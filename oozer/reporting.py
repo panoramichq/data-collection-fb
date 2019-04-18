@@ -2,9 +2,7 @@ import functools
 import logging
 import math
 import time
-from typing import Any, Callable, Optional
-
-from boto3.resources.model import Action
+from typing import Any, Callable
 
 from common.enums.failure_bucket import FailureBucket
 from common.error_inspector import ErrorInspector, ErrorTypesReport
