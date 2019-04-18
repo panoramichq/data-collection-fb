@@ -7,7 +7,7 @@ from typing import List
 
 from common.bugsnag import BugSnagContextData
 from common.connect.redis import get_redis
-from common.enums.jobtype import detect_job_type
+from common.enums.jobtype import detect_job_type, JobType
 from common.id_tools import parse_id_parts
 from common.measurement import Measure
 
@@ -56,6 +56,7 @@ class _JobsWriter:
         self._measurement_base = f'{__name__}.JobsWriter'
         self.cache_max_size = 20000
         self.cnts = defaultdict(int)
+        self.cnts_global_jobs = 0
         self.redis_client = get_redis()
         self.sweep_id = sorted_jobs_queue_interface.sweep_id
         self.sorted_jobs_queue_interface = sorted_jobs_queue_interface
@@ -141,9 +142,12 @@ class _JobsWriter:
                     self.cache.popitem()  # oldest
 
                 if job_id_parts.ad_account_id:
-                    self.cnts[job_id_parts.ad_account_id] += 1
+                    job_type = detect_job_type(job_id_parts.report_type, job_id_parts.report_variant)
+
+                    key = (job_type, job_id_parts.ad_account_id, job_id_parts.report_type, job_id_parts.report_variant)
+                    self.cnts[key] += 1
                 else:
-                    self.cnts[self.GLOBAL_SHARD_NAME] += 1
+                    self.cnts_global_jobs += 1
 
         if len(self.batch) == self.batch_size:
             self.flush()
@@ -156,11 +160,24 @@ class _JobsWriter:
             self.flush()
 
         cnt = 0
-        for ad_account_id, cnts in self.cnts.items():
+        for (job_type, ad_account_id, report_type, report_variant), cnts in self.cnts.items():
             Measure.counter(
-                f'{self._measurement_base}.unique_tasks', {'sweep_id': self.sweep_id, 'ad_account_id': ad_account_id}
+                f'{self._measurement_base}.unique_tasks',
+                {
+                    'sweep_id': self.sweep_id,
+                    'ad_account_id': ad_account_id,
+                    'job_type': job_type,
+                    'report_type': report_type,
+                    'report_variant': report_variant,
+                },
             ).increment(cnts)
             cnt += cnts
+
+        if self.cnts_global_jobs > 0:
+            Measure.counter(
+                f'{self._measurement_base}.unique_tasks', {'sweep_id': self.sweep_id, 'job_type': JobType.GLOBAL}
+            ).increment(self.cnts_global_jobs)
+            cnt += self.cnts_global_jobs
         logger.info(f"#{self.sweep_id}: Redis SortedSet Batcher wrote a total of {cnt} *unique* tasks")
 
 

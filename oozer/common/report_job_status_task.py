@@ -44,6 +44,7 @@ def report_job_status_task(stage_status: int, job_scope: JobScope):
         # may happen a lot in prod. At some point Write Units on the table
         # will auto-scale and the error will go away.
         # So, not allowing this to noisy up our logs much
+
         ex_str = str(ex)
         if 'ProvisionedThroughputExceededException' in ex_str:
             logger.info(ex_str)

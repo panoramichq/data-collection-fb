@@ -269,7 +269,7 @@ def oozer_factory(sweep_tracker: SweepStatusTracker, num_accounts: int, num_task
 @timeout(looper_config.RUN_TASKS_TIMEOUT)
 def run_tasks(
     sweep_id: str, limit: int = None, time_slices: int = looper_config.FB_THROTTLING_WINDOW, time_slice_length: int = 1
-):
+) -> Tuple[int, Pulse]:
     """
     Oozes tasks gradually into Celery workers queue, accounting for total number of tasks
     and the window of time over which we want them to be processed.
@@ -281,7 +281,7 @@ def run_tasks(
     :param time_slices: Number of one-second periods to spread the tasks over
     :param time_slice_length: in seconds. can be fractional
     """
-    _measurement_name_base = __name__ + '.run_tasks.'  # <- function name. adjust if changed
+    _measurement_name_base = f'{__name__}.{run_tasks.__name__}.'
     _measurement_tags = {'sweep_id': sweep_id}
     _step = 100
 
@@ -312,6 +312,7 @@ def run_tasks(
 
             # We need to see into the jobs scoring state per sweep
             additional_tags = {
+                'sweep_id': sweep_id,
                 'score': inner_score,
                 'ad_account_id': inner_job_scope.ad_account_id,
                 'report_type': inner_job_scope.report_type,
@@ -326,6 +327,10 @@ def run_tasks(
 
     tasks_iter = task_iter_score_gate(tasks_iter)
 
+    logger.warning(
+        f'[oozer-run][{sweep_id}][initial-state] Starting oozer '
+        f'with {num_tasks} scheduled tasks for {num_accounts} accounts with oozer type "{OOZER_TYPE}"'
+    )
     with oozer_factory(
         sweep_tracker, num_accounts, num_tasks, time_slice_length=time_slice_length
     ) as ooze_task, Measure.counter(_measurement_name_base + 'oozed', tags=_measurement_tags) as cntr:
@@ -543,7 +548,7 @@ def run_tasks(
                     )
                     break
 
-                logger.warning(f"#{sweep_id}: Queued up all jobs {num_tasks}")
+            logger.warning(f"#{sweep_id}: Queued up all jobs {num_tasks}")
 
     cntr += cnt % _step
 
@@ -627,7 +632,7 @@ def run_tasks(
         return False
 
     # we wait for certain number of tasks to be done, until we run out of waiting time
-    pulse = sweep_tracker.get_pulse()  # type: Pulse
+    pulse = sweep_tracker.get_pulse()
     _last = 0
     with Measure.counter(_measurement_name_base + 'done', tags=_measurement_tags) as cntr:
 
@@ -638,10 +643,15 @@ def run_tasks(
             running_time = int(time.time() - start_of_run_seconds)
             logger.info(f"#{sweep_id}: ({running_time} seconds in) Waiting on {cnt} jobs with last pulse being {pulse}")
             gevent.sleep(time_slice_length)
-            pulse = sweep_tracker.get_pulse()  # type: Pulse
+            pulse = sweep_tracker.get_pulse()
 
         cntr += pulse.Total - _last
 
+    logger.warning(
+        f'[oozer-run][{sweep_id}][exiting] Exited oozer'
+        f' with following pulse: {sweep_tracker.get_pulse()}'
+        f' and last score {last_processed_score}'
+    )
     return cnt, pulse
 
 
