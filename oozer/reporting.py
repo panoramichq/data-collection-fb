@@ -96,7 +96,6 @@ def reported_task(func: Callable) -> Callable:
             _report_success(job_scope, start_time, ret_value)
         except TaskOutsideSweepException as e:
             logger.info(f'{e.job_scope} skipped because sweep {e.job_scope.sweep_id} is done')
-            log_celery_task_status(job_scope, FailureBucket.Other)
             ErrorInspector.send_measurement_error(ErrorTypesReport.SWEEP_ALREADY_ENDED, job_scope.ad_account_id)
         except CollectionError as e:
             _report_failure(job_scope, start_time, e.inner, partial_datapoint_count=e.partial_datapoint_count)
