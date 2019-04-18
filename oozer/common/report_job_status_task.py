@@ -3,6 +3,7 @@ import logging
 from common.celeryapp import get_celery_app
 from common.measurement import Measure
 from oozer.common.job_scope import JobScope
+from oozer.reporting import log_celery_task_status
 
 logger = logging.getLogger(__name__)
 app = get_celery_app()
@@ -44,6 +45,8 @@ def report_job_status_task(stage_status: int, job_scope: JobScope):
         # may happen a lot in prod. At some point Write Units on the table
         # will auto-scale and the error will go away.
         # So, not allowing this to noisy up our logs much
+
+        log_celery_task_status(job_scope, 'failed to update dynamo')
         ex_str = str(ex)
         if 'ProvisionedThroughputExceededException' in ex_str:
             logger.info(ex_str)

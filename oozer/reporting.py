@@ -2,7 +2,7 @@ import functools
 import logging
 import math
 import time
-from typing import Any, Callable
+from typing import Any, Callable, Optional
 
 from common.enums.failure_bucket import FailureBucket
 from common.error_inspector import ErrorInspector, ErrorTypesReport
@@ -38,7 +38,6 @@ def _report_failure(job_scope: JobScope, start_time: float, exc: Exception, **kw
     PlatformTokenManager.from_job_scope(job_scope).report_usage_per_failure_bucket(token, failure_bucket)
     SweepStatusTracker(job_scope.sweep_id).report_status(failure_bucket)
     _send_measurement_task_runtime(job_scope, failure_bucket)
-    _log_job_scope_with_status(job_scope, 'other-error', failure_bucket)
 
 
 def _report_success(job_scope: JobScope, start_time: float, ret_value: Any):
@@ -76,8 +75,12 @@ def _send_measurement_task_runtime(job_scope: JobScope, bucket: int):
 
     Measure.gauge(f'{_measurement_base_name}.running_time', tags=_measurement_tags)(job_scope.running_time)
 
-def _log_job_scope_with_status(job_scope: JobScope, status: str, failure_bucket: int):
-    logger.warning(f'[reported-task][{job_scope.sweep_id}] Job "{job_scope.job_id}" ' f'changed to status "{status}" with bucket {failure_bucket}')
+
+def log_celery_task_status(job_scope: JobScope, status: Optional[str], failure_bucket: Optional[int]):
+    logger.warning(
+        f'[reported-task][{job_scope.sweep_id}] Job "{job_scope.job_id}" '
+        f'changed to status "{status}" with bucket {failure_bucket}'
+    )
 
 
 def reported_task(func: Callable) -> Callable:
@@ -88,14 +91,12 @@ def reported_task(func: Callable) -> Callable:
         start_time = time.time()
         report_job_status_task.delay(ExternalPlatformJobStatus.Start, job_scope)
         _report_start(job_scope)
-        _log_job_scope_with_status(job_scope, 'started', FailureBucket.WorkingOnIt)
         try:
             ret_value = func(job_scope, *args, **kwargs)
             _report_success(job_scope, start_time, ret_value)
-            _log_job_scope_with_status(job_scope, 'succeeded', FailureBucket.Success)
         except TaskOutsideSweepException as e:
             logger.info(f'{e.job_scope} skipped because sweep {e.job_scope.sweep_id} is done')
-            _log_job_scope_with_status(job_scope, 'sweep-ended', FailureBucket.Other)
+            log_celery_task_status(job_scope, 'sweep-ended', FailureBucket.Other)
             ErrorInspector.send_measurement_error(ErrorTypesReport.SWEEP_ALREADY_ENDED, job_scope.ad_account_id)
             logger.warning(f'[reported-task][{job_scope.sweep_id}] Job "{job_scope.job_id}" succeeded')
         except CollectionError as e:

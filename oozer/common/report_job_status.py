@@ -11,6 +11,7 @@ from common.store.jobreport import JobReport
 from oozer.common import cold_storage
 from oozer.common.enum import ExternalPlatformJobStatus
 from oozer.common.job_scope import JobScope
+from oozer.reporting import log_celery_task_status
 
 logger = logging.getLogger(__name__)
 
@@ -68,6 +69,8 @@ def report_job_status(stage_id: int, job_scope: JobScope):
     is_done = False
     actions = None
 
+    reported_state = None
+
     if stage_id == ExternalPlatformJobStatus.Done:
         actions = [
             JobReport.last_success_dt.set(datetime.utcnow()),
@@ -77,12 +80,14 @@ def report_job_status(stage_id: int, job_scope: JobScope):
             _set_or_remove(JobReport.last_total_datapoint_count, job_scope.datapoint_count),
         ]
         is_done = True
+        reported_state = 'succeeded'
     elif stage_id > 0:
         actions = [
             JobReport.last_progress_dt.set(datetime.utcnow()),
             JobReport.last_progress_stage_id.set(stage_id),
             JobReport.last_progress_sweep_id.set(job_scope.sweep_id),
         ]
+        reported_state = 'in progress'
     elif stage_id < 0:
         actions = [
             JobReport.last_failure_dt.set(datetime.utcnow()),
@@ -94,9 +99,12 @@ def report_job_status(stage_id: int, job_scope: JobScope):
             _set_or_remove(JobReport.last_partial_running_time, job_scope.running_time),
             _set_or_remove(JobReport.last_partial_datapoint_count, job_scope.datapoint_count),
         ]
+        reported_state = 'failed'
 
     if actions:
         JobReport(job_scope.job_id).update(actions=actions)
 
     if is_done and job_scope.namespace == JobScope.namespace:
         _report_job_done_to_cold_store(job_scope)
+
+    log_celery_task_status(job_scope, reported_state, stage_id)
