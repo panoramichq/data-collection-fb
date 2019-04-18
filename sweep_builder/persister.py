@@ -1,5 +1,6 @@
 import logging
 import time
+from collections import defaultdict
 
 from typing import Generator
 
@@ -44,7 +45,7 @@ def iter_persist_prioritized(
         _measurement_sample_rate = 1
 
         _before_next_prioritized = time.time()
-        skipped_jobs = {}
+        skipped_jobs = defaultdict(int)
         for prioritization_claim in prioritized_iter:
             job_type = detect_job_type(prioritization_claim.report_type, prioritization_claim.entity_type)
             _measurement_tags = {
@@ -146,14 +147,9 @@ def iter_persist_prioritized(
             if not should_persist(score):
                 logger.info(f'Not persisting job {job_id_effective} due to low score: {score}')
                 ad_account_id = prioritization_claim.ad_account_id
-                if job_type not in skipped_jobs:
-                    skipped_jobs[job_type] = {}
-                if ad_account_id not in skipped_jobs[job_type]:
-                    skipped_jobs[job_type][ad_account_id] = {}
-                if prioritization_claim.report_type not in skipped_jobs[job_type][ad_account_id]:
-                    skipped_jobs[job_type][ad_account_id][prioritization_claim.report_type] = 0
+                key = (job_type, ad_account_id, prioritization_claim.report_type)
+                skipped_jobs[key] += 1
 
-                skipped_jobs[job_type][ad_account_id][prioritization_claim.report_type] += 1
                 continue
 
             # Following are JobScope attributes we don't store on JobID
@@ -219,16 +215,12 @@ def iter_persist_prioritized(
 
             _before_next_prioritized = time.time()
 
-        if skipped_jobs:
-            for job_type in skipped_jobs:
-                for ad_account_id in skipped_jobs[job_type]:
-                    for report_type in skipped_jobs[job_type][ad_account_id]:
-                        measurement_tags = {
-                            'sweep_id': sweep_id,
-                            'ad_account_id': ad_account_id,
-                            'job_type': job_type,
-                            'report_type': report_type,
-                        }
-                        Measure.gauge(f'{_measurement_name_base}.gatekeeper_stop_jobs', tags=measurement_tags)(
-                            skipped_jobs[job_type][ad_account_id][report_type]
-                        )
+        if len(skipped_jobs):
+            for (job_type, ad_account_id, report_type), cnt in skipped_jobs.items():
+                measurement_tags = {
+                    'sweep_id': sweep_id,
+                    'ad_account_id': ad_account_id,
+                    'job_type': job_type,
+                    'report_type': report_type,
+                }
+                Measure.gauge(f'{_measurement_name_base}.gatekeeper_stop_jobs', tags=measurement_tags)(cnt)

@@ -56,6 +56,7 @@ class _JobsWriter:
         self._measurement_base = f'{__name__}.JobsWriter'
         self.cache_max_size = 20000
         self.cnts = defaultdict(int)
+        self.cnts_global_jobs = 0
         self.redis_client = get_redis()
         self.sweep_id = sorted_jobs_queue_interface.sweep_id
         self.sorted_jobs_queue_interface = sorted_jobs_queue_interface
@@ -118,14 +119,16 @@ class _JobsWriter:
                 self.sorted_jobs_queue_interface.get_queue_key_ad_account(), job_id_parts.ad_account_id
             )
 
+        job_type = detect_job_type(job_id_parts.report_type, job_id_parts.report_variant)
+        ad_account_id = self.GLOBAL_SHARD_NAME if job_id_parts.ad_account_id is None else job_id_parts.ad_account_id
+        key_cnts = (job_type, ad_account_id, job_id_parts.report_type, job_id_parts.report_variant)
         if job_id_parts.entity_id:
             # if entity ID is present, there is no way
             # this could be a reused job
             # (as only per-Parent jobs can be reused by children)
             # Thus, we just add to the batch and move on
             self.batch[job_id] = score
-            if job_id_parts.ad_account_id:
-                self.cnts[job_id_parts.ad_account_id] += 1
+            self.cnts[key_cnts] += 1
         else:  # this is some per-Parent job
             # There is a chance it's in the larger cache with same exact score
             if self.cache.get(job_id) == score:
@@ -140,11 +143,7 @@ class _JobsWriter:
                 while len(self.cache) > self.cache_max_size:
                     self.cache.popitem()  # oldest
 
-                if job_id_parts.ad_account_id:
-                    self.cnts[job_id_parts.ad_account_id] += 1
-                else:
-                    self.cnts[self.GLOBAL_SHARD_NAME] += 1
-
+                self.cnts[key_cnts] += 1
         if len(self.batch) == self.batch_size:
             self.flush()
 
@@ -156,11 +155,19 @@ class _JobsWriter:
             self.flush()
 
         cnt = 0
-        for ad_account_id, cnts in self.cnts.items():
+        for (job_type, ad_account_id, report_type, report_variant), cnts in self.cnts.items():
             Measure.counter(
-                f'{self._measurement_base}.unique_tasks', {'sweep_id': self.sweep_id, 'ad_account_id': ad_account_id}
+                f'{self._measurement_base}.unique_tasks',
+                {
+                    'sweep_id': self.sweep_id,
+                    'ad_account_id': ad_account_id,
+                    'job_type': job_type,
+                    'report_type': report_type,
+                    'report_variant': report_variant,
+                },
             ).increment(cnts)
             cnt += cnts
+
         logger.info(f"#{self.sweep_id}: Redis SortedSet Batcher wrote a total of {cnt} *unique* tasks")
 
 

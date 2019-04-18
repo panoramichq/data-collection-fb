@@ -68,8 +68,6 @@ def report_job_status(stage_id: int, job_scope: JobScope):
     is_done = False
     actions = None
 
-    logger.warning(f'[job-status] job id: {job_scope.job_id} stage_id: {stage_id} status_bucket: {status_bucket}')
-
     if stage_id == ExternalPlatformJobStatus.Done:
         actions = [
             JobReport.last_success_dt.set(datetime.utcnow()),
@@ -98,6 +96,10 @@ def report_job_status(stage_id: int, job_scope: JobScope):
         ]
 
     if actions:
+        logger.warning(
+            f'[job-status][{job_scope.sweep_id}] Job "{job_scope.job_id}" '
+            f'at stage "{stage_id}" with actions {actions}'
+        )
         JobReport(job_scope.job_id).update(actions=actions)
 
     if is_done and job_scope.namespace == JobScope.namespace:
