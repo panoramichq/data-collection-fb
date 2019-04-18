@@ -35,16 +35,15 @@ def entities_per_ad_account(entity_type: str, reality_claim: RealityClaim) -> Ge
     assert entity_type in Entity.ALL
 
     yield ExpectationClaim(
-        reality_claim.entity_id,
-        reality_claim.entity_type,
-        ReportType.entity,
-        JobSignature(
-            generate_id(
-                ad_account_id=reality_claim.ad_account_id, report_type=ReportType.entity, report_variant=entity_type
+        reality_claim.to_dict(),
+        report_type=ReportType.entity,
+        job_signatures=[
+            JobSignature.bind(
+                generate_id(
+                    ad_account_id=reality_claim.ad_account_id, report_type=ReportType.entity, report_variant=entity_type
+                )
             )
-        ),
-        ad_account_id=reality_claim.ad_account_id,
-        timezone=reality_claim.timezone,
+        ],
     )
 
 
@@ -55,15 +54,15 @@ def entities_per_page(entity_type: str, reality_claim: RealityClaim) -> Generato
     assert entity_type in Entity.NON_AA_SCOPED
 
     yield ExpectationClaim(
-        reality_claim.entity_id,
-        reality_claim.entity_type,
-        ReportType.entity,
-        JobSignature(
-            generate_id(
-                ad_account_id=reality_claim.ad_account_id, report_type=ReportType.entity, report_variant=entity_type
+        reality_claim.to_dict(),
+        report_type=ReportType.entity,
+        job_signatures=[
+            JobSignature.bind(
+                generate_id(
+                    ad_account_id=reality_claim.ad_account_id, report_type=ReportType.entity, report_variant=entity_type
+                )
             )
-        ),
-        ad_account_id=reality_claim.ad_account_id,
+        ],
     )
 
 
@@ -74,18 +73,18 @@ def entities_per_page_post(entity_type: str, reality_claim: RealityClaim) -> Gen
     assert entity_type in Entity.NON_AA_SCOPED
 
     yield ExpectationClaim(
-        reality_claim.entity_id,
-        reality_claim.entity_type,
-        ReportType.entity,
-        JobSignature(
-            generate_id(
-                ad_account_id=reality_claim.ad_account_id,
-                report_type=ReportType.entity,
-                report_variant=entity_type,
-                entity_id=reality_claim.entity_id,
+        reality_claim.to_dict(),
+        report_type=ReportType.entity,
+        job_signatures=[
+            JobSignature.bind(
+                generate_id(
+                    ad_account_id=reality_claim.ad_account_id,
+                    report_type=ReportType.entity,
+                    report_variant=entity_type,
+                    entity_id=reality_claim.entity_id,
+                )
             )
-        ),
-        ad_account_id=reality_claim.ad_account_id,
+        ],
     )
 
 
@@ -93,18 +92,18 @@ def page_entity(reality_claim: RealityClaim) -> Generator[ExpectationClaim, None
     assert reality_claim.entity_type == Entity.Page, 'Page expectation should be triggered only by page reality claims'
 
     yield ExpectationClaim(
-        reality_claim.entity_id,
-        reality_claim.entity_type,
-        ReportType.entity,
-        JobSignature(
-            generate_id(
-                ad_account_id=reality_claim.ad_account_id,
-                entity_id=reality_claim.entity_id,
-                report_type=ReportType.entity,
-                report_variant=Entity.Page,
+        reality_claim.to_dict(),
+        report_type=ReportType.entity,
+        job_signatures=[
+            JobSignature.bind(
+                generate_id(
+                    ad_account_id=reality_claim.ad_account_id,
+                    entity_id=reality_claim.entity_id,
+                    report_type=ReportType.entity,
+                    report_variant=Entity.Page,
+                )
             )
-        ),
-        ad_account_id=reality_claim.ad_account_id,
+        ],
     )
 
 
@@ -114,19 +113,18 @@ def ad_account_entity(reality_claim: RealityClaim) -> Generator[ExpectationClaim
     ), 'Ad account expectation should be triggered only by ad account reality claims'
 
     yield ExpectationClaim(
-        reality_claim.entity_id,
-        reality_claim.entity_type,
-        ReportType.entity,
-        JobSignature(
-            generate_id(
-                ad_account_id=reality_claim.ad_account_id,
-                entity_id=reality_claim.entity_id,
-                report_type=ReportType.entity,
-                report_variant=Entity.AdAccount,
+        reality_claim.to_dict(),
+        report_type=ReportType.entity,
+        job_signatures=[
+            JobSignature.bind(
+                generate_id(
+                    ad_account_id=reality_claim.ad_account_id,
+                    entity_id=reality_claim.entity_id,
+                    report_type=ReportType.entity,
+                    report_variant=Entity.AdAccount,
+                )
             )
-        ),
-        ad_account_id=reality_claim.ad_account_id,
-        timezone=reality_claim.timezone,
+        ],
     )
 
 
