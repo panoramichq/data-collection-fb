@@ -76,10 +76,10 @@ def _send_measurement_task_runtime(job_scope: JobScope, bucket: int):
     Measure.gauge(f'{_measurement_base_name}.running_time', tags=_measurement_tags)(job_scope.running_time)
 
 
-def log_celery_task_status(job_scope: JobScope, status: Optional[str], failure_bucket: Optional[int]):
+def log_celery_task_status(job_scope: JobScope, failure_bucket: Optional[int], actions):
     logger.warning(
         f'[job-status][{job_scope.sweep_id}] Job "{job_scope.job_id}" '
-        f'changed to status "{status}" with bucket {failure_bucket}'
+        f'status "{failure_bucket}" with actions {actions}'
     )
 
 
@@ -96,7 +96,7 @@ def reported_task(func: Callable) -> Callable:
             _report_success(job_scope, start_time, ret_value)
         except TaskOutsideSweepException as e:
             logger.info(f'{e.job_scope} skipped because sweep {e.job_scope.sweep_id} is done')
-            log_celery_task_status(job_scope, 'sweep-ended', FailureBucket.Other)
+            log_celery_task_status(job_scope, FailureBucket.Other)
             ErrorInspector.send_measurement_error(ErrorTypesReport.SWEEP_ALREADY_ENDED, job_scope.ad_account_id)
         except CollectionError as e:
             _report_failure(job_scope, start_time, e.inner, partial_datapoint_count=e.partial_datapoint_count)
