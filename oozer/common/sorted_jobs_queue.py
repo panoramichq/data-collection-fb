@@ -119,14 +119,16 @@ class _JobsWriter:
                 self.sorted_jobs_queue_interface.get_queue_key_ad_account(), job_id_parts.ad_account_id
             )
 
+        job_type = detect_job_type(job_id_parts.report_type, job_id_parts.report_variant)
+        ad_account_id = self.GLOBAL_SHARD_NAME if job_id_parts.ad_account_id is None else job_id_parts.ad_account_id
+        key_cnts = (job_type, ad_account_id, job_id_parts.report_type, job_id_parts.report_variant)
         if job_id_parts.entity_id:
             # if entity ID is present, there is no way
             # this could be a reused job
             # (as only per-Parent jobs can be reused by children)
             # Thus, we just add to the batch and move on
             self.batch[job_id] = score
-            if job_id_parts.ad_account_id:
-                self.cnts[job_id_parts.ad_account_id] += 1
+            self.cnts[key_cnts] += 1
         else:  # this is some per-Parent job
             # There is a chance it's in the larger cache with same exact score
             if self.cache.get(job_id) == score:
@@ -141,14 +143,7 @@ class _JobsWriter:
                 while len(self.cache) > self.cache_max_size:
                     self.cache.popitem()  # oldest
 
-                if job_id_parts.ad_account_id:
-                    job_type = detect_job_type(job_id_parts.report_type, job_id_parts.report_variant)
-
-                    key = (job_type, job_id_parts.ad_account_id, job_id_parts.report_type, job_id_parts.report_variant)
-                    self.cnts[key] += 1
-                else:
-                    self.cnts_global_jobs += 1
-
+                self.cnts[key_cnts] += 1
         if len(self.batch) == self.batch_size:
             self.flush()
 
@@ -173,11 +168,6 @@ class _JobsWriter:
             ).increment(cnts)
             cnt += cnts
 
-        if self.cnts_global_jobs > 0:
-            Measure.counter(
-                f'{self._measurement_base}.unique_tasks', {'sweep_id': self.sweep_id, 'job_type': JobType.GLOBAL}
-            ).increment(self.cnts_global_jobs)
-            cnt += self.cnts_global_jobs
         logger.info(f"#{self.sweep_id}: Redis SortedSet Batcher wrote a total of {cnt} *unique* tasks")
 
 
