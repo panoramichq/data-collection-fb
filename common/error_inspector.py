@@ -49,7 +49,7 @@ class ErrorInspector:
 
     @staticmethod
     def send_measurement_error(error_type: str, ad_account_id: str):
-        Measure.counter(__name__ + '.errors', {'error_type': error_type, 'ad_account_id': ad_account_id}).increment()
+        Measure.counter(__name__ + '.errors', {'ad_account_id': ad_account_id, 'error_type': error_type}).increment()
 
     @staticmethod
     def _get_trackback_exception(exception: Exception) -> str:

@@ -28,9 +28,3 @@ class Entity:
     NON_AA_SCOPED = {Page, PagePost, Comment, PageVideo, PagePostPromotable}
 
     ALL = AA_SCOPED.union({Scope}, NON_AA_SCOPED)
-
-    @staticmethod
-    def next_level(entity_type: str) -> str:
-        if entity_type not in {Entity.AdAccount, Entity.Campaign, Entity.AdSet}:
-            raise NotImplementedError(f'Determining next level from type: {entity_type} is not supported')
-        return {Entity.AdAccount: Entity.Campaign, Entity.Campaign: Entity.AdSet, Entity.AdSet: Entity.Ad}[entity_type]

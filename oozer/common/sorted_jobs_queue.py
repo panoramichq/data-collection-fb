@@ -53,7 +53,7 @@ class _JobsWriter:
         #  ========
         #  ~20k
 
-        self._measurement_base = f'{__name__}.JobsWriter'
+        self._measurement_base = f'{__name__}.{_JobsWriter.__class__.__name__}'
         self.cache_max_size = 20000
         self.cnts = defaultdict(int)
         self.redis_client = get_redis()
