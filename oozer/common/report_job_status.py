@@ -68,6 +68,8 @@ def report_job_status(stage_id: int, job_scope: JobScope):
     is_done = False
     actions = None
 
+    logger.warning(f'[job-status] job id: {job_scope.job_id} status: {status_bucket}')
+
     if stage_id == ExternalPlatformJobStatus.Done:
         actions = [
             JobReport.last_success_dt.set(datetime.utcnow()),

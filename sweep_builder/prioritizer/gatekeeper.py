@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime
 from typing import Optional
 
@@ -13,6 +14,8 @@ from config.jobs import (
     REPORT_TYPE_LIFETIME_PAGE_POSTS_FREQUENCY,
 )
 
+logger = logging.getLogger(__name__)
+
 
 class JobGateKeeper:
     """Prevent over-collection of datapoints."""
@@ -24,6 +27,7 @@ class JobGateKeeper:
         """Return true if job should be re-collected."""
         # never collected before so you have to try to collect it
         if last_success_dt is None:
+            logger.warning(f'[never-collected] Job {job} was never collected yet.')
             return True
 
         minutes_since_success = (now() - last_success_dt).total_seconds() / 60
