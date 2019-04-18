@@ -4,6 +4,8 @@ import math
 import time
 from typing import Any, Callable, Optional
 
+from boto3.resources.model import Action
+
 from common.enums.failure_bucket import FailureBucket
 from common.error_inspector import ErrorInspector, ErrorTypesReport
 from common.measurement import Measure
@@ -76,10 +78,12 @@ def _send_measurement_task_runtime(job_scope: JobScope, bucket: int):
     Measure.gauge(f'{_measurement_base_name}.running_time', tags=_measurement_tags)(job_scope.running_time)
 
 
-def log_celery_task_status(job_scope: JobScope, failure_bucket: Optional[int], actions):
+def log_celery_task_status(
+    job_scope: JobScope, stage_id: Optional[int], failure_bucket: Optional[int], actions: Optional[List[Action]]
+):
     logger.warning(
         f'[job-status][{job_scope.sweep_id}] Job "{job_scope.job_id}" '
-        f'status "{failure_bucket}" with actions {actions}'
+        f'status "{failure_bucket}" ad stage "{stage_id}" with actions {actions}'
     )
 
 

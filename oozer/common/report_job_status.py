@@ -97,7 +97,7 @@ def report_job_status(stage_id: int, job_scope: JobScope):
         ]
 
     if actions:
-        log_celery_task_status(job_scope, status_bucket, actions)
+        log_celery_task_status(job_scope, stage_id, status_bucket, actions)
         JobReport(job_scope.job_id).update(actions=actions)
 
     if is_done and job_scope.namespace == JobScope.namespace:
