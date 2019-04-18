@@ -68,7 +68,7 @@ def report_job_status(stage_id: int, job_scope: JobScope):
     is_done = False
     actions = None
 
-    logger.warning(f'[job-status] job id: {job_scope.job_id} status: {status_bucket}')
+    logger.warning(f'[job-status] job id: {job_scope.job_id} stage_id: {stage_id} status_bucket: {status_bucket}')
 
     if stage_id == ExternalPlatformJobStatus.Done:
         actions = [
