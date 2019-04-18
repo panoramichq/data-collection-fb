@@ -11,7 +11,6 @@ from common.store.jobreport import JobReport
 from oozer.common import cold_storage
 from oozer.common.enum import ExternalPlatformJobStatus
 from oozer.common.job_scope import JobScope
-from oozer.reporting import log_celery_task_status
 
 logger = logging.getLogger(__name__)
 
@@ -97,7 +96,10 @@ def report_job_status(stage_id: int, job_scope: JobScope):
         ]
 
     if actions:
-        log_celery_task_status(job_scope, stage_id, status_bucket, actions)
+        logger.warning(
+            f'[job-status][{job_scope.sweep_id}] Job "{job_scope.job_id}" '
+            f'at stage "{stage_id}" with actions {actions}'
+        )
         JobReport(job_scope.job_id).update(actions=actions)
 
     if is_done and job_scope.namespace == JobScope.namespace:

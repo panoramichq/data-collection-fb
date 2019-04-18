@@ -78,15 +78,6 @@ def _send_measurement_task_runtime(job_scope: JobScope, bucket: int):
     Measure.gauge(f'{_measurement_base_name}.running_time', tags=_measurement_tags)(job_scope.running_time)
 
 
-def log_celery_task_status(
-    job_scope: JobScope, stage_id: Optional[int], failure_bucket: Optional[int], actions: Optional[List[Action]]
-):
-    logger.warning(
-        f'[job-status][{job_scope.sweep_id}] Job "{job_scope.job_id}" '
-        f'status "{failure_bucket}" ad stage "{stage_id}" with actions {actions}'
-    )
-
-
 def reported_task(func: Callable) -> Callable:
     """Report task stats."""
 
