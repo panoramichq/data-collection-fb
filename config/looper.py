@@ -1,9 +1,9 @@
 # flake8: noqa: E722
 
 RUN_SWEEP_TIMEOUT = 60 * 60  # seconds
-RUN_TASKS_TIMEOUT = 30 * 60  # 30 minutes.
+RUN_TASKS_TIMEOUT = 20 * 60  # seconds
 
-FB_THROTTLING_WINDOW = 20 * 60  # 20 minutes.
+FB_THROTTLING_WINDOW = 10 * 60  # seconds
 ALLOW_RECURSION = False
 MIN_STARTING_FREQUENCY = 10
 
