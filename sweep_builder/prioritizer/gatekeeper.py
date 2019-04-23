@@ -35,6 +35,7 @@ class JobGateKeeper:
             minutes_since_progress = (now() - last_progress_dt).total_seconds() / 60
             shall_pass = JobGateKeeper._every_x_minutes(minutes_since_progress, REPORT_IN_PROGRESS_FREQUENCY)
             if not shall_pass or last_success_dt is None:
+                logger.warning(f'[in-progress] Job {job} is in-progress. Gatekeeper result: {shall_pass}')
                 return shall_pass
 
         minutes_since_success = (now() - last_success_dt).total_seconds() / 60
