@@ -1,16 +1,17 @@
-from collections import namedtuple
+class JobSignature:
+    """Represent serialized call signature of a task."""
 
-JobSignature = namedtuple('JobSignature', ['job_id', 'args', 'kwargs'])
+    __slots__ = ['job_id']
 
-JobSignature.__doc__ += """
-Represents serialized call signature of some task
+    def __init__(self, job_id: str):
+        self.job_id = job_id
 
-:param job_id:
-:param tuple args:
-:param dict kwargs:
-"""
+    def __hash__(self):
+        return hash(self.job_id)
 
-# namedtuples are cool and all, but overriding initializer on them is annoying.
-# This is a convenience init method where instead of having to communicate
-# args and kwargs as tuple and dict, one can leverage *args, **kwargs.
-JobSignature.bind = classmethod(lambda cls, job_id, *args, **kwargs: cls(job_id, args, kwargs))
+    def __eq__(self, other):
+        return isinstance(other, JobSignature) and other.job_id == self.job_id
+
+    def __repr__(self):
+        props = {'job_id': self.job_id}
+        return f'<{self.__class__.__name__} {props}>'
