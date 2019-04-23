@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Set
+from typing import Set, Tuple
 
 from common.enums.entity import Entity
 
@@ -22,7 +22,10 @@ class RealityClaim:
     entity_type: str = None
 
     ad_account_id: str = None
+    campaign_id: str = None
+    adset_id: str = None
 
+    # TODO: Remove cause not used
     tokens: Set[str] = None
 
     # Comes from parent AdAccount record
@@ -52,3 +55,16 @@ class RealityClaim:
 
     def to_dict(self):
         return self.__dict__.copy()
+
+    @property
+    def is_divisible(self) -> bool:
+        return all(id_ is not None for id_ in self.parent_entity_ids)
+
+    @property
+    def parent_entity_ids(self) -> Tuple[str, ...]:
+        if self.entity_type == Entity.Ad:
+            return self.campaign_id, self.adset_id
+        elif self.entity_type == Entity.AdSet:
+            return (self.campaign_id,)
+        elif self.entity_type == Entity.Campaign:
+            return ()

@@ -25,47 +25,18 @@ def ad_accounts_per_scope(reality_claim: RealityClaim) -> Generator[ExpectationC
         return
 
     yield ExpectationClaim(
-        reality_claim.to_dict(),
-        report_type=ReportType.import_accounts,
-        job_signatures=[
-            JobSignature.bind(
-                generate_id(
-                    namespace=config.application.UNIVERSAL_ID_SYSTEM_NAMESPACE,
-                    # Note absence of value for AdAccount
-                    # This is "all AA per scope X" job.
-                    entity_id=reality_claim.entity_id,
-                    entity_type=reality_claim.entity_type,
-                    report_type=ReportType.import_accounts,
-                    report_variant=Entity.AdAccount,
-                )
+        reality_claim.entity_id,
+        reality_claim.entity_type,
+        ReportType.import_accounts,
+        JobSignature(
+            generate_id(
+                namespace=config.application.UNIVERSAL_ID_SYSTEM_NAMESPACE,
+                # Note absence of value for AdAccount
+                # This is "all AA per scope X" job.
+                entity_id=reality_claim.entity_id,
+                entity_type=reality_claim.entity_type,
+                report_type=ReportType.import_accounts,
+                report_variant=Entity.AdAccount,
             )
-        ],
-    )
-
-
-def sync_expectations_per_ad_account(reality_claim: RealityClaim) -> Generator[ExpectationClaim, None, None]:
-    """
-    Generates "Communicate all calculated expectation Job IDs to Cold Store" job ID
-
-    To be used by Scope-level RealityClaim / ExpectationClaim.
-    """
-    if not reality_claim.ad_account_id:
-        ValueError("AdAccountID value is missing")
-
-    if reality_claim.entity_type != Entity.AdAccount:
-        ValueError("Only AdAccount-level expectations may generate this job signature")
-
-    yield ExpectationClaim(
-        reality_claim.to_dict(),
-        report_type=ReportType.sync_expectations,
-        job_signatures=[
-            JobSignature.bind(
-                generate_id(
-                    ad_account_id=reality_claim.ad_account_id,
-                    entity_id=reality_claim.ad_account_id,
-                    entity_type=reality_claim.entity_type,
-                    report_type=ReportType.sync_expectations,
-                )
-            )
-        ],
+        ),
     )
