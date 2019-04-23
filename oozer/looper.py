@@ -595,7 +595,8 @@ def run_tasks(
         if should_be_done_cnt <= inner_pulse.Total:
             # Yey! all done!
             logger.warning(
-                f'[oozer-run][{sweep_id}][stop-reason] Stopping due to completing all tasks'
+                f'[oozer-run][{sweep_id}][stop-reason] Stopping due to completing 90 % of oozed tasks '
+                f' ({should_be_done_cnt} oozed out of {num_tasks} scheduled)'
                 f' with following pulse: {inner_pulse}'
                 f' and last score {last_processed_score}'
             )
