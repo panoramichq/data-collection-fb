@@ -7,7 +7,7 @@ from common.enums.reporttype import ReportType
 from common.id_tools import JobIdParts
 from common.tztools import now
 from config.jobs import (
-    REPORT_IN_PROGRESS_FREQUENCY,
+    REPORT_IN_PROGRESS_FREQUENCY_MINS,
     REPORT_TYPE_ENTITY_FREQUENCY,
     REPORT_TYPE_LIFETIME_FREQUENCY,
     REPORT_TYPE_ENTITY_COMMENTS_FREQUENCY,
@@ -33,7 +33,7 @@ class JobGateKeeper:
 
         if last_progress_dt is not None:
             minutes_since_progress = (now() - last_progress_dt).total_seconds() / 60
-            shall_pass = JobGateKeeper._every_x_minutes(minutes_since_progress, REPORT_IN_PROGRESS_FREQUENCY)
+            shall_pass = JobGateKeeper._every_x_minutes(minutes_since_progress, REPORT_IN_PROGRESS_FREQUENCY_MINS)
             if not shall_pass or last_success_dt is None:
                 logger.warning(f'[in-progress] Job {job} is in-progress. Gatekeeper result: {shall_pass}')
                 return shall_pass
