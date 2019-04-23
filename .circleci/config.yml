@@ -41,7 +41,7 @@ jobs:
           name: auth AWS ECR and Docker Hub
           command: |
             set -exu
-            docker login -u ${DOCKERHUB_USER} -p ${DOCKERHUB_PASS}
+            echo "$DOCKERHUB_PASS" | docker login -u ${DOCKERHUB_USER} --password-stdin
             eval $(aws ecr get-login --region ${AWS_REGION} --no-include-email --registry-ids ${AWS_ACCOUNT_ASSETS})
 
       # build and push Docker image
@@ -102,7 +102,7 @@ jobs:
           name: auth AWS ECR and Docker Hub
           command: |
             set -exu
-            docker login -u ${DOCKERHUB_USER} -p ${DOCKERHUB_PASS}
+            echo "$DOCKERHUB_PASS" | docker login -u ${DOCKERHUB_USER} --password-stdin
             eval $(aws ecr get-login --region ${AWS_REGION} --no-include-email --registry-ids ${AWS_ACCOUNT_ASSETS})
       - run :
           name: check flake8
@@ -139,7 +139,7 @@ jobs:
           name: auth AWS ECR and Docker Hub
           command: |
             set -exu
-            docker login -u ${DOCKERHUB_USER} -p ${DOCKERHUB_PASS}
+            echo "$DOCKERHUB_PASS" | docker login -u ${DOCKERHUB_USER} --password-stdin
             eval $(aws ecr get-login --region ${AWS_REGION} --no-include-email --registry-ids ${AWS_ACCOUNT_ASSETS})
 
       - run :
