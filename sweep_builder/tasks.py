@@ -50,9 +50,7 @@ def build_sweep_slice_per_ad_account_task(sweep_id: str, ad_account_reality_clai
 
             reality_claims_iter = itertools.chain(
                 [ad_account_reality_claim],
-                iter_reality_per_ad_account_claim(
-                    ad_account_reality_claim, entity_types=[Entity.Campaign, Entity.AdSet, Entity.Ad]
-                ),
+                iter_reality_per_ad_account_claim(ad_account_reality_claim, entity_types=[Entity.Campaign]),
             )
             cnt = 0
 
