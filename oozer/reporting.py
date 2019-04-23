@@ -4,6 +4,8 @@ import math
 import time
 from typing import Any, Callable
 
+import gevent
+
 from common.enums.failure_bucket import FailureBucket
 from common.error_inspector import ErrorInspector, ErrorTypesReport
 from common.measurement import Measure
@@ -16,6 +18,8 @@ from oozer.common.errors import CollectionError, TaskOutsideSweepException
 from oozer.common.sweep_status_tracker import SweepStatusTracker
 
 logger = logging.getLogger(__name__)
+
+PROGRESS_REPORTING_INTERVAL = 5 * 60
 
 
 def _report_failure(job_scope: JobScope, start_time: float, exc: Exception, **kwargs: Any):
@@ -53,9 +57,18 @@ def _report_success(job_scope: JobScope, start_time: float, ret_value: Any):
     _send_measurement_task_runtime(job_scope, FailureBucket.Success)
 
 
+def _report_progress(job_scope: JobScope):
+    """Report task progress with interval."""
+    while True:
+        gevent.sleep(PROGRESS_REPORTING_INTERVAL)
+        # Purposefully not using delay here
+        report_job_status_task(ExternalPlatformJobStatus.DataFetched, job_scope)
+
+
 def _report_start(job_scope: JobScope):
     """Report task started."""
     SweepStatusTracker(job_scope.sweep_id).report_status(FailureBucket.WorkingOnIt)
+    gevent.spawn(_report_progress, job_scope)
 
 
 def _send_measurement_task_runtime(job_scope: JobScope, bucket: int):
