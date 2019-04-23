@@ -35,12 +35,16 @@ class TaskProgressReporter:
 
     def __call__(self, *args, **kwargs):
         report_job_status_task(ExternalPlatformJobStatus.Start, self.job_scope)
+        interval = PROGRESS_REPORTING_INTERVAL
         while not self.should_stop:
-            gevent.sleep(5)
+            gevent.sleep(interval)
             if self.should_stop:
                 return
+            before = time.time()
             # Purposefully not using delay here
             report_job_status_task(ExternalPlatformJobStatus.DataFetched, self.job_scope)
+            # Correct for interval "drift"
+            interval = PROGRESS_REPORTING_INTERVAL - (time.time() - before)
 
 
 def _report_failure(job_scope: JobScope, start_time: float, exc: Exception, **kwargs: Any):
@@ -78,7 +82,7 @@ def _report_success(job_scope: JobScope, start_time: float, ret_value: Any):
     _send_measurement_task_runtime(job_scope, FailureBucket.Success)
 
 
-def _report_start(job_scope: JobScope):
+def _report_start(job_scope: JobScope) -> TaskProgressReporter:
     """Report task started."""
     SweepStatusTracker(job_scope.sweep_id).report_status(FailureBucket.WorkingOnIt)
     reporter = TaskProgressReporter(job_scope)
