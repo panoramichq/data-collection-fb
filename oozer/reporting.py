@@ -5,7 +5,6 @@ import time
 from typing import Any, Callable
 
 import gevent
-from gevent import Greenlet
 
 from common.enums.failure_bucket import FailureBucket
 from common.error_inspector import ErrorInspector, ErrorTypesReport
@@ -21,6 +20,27 @@ from oozer.common.sweep_status_tracker import SweepStatusTracker
 logger = logging.getLogger(__name__)
 
 PROGRESS_REPORTING_INTERVAL = 5 * 60
+
+
+class TaskProgressReporter:
+
+    job_scope: JobScope
+    should_stop: bool = False
+
+    def __init__(self, job_scope: JobScope):
+        self.job_scope = job_scope
+
+    def stop(self):
+        self.should_stop = True
+
+    def __call__(self, *args, **kwargs):
+        report_job_status_task(ExternalPlatformJobStatus.Start, self.job_scope)
+        while not self.should_stop:
+            gevent.sleep(5)
+            if self.should_stop:
+                return
+            # Purposefully not using delay here
+            report_job_status_task(ExternalPlatformJobStatus.DataFetched, self.job_scope)
 
 
 def _report_failure(job_scope: JobScope, start_time: float, exc: Exception, **kwargs: Any):
@@ -58,18 +78,12 @@ def _report_success(job_scope: JobScope, start_time: float, ret_value: Any):
     _send_measurement_task_runtime(job_scope, FailureBucket.Success)
 
 
-def _report_progress(job_scope: JobScope):
-    """Report task progress with interval."""
-    while True:
-        gevent.sleep(PROGRESS_REPORTING_INTERVAL)
-        # Purposefully not using delay here
-        report_job_status_task(ExternalPlatformJobStatus.DataFetched, job_scope)
-
-
-def _report_start(job_scope: JobScope) -> Greenlet:
+def _report_start(job_scope: JobScope):
     """Report task started."""
     SweepStatusTracker(job_scope.sweep_id).report_status(FailureBucket.WorkingOnIt)
-    return gevent.spawn(_report_progress, job_scope)
+    reporter = TaskProgressReporter(job_scope)
+    gevent.spawn(reporter)
+    return reporter
 
 
 def _send_measurement_task_runtime(job_scope: JobScope, bucket: int):
@@ -96,19 +110,19 @@ def reported_task(func: Callable) -> Callable:
     @functools.wraps(func)
     def wrapper(job_scope: JobScope, *args: Any, **kwargs: Any):
         start_time = time.time()
-        report_job_status_task.delay(ExternalPlatformJobStatus.Start, job_scope)
-        progress_greenlet = _report_start(job_scope)
+        progress_reporter = _report_start(job_scope)
         try:
             ret_value = func(job_scope, *args, **kwargs)
+            progress_reporter.stop()
             _report_success(job_scope, start_time, ret_value)
         except TaskOutsideSweepException as e:
             logger.info(f'{e.job_scope} skipped because sweep {e.job_scope.sweep_id} is done')
             ErrorInspector.send_measurement_error(ErrorTypesReport.SWEEP_ALREADY_ENDED, job_scope.ad_account_id)
         except CollectionError as e:
             _report_failure(job_scope, start_time, e.inner, partial_datapoint_count=e.partial_datapoint_count)
+            progress_reporter.stop()
         except Exception as e:
             _report_failure(job_scope, start_time, e)
-        finally:
-            progress_greenlet.join(timeout=1)
+            progress_reporter.stop()
 
     return wrapper
