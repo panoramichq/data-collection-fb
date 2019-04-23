@@ -5,6 +5,7 @@ import time
 from typing import Any, Callable
 
 import gevent
+from gevent import Greenlet
 
 from common.enums.failure_bucket import FailureBucket
 from common.error_inspector import ErrorInspector, ErrorTypesReport
@@ -65,10 +66,10 @@ def _report_progress(job_scope: JobScope):
         report_job_status_task(ExternalPlatformJobStatus.DataFetched, job_scope)
 
 
-def _report_start(job_scope: JobScope):
+def _report_start(job_scope: JobScope) -> Greenlet:
     """Report task started."""
     SweepStatusTracker(job_scope.sweep_id).report_status(FailureBucket.WorkingOnIt)
-    gevent.spawn(_report_progress, job_scope)
+    return gevent.spawn(_report_progress, job_scope)
 
 
 def _send_measurement_task_runtime(job_scope: JobScope, bucket: int):
@@ -96,7 +97,7 @@ def reported_task(func: Callable) -> Callable:
     def wrapper(job_scope: JobScope, *args: Any, **kwargs: Any):
         start_time = time.time()
         report_job_status_task.delay(ExternalPlatformJobStatus.Start, job_scope)
-        _report_start(job_scope)
+        progress_greenlet = _report_start(job_scope)
         try:
             ret_value = func(job_scope, *args, **kwargs)
             _report_success(job_scope, start_time, ret_value)
@@ -107,5 +108,7 @@ def reported_task(func: Callable) -> Callable:
             _report_failure(job_scope, start_time, e.inner, partial_datapoint_count=e.partial_datapoint_count)
         except Exception as e:
             _report_failure(job_scope, start_time, e)
+        finally:
+            progress_greenlet.join(timeout=1)
 
     return wrapper
