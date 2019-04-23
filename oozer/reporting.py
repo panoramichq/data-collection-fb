@@ -16,35 +16,9 @@ from oozer.common.enum import ExternalPlatformJobStatus
 from oozer.common.facebook_api import FacebookApiErrorInspector
 from oozer.common.errors import CollectionError, TaskOutsideSweepException
 from oozer.common.sweep_status_tracker import SweepStatusTracker
+from oozer.common.task_progress_reporter import TaskProgressReporter
 
 logger = logging.getLogger(__name__)
-
-PROGRESS_REPORTING_INTERVAL = 5 * 60
-
-
-class TaskProgressReporter:
-
-    job_scope: JobScope
-    should_stop: bool = False
-
-    def __init__(self, job_scope: JobScope):
-        self.job_scope = job_scope
-
-    def stop(self):
-        self.should_stop = True
-
-    def __call__(self, *args, **kwargs):
-        report_job_status_task(ExternalPlatformJobStatus.Start, self.job_scope)
-        interval = PROGRESS_REPORTING_INTERVAL
-        while not self.should_stop:
-            gevent.sleep(interval)
-            if self.should_stop:
-                return
-            before = time.time()
-            # Purposefully not using delay here
-            report_job_status_task(ExternalPlatformJobStatus.DataFetched, self.job_scope)
-            # Correct for interval "drift"
-            interval = PROGRESS_REPORTING_INTERVAL - (time.time() - before)
 
 
 def _report_failure(job_scope: JobScope, start_time: float, exc: Exception, **kwargs: Any):
