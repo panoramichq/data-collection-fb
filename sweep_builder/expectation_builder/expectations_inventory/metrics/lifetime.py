@@ -1,4 +1,5 @@
 import functools
+import logging
 
 from typing import Generator
 
@@ -12,6 +13,8 @@ from common.enums.entity import Entity
 from sweep_builder.reality_inferrer.reality import iter_reality_per_ad_account_claim
 
 from sweep_builder.types import ExpectationGeneratorType
+
+logger = logging.getLogger(__name__)
 
 
 def lifetime_metrics_per_entity_under_ad_account(
@@ -52,6 +55,10 @@ def lifetime_metrics_per_entity_under_ad_account(
             if is_dividing_possible:
                 new_node = EntityNode(child_claim.entity_id, child_claim.entity_type)
                 root_node.add_node(new_node, path=child_claim.parent_entity_ids)
+
+        logger.warning(
+            f'[dividing-possible] Ad Account {reality_claim.ad_account_id} Dividing possible: {is_dividing_possible}'
+        )
 
         yield ExpectationClaim(
             reality_claim.entity_id,

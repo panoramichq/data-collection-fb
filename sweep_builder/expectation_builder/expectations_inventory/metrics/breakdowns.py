@@ -109,6 +109,10 @@ def day_metrics_per_entity_under_ad_account(
                 new_node = EntityNode(child_claim.entity_id, child_claim.entity_type)
                 date_map[day].add_node(new_node, path=child_claim.parent_entity_ids)
 
+    logger.warning(
+        f'[dividing-possible] Ad Account {reality_claim.ad_account_id} Dividing possible: {is_dividing_possible}'
+    )
+
     for (day, entity_node) in date_map.items():
         for report_type in report_types:
             yield ExpectationClaim(
