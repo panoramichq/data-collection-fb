@@ -1,4 +1,3 @@
-import functools
 import logging
 
 from collections import defaultdict
@@ -16,7 +15,6 @@ from sweep_builder.data_containers.scorable_claim import ScorableClaim
 logger = logging.getLogger(__name__)
 
 
-@functools.lru_cache(maxsize=None)
 def _fetch_job_report(job_id: str) -> Optional[JobReport]:
     """Retrieve job report from job report table (cached)."""
     try:
