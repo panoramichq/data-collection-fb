@@ -1,14 +1,16 @@
 import functools
 import logging
 
+from collections import defaultdict
 from datetime import date, timedelta
-from typing import Generator, List, Tuple
+from typing import Generator, List, Tuple, Dict
 
 from common.enums.entity import Entity
 from common.enums.reporttype import ReportType
 from common.id_tools import generate_id
 from common.job_signature import JobSignature
 from common.tztools import now_in_tz, date_range
+from sweep_builder.data_containers.entity_node import EntityNode
 from sweep_builder.data_containers.expectation_claim import ExpectationClaim
 from sweep_builder.data_containers.reality_claim import RealityClaim
 from sweep_builder.reality_inferrer.reality import iter_reality_per_ad_account_claim
@@ -91,34 +93,42 @@ def day_metrics_per_entity_under_ad_account(
     if not report_types or not reality_claim.timezone:
         return
 
-    _days_cache = set()
+    date_map: Dict[date, EntityNode] = defaultdict(
+        lambda: EntityNode(reality_claim.entity_id, reality_claim.entity_type)
+    )
 
-    for child_reality_claim in iter_reality_per_ad_account_claim(reality_claim, entity_types=[entity_type]):
+    # TODO: Remove once all entities have parent ids
+    # Divide tasks only if parent levels are defined for all ads
+    is_dividing_possible = True
 
-        range_start, range_end = _determine_active_date_range_for_claim(child_reality_claim)
+    for child_claim in iter_reality_per_ad_account_claim(reality_claim, entity_types=[entity_type]):
+        range_start, range_end = _determine_active_date_range_for_claim(child_claim)
         for day in date_range(range_start, range_end):
+            is_dividing_possible = is_dividing_possible and child_claim.is_divisible
+            if is_dividing_possible:
+                new_node = EntityNode(child_claim.entity_id, child_claim.entity_type)
+                date_map[day].add_node(new_node, path=child_claim.parent_entity_ids)
 
-            if day not in _days_cache:
-                _days_cache.add(day)
-
-                for report_type in report_types:
-                    yield ExpectationClaim(
-                        reality_claim.entity_id,
-                        reality_claim.entity_type,
-                        report_type,
-                        JobSignature(
-                            generate_id(
-                                ad_account_id=reality_claim.ad_account_id,
-                                range_start=day,
-                                report_type=report_type,
-                                report_variant=entity_type,
-                            )
-                        ),
+    for (day, entity_node) in date_map.items():
+        for report_type in report_types:
+            yield ExpectationClaim(
+                reality_claim.entity_id,
+                reality_claim.entity_type,
+                report_type,
+                JobSignature(
+                    generate_id(
                         ad_account_id=reality_claim.ad_account_id,
-                        timezone=reality_claim.timezone,
                         range_start=day,
+                        report_type=report_type,
                         report_variant=entity_type,
                     )
+                ),
+                ad_account_id=reality_claim.ad_account_id,
+                timezone=reality_claim.timezone,
+                entity_hierarchy=entity_node if is_dividing_possible else None,
+                range_start=day,
+                report_variant=entity_type,
+            )
 
 
 # per entity permutation (still need per report type)
@@ -145,6 +155,6 @@ day_dma_metrics_per_ad_per_entity: ExpectationGeneratorType = functools.partial(
     _lifecycle_metrics_per_ad, ReportType.day_dma
 )
 
-metrics_per_ad_per_ad_account: ExpectationGeneratorType = functools.partial(
+day_metrics_per_ads_under_ad_account: ExpectationGeneratorType = functools.partial(
     day_metrics_per_entity_under_ad_account, Entity.Ad
 )

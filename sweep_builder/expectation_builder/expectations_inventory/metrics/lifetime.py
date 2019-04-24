@@ -2,12 +2,14 @@ import functools
 
 from typing import Generator
 
+from sweep_builder.data_containers.entity_node import EntityNode
 from sweep_builder.data_containers.reality_claim import RealityClaim
 from sweep_builder.data_containers.expectation_claim import ExpectationClaim
 from common.id_tools import generate_id
 from common.job_signature import JobSignature
 from common.enums.reporttype import ReportType
 from common.enums.entity import Entity
+from sweep_builder.reality_inferrer.reality import iter_reality_per_ad_account_claim
 
 from sweep_builder.types import ExpectationGeneratorType
 
@@ -39,6 +41,18 @@ def lifetime_metrics_per_entity_under_ad_account(
             report_variant=entity_type,
         )
     else:
+
+        # TODO: Remove once all entities have parent ids
+        # Divide tasks only if parent levels are defined for all ads
+        is_dividing_possible = True
+
+        root_node = EntityNode(reality_claim.entity_id, reality_claim.entity_type)
+        for child_claim in iter_reality_per_ad_account_claim(reality_claim, entity_types=[entity_type]):
+            is_dividing_possible = is_dividing_possible and child_claim.is_divisible
+            if is_dividing_possible:
+                new_node = EntityNode(child_claim.entity_id, child_claim.entity_type)
+                root_node.add_node(new_node, path=child_claim.parent_entity_ids)
+
         yield ExpectationClaim(
             reality_claim.entity_id,
             reality_claim.entity_type,
@@ -51,6 +65,7 @@ def lifetime_metrics_per_entity_under_ad_account(
                 )
             ),
             ad_account_id=reality_claim.ad_account_id,
+            entity_hierarchy=root_node if is_dividing_possible else None,
             timezone=reality_claim.timezone,
             report_variant=entity_type,
         )
