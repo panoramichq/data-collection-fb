@@ -4,6 +4,8 @@ import math
 import time
 from typing import Any, Callable
 
+import gevent
+
 from common.enums.failure_bucket import FailureBucket
 from common.error_inspector import ErrorInspector, ErrorTypesReport
 from common.measurement import Measure
@@ -14,6 +16,7 @@ from oozer.common.enum import ExternalPlatformJobStatus
 from oozer.common.facebook_api import FacebookApiErrorInspector
 from oozer.common.errors import CollectionError, TaskOutsideSweepException
 from oozer.common.sweep_status_tracker import SweepStatusTracker
+from oozer.common.task_progress_reporter import TaskProgressReporter
 
 logger = logging.getLogger(__name__)
 
@@ -53,9 +56,12 @@ def _report_success(job_scope: JobScope, start_time: float, ret_value: Any):
     _send_measurement_task_runtime(job_scope, FailureBucket.Success)
 
 
-def _report_start(job_scope: JobScope):
+def _report_start(job_scope: JobScope) -> TaskProgressReporter:
     """Report task started."""
     SweepStatusTracker(job_scope.sweep_id).report_status(FailureBucket.WorkingOnIt)
+    reporter = TaskProgressReporter(job_scope)
+    gevent.spawn(reporter)
+    return reporter
 
 
 def _send_measurement_task_runtime(job_scope: JobScope, bucket: int):
@@ -82,10 +88,12 @@ def reported_task(func: Callable) -> Callable:
     @functools.wraps(func)
     def wrapper(job_scope: JobScope, *args: Any, **kwargs: Any):
         start_time = time.time()
-        report_job_status_task.delay(ExternalPlatformJobStatus.Start, job_scope)
-        _report_start(job_scope)
+        progress_reporter = _report_start(job_scope)
         try:
-            ret_value = func(job_scope, *args, **kwargs)
+            try:
+                ret_value = func(job_scope, *args, **kwargs)
+            finally:
+                progress_reporter.stop()
             _report_success(job_scope, start_time, ret_value)
         except TaskOutsideSweepException as e:
             logger.info(f'{e.job_scope} skipped because sweep {e.job_scope.sweep_id} is done')

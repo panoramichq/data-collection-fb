@@ -23,7 +23,6 @@ def test_reported_task_on_success(mock_report):
     assert mock_job_scope.running_time is not None
 
     assert mock_report.delay.call_args_list == [
-        call(ExternalPlatformJobStatus.Start, mock_job_scope),
         call(ExternalPlatformJobStatus.Done, mock_job_scope),
     ]
 
@@ -51,7 +50,6 @@ def test_reported_task_on_failure_facebook_error(
 
     assert mock_job_scope.running_time is not None
     assert mock_report.delay.call_args_list == [
-        call(ExternalPlatformJobStatus.Start, mock_job_scope),
         call(ExternalPlatformJobStatus.UserThrottlingError, mock_job_scope),
     ]
 
@@ -77,7 +75,6 @@ def test_reported_task_on_failure_generic_error(mock_notify, mock_report, mock_f
 
     assert mock_job_scope.running_time is not None
     assert mock_report.delay.call_args_list == [
-        call(ExternalPlatformJobStatus.Start, mock_job_scope),
         call(ExternalPlatformJobStatus.GenericError, mock_job_scope),
     ]
 
