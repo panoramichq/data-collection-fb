@@ -24,57 +24,34 @@ def lifetime_metrics_per_entity_under_ad_account(
     if not reality_claim.timezone:
         return
 
-    if reality_claim.ad_account_id == '23845179':
-        # Use normative job for ad account 23845179
-        yield ExpectationClaim(
-            reality_claim.entity_id,
-            reality_claim.entity_type,
-            ReportType.lifetime,
-            JobSignature(
-                generate_id(
-                    ad_account_id=reality_claim.ad_account_id,
-                    entity_type=reality_claim.entity_type,
-                    entity_id=reality_claim.entity_id,
-                    report_type=ReportType.lifetime,
-                    report_variant=entity_type,
-                )
-            ),
-            ad_account_id=reality_claim.ad_account_id,
-            timezone=reality_claim.timezone,
-            report_variant=entity_type,
-        )
-    else:
+    # TODO: Remove once all entities have parent ids
+    # Divide tasks only if parent levels are defined for all ads
+    is_dividing_possible = True
 
-        # TODO: Remove once all entities have parent ids
-        # Divide tasks only if parent levels are defined for all ads
-        is_dividing_possible = True
+    root_node = EntityNode(reality_claim.entity_id, reality_claim.entity_type)
+    for child_claim in iter_reality_per_ad_account_claim(reality_claim, entity_types=[entity_type]):
+        is_dividing_possible = is_dividing_possible and child_claim.all_parent_ids_set
+        new_node = EntityNode(child_claim.entity_id, child_claim.entity_type)
+        root_node.add_node(new_node, path=child_claim.parent_entity_ids)
 
-        root_node = EntityNode(reality_claim.entity_id, reality_claim.entity_type)
-        for child_claim in iter_reality_per_ad_account_claim(reality_claim, entity_types=[entity_type]):
-            is_dividing_possible = is_dividing_possible and child_claim.all_parent_ids_set
-            new_node = EntityNode(child_claim.entity_id, child_claim.entity_type)
-            root_node.add_node(new_node, path=child_claim.parent_entity_ids)
+    logger.warning(
+        f'[dividing-possible] Ad Account {reality_claim.ad_account_id} Dividing possible: {is_dividing_possible}'
+    )
 
-        logger.warning(
-            f'[dividing-possible] Ad Account {reality_claim.ad_account_id} Dividing possible: {is_dividing_possible}'
-        )
-
-        yield ExpectationClaim(
-            reality_claim.entity_id,
-            reality_claim.entity_type,
-            ReportType.lifetime,
-            JobSignature(
-                generate_id(
-                    ad_account_id=reality_claim.ad_account_id,
-                    report_type=ReportType.lifetime,
-                    report_variant=entity_type,
-                )
-            ),
-            ad_account_id=reality_claim.ad_account_id,
-            entity_hierarchy=root_node if is_dividing_possible else None,
-            timezone=reality_claim.timezone,
-            report_variant=entity_type,
-        )
+    yield ExpectationClaim(
+        reality_claim.entity_id,
+        reality_claim.entity_type,
+        ReportType.lifetime,
+        JobSignature(
+            generate_id(
+                ad_account_id=reality_claim.ad_account_id, report_type=ReportType.lifetime, report_variant=entity_type
+            )
+        ),
+        ad_account_id=reality_claim.ad_account_id,
+        entity_hierarchy=root_node if is_dividing_possible else None,
+        timezone=reality_claim.timezone,
+        report_variant=entity_type,
+    )
 
 
 def lifetime_page_metrics_per_entity(
