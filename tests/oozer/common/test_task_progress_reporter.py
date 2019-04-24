@@ -15,7 +15,9 @@ def test_reporter(mock_report_job_status):
     gevent.sleep(0.3)
     reporter.stop()
 
-    mock_report_job_status.assert_has_calls([
-        call(ExternalPlatformJobStatus.Start, sentinel.mock_scope),
-        call(ExternalPlatformJobStatus.DataFetched, sentinel.mock_scope),
-    ])
+    mock_report_job_status.assert_has_calls(
+        [
+            call(ExternalPlatformJobStatus.Start, sentinel.mock_scope),
+            call(ExternalPlatformJobStatus.DataFetched, sentinel.mock_scope),
+        ]
+    )
