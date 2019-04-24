@@ -186,6 +186,6 @@ black-check:
 	docker run \
 		-v $(PWD):$(WORKDIR) \
 		--rm $(IMAGE_NAME_FULL):latest \
-	    /bin/bash -c "black --skip-string-normalization --diff --line-length 120 --target-version py36 ."
+	    /bin/bash -c "black --skip-string-normalization --diff --check --line-length 120 --target-version py36 ."
 
 .PHONY: black-check

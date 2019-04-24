@@ -92,8 +92,9 @@ def assign_score(claim: ScorableClaim) -> int:
         Measure.counter(f'{_measurement_name_base}.skipped_not_parent_jobs', _measurement_tags).increment()
         return 0
 
+    last_progress_dt = None if last_report is None else last_report.last_progress_dt
     last_success_dt = None if last_report is None else last_report.last_success_dt
-    if ACTIVATE_JOB_GATEKEEPER and not JobGateKeeper.shall_pass(job_id_parts, last_success_dt=last_success_dt):
+    if ACTIVATE_JOB_GATEKEEPER and not JobGateKeeper.shall_pass(job_id_parts, last_success_dt, last_progress_dt):
         return JobGateKeeper.JOB_NOT_PASSED_SCORE
 
     score = 0

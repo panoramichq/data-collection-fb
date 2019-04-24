@@ -7,6 +7,7 @@ from common.enums.reporttype import ReportType
 from common.id_tools import JobIdParts
 from common.tztools import now
 from config.jobs import (
+    REPORT_IN_PROGRESS_FREQUENCY_MINS,
     REPORT_TYPE_ENTITY_FREQUENCY,
     REPORT_TYPE_LIFETIME_FREQUENCY,
     REPORT_TYPE_ENTITY_COMMENTS_FREQUENCY,
@@ -23,13 +24,22 @@ class JobGateKeeper:
     JOB_NOT_PASSED_SCORE = 1
 
     @staticmethod
-    def shall_pass(job: JobIdParts, last_success_dt: Optional[datetime]):
+    def shall_pass(job: JobIdParts, last_success_dt: Optional[datetime], last_progress_dt: Optional[datetime]):
         """Return true if job should be re-collected."""
         # never collected before so you have to try to collect it
-        if last_success_dt is None:
+        if last_success_dt is None and last_progress_dt is None:
             logger.warning(f'[never-collected] Job {job} was never collected yet.')
             return True
 
+        if last_progress_dt is not None:
+            minutes_since_progress = (now() - last_progress_dt).total_seconds() / 60
+            shall_pass = JobGateKeeper._every_x_minutes(minutes_since_progress, REPORT_IN_PROGRESS_FREQUENCY_MINS)
+            if not shall_pass or last_success_dt is None:
+                # Either task already running or never succeeded
+                logger.warning(f'[in-progress] Job {job} is in-progress. Gatekeeper result: {shall_pass}')
+                return shall_pass
+
+        # Task not running and has succeeded before
         minutes_since_success = (now() - last_success_dt).total_seconds() / 60
 
         # lifetime data should be attempted to collect at least 6 hours apart
@@ -69,5 +79,9 @@ class JobGateKeeper:
             return JobGateKeeper._every_x_hours(minutes_since_success, 24 * 7)
 
     @staticmethod
-    def _every_x_hours(minutes_since_success: float, x_hours: int) -> bool:
-        return minutes_since_success > 60 * x_hours
+    def _every_x_minutes(minutes_since: float, x_minutes: int) -> bool:
+        return minutes_since > x_minutes
+
+    @staticmethod
+    def _every_x_hours(minutes_since: float, x_hours: int) -> bool:
+        return minutes_since > 60 * x_hours
