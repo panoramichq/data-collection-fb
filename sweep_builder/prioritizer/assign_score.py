@@ -1,5 +1,4 @@
 import logging
-import random
 from typing import Dict
 
 import config.application
@@ -7,7 +6,6 @@ import config.application
 from common.enums.entity import Entity
 
 from common.enums.failure_bucket import FailureBucket
-from common.enums.jobtype import detect_job_type
 from common.enums.reporttype import ReportType
 from common.id_tools import parse_id_parts
 from common.measurement import Measure
@@ -55,7 +53,6 @@ def assign_score(claim: ScorableClaim) -> int:
     last_report = claim.last_report
     # TODO: Avoid parsing ID - all information should be available
     job_id_parts = parse_id_parts(job_id)
-    ad_account_id = job_id_parts.ad_account_id
     report_day = job_id_parts.range_start
     report_type = job_id_parts.report_type
     report_variant = job_id_parts.report_variant
@@ -73,45 +70,12 @@ def assign_score(claim: ScorableClaim) -> int:
     is_per_parent_job = bool(report_variant and (not entity_type or entity_type == Entity.PagePost))
     is_per_page_metrics_job = bool(report_variant and report_variant in Entity.NON_AA_SCOPED)
 
-    if not is_per_parent_job and ad_account_id != '23845179' and not is_per_page_metrics_job:
-        _measurement_name_base = f'{__name__}.{assign_score.__name__}'
-        job_type = detect_job_type(claim.report_type, claim.entity_type)
-        _measurement_tags = {
-            'ad_account_id': ad_account_id,
-            'entity_type': entity_type,
-            'report_variant': report_variant,
-            'report_type': report_type,
-            'job_type': job_type,
-        }
-
-        # at this time, it's impossible to have per-entity_id
-        # jobs here because sweep builder specifically avoids
-        # scoring and releasing per-entity_id jobs
-        # TODO: when we get per-entity_id jobs back, do some scoring for these
-        # Until then, we are making sure per-parent jobs get out first
-        Measure.counter(f'{_measurement_name_base}.skipped_not_parent_jobs', _measurement_tags).increment()
-        return 0
-
     last_progress_dt = None if last_report is None else last_report.last_progress_dt
     last_success_dt = None if last_report is None else last_report.last_success_dt
     if ACTIVATE_JOB_GATEKEEPER and not JobGateKeeper.shall_pass(job_id_parts, last_success_dt, last_progress_dt):
         return JobGateKeeper.JOB_NOT_PASSED_SCORE
 
     score = 0
-
-    if ad_account_id == '23845179' and report_type != ReportType.entity:
-        now_time = now_in_tz(timezone)
-        if not last_report or not last_report.last_success_dt:
-            # Not succeeded this job yet
-            return random.randint(8, 15)
-        else:
-            secs_since_last_success = (now_time - last_report.last_success_dt).seconds
-            if secs_since_last_success > 60 * 60 * 8:
-                # Succeeded more than 8 hours ago
-                return random.randint(8, 15)
-            else:
-                # Succeeded in last 8 hours
-                return 0
 
     if is_per_parent_job or is_per_page_metrics_job:
         # yeah, i know, redundant, but keeping it here
