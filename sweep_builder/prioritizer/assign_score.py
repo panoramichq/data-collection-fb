@@ -1,5 +1,4 @@
 import logging
-import random
 from typing import Dict
 
 import config.application
@@ -7,7 +6,6 @@ import config.application
 from common.enums.entity import Entity
 
 from common.enums.failure_bucket import FailureBucket
-from common.enums.jobtype import detect_job_type
 from common.enums.reporttype import ReportType
 from common.id_tools import parse_id_parts
 from common.measurement import Measure
