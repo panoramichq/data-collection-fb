@@ -128,7 +128,7 @@ jobs:
     steps:
     - checkout
     - run: sudo pip install -r requirements.dev.txt
-    - run: black --skip-string-normalization --diff --line-length 120 --target-version py36 .
+    - run: black --skip-string-normalization --diff --check --line-length 120 --target-version py36 .
 
   run_tests:
     machine:
