@@ -66,6 +66,8 @@ class FacebookApiErrorInspector:
         (613, 1487742): (ExternalPlatformJobStatus.AdAccountThrottlingError, FailureBucket.AdAccountThrottling),
         # Too big a report
         (100, 1487534): (ExternalPlatformJobStatus.TooMuchData, FailureBucket.TooLarge),
+        # Object does not exist, cannot be loaded due to missing permissions, or does not support this operation
+        (100, 13): (ExternalPlatformJobStatus.InaccessibleObject, FailureBucket.InaccessibleObject),
     }
 
     ERROR_MESSAGE_MAP = {

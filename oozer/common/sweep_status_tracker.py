@@ -111,6 +111,7 @@ class SweepStatusTracker:
             FailureBucket.AdAccountThrottling: 0,
             FailureBucket.TooLarge: 0,
             FailureBucket.WorkingOnIt: 0,
+            FailureBucket.InaccessibleObject: 0,
         }
         # Now the proportion of successes, failure
         # is calculated per each minute. Then those
@@ -167,6 +168,7 @@ class SweepStatusTracker:
             FailureBucket.AdAccountThrottling: 'adaccount_throttling',
             FailureBucket.TooLarge: 'too_large',
             FailureBucket.WorkingOnIt: 'working_on_it',
+            FailureBucket.InaccessibleObject: 'inaccessible_object',
         }
 
         while True:
