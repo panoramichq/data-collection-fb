@@ -65,12 +65,10 @@ class JobGateKeeper:
             return True
         datapoint_age_in_days = (now().date() - job_range_end).total_seconds() / (60 * 60 * 24)
 
-        if datapoint_age_in_days < 3:
-            return True
-        elif datapoint_age_in_days < 7:
-            return JobGateKeeper._every_x_hours(minutes_since_success, 1)
+        if datapoint_age_in_days < 7:
+            return JobGateKeeper._every_x_hours(minutes_since_success, 3)
         elif datapoint_age_in_days < 14:
-            return JobGateKeeper._every_x_hours(minutes_since_success, 5)
+            return JobGateKeeper._every_x_hours(minutes_since_success, 10)
         elif datapoint_age_in_days < 30:
             return JobGateKeeper._every_x_hours(minutes_since_success, 24)
         elif datapoint_age_in_days < 90:
