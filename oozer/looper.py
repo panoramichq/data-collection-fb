@@ -1,10 +1,9 @@
 import gevent
 import logging
-import math
 import time
 
 from itertools import islice
-from typing import Generator, Tuple, Union, Callable, Any
+from typing import Generator, Tuple, Any
 
 from common.celeryapp import CeleryTask
 from common.id_tools import parse_id
@@ -13,8 +12,6 @@ from common.measurement import Measure
 from common.timeout import timeout
 from config import looper as looper_config
 from config.looper import (
-    MIN_STARTING_FREQUENCY,
-    OOZER_TYPE,
     OOZER_REVIEW_INTERVAL,
     OOZER_MAX_RATE,
     OOZER_MIN_RATE,
@@ -30,10 +27,6 @@ from oozer.common.sweep_status_tracker import SweepStatusTracker, Pulse
 from oozer.inventory import resolve_job_scope_to_celery_task
 
 logger = logging.getLogger(__name__)
-
-
-class OozingDecayOverflow(BaseException):
-    pass
 
 
 OOZER_CUT_OFF_SCORE = 2
@@ -64,54 +57,7 @@ def iter_tasks(sweep_id: str) -> Generator[Tuple[CeleryTask, JobScope, JobContex
                 logger.info(f"#{sweep_id}: Scheduling job_id {job_id} with score {score}.")
 
 
-def create_decay_function(num_accounts: int, num_tasks: int) -> Callable[[Union[float, int]], Union[float, int]]:
-    a = max(MIN_STARTING_FREQUENCY, math.sqrt(num_accounts) + math.sqrt(num_tasks / num_accounts))
-    b = -1 / (2 * math.log(num_tasks))
-    cut_off = a / -b
-
-    logger.warning(
-        f'Initial settings for decay function are '
-        + f'a={a}; b={b}; cut_off={cut_off}; accounts={num_accounts}; tasks={num_tasks}'
-    )
-
-    def calculate(x: Union[float, int]) -> Union[float, int]:
-        if x >= cut_off:
-            raise OozingDecayOverflow(f'Oozing part ran out of time (time={x}) defined by decay function - {cut_off}')
-
-        return a / 1.2 + b * x
-
-    return calculate
-
-
-def find_area_covered_so_far(fn: Callable[[float], Union[float, int]], x: float) -> int:
-    """
-    Computes total population ("area") of tasks we should have already processed
-    by the time we are at this value of x
-
-    zk|                      |
-      |`-,_ P                |
-    y |----i-,_              |
-    k |----|-----------------|
-      |    |       `-,_      |
-      |____|___________`-,___|
-     0     x             r   t
-
-    The area is zk-P-x-0
-
-    NOTE: This only works for cases when f(x) > 0
-
-    :param fn: linear equation y = F(x)
-    :param x: value of x
-    :return: Total population ("area") of zk-P-x-0
-    """
-    y = fn(x)
-    # sum of y-x rectangle and zk-P-y triangle areas
-    return math.ceil(y * x + (fn(0) - y) * x / 2)
-
-
 class AdaptiveTaskOozer:
-
-    type = 'ADAPTIVE'
 
     sweep_status_tracker: SweepStatusTracker
     actual_processed: int
@@ -197,73 +143,6 @@ class AdaptiveTaskOozer:
         return True
 
 
-class TaskOozer:
-
-    TYPE = 'BASIC'
-
-    def __init__(
-        self, sweep_tracker: SweepStatusTracker, num_accounts: int, num_tasks: int, time_slice_length: int = 1
-    ):
-        """
-        :param num_accounts: Number of accounts to work with
-        :param num_tasks: Number of tasks to release
-        :param time_slice_length: in seconds. can be fractional.
-        """
-        self.sweep_tracker = sweep_tracker
-        self.actual_processed: int = 0
-        self.time_slice_length: int = time_slice_length
-
-        # doing this odd way of creating a method to trap decay_fn in the closure
-        start_time: int = round(time.time()) - 1
-        decay_fn = create_decay_function(num_accounts, num_tasks)
-
-        def fn():
-            return find_area_covered_so_far(decay_fn, (round(time.time()) - start_time) / time_slice_length)
-
-        self.get_normative_processed: Callable[[], int] = fn
-
-    def ooze_task(
-        self, task: CeleryTask, job_scope: JobScope, job_context: JobContext, sweep_id: str, job_score: int
-    ) -> bool:
-        """
-        Tracks the number of calls
-        """
-        # *** WE ARE BLOCKING HERE ****
-        # (Albeit in a concurrent way)
-        # This means that calling process will be stuck waiting for us to exit,
-        # without even knowing they are blocked.
-
-        try:
-            while self.actual_processed > self.get_normative_processed():
-                gevent.sleep(self.time_slice_length)
-
-            task.delay(job_scope, job_context)
-            self.actual_processed += 1
-            return True
-        except OozingDecayOverflow as ex:
-            logger.warning(str(ex))
-            logger.warning(
-                f'[oozer-run][{sweep_id}][breaking-reason] Breaking due to reaching end of decay fn'
-                f' with following pulse: {self.sweep_tracker.get_pulse()}'
-                f' and last score {job_score}'
-            )
-            return False
-
-    def __enter__(self):
-        return self.ooze_task
-
-    def __exit__(self, *args):
-        # kill outstanding tasks?
-        pass
-
-
-def oozer_factory(sweep_tracker: SweepStatusTracker, num_accounts: int, num_tasks: int, time_slice_length: int = 1):
-    if OOZER_TYPE == AdaptiveTaskOozer.type:
-        return AdaptiveTaskOozer(sweep_tracker, wait_time=time_slice_length)
-
-    return TaskOozer(sweep_tracker, num_accounts, num_tasks, time_slice_length=time_slice_length)
-
-
 @Measure.timer(__name__, function_name_as_metric=True)
 @Measure.counter(__name__, function_name_as_metric=True, count_once=True)
 @timeout(looper_config.RUN_TASKS_TIMEOUT)
@@ -329,11 +208,11 @@ def run_tasks(
 
     logger.warning(
         f'[oozer-run][{sweep_id}][initial-state] Starting oozer '
-        f'with {num_tasks} scheduled tasks for {num_accounts} accounts with oozer type "{OOZER_TYPE}"'
+        f'with {num_tasks} scheduled tasks for {num_accounts} accounts'
     )
-    with oozer_factory(
-        sweep_tracker, num_accounts, num_tasks, time_slice_length=time_slice_length
-    ) as ooze_task, Measure.counter(_measurement_name_base + 'oozed', tags=_measurement_tags) as cntr:
+    with AdaptiveTaskOozer(sweep_tracker, wait_time=time_slice_length) as ooze_task, Measure.counter(
+        _measurement_name_base + 'oozed', tags=_measurement_tags
+    ) as cntr:
         keep_going = True
         next_pulse_review_second = time.time() + _pulse_refresh_interval
 
