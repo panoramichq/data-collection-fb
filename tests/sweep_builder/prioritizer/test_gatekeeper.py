@@ -21,10 +21,10 @@ def test_shall_pass_last_success_dt_none_returns_true():
         (timedelta(days=13), timedelta(hours=9), False),
         (timedelta(days=29), timedelta(hours=26), True),
         (timedelta(days=29), timedelta(hours=23), False),
-        (timedelta(days=89), timedelta(hours=24 * 3 + 1), True),
-        (timedelta(days=89), timedelta(hours=24 * 3 - 1), False),
-        (timedelta(days=91), timedelta(hours=24 * 7 + 1), True),
-        (timedelta(days=91), timedelta(hours=24 * 7 - 1), False),
+        (timedelta(days=89), timedelta(hours=24 * 7 + 1), True),
+        (timedelta(days=89), timedelta(hours=24 * 7 - 1), False),
+        (timedelta(days=91), timedelta(hours=24 * 7 * 3 + 1), True),
+        (timedelta(days=91), timedelta(hours=24 * 7 * 3 - 1), False),
     ],
 )
 def test_shall_pass_range_end_less_than_seven_days_true(range_start_delta, last_success_delta, expected):

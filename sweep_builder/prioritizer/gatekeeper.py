@@ -72,9 +72,9 @@ class JobGateKeeper:
         elif datapoint_age_in_days < 30:
             return JobGateKeeper._every_x_hours(minutes_since_success, 24)
         elif datapoint_age_in_days < 90:
-            return JobGateKeeper._every_x_hours(minutes_since_success, 24 * 3)
-        else:
             return JobGateKeeper._every_x_hours(minutes_since_success, 24 * 7)
+        else:
+            return JobGateKeeper._every_x_hours(minutes_since_success, 24 * 7 * 3)
 
     @staticmethod
     def _every_x_minutes(minutes_since: float, x_minutes: int) -> bool:
