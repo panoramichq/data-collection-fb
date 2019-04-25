@@ -51,7 +51,7 @@ def lifetime_metrics_per_entity_under_ad_account(
 
         root_node = EntityNode(reality_claim.entity_id, reality_claim.entity_type)
         for child_claim in iter_reality_per_ad_account_claim(reality_claim, entity_types=[entity_type]):
-            is_dividing_possible = is_dividing_possible and child_claim.is_divisible
+            is_dividing_possible = is_dividing_possible and child_claim.all_parent_ids_set
             if is_dividing_possible:
                 new_node = EntityNode(child_claim.entity_id, child_claim.entity_type)
                 root_node.add_node(new_node, path=child_claim.parent_entity_ids)
