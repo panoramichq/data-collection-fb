@@ -23,6 +23,7 @@ class FailureBucket:
     UserThrottling = 200
     AdAccountThrottling = 300
     ApplicationThrottling = 400
+    InaccessibleObject = 550
 
     # errors indicating that our use of API causes vendor to error out
     # due to very large computation / memory / time needs to process such request

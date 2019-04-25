@@ -102,6 +102,7 @@ class ExternalPlatformJobStatus(JobStatus):
 
     # Indicates FB hinting us that API call failed because we might have asked for too much data
     TooMuchData = -500
+    InaccessibleObject = -550
 
     AdAccountThrottlingError = -600
     UserThrottlingError = -700
@@ -118,6 +119,7 @@ class ExternalPlatformJobStatus(JobStatus):
         ApplicationThrottlingError: FailureBucket.ApplicationThrottling,
         GenericPlatformError: FailureBucket.Other,
         JobStatus.GenericError: FailureBucket.Other,
+        InaccessibleObject: FailureBucket.InaccessibleObject,
     }
 
 

@@ -26,6 +26,7 @@ class ErrorTypesReport:
     THROTTLING_ERROR = 'throttling-error'
     TOO_MUCH_DATA = 'too-much-data'
     DYNAMO_PROVISIONING = 'dynamo-provisioning'
+    INACCESSIBLE_OBJECT = 'inaccessible-object'
 
 
 MAPPING_FACEBOOK_ERRORS = {
@@ -34,6 +35,7 @@ MAPPING_FACEBOOK_ERRORS = {
     FailureBucket.AdAccountThrottling: ErrorTypesReport.ACCOUNT_RATE_LIMIT,
     FailureBucket.ApplicationThrottling: ErrorTypesReport.APP_RATE_LIMIT,
     FailureBucket.UserThrottling: ErrorTypesReport.USER_RATE_LIMIT,
+    FailureBucket.InaccessibleObject: ErrorTypesReport.INACCESSIBLE_OBJECT,
 }
 
 
