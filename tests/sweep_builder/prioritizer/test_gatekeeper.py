@@ -12,24 +12,19 @@ def test_shall_pass_last_success_dt_none_returns_true():
     assert JobGateKeeper.shall_pass(Mock(), None, None)
 
 
-def test_shall_pass_range_end_less_than_three_days_ago_returns_true():
-    parts = Mock(range_end=None, range_start=(now() - timedelta(days=2)).date())
-    assert JobGateKeeper.shall_pass(parts, now(), None)
-
-
 @pytest.mark.parametrize(
     ['range_start_delta', 'last_success_delta', 'expected'],
     [
-        (timedelta(days=6), timedelta(hours=2), True),
-        (timedelta(days=6), timedelta(hours=0.5), False),
-        (timedelta(days=13), timedelta(hours=6), True),
-        (timedelta(days=13), timedelta(hours=4), False),
+        (timedelta(days=6), timedelta(hours=4), True),
+        (timedelta(days=6), timedelta(hours=2), False),
+        (timedelta(days=13), timedelta(hours=11), True),
+        (timedelta(days=13), timedelta(hours=9), False),
         (timedelta(days=29), timedelta(hours=26), True),
         (timedelta(days=29), timedelta(hours=23), False),
-        (timedelta(days=89), timedelta(hours=24 * 3 + 1), True),
-        (timedelta(days=89), timedelta(hours=24 * 3 - 1), False),
-        (timedelta(days=91), timedelta(hours=24 * 7 + 1), True),
-        (timedelta(days=91), timedelta(hours=24 * 7 - 1), False),
+        (timedelta(days=89), timedelta(hours=24 * 7 + 1), True),
+        (timedelta(days=89), timedelta(hours=24 * 7 - 1), False),
+        (timedelta(days=91), timedelta(hours=24 * 7 * 3 + 1), True),
+        (timedelta(days=91), timedelta(hours=24 * 7 * 3 - 1), False),
     ],
 )
 def test_shall_pass_range_end_less_than_seven_days_true(range_start_delta, last_success_delta, expected):

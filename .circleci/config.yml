@@ -58,24 +58,6 @@ jobs:
             echo Image URL: `cat /tmp/workspace/image_url`
             make push_image
 
-      # Remove this once deploy logic is fully adapted to Assets repos
-      - run:
-          name: push image to Prod repo
-          command: |
-            export AWS_ACCOUNT=${AWS_ACCOUNT_PROD}
-            eval $(aws ecr get-login --region ${AWS_REGION} --no-include-email --registry-ids ${AWS_ACCOUNT})
-            export REPOSITORY_URL=${AWS_ACCOUNT}.dkr.ecr.${AWS_REGION}.amazonaws.com/
-            make push_image
-
-      # Remove this once deploy logic is fully adapted to Assets repos
-      - run:
-          name: push image to Stage repo
-          command: |
-            export AWS_ACCOUNT=${AWS_ACCOUNT_STAGE}
-            eval $(aws ecr get-login --region ${AWS_REGION} --no-include-email --registry-ids ${AWS_ACCOUNT})
-            export REPOSITORY_URL=${AWS_ACCOUNT}.dkr.ecr.${AWS_REGION}.amazonaws.com/
-            make push_image
-
       # Persist the specified paths (workspace/image*) into the workspace for use in downstream job.
       - persist_to_workspace:
           # Must be absolute path or relative path from working_directory
