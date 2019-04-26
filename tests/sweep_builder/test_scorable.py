@@ -28,12 +28,12 @@ def test_generate_child_claims():
         'adset-id',
         Entity.AdSet,
         ReportType.lifetime,
+        Entity.Ad,
         JobSignature('fb|ad-account-id|A|adset-id|lifetime|A|2019-02-20'),
         ad_account_id='ad-account-id',
         timezone='timezone',
         entity_hierarchy=entity_hierarchy,
         range_start=date(2019, 2, 20),
-        report_variant=Entity.Ad,
     )
 
     result = list(generate_child_claims(claim))
@@ -43,23 +43,23 @@ def test_generate_child_claims():
             'ad-id1',
             Entity.Ad,
             ReportType.lifetime,
+            Entity.Ad,
             JobSignature('fb|ad-account-id|A|ad-id1|lifetime|A|2019-02-20'),
             ad_account_id='ad-account-id',
             timezone='timezone',
             entity_hierarchy=ad1,
             range_start=date(2019, 2, 20),
-            report_variant=Entity.Ad,
         ),
         ExpectationClaim(
             'ad-id2',
             Entity.Ad,
             ReportType.lifetime,
+            Entity.Ad,
             JobSignature('fb|ad-account-id|A|ad-id2|lifetime|A|2019-02-20'),
             ad_account_id='ad-account-id',
             timezone='timezone',
             entity_hierarchy=ad2,
             range_start=date(2019, 2, 20),
-            report_variant=Entity.Ad,
         ),
     ]
 

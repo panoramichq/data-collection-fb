@@ -94,6 +94,7 @@ def day_metrics_per_entity_under_ad_account(
                 reality_claim.entity_id,
                 reality_claim.entity_type,
                 report_type,
+                entity_type,
                 JobSignature(
                     generate_id(
                         ad_account_id=reality_claim.ad_account_id,
@@ -106,7 +107,6 @@ def day_metrics_per_entity_under_ad_account(
                 timezone=reality_claim.timezone,
                 entity_hierarchy=ad_account_node if is_dividing_possible else None,
                 range_start=day,
-                report_variant=entity_type,
             )
 
 

@@ -42,6 +42,7 @@ def lifetime_metrics_per_entity_under_ad_account(
         reality_claim.entity_id,
         reality_claim.entity_type,
         ReportType.lifetime,
+        entity_type,
         JobSignature(
             generate_id(
                 ad_account_id=reality_claim.ad_account_id, report_type=ReportType.lifetime, report_variant=entity_type
@@ -50,7 +51,6 @@ def lifetime_metrics_per_entity_under_ad_account(
         ad_account_id=reality_claim.ad_account_id,
         entity_hierarchy=root_node if is_dividing_possible else None,
         timezone=reality_claim.timezone,
-        report_variant=entity_type,
     )
 
 
@@ -63,6 +63,7 @@ def lifetime_page_metrics_per_entity(
         reality_claim.entity_id,
         reality_claim.entity_type,
         ReportType.lifetime,
+        entity_type,
         JobSignature(
             generate_id(
                 ad_account_id=reality_claim.ad_account_id,

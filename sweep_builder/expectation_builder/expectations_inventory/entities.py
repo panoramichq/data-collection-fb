@@ -38,6 +38,7 @@ def entities_per_ad_account(entity_type: str, reality_claim: RealityClaim) -> Ge
         reality_claim.entity_id,
         reality_claim.entity_type,
         ReportType.entity,
+        entity_type,
         JobSignature(
             generate_id(
                 ad_account_id=reality_claim.ad_account_id, report_type=ReportType.entity, report_variant=entity_type
@@ -58,6 +59,7 @@ def entities_per_page(entity_type: str, reality_claim: RealityClaim) -> Generato
         reality_claim.entity_id,
         reality_claim.entity_type,
         ReportType.entity,
+        entity_type,
         JobSignature(
             generate_id(
                 ad_account_id=reality_claim.ad_account_id, report_type=ReportType.entity, report_variant=entity_type
@@ -77,6 +79,7 @@ def entities_per_page_post(entity_type: str, reality_claim: RealityClaim) -> Gen
         reality_claim.entity_id,
         reality_claim.entity_type,
         ReportType.entity,
+        entity_type,
         JobSignature(
             generate_id(
                 ad_account_id=reality_claim.ad_account_id,
@@ -96,6 +99,7 @@ def page_entity(reality_claim: RealityClaim) -> Generator[ExpectationClaim, None
         reality_claim.entity_id,
         reality_claim.entity_type,
         ReportType.entity,
+        Entity.Page,
         JobSignature(
             generate_id(
                 ad_account_id=reality_claim.ad_account_id,
@@ -117,6 +121,7 @@ def ad_account_entity(reality_claim: RealityClaim) -> Generator[ExpectationClaim
         reality_claim.entity_id,
         reality_claim.entity_type,
         ReportType.entity,
+        Entity.AdAccount,
         JobSignature(
             generate_id(
                 ad_account_id=reality_claim.ad_account_id,

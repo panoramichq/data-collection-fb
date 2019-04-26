@@ -23,36 +23,36 @@ class ExpectationClaim:
     entity_id: str
     entity_type: str
     report_type: str
+    report_variant: str
     job_signature: JobSignature
 
     ad_account_id: str = None
     timezone: str = None
     entity_hierarchy: EntityNode = None
     range_start: date = None
-    report_variant: str = None
 
     def __init__(
         self,
         entity_id: str,
         entity_type: str,
         report_type: str,
+        report_variant: str,
         job_signature: JobSignature,
         *,
         ad_account_id: str = None,
         timezone: str = None,
         entity_hierarchy: EntityNode = None,
         range_start: date = None,
-        report_variant: str = None,
     ):
         self.entity_id = entity_id
         self.entity_type = entity_type
         self.report_type = report_type
+        self.report_variant = report_variant
         self.job_signature = job_signature
         self.ad_account_id = ad_account_id
         self.timezone = timezone
         self.entity_hierarchy = entity_hierarchy
         self.range_start = range_start
-        self.report_variant = report_variant
 
     def __eq__(self, other):
         return isinstance(other, self.__class__) and self.__dict__ == other.__dict__

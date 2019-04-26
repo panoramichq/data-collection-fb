@@ -28,6 +28,7 @@ def pages_per_scope(reality_claim: RealityClaim) -> Generator[ExpectationClaim, 
         reality_claim.entity_id,
         reality_claim.entity_type,
         ReportType.import_pages,
+        Entity.Page,
         JobSignature(
             generate_id(
                 namespace=config.application.UNIVERSAL_ID_SYSTEM_NAMESPACE,
