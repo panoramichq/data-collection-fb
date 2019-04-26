@@ -13,7 +13,7 @@ from sweep_builder.expectation_builder.expectations_inventory.metrics.lifetime i
 
 
 @patch('sweep_builder.expectation_builder.expectations_inventory.metrics.lifetime.iter_reality_per_ad_account_claim')
-def test_create_daily_entity_trees_not_divisible(mock_iter_reality_per_ad_account):
+def test_lifetime_metrics_per_entity_under_ad_account_not_divisible(mock_iter_reality_per_ad_account):
     reality_claim = RealityClaim(
         ad_account_id='ad-account-id',
         entity_id='ad-account-id',
@@ -51,7 +51,7 @@ def test_create_daily_entity_trees_not_divisible(mock_iter_reality_per_ad_accoun
 
 
 @patch('sweep_builder.expectation_builder.expectations_inventory.metrics.lifetime.iter_reality_per_ad_account_claim')
-def test_create_daily_entity_trees_is_divisible(mock_iter_reality_per_ad_account):
+def test_lifetime_metrics_per_entity_under_ad_account_is_divisible(mock_iter_reality_per_ad_account):
     reality_claim = RealityClaim(
         ad_account_id='ad-account-id',
         entity_id='ad-account-id',
