@@ -51,11 +51,12 @@ def assign_score(claim: ScorableClaim) -> int:
     job_id = claim.selected_job_id
     timezone = claim.timezone
     last_report = claim.last_report
+    report_day = claim.range_start
+    report_type = claim.report_type
+    report_variant = claim.report_variant
+
     # TODO: Avoid parsing ID - all information should be available
     job_id_parts = parse_id_parts(job_id)
-    report_day = job_id_parts.range_start
-    report_type = job_id_parts.report_type
-    report_variant = job_id_parts.report_variant
     entity_type = job_id_parts.entity_type
 
     if job_id_parts.namespace == config.application.UNIVERSAL_ID_SYSTEM_NAMESPACE:
