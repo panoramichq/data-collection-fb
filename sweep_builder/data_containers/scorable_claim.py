@@ -45,3 +45,7 @@ class ScorableClaim:
     @property
     def selected_job_id(self) -> str:
         return self.job_signature.job_id
+
+    @property
+    def is_per_parent_job(self) -> bool:
+        return self.entity_type != self.report_variant

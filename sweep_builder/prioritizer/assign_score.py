@@ -68,8 +68,7 @@ def assign_score(claim: ScorableClaim) -> int:
         return 1000
 
     # if we are here, we have Platform-flavored job
-    is_per_parent_job = bool(report_variant and (not entity_type or entity_type == Entity.PagePost))
-    is_per_page_metrics_job = bool(report_variant and report_variant in Entity.NON_AA_SCOPED)
+    is_per_page_metrics_job = report_variant in Entity.NON_AA_SCOPED
 
     last_progress_dt = None if last_report is None else last_report.last_progress_dt
     last_success_dt = None if last_report is None else last_report.last_success_dt
@@ -78,7 +77,7 @@ def assign_score(claim: ScorableClaim) -> int:
 
     score = 0
 
-    if is_per_parent_job or is_per_page_metrics_job:
+    if claim.is_per_parent_job or is_per_page_metrics_job:
         # yeah, i know, redundant, but keeping it here
         # to allow per-entity_id logic further below to be around
 
