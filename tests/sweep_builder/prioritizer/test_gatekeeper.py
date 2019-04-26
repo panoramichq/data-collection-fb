@@ -8,8 +8,8 @@ from common.tztools import now
 from sweep_builder.prioritizer.assign_score import JobGateKeeper
 
 
-def test_shall_pass_last_success_dt_none_returns_true():
-    assert JobGateKeeper.shall_pass(Mock(), None, None)
+def test_shall_pass_last_success_dt_and_last_progress_dt_none_returns_true():
+    assert JobGateKeeper.shall_pass(Mock(last_report=Mock(last_progress_dt=None, last_success_dt=None)))
 
 
 @pytest.mark.parametrize(
@@ -29,34 +29,39 @@ def test_shall_pass_last_success_dt_none_returns_true():
 )
 def test_shall_pass_range_end_less_than_seven_days_true(range_start_delta, last_success_delta, expected):
     """Check range_start now - delta and last_success now - delta returns expected."""
-    parts = Mock(range_end=None, range_start=(now() - range_start_delta).date())
+    last_report = Mock(last_success_dt=now() - last_success_delta, last_progress_dt=None)
+    claim = Mock(last_report=last_report, range_start=(now() - range_start_delta).date(), range_end=None)
 
-    assert expected == JobGateKeeper.shall_pass(parts, now() - last_success_delta, None)
+    assert expected == JobGateKeeper.shall_pass(claim)
 
 
 @pytest.mark.parametrize(['last_success_delta', 'expected'], [(timedelta(hours=7), True), (timedelta(hours=5), False)])
 def test_shall_pass_lifetime_report_type(last_success_delta, expected):
     """Check behaviour for lifetime report type"""
-    parts = Mock(range_start=None, range_end=None, report_type=ReportType.lifetime)
+    last_report = Mock(last_success_dt=now() - last_success_delta, last_progress_dt=None)
+    claim = Mock(last_report=last_report, range_start=None, range_end=None, report_type=ReportType.lifetime)
 
-    assert expected == JobGateKeeper.shall_pass(parts, now() - last_success_delta, None)
+    assert expected == JobGateKeeper.shall_pass(claim)
 
 
 @pytest.mark.parametrize(['last_success_delta', 'expected'], [(timedelta(hours=3), True), (timedelta(hours=1), False)])
 def test_shall_pass_entity_report_type(last_success_delta, expected):
     """Check behaviour for entity report type"""
-    parts = Mock(range_start=None, range_end=None, report_type=ReportType.entity)
+    last_report = Mock(last_success_dt=now() - last_success_delta, last_progress_dt=None)
+    parts = Mock(range_start=None, range_end=None, report_type=ReportType.entity, last_report=last_report)
 
-    assert expected == JobGateKeeper.shall_pass(parts, now() - last_success_delta, None)
+    assert expected == JobGateKeeper.shall_pass(parts)
 
 
 def test_shall_pass_progress_reported_recently():
-    parts = Mock(range_start=None, range_end=None, report_type=ReportType.entity)
+    last_report = Mock(last_success_dt=None, last_progress_dt=now() - timedelta(minutes=3))
+    claim = Mock(range_start=None, range_end=None, report_type=ReportType.entity, last_report=last_report)
 
-    assert JobGateKeeper.shall_pass(parts, None, now() - timedelta(minutes=3)) is False
+    assert JobGateKeeper.shall_pass(claim) is False
 
 
 def test_shall_pass_progress_reported_long_ago():
-    parts = Mock(range_start=None, range_end=None, report_type=ReportType.entity)
+    last_report = Mock(last_success_dt=None, last_progress_dt=now() - timedelta(minutes=10))
+    parts = Mock(range_start=None, range_end=None, report_type=ReportType.entity, last_report=last_report)
 
-    assert JobGateKeeper.shall_pass(parts, None, now() - timedelta(minutes=10)) is True
+    assert JobGateKeeper.shall_pass(parts) is True
