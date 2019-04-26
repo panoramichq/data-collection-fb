@@ -1,3 +1,4 @@
+from datetime import date
 from typing import Optional
 
 from common.job_signature import JobSignature
@@ -15,6 +16,7 @@ class ScorableClaim:
 
     ad_account_id: Optional[str]
     timezone: Optional[str]
+    range_start: date = None
     report_variant: str
 
     def __init__(
@@ -28,6 +30,7 @@ class ScorableClaim:
         *,
         ad_account_id: str = None,
         timezone: str = None,
+        range_start: date = None,
     ):
         self.entity_id = entity_id
         self.entity_type = entity_type
@@ -37,6 +40,7 @@ class ScorableClaim:
         self.last_report = last_report
         self.ad_account_id = ad_account_id
         self.timezone = timezone
+        self.range_start = range_start
 
     @property
     def selected_job_id(self) -> str:

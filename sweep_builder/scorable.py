@@ -83,6 +83,7 @@ def generate_scorable(claim: ExpectationClaim) -> Generator[ScorableClaim, None,
             last_report,
             ad_account_id=claim.ad_account_id,
             timezone=claim.timezone,
+            range_start=claim.range_start,
         )
         return
 
