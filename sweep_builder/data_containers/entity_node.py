@@ -1,4 +1,4 @@
-from typing import Dict, Tuple, Iterable, Optional
+from typing import Dict, Tuple, Iterable, Optional, List
 
 from common.enums.entity import Entity
 
@@ -9,9 +9,11 @@ class EntityNode:
     entity_type: str
     _children: Dict[str, 'EntityNode'] = None
 
-    def __init__(self, entity_id: str, entity_type: str):
+    def __init__(self, entity_id: str, entity_type: str, children: List['EntityNode'] = None):
         self.entity_id = entity_id
         self.entity_type = entity_type
+        if children is not None:
+            self._children = {child.entity_id: child for child in children}
 
     @property
     def children(self) -> Iterable['EntityNode']:
@@ -45,3 +47,13 @@ class EntityNode:
                 insert_node.add_node(EntityNode(path_entity_id, Entity.next_level(insert_node.entity_type)))
             insert_node = insert_node.get_child(path_entity_id)
         insert_node.add_node(node)
+
+    def __eq__(self, other):
+        return isinstance(other, EntityNode) and all([
+            other.entity_id == self.entity_id,
+            other.entity_type == self.entity_type,
+            other._children == other._children,
+        ])
+
+    def __repr__(self):
+        return f'<{self.__class__.__name__} {self.__dict__}>'

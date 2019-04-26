@@ -105,9 +105,8 @@ def day_metrics_per_entity_under_ad_account(
         range_start, range_end = _determine_active_date_range_for_claim(child_claim)
         for day in date_range(range_start, range_end):
             is_dividing_possible = is_dividing_possible and child_claim.all_parent_ids_set
-            if is_dividing_possible:
-                new_node = EntityNode(child_claim.entity_id, child_claim.entity_type)
-                date_map[day].add_node(new_node, path=child_claim.parent_entity_ids)
+            new_node = EntityNode(child_claim.entity_id, child_claim.entity_type)
+            date_map[day].add_node(new_node, path=child_claim.parent_entity_ids)
 
     logger.warning(
         f'[dividing-possible] Ad Account {reality_claim.ad_account_id} Dividing possible: {is_dividing_possible}'
