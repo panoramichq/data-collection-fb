@@ -53,7 +53,6 @@ def assign_score(claim: ScorableClaim) -> int:
     last_report = claim.last_report
     # TODO: Avoid parsing ID - all information should be available
     job_id_parts = parse_id_parts(job_id)
-    ad_account_id = job_id_parts.ad_account_id
     report_day = job_id_parts.range_start
     report_type = job_id_parts.report_type
     report_variant = job_id_parts.report_variant
