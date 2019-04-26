@@ -49,11 +49,13 @@ class EntityNode:
         insert_node.add_node(node)
 
     def __eq__(self, other):
-        return isinstance(other, EntityNode) and all([
-            other.entity_id == self.entity_id,
-            other.entity_type == self.entity_type,
-            other._children == other._children,
-        ])
+        return isinstance(other, EntityNode) and all(
+            [
+                other.entity_id == self.entity_id,
+                other.entity_type == self.entity_type,
+                other._children == other._children,
+            ]
+        )
 
     def __repr__(self):
         return f'<{self.__class__.__name__} {self.__dict__}>'

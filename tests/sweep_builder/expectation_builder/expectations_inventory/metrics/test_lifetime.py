@@ -1,4 +1,4 @@
-from datetime import datetime, date
+from datetime import datetime
 from unittest.mock import patch
 
 from common.enums.entity import Entity
@@ -7,8 +7,9 @@ from common.job_signature import JobSignature
 from sweep_builder.data_containers.entity_node import EntityNode
 from sweep_builder.data_containers.expectation_claim import ExpectationClaim
 from sweep_builder.data_containers.reality_claim import RealityClaim
-from sweep_builder.expectation_builder.expectations_inventory.metrics.lifetime import \
-    lifetime_metrics_per_entity_under_ad_account
+from sweep_builder.expectation_builder.expectations_inventory.metrics.lifetime import (
+    lifetime_metrics_per_entity_under_ad_account,
+)
 
 
 @patch('sweep_builder.expectation_builder.expectations_inventory.metrics.lifetime.iter_reality_per_ad_account_claim')
@@ -45,7 +46,7 @@ def test_create_daily_entity_trees_not_divisible(mock_iter_reality_per_ad_accoun
             ad_account_id='ad-account-id',
             timezone='America/Los_Angeles',
             report_variant=Entity.Ad,
-        ),
+        )
     ]
 
 
