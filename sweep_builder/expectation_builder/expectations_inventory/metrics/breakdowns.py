@@ -10,7 +10,6 @@ from common.enums.reporttype import ReportType
 from common.id_tools import generate_id
 from common.job_signature import JobSignature
 from common.tztools import now_in_tz, date_range
-from common.util import total_size
 from sweep_builder.data_containers.entity_node import EntityNode
 from sweep_builder.data_containers.expectation_claim import ExpectationClaim
 from sweep_builder.data_containers.reality_claim import RealityClaim
