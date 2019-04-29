@@ -57,7 +57,7 @@ class RealityClaim:
         return self.__dict__.copy()
 
     @property
-    def is_divisible(self) -> bool:
+    def all_parent_ids_set(self) -> bool:
         return all(id_ is not None for id_ in self.parent_entity_ids)
 
     @property
