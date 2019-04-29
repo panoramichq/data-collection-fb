@@ -10,6 +10,7 @@ from common.enums.reporttype import ReportType
 from common.id_tools import generate_id
 from common.job_signature import JobSignature
 from common.tztools import now_in_tz, date_range
+from common.util import total_size
 from sweep_builder.data_containers.entity_node import EntityNode
 from sweep_builder.data_containers.expectation_claim import ExpectationClaim
 from sweep_builder.data_containers.reality_claim import RealityClaim
@@ -111,6 +112,9 @@ def day_metrics_per_entity_under_ad_account(
     logger.warning(
         f'[dividing-possible] Ad Account {reality_claim.ad_account_id} Dividing possible: {is_dividing_possible}'
     )
+
+    date_map_size = total_size(date_map)
+    logger.warning(f'[date-map-size] Ad Account {reality_claim.ad_account_id} Size of date_map: {date_map_size}')
 
     for (day, entity_node) in date_map.items():
         for report_type in report_types:
