@@ -3,7 +3,7 @@ import logging
 
 from collections import defaultdict
 from datetime import date, timedelta
-from typing import Generator, List, Tuple, Dict, Set
+from typing import Generator, List, Tuple, Dict
 
 from common.enums.entity import Entity
 from common.enums.reporttype import ReportType
@@ -98,7 +98,7 @@ def day_metrics_per_entity_under_ad_account(
     #     lambda: EntityNode(reality_claim.entity_id, reality_claim.entity_type)
     # )
 
-    active_entity_ids_by_day: Dict[date, Set[str]] = defaultdict(lambda: set())
+    active_entity_ids_by_day: Dict[date, List[str]] = defaultdict(lambda: list())
 
     entity_parent_ids: Dict[str, Tuple[str, ...]] = dict()
 
@@ -113,7 +113,7 @@ def day_metrics_per_entity_under_ad_account(
             # new_node = EntityNode(child_claim.entity_id, child_claim.entity_type)
             # date_map[day].add_node(new_node, path=child_claim.parent_entity_ids)
             entity_parent_ids[child_claim.entity_id] = child_claim.parent_entity_ids
-            active_entity_ids_by_day[day].add(child_claim.entity_id)
+            active_entity_ids_by_day[day].append(child_claim.entity_id)
 
     logger.warning(
         f'[dividing-possible] Ad Account {reality_claim.ad_account_id} Dividing possible: {is_dividing_possible}'
