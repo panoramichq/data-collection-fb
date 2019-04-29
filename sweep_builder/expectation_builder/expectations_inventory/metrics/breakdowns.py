@@ -98,7 +98,7 @@ def day_metrics_per_entity_under_ad_account(
     #     lambda: EntityNode(reality_claim.entity_id, reality_claim.entity_type)
     # )
 
-    active_entity_ids_by_day: Dict[date, List[str]] = defaultdict(lambda: [])
+    active_entity_ids_by_day: Dict[date, List[str]] = defaultdict(list)
 
     entity_parent_ids: Dict[str, Tuple[str, ...]] = {}
 
