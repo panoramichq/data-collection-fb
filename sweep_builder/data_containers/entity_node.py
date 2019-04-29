@@ -8,13 +8,14 @@ class EntityNode:
 
     entity_id: str
     entity_type: str
-    _children: Dict[str, 'EntityNode'] = None
+    _children: Optional[Dict[str, 'EntityNode']]
+
+    __slots__ = ['entity_id', 'entity_type', '_children']
 
     def __init__(self, entity_id: str, entity_type: str, children: List['EntityNode'] = None):
         self.entity_id = entity_id
         self.entity_type = entity_type
-        if children is not None:
-            self._children = {child.entity_id: child for child in children}
+        self._children = None if children is None else {child.entity_id: child for child in children}
 
     @property
     def children(self) -> Iterable['EntityNode']:
