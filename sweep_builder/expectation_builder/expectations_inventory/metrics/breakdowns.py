@@ -1,6 +1,6 @@
 import functools
 import logging
-
+from pympler import asizeof
 from collections import defaultdict
 from datetime import date, timedelta
 from typing import Generator, List, Tuple, Dict
@@ -115,6 +115,11 @@ def day_metrics_per_entity_under_ad_account(
 
     date_map_size = total_size(date_map)
     logger.warning(f'[date-map-size] Ad Account {reality_claim.ad_account_id} Size of date_map: {date_map_size}')
+    # Trying pympler lib to get the size.
+    logger.warning(
+        f'[date-map-size][pympler] Ad Account {reality_claim.ad_account_id} '
+        f'Size of date_map: {asizeof.asizeof(date_map)}'
+    )
 
     for (day, entity_node) in date_map.items():
         for report_type in report_types:

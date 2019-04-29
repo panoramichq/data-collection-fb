@@ -7,3 +7,4 @@ ujson==1.35
 xxhash==1.0.1
 datadog==0.19.0
 bugsnag==3.4.2
+pympler==0.7
