@@ -1,5 +1,9 @@
 import re
 
+from sys import getsizeof
+from itertools import chain
+from collections import deque
+
 from typing import Match
 from facebook_business.exceptions import FacebookError
 
@@ -30,3 +34,28 @@ def redact_access_token(e: Exception) -> Exception:
         return e
     e.args = (redact_access_token_from_str(str(e.args[0])),)
     return e
+
+
+def total_size(o):
+    """Returns the approximate memory footprint an object and all of its contents."""
+
+    def dict_handler(d):
+        return chain.from_iterable(d.items())
+
+    all_handlers = {tuple: iter, list: iter, deque: iter, dict: dict_handler, set: iter, frozenset: iter}
+    seen = set()
+    default_size = getsizeof(0)
+
+    def sizeof(o):
+        if id(o) in seen:
+            return 0
+        seen.add(id(o))
+        s = getsizeof(o, default_size)
+
+        for typ, handler in all_handlers.items():
+            if isinstance(o, typ):
+                s += sum(map(sizeof, handler(o)))
+                break
+        return s
+
+    return sizeof(o)
