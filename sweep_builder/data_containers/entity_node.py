@@ -1,3 +1,4 @@
+import sys
 from typing import Dict, Tuple, Iterable, Optional, List
 
 from common.enums.entity import Entity
@@ -59,3 +60,6 @@ class EntityNode:
 
     def __repr__(self):
         return f'<{self.__class__.__name__} {self.__dict__}>'
+
+    def __sizeof__(self):
+        return sys.getsizeof(self.entity_id) + sys.getsizeof(self.entity_type) + sys.getsizeof(self._children)
