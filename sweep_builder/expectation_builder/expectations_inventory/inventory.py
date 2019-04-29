@@ -4,17 +4,17 @@ require these reports and to report task implementations effectively fulfilling
 the normative report requirement.
 """
 import functools
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 from config import jobs as jobs_config
 from common.enums.entity import Entity
 from common.enums.reporttype import ReportType
 from sweep_builder.expectation_builder.expectations_inventory.metrics.breakdowns import (
-    metrics_per_ad_per_ad_account,
     day_metrics_per_ad_per_entity,
     hour_metrics_per_ad_per_entity,
     day_platform_metrics_per_ad_per_entity,
     day_age_gender_metrics_per_ad_per_entity,
+    day_metrics_per_ads_under_ad_account,
 )
 from sweep_builder.expectation_builder.expectations_inventory.metrics.lifetime import (
     lifetime_metrics_per_ads_under_ad_account,
@@ -46,7 +46,7 @@ from sweep_builder.expectation_builder.expectations_inventory.entities import (
 # map of source / trigger entity type to
 # a list of generator functions each of which, given RealityClaim instance
 # generate one or more ExpectationClaim objects
-entity_expectation_generator_map: Dict[str, List[Optional[ExpectationGeneratorType]]] = {
+entity_expectation_generator_map: Dict[str, List[ExpectationGeneratorType]] = {
     Entity.Scope: list(
         filter(
             None,
@@ -73,7 +73,7 @@ entity_expectation_generator_map: Dict[str, List[Optional[ExpectationGeneratorTy
                 None if jobs_config.INSIGHTS_LIFETIME_AS_DISABLED else lifetime_metrics_per_adsets_under_ad_account,
                 None if jobs_config.INSIGHTS_LIFETIME_A_DISABLED else lifetime_metrics_per_ads_under_ad_account,
                 functools.partial(
-                    metrics_per_ad_per_ad_account,
+                    day_metrics_per_ads_under_ad_account,
                     list(
                         filter(
                             None,
