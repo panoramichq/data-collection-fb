@@ -65,7 +65,7 @@ def process_celery_worker_command(command_line_values):
     celery_worker_args = [
         'worker',
         '--pool=gevent',
-        '--autoscale=1000,30',
+        '--autoscale=100,30',
         # Had an unfortunate occasion of bringing
         # a Redis instance to near-death with large
         # amount of network IO when these were on
