@@ -1,5 +1,6 @@
 import functools
 import logging
+import sys
 
 from collections import defaultdict
 from datetime import date, timedelta
@@ -111,6 +112,9 @@ def day_metrics_per_entity_under_ad_account(
     logger.warning(
         f'[dividing-possible] Ad Account {reality_claim.ad_account_id} Dividing possible: {is_dividing_possible}'
     )
+
+    date_map_size = sys.getsizeof(date_map)
+    logger.warning(f'[date-map-size] Ad Account {reality_claim.ad_account_id} Size of date_map: {date_map_size}')
 
     for (day, entity_node) in date_map.items():
         for report_type in report_types:
