@@ -100,7 +100,7 @@ def day_metrics_per_entity_under_ad_account(
 
     active_entity_ids_by_day: Dict[date, List[str]] = defaultdict(lambda: [])
 
-    entity_parent_ids: Dict[str, Tuple[str, ...]] = dict()
+    entity_parent_ids: Dict[str, Tuple[str, ...]] = {}
 
     # TODO: Remove once all entities have parent ids
     # Divide tasks only if parent levels are defined for all ads
