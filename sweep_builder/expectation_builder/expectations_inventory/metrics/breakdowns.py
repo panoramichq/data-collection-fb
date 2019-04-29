@@ -1,6 +1,6 @@
 import functools
 import logging
-
+from pympler import asizeof
 from collections import defaultdict
 from datetime import date, timedelta
 from typing import Generator, List, Tuple, Dict
@@ -120,9 +120,9 @@ def day_metrics_per_entity_under_ad_account(
     )
 
     logger.warning(
-        f'[date-map-size] Ad Account {reality_claim.ad_account_id} '
-        f'Size of active_entity_ids_by_day: {total_size(active_entity_ids_by_day)} '
-        f'Size of entity_parent_ids: {total_size(entity_parent_ids)}'
+        f'[date-map-size][pympler] Ad Account {reality_claim.ad_account_id} '
+        f'Size of active_entity_ids_by_day: {asizeof.asizeof(active_entity_ids_by_day)} '
+        f'Size of entity_parent_ids: {asizeof.asizeof(entity_parent_ids)}'
     )
 
     for (day, active_entity_ids) in active_entity_ids_by_day.items():
