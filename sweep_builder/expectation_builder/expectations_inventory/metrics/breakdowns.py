@@ -10,7 +10,6 @@ from common.enums.reporttype import ReportType
 from common.id_tools import generate_id
 from common.job_signature import JobSignature
 from common.tztools import now_in_tz, date_range
-from common.util import total_size
 from sweep_builder.data_containers.entity_node import EntityNode
 from sweep_builder.data_containers.expectation_claim import ExpectationClaim
 from sweep_builder.data_containers.reality_claim import RealityClaim
@@ -94,9 +93,13 @@ def day_metrics_per_entity_under_ad_account(
     if not report_types or not reality_claim.timezone:
         return
 
-    date_map: Dict[date, EntityNode] = defaultdict(
-        lambda: EntityNode(reality_claim.entity_id, reality_claim.entity_type)
-    )
+    # date_map: Dict[date, EntityNode] = defaultdict(
+    #     lambda: EntityNode(reality_claim.entity_id, reality_claim.entity_type)
+    # )
+
+    active_entity_ids_by_day: Dict[date, List[str]] = defaultdict(list)
+
+    entity_parent_ids: Dict[str, Tuple[str, ...]] = {}
 
     # TODO: Remove once all entities have parent ids
     # Divide tasks only if parent levels are defined for all ads
@@ -106,22 +109,28 @@ def day_metrics_per_entity_under_ad_account(
         range_start, range_end = _determine_active_date_range_for_claim(child_claim)
         for day in date_range(range_start, range_end):
             is_dividing_possible = is_dividing_possible and child_claim.all_parent_ids_set
-            new_node = EntityNode(child_claim.entity_id, child_claim.entity_type)
-            date_map[day].add_node(new_node, path=child_claim.parent_entity_ids)
+            # new_node = EntityNode(child_claim.entity_id, child_claim.entity_type)
+            # date_map[day].add_node(new_node, path=child_claim.parent_entity_ids)
+            entity_parent_ids[child_claim.entity_id] = child_claim.parent_entity_ids
+            active_entity_ids_by_day[day].append(child_claim.entity_id)
 
     logger.warning(
         f'[dividing-possible] Ad Account {reality_claim.ad_account_id} Dividing possible: {is_dividing_possible}'
     )
 
-    date_map_size = total_size(date_map)
-    logger.warning(f'[date-map-size] Ad Account {reality_claim.ad_account_id} Size of date_map: {date_map_size}')
-    # Trying pympler lib to get the size.
     logger.warning(
         f'[date-map-size][pympler] Ad Account {reality_claim.ad_account_id} '
-        f'Size of date_map: {asizeof.asizeof(date_map)}'
+        f'Size of active_entity_ids_by_day: {asizeof.asizeof(active_entity_ids_by_day)} '
+        f'Size of entity_parent_ids: {asizeof.asizeof(entity_parent_ids)}'
     )
 
-    for (day, entity_node) in date_map.items():
+    for (day, active_entity_ids) in active_entity_ids_by_day.items():
+        ad_account_node = EntityNode(reality_claim.entity_id, reality_claim.entity_type)
+        for entity_id in active_entity_ids:
+            parent_ids = entity_parent_ids[entity_id]
+            new_node = EntityNode(entity_id, entity_type)
+            ad_account_node.add_node(new_node, path=parent_ids)
+
         for report_type in report_types:
             yield ExpectationClaim(
                 reality_claim.entity_id,
@@ -137,7 +146,7 @@ def day_metrics_per_entity_under_ad_account(
                 ),
                 ad_account_id=reality_claim.ad_account_id,
                 timezone=reality_claim.timezone,
-                entity_hierarchy=entity_node if is_dividing_possible else None,
+                entity_hierarchy=ad_account_node if is_dividing_possible else None,
                 range_start=day,
                 report_variant=entity_type,
             )
