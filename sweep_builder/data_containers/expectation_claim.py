@@ -21,15 +21,24 @@ class ExpectationClaim:
     """
 
     entity_id: str
+    """ID of entity the report is created for."""
     entity_type: str
+    """Type of entity the report is created for."""
     report_type: str
+    """Type of report (breakdown type, lifetime, entity collection)."""
     report_variant: str
+    """Type of entity the report is reporting on (level in Marketing API)."""
     job_signature: JobSignature
+    """Job signature that represents the celery task."""
 
     ad_account_id: str = None
+    """ID of ad account."""
     timezone: str = None
+    """Timezone of the ad account."""
     entity_hierarchy: EntityNode = None
+    """Used for breaking down tasks into smaller tasks when report size too large."""
     range_start: date = None
+    """Date the report is created for."""
 
     def __init__(
         self,
