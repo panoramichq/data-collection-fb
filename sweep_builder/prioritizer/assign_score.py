@@ -48,23 +48,13 @@ def get_minutes_away_from_whole_hour() -> int:
 @Measure.timer(__name__, function_name_as_metric=True, extract_tags_from_arguments=_extract_tags_from_claim)
 def assign_score(claim: ScorableClaim) -> int:
     """Calculate score for a given job."""
-    job_id = claim.selected_job_id
     timezone = claim.timezone
     last_report = claim.last_report
     report_day = claim.range_start
     report_type = claim.report_type
     report_variant = claim.report_variant
 
-    # TODO: entity_type is on claim but not on job id
-    job_id_parts = parse_id_parts(job_id)
-    entity_type = job_id_parts.entity_type
-
-    if job_id_parts.namespace == config.application.UNIVERSAL_ID_SYSTEM_NAMESPACE:
-        # some system worker. must run on every sweep usually
-        # give it highest score to give it a good chance.
-        return 1000
-
-    if job_id_parts.report_type in ReportType.MUST_RUN_EVERY_SWEEP:
+    if claim.report_type in ReportType.MUST_RUN_EVERY_SWEEP:
         return 1000
 
     # if we are here, we have Platform-flavored job
@@ -135,11 +125,6 @@ def assign_score(claim: ScorableClaim) -> int:
                 score += 5
 
     else:
-        if entity_type in [Entity.AdAccount, Entity.Page]:
-            # This is an ad account sync job, let's rank it a bit higher as
-            # these updates ar quite important
-            score += 100
-
         # per entity_id
         # this is not used now, but is left for reuse when we unleash per-entity_id jobs
         # onto this code again. Must be revisited
