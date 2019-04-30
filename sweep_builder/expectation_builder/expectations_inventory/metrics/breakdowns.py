@@ -1,6 +1,5 @@
 import functools
 import logging
-from pympler import asizeof
 from collections import defaultdict
 from datetime import date, timedelta
 from typing import Generator, List, Tuple, Dict
