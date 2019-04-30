@@ -1,13 +1,10 @@
 import logging
 from typing import Dict
 
-import config.application
-
 from common.enums.entity import Entity
 
 from common.enums.failure_bucket import FailureBucket
 from common.enums.reporttype import ReportType
-from common.id_tools import parse_id_parts
 from common.measurement import Measure
 from common.tztools import now_in_tz, now
 from common.math import adapt_decay_rate_to_population, get_decay_proportion, get_fade_in_proportion
