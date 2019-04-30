@@ -51,12 +51,7 @@ def day_metrics_per_entity_under_ad_account(
     if not report_types or not reality_claim.timezone:
         return
 
-    # date_map: Dict[date, EntityNode] = defaultdict(
-    #     lambda: EntityNode(reality_claim.entity_id, reality_claim.entity_type)
-    # )
-
     active_entity_ids_by_day: Dict[date, List[str]] = defaultdict(list)
-
     entity_parent_ids: Dict[str, Tuple[str, ...]] = {}
 
     # TODO: Remove once all entities have parent ids
@@ -67,19 +62,11 @@ def day_metrics_per_entity_under_ad_account(
         range_start, range_end = _determine_active_date_range_for_claim(child_claim)
         for day in date_range(range_start, range_end):
             is_dividing_possible = is_dividing_possible and child_claim.all_parent_ids_set
-            # new_node = EntityNode(child_claim.entity_id, child_claim.entity_type)
-            # date_map[day].add_node(new_node, path=child_claim.parent_entity_ids)
             entity_parent_ids[child_claim.entity_id] = child_claim.parent_entity_ids
             active_entity_ids_by_day[day].append(child_claim.entity_id)
 
     logger.warning(
         f'[dividing-possible] Ad Account {reality_claim.ad_account_id} Dividing possible: {is_dividing_possible}'
-    )
-
-    logger.warning(
-        f'[date-map-size][pympler] Ad Account {reality_claim.ad_account_id} '
-        f'Size of active_entity_ids_by_day: {asizeof.asizeof(active_entity_ids_by_day)} '
-        f'Size of entity_parent_ids: {asizeof.asizeof(entity_parent_ids)}'
     )
 
     for (day, active_entity_ids) in active_entity_ids_by_day.items():
