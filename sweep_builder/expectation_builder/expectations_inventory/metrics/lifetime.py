@@ -17,6 +17,41 @@ from sweep_builder.types import ExpectationGeneratorType
 logger = logging.getLogger(__name__)
 
 
+def lifetime_metrics_per_ads_under_ad_account(reality_claim: RealityClaim) -> Generator[ExpectationClaim, None, None]:
+    """Generate ad-account level expectation claims for lifetime."""
+    if not reality_claim.timezone:
+        return
+
+    # TODO: Remove once all entities have parent ids
+    # Divide tasks only if parent levels are defined for all ads
+    is_dividing_possible = True
+
+    root_node = EntityNode(reality_claim.entity_id, reality_claim.entity_type)
+    for child_claim in iter_reality_per_ad_account_claim(reality_claim, entity_types=[Entity.Ad]):
+        is_dividing_possible = is_dividing_possible and child_claim.all_parent_ids_set
+        new_node = EntityNode(child_claim.adset_id, child_claim.entity_type)
+        root_node.add_node(new_node, path=(child_claim.campaign_id,))
+
+    logger.warning(
+        f'[dividing-possible] Ad Account {reality_claim.ad_account_id} Dividing possible: {is_dividing_possible}'
+    )
+
+    yield ExpectationClaim(
+        reality_claim.entity_id,
+        reality_claim.entity_type,
+        ReportType.lifetime,
+        Entity.Ad,
+        JobSignature(
+            generate_id(
+                ad_account_id=reality_claim.ad_account_id, report_type=ReportType.lifetime, report_variant=Entity.Ad
+            )
+        ),
+        ad_account_id=reality_claim.ad_account_id,
+        entity_hierarchy=root_node if is_dividing_possible else None,
+        timezone=reality_claim.timezone,
+    )
+
+
 def lifetime_metrics_per_entity_under_ad_account(
     entity_type: str, reality_claim: RealityClaim
 ) -> Generator[ExpectationClaim, None, None]:
@@ -77,7 +112,6 @@ def lifetime_page_metrics_per_entity(
     )
 
 
-lifetime_metrics_per_ads_under_ad_account = functools.partial(lifetime_metrics_per_entity_under_ad_account, Entity.Ad)
 lifetime_metrics_per_adsets_under_ad_account = functools.partial(
     lifetime_metrics_per_entity_under_ad_account, Entity.AdSet
 )

@@ -1,8 +1,7 @@
-import functools
 import logging
 from collections import defaultdict
 from datetime import date, timedelta
-from typing import Generator, List, Tuple, Dict
+from typing import Generator, List, Tuple, Dict, Set
 
 from common.enums.entity import Entity
 from common.id_tools import generate_id
@@ -12,7 +11,6 @@ from sweep_builder.data_containers.entity_node import EntityNode
 from sweep_builder.data_containers.expectation_claim import ExpectationClaim
 from sweep_builder.data_containers.reality_claim import RealityClaim
 from sweep_builder.reality_inferrer.reality import iter_reality_per_ad_account_claim
-from sweep_builder.types import ExpectationGeneratorType
 
 logger = logging.getLogger(__name__)
 
@@ -43,50 +41,50 @@ def _determine_active_date_range_for_claim(reality_claim: RealityClaim) -> Tuple
     return range_start, range_end
 
 
-def day_metrics_per_entity_under_ad_account(
-    entity_type: str, report_types: List[str], reality_claim: RealityClaim
+def day_metrics_per_ads_under_ad_account(
+    report_types: List[str], reality_claim: RealityClaim
 ) -> Generator[ExpectationClaim, None, None]:
     """Generate ad-account level expectation claims for every day."""
     if not report_types or not reality_claim.timezone:
         return
 
-    active_entity_ids_by_day: Dict[date, List[str]] = defaultdict(list)
-    entity_parent_ids: Dict[str, Tuple[str, ...]] = {}
+    active_adset_ids_by_day: Dict[date, Set[str]] = defaultdict(set)
+    adset_campaigns: Dict[str, str] = {}
 
     # TODO: Remove once all entities have parent ids
     # Divide tasks only if parent levels are defined for all ads
     is_dividing_possible = True
 
-    for child_claim in iter_reality_per_ad_account_claim(reality_claim, entity_types=[entity_type]):
+    for child_claim in iter_reality_per_ad_account_claim(reality_claim, entity_types=[Entity.Ad]):
         range_start, range_end = _determine_active_date_range_for_claim(child_claim)
         for day in date_range(range_start, range_end):
             is_dividing_possible = is_dividing_possible and child_claim.all_parent_ids_set
-            entity_parent_ids[child_claim.entity_id] = child_claim.parent_entity_ids
-            active_entity_ids_by_day[day].append(child_claim.entity_id)
+            adset_campaigns[child_claim.adset_id] = child_claim.campaign_id
+            active_adset_ids_by_day[day].add(child_claim.adset_id)
 
     logger.warning(
         f'[dividing-possible] Ad Account {reality_claim.ad_account_id} Dividing possible: {is_dividing_possible}'
     )
 
-    for (day, active_entity_ids) in active_entity_ids_by_day.items():
+    for (day, active_adset_ids) in active_adset_ids_by_day.items():
         ad_account_node = EntityNode(reality_claim.entity_id, reality_claim.entity_type)
-        for entity_id in active_entity_ids:
-            parent_ids = entity_parent_ids[entity_id]
-            new_node = EntityNode(entity_id, entity_type)
-            ad_account_node.add_node(new_node, path=parent_ids)
+        for adset_id in active_adset_ids:
+            campaign_id = adset_campaigns[adset_id]
+            new_node = EntityNode(adset_id, Entity.AdSet)
+            ad_account_node.add_node(new_node, path=(campaign_id,))
 
         for report_type in report_types:
             yield ExpectationClaim(
                 reality_claim.entity_id,
                 reality_claim.entity_type,
                 report_type,
-                entity_type,
+                Entity.Ad,
                 JobSignature(
                     generate_id(
                         ad_account_id=reality_claim.ad_account_id,
                         range_start=day,
                         report_type=report_type,
-                        report_variant=entity_type,
+                        report_variant=Entity.Ad,
                     )
                 ),
                 ad_account_id=reality_claim.ad_account_id,
@@ -94,8 +92,3 @@ def day_metrics_per_entity_under_ad_account(
                 entity_hierarchy=ad_account_node if is_dividing_possible else None,
                 range_start=day,
             )
-
-
-day_metrics_per_ads_under_ad_account: ExpectationGeneratorType = functools.partial(
-    day_metrics_per_entity_under_ad_account, Entity.Ad
-)
