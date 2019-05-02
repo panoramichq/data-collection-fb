@@ -96,7 +96,7 @@ def report_job_status(stage_id: int, job_scope: JobScope):
         ]
 
     if actions:
-        logger.warning(
+        logger.info(
             f'[job-status][{job_scope.sweep_id}] Job "{job_scope.job_id}" '
             f'at stage "{stage_id}" with actions {actions}'
         )
