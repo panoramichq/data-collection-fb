@@ -123,11 +123,6 @@ def _job_scope_to_metadata(job_scope: JobScope) -> Dict[str, str]:
     because for all code starting with S3 the difference is irrelevant and all data
     looks like it's "normative."
     """
-    if job_scope.ad_account_id == '23845179':
-        # We download campaign/adset entity but report on variant
-        entity_type = job_scope.report_variant
-    else:
-        entity_type = job_scope.entity_type or job_scope.report_variant
     return {
         key: value
         for key, value in {
@@ -141,7 +136,7 @@ def _job_scope_to_metadata(job_scope: JobScope) -> Dict[str, str]:
             'platform': job_scope.namespace,
             'ad_account_id': job_scope.ad_account_id,
             'report_type': job_scope.report_type,
-            'entity_type': entity_type,
+            'entity_type': job_scope.report_variant,
             # TODO: communicate this with JobScope somewhere
             # so that when we have requests done in multiple versions
             # we communicate the right one.

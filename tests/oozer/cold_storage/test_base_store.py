@@ -271,6 +271,7 @@ def test__job_scope_to_metadata():
         ad_account_id='007',
         report_type='report type',
         entity_type=Entity.Campaign,
+        report_variant=Entity.Ad,
         range_start=datetime.fromtimestamp(1),
         score=10,
     )
@@ -281,10 +282,10 @@ def test__job_scope_to_metadata():
     result.pop('build_id')
 
     assert {
-        'job_id': 'fb|007|C||report+type||1970-01-01T00%3A00%3A01',
+        'job_id': 'fb|007|C||report+type|A|1970-01-01T00%3A00%3A01',
         'ad_account_id': '007',
         'report_type': 'report type',
-        'entity_type': 'C',
+        'entity_type': 'A',
         'platform_api_version': 'v3.1',
         'platform': 'fb',
         'score': '10',
