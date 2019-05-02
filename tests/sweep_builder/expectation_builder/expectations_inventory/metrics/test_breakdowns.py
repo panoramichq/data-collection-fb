@@ -8,7 +8,7 @@ from sweep_builder.data_containers.entity_node import EntityNode
 from sweep_builder.data_containers.expectation_claim import ExpectationClaim
 from sweep_builder.data_containers.reality_claim import RealityClaim
 from sweep_builder.expectation_builder.expectations_inventory.metrics.breakdowns import (
-    day_metrics_per_entity_under_ad_account,
+    day_metrics_per_ads_under_ad_account,
 )
 
 
@@ -35,7 +35,7 @@ def test_day_metrics_per_entity_under_ad_account_not_divisible(mock_iter_reality
         ),
     ]
 
-    result = list(day_metrics_per_entity_under_ad_account(Entity.Ad, [ReportType.day], reality_claim))
+    result = list(day_metrics_per_ads_under_ad_account([ReportType.day], reality_claim))
 
     assert result == [
         ExpectationClaim(
@@ -91,7 +91,7 @@ def test_day_metrics_per_entity_under_ad_account_is_divisible(mock_iter_reality_
         )
     ]
 
-    result = list(day_metrics_per_entity_under_ad_account(Entity.Ad, [ReportType.day], reality_claim))
+    result = list(day_metrics_per_ads_under_ad_account([ReportType.day], reality_claim))
 
     assert result == [
         ExpectationClaim(
@@ -106,13 +106,7 @@ def test_day_metrics_per_entity_under_ad_account_is_divisible(mock_iter_reality_
             entity_hierarchy=EntityNode(
                 'ad-account-id',
                 Entity.AdAccount,
-                children=[
-                    EntityNode(
-                        'campaign-1',
-                        Entity.Campaign,
-                        children=[EntityNode('adset-1', Entity.AdSet, children=[EntityNode('ad-1', Entity.Ad)])],
-                    )
-                ],
+                children=[EntityNode('campaign-1', Entity.Campaign, children=[EntityNode('adset-1', Entity.AdSet)])],
             ),
         )
     ]
