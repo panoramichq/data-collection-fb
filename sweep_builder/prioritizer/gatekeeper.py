@@ -1,10 +1,7 @@
 import logging
-from datetime import datetime
-from typing import Optional
 
 from common.enums.entity import Entity
 from common.enums.reporttype import ReportType
-from common.id_tools import JobIdParts
 from common.tztools import now
 from config.jobs import (
     REPORT_IN_PROGRESS_FREQUENCY_MINS,
@@ -14,6 +11,7 @@ from config.jobs import (
     REPORT_TYPE_LIFETIME_PAGE_VIDEOS_FREQUENCY,
     REPORT_TYPE_LIFETIME_PAGE_POSTS_FREQUENCY,
 )
+from sweep_builder.data_containers.scorable_claim import ScorableClaim
 
 logger = logging.getLogger(__name__)
 
@@ -24,11 +22,16 @@ class JobGateKeeper:
     JOB_NOT_PASSED_SCORE = 1
 
     @staticmethod
-    def shall_pass(job: JobIdParts, last_success_dt: Optional[datetime], last_progress_dt: Optional[datetime]):
+    def shall_pass(claim: ScorableClaim):
         """Return true if job should be re-collected."""
+        report_type = claim.report_type
+        report_variant = claim.report_variant
+        report_day = claim.range_start
+        last_progress_dt = None if claim.last_report is None else claim.last_report.last_progress_dt
+        last_success_dt = None if claim.last_report is None else claim.last_report.last_success_dt
         # never collected before so you have to try to collect it
         if last_success_dt is None and last_progress_dt is None:
-            logger.warning(f'[never-collected] Job {job} was never collected yet.')
+            logger.warning(f'[never-collected] Job {claim.selected_job_id} was never collected yet.')
             return True
 
         if last_progress_dt is not None:
@@ -36,34 +39,33 @@ class JobGateKeeper:
             shall_pass = JobGateKeeper._every_x_minutes(minutes_since_progress, REPORT_IN_PROGRESS_FREQUENCY_MINS)
             if not shall_pass or last_success_dt is None:
                 # Either task already running or never succeeded
-                logger.warning(f'[in-progress] Job {job} is in-progress. Gatekeeper result: {shall_pass}')
+                logger.warning(
+                    f'[in-progress] Job {claim.selected_job_id} is in-progress. Gatekeeper result: {shall_pass}'
+                )
                 return shall_pass
 
         # Task not running and has succeeded before
         minutes_since_success = (now() - last_success_dt).total_seconds() / 60
 
         # lifetime data should be attempted to collect at least 6 hours apart
-        if job.report_type == ReportType.lifetime:
-            if job.report_variant == Entity.PageVideo:
+        if report_type == ReportType.lifetime:
+            if report_variant == Entity.PageVideo:
                 return JobGateKeeper._every_x_hours(minutes_since_success, REPORT_TYPE_LIFETIME_PAGE_VIDEOS_FREQUENCY)
-            elif job.report_variant in {Entity.PagePost, Entity.PagePostPromotable}:
+            elif report_variant in {Entity.PagePost, Entity.PagePostPromotable}:
                 return JobGateKeeper._every_x_hours(minutes_since_success, REPORT_TYPE_LIFETIME_PAGE_POSTS_FREQUENCY)
             return JobGateKeeper._every_x_hours(minutes_since_success, REPORT_TYPE_LIFETIME_FREQUENCY)
 
         # entity collection every 2 hours (and comments every 4 hours)
-        if job.report_type == ReportType.entity:
-            if job.report_variant == Entity.Comment:
+        if report_type == ReportType.entity:
+            if report_variant == Entity.Comment:
                 return JobGateKeeper._every_x_hours(minutes_since_success, REPORT_TYPE_ENTITY_COMMENTS_FREQUENCY)
 
             return JobGateKeeper._every_x_hours(minutes_since_success, REPORT_TYPE_ENTITY_FREQUENCY)
 
-        # Single-day jobs have no range_end
-        job_range_end = job.range_start if job.range_end is None else job.range_end
-
         # just in case we generate job without range_end, we better let it go :)
-        if job_range_end is None:
+        if report_day is None:
             return True
-        datapoint_age_in_days = (now().date() - job_range_end).total_seconds() / (60 * 60 * 24)
+        datapoint_age_in_days = (now().date() - report_day).total_seconds() / (60 * 60 * 24)
 
         if datapoint_age_in_days < 7:
             return JobGateKeeper._every_x_hours(minutes_since_success, 3)

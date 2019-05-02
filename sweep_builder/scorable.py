@@ -39,6 +39,7 @@ def generate_child_claims(claim: ExpectationClaim) -> Generator[ExpectationClaim
             child_entity_node.entity_id,
             child_entity_node.entity_type,
             claim.report_type,
+            claim.report_variant,
             JobSignature(
                 generate_id(
                     ad_account_id=claim.ad_account_id,
@@ -53,7 +54,6 @@ def generate_child_claims(claim: ExpectationClaim) -> Generator[ExpectationClaim
             timezone=claim.timezone,
             entity_hierarchy=child_entity_node,
             range_start=claim.range_start,
-            report_variant=claim.report_variant,
         )
 
 
@@ -78,10 +78,12 @@ def generate_scorable(claim: ExpectationClaim) -> Generator[ScorableClaim, None,
             claim.entity_id,
             claim.entity_type,
             claim.report_type,
+            claim.report_variant,
             claim.job_signature,
             last_report,
             ad_account_id=claim.ad_account_id,
             timezone=claim.timezone,
+            range_start=claim.range_start,
         )
         return
 

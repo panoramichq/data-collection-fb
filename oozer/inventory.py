@@ -67,6 +67,4 @@ def resolve_job_scope_to_celery_task(job_scope: JobScope):
 
     Returns None if no handler for such JobScope is registered
     """
-    return entity_report_handler_map.get(job_scope.report_type, {}).get(
-        job_scope.entity_type or job_scope.report_variant
-    )
+    return entity_report_handler_map.get(job_scope.report_type, {}).get(job_scope.report_variant)

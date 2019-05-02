@@ -42,10 +42,10 @@ def test_lifetime_metrics_per_entity_under_ad_account_not_divisible(mock_iter_re
             'ad-account-id',
             Entity.AdAccount,
             ReportType.lifetime,
+            Entity.Ad,
             JobSignature('fb|ad-account-id|||lifetime|A'),
             ad_account_id='ad-account-id',
             timezone='America/Los_Angeles',
-            report_variant=Entity.Ad,
         )
     ]
 
@@ -77,10 +77,10 @@ def test_lifetime_metrics_per_entity_under_ad_account_is_divisible(mock_iter_rea
             'ad-account-id',
             Entity.AdAccount,
             ReportType.lifetime,
+            Entity.Ad,
             JobSignature('fb|ad-account-id|||lifetime|A'),
             ad_account_id='ad-account-id',
             timezone='America/Los_Angeles',
-            report_variant=Entity.Ad,
             entity_hierarchy=EntityNode(
                 'ad-account-id',
                 Entity.AdAccount,

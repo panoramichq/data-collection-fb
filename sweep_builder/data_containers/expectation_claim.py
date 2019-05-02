@@ -21,38 +21,47 @@ class ExpectationClaim:
     """
 
     entity_id: str
+    """ID of entity the report is created for."""
     entity_type: str
+    """Type of entity the report is created for."""
     report_type: str
+    """Type of report (breakdown type, lifetime, entity collection)."""
+    report_variant: str
+    """Type of entity the report is reporting on (level in Marketing API)."""
     job_signature: JobSignature
+    """Job signature that represents the celery task."""
 
     ad_account_id: str = None
+    """ID of ad account."""
     timezone: str = None
+    """Timezone of the ad account."""
     entity_hierarchy: EntityNode = None
+    """Used for breaking down tasks into smaller tasks when report size too large."""
     range_start: date = None
-    report_variant: str = None
+    """Date the report is created for."""
 
     def __init__(
         self,
         entity_id: str,
         entity_type: str,
         report_type: str,
+        report_variant: str,
         job_signature: JobSignature,
         *,
         ad_account_id: str = None,
         timezone: str = None,
         entity_hierarchy: EntityNode = None,
         range_start: date = None,
-        report_variant: str = None,
     ):
         self.entity_id = entity_id
         self.entity_type = entity_type
         self.report_type = report_type
+        self.report_variant = report_variant
         self.job_signature = job_signature
         self.ad_account_id = ad_account_id
         self.timezone = timezone
         self.entity_hierarchy = entity_hierarchy
         self.range_start = range_start
-        self.report_variant = report_variant
 
     def __eq__(self, other):
         return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
