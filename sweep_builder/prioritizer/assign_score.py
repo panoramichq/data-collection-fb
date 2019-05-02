@@ -127,7 +127,11 @@ def assign_score(claim: ScorableClaim) -> int:
         # onto this code again. Must be revisited
         if not last_report:
             score += 20
-        elif last_report.last_success_dt > last_report.last_failure_dt:
+        elif (
+            last_report.last_success_dt
+            and last_report.last_failure_dt
+            and last_report.last_success_dt > last_report.last_failure_dt
+        ):
             # last group route was success. Let's try to keep it that way
             score += 10
         elif last_report.last_failure_bucket == FailureBucket.Throttling:
