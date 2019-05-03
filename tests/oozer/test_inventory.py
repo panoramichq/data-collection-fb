@@ -1,10 +1,10 @@
 from datetime import datetime
 from unittest.mock import patch
 
+from tests.base.testcase import TestCase
 from common.id_tools import parse_id
 from sweep_builder.data_containers.reality_claim import RealityClaim
 from sweep_builder.expectation_builder.expectations_inventory.inventory import entity_expectation_generator_map
-from tests.base.testcase import TestCase
 
 from common.enums.entity import Entity
 from oozer.common.job_scope import JobScope
@@ -37,12 +37,26 @@ class TestLooperReportTypeInventoryResolution(TestCase):
             )
         ]
         for job_generator in entity_expectation_generator_map[Entity.AdAccount]:
-            with self.subTest(job_generator=job_generator):
-                exp_claim = next(job_generator(real_claim))
+            for exp_claim in job_generator(real_claim):
+                with self.subTest(job_generator=job_generator, exp_claim=exp_claim):
+                    job_scope = JobScope(parse_id(exp_claim.job_id))
 
-                job_scope = JobScope(parse_id(exp_claim.job_id))
+                    assert inventory.resolve_job_scope_to_celery_task(job_scope)
 
-                assert inventory.resolve_job_scope_to_celery_task(job_scope)
+    def test_resolve_job_scope_to_celery_task_page(self):
+        real_claim = RealityClaim(
+            entity_id='P1',
+            ad_account_id='P1',
+            entity_type=Entity.Page,
+            tokens='bogus',
+            timezone='America/Los_Angeles',
+        )
+        for job_generator in entity_expectation_generator_map[Entity.Page]:
+            for exp_claim in job_generator(real_claim):
+                with self.subTest(job_generator=job_generator, exp_claim=exp_claim):
+                    job_scope = JobScope(parse_id(exp_claim.job_id))
+
+                    assert inventory.resolve_job_scope_to_celery_task(job_scope)
 
     def test_resolve_job_scope_to_celery_task_page_post(self):
         real_claim = RealityClaim(entity_id='PP1', ad_account_id='P1', entity_type=Entity.PagePost, tokens='bogus')
