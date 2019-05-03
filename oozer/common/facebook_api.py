@@ -382,7 +382,7 @@ _default_fields_map = {
             'company_overview',
             'connected_instagram_account',
             'contact_address',
-            'context',
+            # 'context',  # silently lost access to this field on April 30, 2019 4AM
             # 'copyright_attribution_insights',  # A page access token is required to request this resource
             # 'copyright_whitelisted_ig_partners',  # A page access token is required to request this resource
             'country_page_likes',
