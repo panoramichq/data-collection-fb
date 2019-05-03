@@ -2,6 +2,7 @@ from oozer.common.job_scope import JobScope
 
 
 class CollectionError(Exception):
+
     """Unrecoverable error thrown when a collection job fails."""
 
     def __init__(self, inner: Exception, partial_datapoint_count: int):
@@ -17,6 +18,14 @@ class TimeoutException(Exception):
 class TaskOutsideSweepException(Exception):
 
     """Raised when a task starts after sweep stopped running."""
+
+    def __init__(self, job_scope: JobScope):
+        self.job_scope = job_scope
+
+
+class InvalidJobScopeException(Exception):
+
+    """Raised when a job scope cannot be converted to a celery task."""
 
     def __init__(self, job_scope: JobScope):
         self.job_scope = job_scope
