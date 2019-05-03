@@ -138,7 +138,7 @@ def assign_score(claim: ScorableClaim) -> int:
             # not cool. we got clobbered by something jumping in front of us last time
             # let's try a little higher priority
             score += 80  # ever slightly less than per-parent approach
-        elif last_report.last_failure_bucket == FailureBucket.TooLarge and last_report.last_failure_dt:
+        elif last_report.last_failure_bucket == FailureBucket.TooLarge:
             # last time we tried this, report failed because we asked for
             # too much data and should probably not try us again.
             # however, if this was long time ago, maybe we should
