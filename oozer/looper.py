@@ -6,6 +6,7 @@ from itertools import islice
 from typing import Generator, Tuple, Any
 
 from common.celeryapp import CeleryTask
+from common.error_inspector import ErrorInspector
 from common.id_tools import parse_id
 from common.math import adapt_decay_rate_to_population, get_decay_proportion
 from common.measurement import Measure
@@ -19,6 +20,7 @@ from config.looper import (
     OOZER_ENABLE_LEARNING,
     OOZER_START_RATE,
 )
+from oozer.common.errors import InvalidJobScopeException
 from oozer.common.job_context import JobContext
 from oozer.common.job_scope import JobScope
 from oozer.common.sorted_jobs_queue import SortedJobsQueue
@@ -41,20 +43,18 @@ def iter_tasks(sweep_id: str) -> Generator[Tuple[CeleryTask, JobScope, JobContex
 
             job_id_parts = parse_id(job_id)
             job_scope = JobScope(job_scope_additional_data, job_id_parts, sweep_id=sweep_id, score=score)
-
-            celery_task = resolve_job_scope_to_celery_task(job_scope)
-
-            if not celery_task:
-                logger.warning(f"#{sweep_id}: Could not match job_id {job_id} to a worker.")
-            else:
+            try:
+                celery_task = resolve_job_scope_to_celery_task(job_scope)
                 # TODO: Decide what to do with this.
                 # Was designed for massive hash collection and such,
                 # but cannot have too much data in there because we pickle it and put in on Redis
                 job_context = JobContext()
-
                 yield celery_task, job_scope, job_context, score
-
                 logger.info(f"#{sweep_id}: Scheduling job_id {job_id} with score {score}.")
+            except InvalidJobScopeException as e:
+                ErrorInspector.inspect(
+                    e, job_scope.ad_account_id, {'sweep_id': job_scope.sweep_id, 'job_id': job_scope.job_id}
+                )
 
 
 class AdaptiveTaskOozer:
