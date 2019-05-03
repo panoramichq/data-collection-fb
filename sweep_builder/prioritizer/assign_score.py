@@ -148,7 +148,7 @@ def assign_score(claim: ScorableClaim) -> int:
             # 2+ weeks old
             days_since_failure = (now() - last_report.last_failure_dt).days
             score += 10 * min(2, days_since_failure / 14)
-        else:
+        elif last_report.last_failure_dt:
             # some sort of failure that we don't understand the meaning of right now
             # So, let's proceed with caution
             days_since_failure = (now() - last_report.last_failure_dt).days
