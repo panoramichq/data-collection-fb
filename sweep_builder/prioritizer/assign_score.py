@@ -61,6 +61,13 @@ def assign_score(claim: ScorableClaim) -> int:
         return JobGateKeeper.JOB_NOT_PASSED_SCORE
 
     score = 0
+    
+    # TODO: Categorising every score change as one of three types/components:
+    # - [N] normal score: e.g. some report type with some report variant is more important than this other type, variant combo
+    # - [P] previous efforts component: e.g. we tried to download this report 7 times and it failed every time
+    # - [R] recency component: daily report is for day 3 years ago
+    #
+    # Will use [A] for any score change that looks arbitrary
 
     if claim.is_per_parent_job or is_per_page_metrics_job:
         # yeah, i know, redundant, but keeping it here
@@ -69,6 +76,7 @@ def assign_score(claim: ScorableClaim) -> int:
         if not last_report:
             # for a group route that has no collection record,
             # this means we absolutely have to try it first (before per-element)
+            # [P]
             score += 1000
         else:
 
@@ -77,6 +85,7 @@ def assign_score(claim: ScorableClaim) -> int:
             if last_report.last_success_dt and not last_report.last_failure_dt:
                 # perfect record of success in fetching
                 # TODO: decay this based on time here, instead of below, maybe...
+                # [P]
                 score += 10
             elif (
                 last_report.last_success_dt
@@ -89,6 +98,7 @@ def assign_score(claim: ScorableClaim) -> int:
                 # greater success rate on average:
                 # TODO: implement decay on "some failure" effect. Otherwise jobs with
                 #       one failure in their life will forever be scored higher.
+                # [P]
                 score += 20
 
             # here we enter unhappy territory
@@ -99,6 +109,7 @@ def assign_score(claim: ScorableClaim) -> int:
                     # not cool. it was important to us on prior runs, but
                     # we got clobbered by something jumping in front of us last time
                     # let's try a little higher priority
+                    # [P]
                     score += 100
                 elif last_report.last_failure_bucket == FailureBucket.TooLarge:
                     # last time we tried this, report failed because we asked for
@@ -108,17 +119,20 @@ def assign_score(claim: ScorableClaim) -> int:
                     # FB's release cycles are weekly (release on Tuesday)
                     # Let's imagine that we should probably retry these failures if they are
                     # 2+ weeks old
+                    # [P]
                     days_since_failure = (now() - last_report.last_failure_dt).days
                     score += 10 * (days_since_failure / 14)
                 else:
                     # some other failure. Not sure what approach to take, but
                     # caution would probably be proper.
+                    # [P]
                     score += 5
 
             else:
                 # likely "in progress" still. let's wait for it to die or success
                 # TODO: implement decay on recency of last "in progress".
                 #       Otherwise jobs that failed silently after some progress will never revive themselves
+                # [A]
                 score += 5
 
     else:
@@ -126,6 +140,7 @@ def assign_score(claim: ScorableClaim) -> int:
         # this is not used now, but is left for reuse when we unleash per-entity_id jobs
         # onto this code again. Must be revisited
         if not last_report:
+            # [P]
             score += 20
         elif (
             last_report.last_success_dt
@@ -133,10 +148,12 @@ def assign_score(claim: ScorableClaim) -> int:
             and last_report.last_success_dt > last_report.last_failure_dt
         ):
             # last group route was success. Let's try to keep it that way
+            # [P]
             score += 10
         elif last_report.last_failure_bucket == FailureBucket.Throttling:
             # not cool. we got clobbered by something jumping in front of us last time
             # let's try a little higher priority
+            # [P]
             score += 80  # ever slightly less than per-parent approach
         elif last_report.last_failure_bucket == FailureBucket.TooLarge:
             # last time we tried this, report failed because we asked for
@@ -146,11 +163,13 @@ def assign_score(claim: ScorableClaim) -> int:
             # FB's release cycles are weekly (release on Tuesday)
             # Let's imagine that we should probably retry these failures if they are
             # 2+ weeks old
+            # [P]
             days_since_failure = (now() - last_report.last_failure_dt).days
             score += 10 * min(2, days_since_failure / 14)
         elif last_report.last_failure_dt:
             # some sort of failure that we don't understand the meaning of right now
             # So, let's proceed with caution
+            # [P]
             days_since_failure = (now() - last_report.last_failure_dt).days
             score += 5 * min(3, days_since_failure / 14)
 
@@ -162,6 +181,7 @@ def assign_score(claim: ScorableClaim) -> int:
         if days_from_now < 0:
             # which may happen if report_day is not in proper timezone
             days_from_now = 0
+        # [R]
         score = score * get_decay_proportion(
             days_from_now, rate=DAYS_BACK_DECAY_RATE, decay_floor=0.10  # never decay to lower then 10% of the score
         )
@@ -175,6 +195,7 @@ def assign_score(claim: ScorableClaim) -> int:
         seconds_old = (now() - last_report.last_success_dt).seconds
         # at this rate, 80% of score id regained by 15th minute
         # and ~100% by 36th minute.
+        # [P]
         score = score * get_fade_in_proportion(seconds_old / 60, rate=0.1)
 
     score = int(score)
