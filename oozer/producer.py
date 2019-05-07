@@ -34,15 +34,15 @@ class TaskProducer:
                 job_id_parts = parse_id(job_id)
                 job_scope = JobScope(job_scope_additional_data, job_id_parts, sweep_id=self.sweep_id, score=score)
 
-            try:
-                celery_task = resolve_job_scope_to_celery_task(job_scope)
-                # TODO: Decide what to do with this.
-                # Was designed for massive hash collection and such,
-                # but cannot have too much data in there because we pickle it and put in on Redis
-                job_context = JobContext()
-                yield celery_task, job_scope, job_context, score
-                logger.info(f"#{self.sweep_id}: Scheduling job_id {job_id} with score {score}.")
-            except InvalidJobScopeException as e:
-                ErrorInspector.inspect(
-                    e, job_scope.ad_account_id, {'sweep_id': job_scope.sweep_id, 'job_id': job_scope.job_id}
-                )
+                try:
+                    celery_task = resolve_job_scope_to_celery_task(job_scope)
+                    # TODO: Decide what to do with this.
+                    # Was designed for massive hash collection and such,
+                    # but cannot have too much data in there because we pickle it and put in on Redis
+                    job_context = JobContext()
+                    yield celery_task, job_scope, job_context, score
+                    logger.info(f"#{self.sweep_id}: Scheduling job_id {job_id} with score {score}.")
+                except InvalidJobScopeException as e:
+                    ErrorInspector.inspect(
+                        e, job_scope.ad_account_id, {'sweep_id': job_scope.sweep_id, 'job_id': job_scope.job_id}
+                    )
