@@ -47,5 +47,6 @@ class ScorableClaim:
         return self.job_signature.job_id
 
     @property
-    def is_per_parent_job(self) -> bool:
-        return self.entity_type != self.report_variant
+    def is_first_attempt(self) -> bool:
+        """First attempt when no pre-existing job report."""
+        return self.last_report is None or self.last_report.last_success_dt is None
