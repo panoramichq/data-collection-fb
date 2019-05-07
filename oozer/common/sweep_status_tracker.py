@@ -179,7 +179,9 @@ class SweepStatusTracker:
             total = 0
             for bucket, name in name_map.items():
                 value = pulse_values.get(bucket, 0)
-                total += value
+                # Exclude non-terminal state from total
+                if bucket != FailureBucket.WorkingOnIt:
+                    total += value
                 Measure.histogram(f'{__name__}.pulse_stats', tags={'sweep_id': self.sweep_id, 'bucket': name})(value)
 
             if total:
