@@ -163,13 +163,14 @@ class TaskOozer:
             if pulse.Success < PULSE_REVIEW_SUCCESS_THRESHOLD:
                 logger.warning(
                     f'[oozer-run][{self.sweep_id}][breaking-reason] Breaking early'
-                    f' due to too many failures of any kind (more than 10%) with pulse: {pulse}'
+                    f' due to too many failures of any kind (>= {PULSE_REVIEW_SUCCESS_THRESHOLD * 100:.1f}%)'
+                    f' with pulse: {pulse}'
                 )
                 should_terminate = True
             elif pulse.Throttling > PULSE_REVIEW_THROTTLING_THRESHOLD:
                 logger.info(
                     f'[oozer-run][{self.sweep_id}][breaking-reason] Breaking early'
-                    f' due to throttling (more than 40%) with pulse: {pulse}'
+                    f' due to throttling (>= {PULSE_REVIEW_THROTTLING_THRESHOLD * 100:.1f}%) with pulse: {pulse}'
                 )
                 should_terminate = True
 
