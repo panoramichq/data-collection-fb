@@ -20,8 +20,10 @@ logger = logging.getLogger(__name__)
 @timeout(looper_config.RUN_TASKS_TIMEOUT)
 def run_tasks(sweep_id: str) -> Tuple[int, Pulse]:
     """Oozes tasks gradually into Celery workers queue."""
-    stop_waiting_time = time.time() + looper_config.FB_THROTTLING_WINDOW
-    stop_oozing_time = 0.9 * stop_waiting_time  # 90% time oozing; 10% waiting
+    start_time = time.time()
+    stop_waiting_time = start_time + looper_config.FB_THROTTLING_WINDOW
+    # 90% time oozing; 10% waiting
+    stop_oozing_time = start_time + 0.9 * looper_config.FB_THROTTLING_WINDOW
 
     pulse_review_interval = 5  # seconds
     sweep_tracker = SweepStatusTracker(sweep_id)
