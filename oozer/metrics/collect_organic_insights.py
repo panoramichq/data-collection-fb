@@ -58,7 +58,7 @@ class InsightsOrganic:
         Run the actual execution of the insights job for video insights
         """
 
-        params = {'metric': ORGANIC_DATA_FIELDS_MAP[report_entity_kind]}
+        params = {'metric': ORGANIC_DATA_FIELDS_MAP[report_entity_kind], 'period': 'lifetime'}
         report_status_obj: InsightsResult = fb_entity.get_insights(params=params, fields=INSIGHTS_REPORT_FIELDS)
 
         for datum in report_status_obj:
