@@ -64,5 +64,5 @@ class TaskWaiter:
         pulse = self.sweep_status_tracker.get_pulse()
         self.counter += pulse.Total - self._last_total
         self._last_total = pulse.Total
-        logger.info(f"#{self.sweep_id}: Waiting on {self.oozed_total} jobs with last pulse being {pulse}")
+        logger.info(f"#{self.sweep_id}: Waiting on {pulse.Total}/{self.oozed_total} jobs with last pulse being {pulse}")
         gevent.sleep(self.wait_interval)
