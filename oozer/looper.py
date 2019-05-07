@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 def run_tasks(sweep_id: str) -> Tuple[int, Pulse]:
     """Oozes tasks gradually into Celery workers queue."""
     stop_waiting_time = time.time() + looper_config.FB_THROTTLING_WINDOW
+    stop_oozing_time = 0.9 * stop_waiting_time  # 90% time oozing; 10% waiting
 
     pulse_review_interval = 5  # seconds
     sweep_tracker = SweepStatusTracker(sweep_id)
@@ -35,7 +36,7 @@ def run_tasks(sweep_id: str) -> Tuple[int, Pulse]:
         f'with {num_tasks} scheduled tasks for {num_accounts} accounts'
     )
 
-    with TaskOozer(sweep_id, sweep_tracker, pulse_review_interval) as oozer:
+    with TaskOozer(sweep_id, sweep_tracker, pulse_review_interval, stop_oozing_time) as oozer:
         for celery_task, job_scope, job_context, score in producer.iter_tasks():
             if oozer.should_terminate():
                 break

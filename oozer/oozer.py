@@ -31,6 +31,7 @@ class TaskOozer:
     sweep_id: str
     sweep_status_tracker: SweepStatusTracker
     pulse_review_interval: int
+    stop_oozing_time: float
     wait_interval: int
     oozed_count: int
     oozing_rate: float
@@ -44,12 +45,14 @@ class TaskOozer:
         sweep_id: str,
         sweep_status_tracker: SweepStatusTracker,
         pulse_review_interval: int,
+        stop_oozing_time: float,
         *,
         wait_interval: int = 1,
     ):
         self.sweep_id = sweep_id
         self.sweep_status_tracker = sweep_status_tracker
         self.pulse_review_interval = pulse_review_interval
+        self.stop_oozing_time = stop_oozing_time
         self.wait_interval = wait_interval
         self.oozed_count = 0
         self.oozing_rate = OOZER_START_RATE
@@ -143,6 +146,14 @@ class TaskOozer:
 
     def should_terminate(self) -> bool:
         """Whether the oozer should terminate or keep oozing."""
+        if self.stop_oozing_time <= time.time():
+            pulse = self.sweep_status_tracker.get_pulse()
+            logger.warning(
+                f'[oozer-run][{self.sweep_id}][breaking-reason] Breaking'
+                f' due to running out of time to ooze with pulse: {pulse}'
+            )
+            return True
+
         if not self.should_review_pulse:
             return False
 
