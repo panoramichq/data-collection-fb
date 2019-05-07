@@ -203,6 +203,33 @@ def iter_collect_entities_per_adaccount(job_scope: JobScope) -> Generator[Dict[s
     token_manager.report_usage(token)
 
 
+def _augment_page_post(page_post: Dict[str, Any]) -> Dict[str, Any]:
+    """
+        Augment page posts to reflect changes in version 3.3
+        Once we confirm that all page posts are downloaded using the newest version, we can drop this augmentation
+        and perform it in platform views
+
+        Source: https://developers.facebook.com/docs/graph-api/changelog/version3.3
+    """
+    if 'attachments' in page_post and len(page_post['attachments']['data']) == 1:
+        data = page_post['attachments']['data'][0]
+        if 'title' in data:
+            page_post['caption'] = data['title']
+            page_post['name'] = data['title']
+        if 'description' in data:
+            page_post['description'] = data['description']
+        if 'url_unshimmed' in data:
+            page_post['link'] = data['url_unshimmed']
+        if 'target' in data and 'id' in data['target']:
+            page_post['object_id'] = data['target']['id']
+        if 'media' in data and 'source' in data['media']:
+            page_post['source'] = data['media']['source']
+        if 'type' in data:
+            page_post['type'] = data['type']
+
+    return page_post
+
+
 def iter_collect_entities_per_page(job_scope: JobScope) -> Generator[Dict[str, Any], None, None]:
     """
     Collects an arbitrary entity for a page
@@ -221,6 +248,10 @@ def iter_collect_entities_per_page(job_scope: JobScope) -> Generator[Dict[str, A
         cnt = 0
         for entity in entities:
             entity_data = entity.export_all_data()
+
+            if entity_type in [Entity.PagePost, Entity.PagePostPromotable]:
+                entity_data = _augment_page_post(entity_data)
+
             entity_data = add_vendor_data(
                 entity_data, id=generate_universal_id(entity_id=entity_data.get('id'), **record_id_base_data)
             )
@@ -262,6 +293,8 @@ def iter_collect_entities_per_page_graph(job_scope: JobScope) -> Generator[Dict[
     with ChunkDumpStore(job_scope, chunk_size=DEFAULT_CHUNK_SIZE) as store:
         for entity in entities:
             entity_data = entity.export_all_data()
+            if entity_type in [Entity.PagePostPromotable]:
+                entity_data = _augment_page_post(entity_data)
             entity_data = add_vendor_data(
                 entity_data, id=generate_universal_id(entity_id=entity_data.get('id'), **record_id_base_data)
             )

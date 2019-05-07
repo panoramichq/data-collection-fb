@@ -500,13 +500,12 @@ _default_fields_map = {
             'application',
             'backdated_time',
             'call_to_action',
+            'attachments',
             # 'can_reply_privately',  # requires READ_PAGE_MAILBOXES or PAGES_MESSAGING permission
-            'caption',
             'child_attachments',
             'comments_mirroring_domain',
             'coordinates',
             'created_time',
-            'description',
             'event',
             'expanded_height',
             'expanded_width',
@@ -523,13 +522,10 @@ _default_fields_map = {
             'is_popular',
             'is_published',
             'is_spherical',
-            'link',
             'message',
             'message_tags',
             'multi_share_end_card',
             'multi_share_optimized',
-            'name',
-            'object_id',
             'parent_id',
             'permalink_url',
             'picture',
@@ -540,7 +536,6 @@ _default_fields_map = {
             'properties',
             'scheduled_publish_time',
             'shares',
-            'source',
             'status_type',
             'story',
             'story_tags',
@@ -548,7 +543,6 @@ _default_fields_map = {
             'target',
             'targeting',
             'timeline_visibility',
-            'type',
             'updated_time',
             'via',
             'video_buying_eligibility',
@@ -623,6 +617,7 @@ def get_default_fields(model_klass: Type['Model']) -> List[str]:
 # There is also a nice side-effect to shifting this to FB - each request outstanding
 # runs longer and allows greater concurrency locally.
 _default_page_size = {
+    CustomAudience: 1,
     Campaign: 400,
     AdSet: 200,  # this is super heavy object mostly because of Targeting spec. Keep it smallish
     Ad: 400,
