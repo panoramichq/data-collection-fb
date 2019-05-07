@@ -617,7 +617,6 @@ def get_default_fields(model_klass: Type['Model']) -> List[str]:
 # There is also a nice side-effect to shifting this to FB - each request outstanding
 # runs longer and allows greater concurrency locally.
 _default_page_size = {
-    CustomAudience: 1,
     Campaign: 400,
     AdSet: 200,  # this is super heavy object mostly because of Targeting spec. Keep it smallish
     Ad: 400,
