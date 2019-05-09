@@ -107,14 +107,26 @@ class TaskOozer:
         rate_change = -error_rate * OOZER_LEARNING_RATE
         return cls.clamp_oozing_rate(current_rate + (rate_change * current_rate))
 
-    def _ooze_task(self, task: CeleryTask, job_scope: JobScope, job_context: JobContext):
+    def _ooze_task(self, task: CeleryTask, job_scope: JobScope, job_context: JobContext, score: int):
         """Non-blocking task oozing function."""
         task.delay(job_scope, job_context)
         self.oozed_count += 1
         if self.oozed_count % OOZING_COUNTER_STEP == 0:
             self.counter += OOZING_COUNTER_STEP
 
-    def ooze_task(self, task: CeleryTask, job_scope: JobScope, job_context: JobContext):
+        Measure.counter(
+            f'{__name__}.job_scores',
+            tags={
+                'sweep_id': self.sweep_id,
+                'score': score,
+                'ad_account_id': job_scope.ad_account_id,
+                'report_type': job_scope.report_type,
+                'report_variant': job_scope.report_variant,
+                'job_type': job_scope.job_type,
+            },
+        ).increment()
+
+    def ooze_task(self, task: CeleryTask, job_scope: JobScope, job_context: JobContext, score: int):
         """Blocking task oozing function."""
         if OOZER_ENABLE_LEARNING and self.should_review_oozer_rate:
             pulse = self.sweep_status_tracker.get_pulse()
@@ -128,7 +140,7 @@ class TaskOozer:
         if self._tasks_since_review > self.expected_tasks_since_oozer_rate_review:
             gevent.sleep(self.wait_interval)
 
-        self._ooze_task(task, job_scope, job_context)
+        self._ooze_task(task, job_scope, job_context, score)
         self._tasks_since_review += 1
 
     @property
