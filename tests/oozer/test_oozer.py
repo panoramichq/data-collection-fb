@@ -24,7 +24,7 @@ def test_should_terminate_false_most_successful():
     mock_tracker.get_pulse.return_value = Mock(Total=21, Success=0.5, Throttling=0)
     with TaskOozer('sweep-id', mock_tracker, 0, math.inf) as oozer:
         for _ in range(PULSE_REVIEW_MIN_OOZED_TASKS):
-            oozer._ooze_task(Mock(), Mock(), Mock())
+            oozer._ooze_task(Mock(), Mock(), Mock(), 10)
         assert not oozer.should_terminate()
 
 
@@ -33,7 +33,7 @@ def test_should_terminate_true_throttling():
     mock_tracker.get_pulse.return_value = Mock(Total=21, Success=0.5, Throttling=0.5)
     with TaskOozer('sweep-id', mock_tracker, 0, math.inf) as oozer:
         for _ in range(PULSE_REVIEW_MIN_OOZED_TASKS):
-            oozer._ooze_task(Mock(), Mock(), Mock())
+            oozer._ooze_task(Mock(), Mock(), Mock(), 10)
         assert oozer.should_terminate()
 
 
@@ -42,7 +42,7 @@ def test_should_terminate_true_most_failures():
     mock_tracker.get_pulse.return_value = Mock(Total=21, Success=0.05)
     with TaskOozer('sweep-id', mock_tracker, 0, math.inf) as oozer:
         for _ in range(PULSE_REVIEW_MIN_OOZED_TASKS):
-            oozer._ooze_task(Mock(), Mock(), Mock())
+            oozer._ooze_task(Mock(), Mock(), Mock(), 10)
         assert oozer.should_terminate()
 
 
