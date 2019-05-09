@@ -44,7 +44,7 @@ def run_tasks(sweep_id: str) -> Tuple[int, Pulse]:
             last_score = score
             if oozer.should_terminate():
                 break
-            oozer.ooze_task(celery_task, job_scope, job_context)
+            oozer.ooze_task(celery_task, job_scope, job_context, score)
 
     oozed_count = oozer.oozed_count
 
