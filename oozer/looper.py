@@ -38,8 +38,10 @@ def run_tasks(sweep_id: str) -> Tuple[int, Pulse]:
         f'with {num_tasks} scheduled tasks for {num_accounts} accounts'
     )
 
+    last_score = None
     with TaskOozer(sweep_id, sweep_tracker, pulse_review_interval, stop_oozing_time) as oozer:
         for celery_task, job_scope, job_context, score in producer.iter_tasks():
+            last_score = score
             if oozer.should_terminate():
                 break
             oozer.ooze_task(celery_task, job_scope, job_context)
@@ -49,7 +51,7 @@ def run_tasks(sweep_id: str) -> Tuple[int, Pulse]:
     pulse = sweep_tracker.get_pulse()
     logger.warning(
         f'[oozer-run][{sweep_id}][oozing-done]: Oozed out {oozed_count} tasks out of {num_tasks}'
-        f' with pulse: {pulse} and last score {score}'
+        f' with pulse: {pulse} and last score {last_score}'
     )
 
     logger.warning(
