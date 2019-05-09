@@ -10,7 +10,7 @@ from common.job_signature import JobSignature
 from common.store.jobreport import JobReport
 from common.tztools import now
 from sweep_builder.data_containers.scorable_claim import ScorableClaim
-from sweep_builder.prioritizer.assign_score import normalize, recency_ratio, historical_ratio, assign_score
+from sweep_builder.prioritizer.prioritized import assign_score, normalize, historical_ratio, recency_ratio
 from sweep_builder.prioritizer.gatekeeper import JobGateKeeper
 
 
@@ -59,9 +59,9 @@ def test_historical_ratio(last_success_dt, expected):
 
 
 @patch.object(JobGateKeeper, 'shall_pass', return_value=True)
-@patch('sweep_builder.prioritizer.assign_score.get_score_range', return_value=(100, 1000))
-@patch('sweep_builder.prioritizer.assign_score.historical_ratio', return_value=0.75)
-@patch('sweep_builder.prioritizer.assign_score.recency_ratio', return_value=0.25)
+@patch('sweep_builder.prioritizer.prioritized.get_score_range', return_value=(100, 1000))
+@patch('sweep_builder.prioritizer.prioritized.historical_ratio', return_value=0.75)
+@patch('sweep_builder.prioritizer.prioritized.recency_ratio', return_value=0.25)
 def test_assign_score(*_):
     claim = ScorableClaim('A1', Entity.Ad, ReportType.lifetime, Entity.Ad, JobSignature('jobid'), None)
 
