@@ -7,7 +7,7 @@ from common.id_tools import generate_id
 from common.job_signature import JobSignature
 from oozer.common.job_scope import JobScope
 from oozer.common.sorted_jobs_queue import SortedJobsQueue
-from oozer.looper import iter_tasks
+from oozer.looper import TaskProducer
 from sweep_builder import persister
 from sweep_builder.data_containers.prioritization_claim import PrioritizationClaim
 from tests.base import random
@@ -78,7 +78,7 @@ class PersisterSavesJobScopeData(TestCase):
 
         job_scope = None
         cnt = 0
-        for celery_task, job_scope, job_context, score in iter_tasks(sweep_id):
+        for celery_task, job_scope, job_context, score in TaskProducer(sweep_id).iter_tasks():
             cnt += 1
             # this just needs to spin once
         assert cnt == 1
