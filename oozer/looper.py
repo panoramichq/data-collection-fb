@@ -14,6 +14,8 @@ from oozer.waiter import TaskWaiter
 
 logger = logging.getLogger(__name__)
 
+MIN_DELAY_SECS = 5
+
 
 @Measure.timer(__name__, function_name_as_metric=True)
 @Measure.counter(__name__, function_name_as_metric=True, count_once=True)
@@ -107,4 +109,4 @@ def run_sweep_looper_suggest_restart_time(sweep_id: str) -> int:
 
     logger.warning(f'#{sweep_id}: Delaying next sweep run by: {delay_next_sweep_start_by} seconds')
 
-    return delay_next_sweep_start_by
+    return max(MIN_DELAY_SECS, delay_next_sweep_start_by)
