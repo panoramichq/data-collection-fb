@@ -31,7 +31,7 @@ class JobGateKeeper:
         last_success_dt = None if claim.last_report is None else claim.last_report.last_success_dt
         # never collected before so you have to try to collect it
         if last_success_dt is None and last_progress_dt is None:
-            logger.warning(f'[never-collected] Job {claim.selected_job_id} was never collected yet.')
+            logger.warning(f'[never-collected] Job {claim.job_id} was never collected yet.')
             return True
 
         if last_progress_dt is not None:
@@ -40,7 +40,7 @@ class JobGateKeeper:
             if not shall_pass or last_success_dt is None:
                 # Either task already running or never succeeded
                 logger.warning(
-                    f'[in-progress] Job {claim.selected_job_id} is in-progress. Gatekeeper result: {shall_pass}'
+                    f'[in-progress] Job {claim.job_id} is in-progress. Gatekeeper result: {shall_pass}'
                 )
                 return shall_pass
 

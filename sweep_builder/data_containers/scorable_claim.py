@@ -43,7 +43,7 @@ class ScorableClaim:
         self.range_start = range_start
 
     @property
-    def selected_job_id(self) -> str:
+    def job_id(self) -> str:
         return self.job_signature.job_id
 
     @property

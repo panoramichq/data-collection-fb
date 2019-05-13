@@ -6,6 +6,7 @@ from typing import Generator, Iterable, Tuple, Dict
 
 from common.enums.jobtype import JobType, detect_job_type
 from common.enums.reporttype import ReportType
+from common.error_inspector import ErrorInspector
 from common.measurement import Measure
 from common.tztools import now
 from config.jobs import ACTIVATE_JOB_GATEKEEPER
@@ -48,7 +49,7 @@ def get_score_range(claim: ScorableClaim) -> Tuple[int, int]:
     try:
         return SCORE_RANGES[(job_type, claim.report_type)]
     except KeyError:
-        raise ScoringException(f'Error scoring job {claim.selected_job_id}')
+        raise ScoringException(f'Error scoring job {claim.job_id}')
 
 
 def historical_ratio(claim: ScorableClaim) -> float:
@@ -127,17 +128,19 @@ def iter_prioritized(claims: Iterable[ScorableClaim]) -> Generator[Prioritizatio
             (time.time() - _before_next_expectation) * 1000
         )
 
-        score = assign_score(claim)
-
-        with Measure.timer(f'{_measurement_name_base}.yield_result', tags=_measurement_tags):
-            yield PrioritizationClaim(
-                claim.entity_id,
-                claim.entity_type,
-                claim.report_type,
-                claim.job_signature,
-                score,
-                ad_account_id=claim.ad_account_id,
-                timezone=claim.timezone,
-            )
+        try:
+            score = assign_score(claim)
+            with Measure.timer(f'{_measurement_name_base}.yield_result', tags=_measurement_tags):
+                yield PrioritizationClaim(
+                    claim.entity_id,
+                    claim.entity_type,
+                    claim.report_type,
+                    claim.job_signature,
+                    score,
+                    ad_account_id=claim.ad_account_id,
+                    timezone=claim.timezone,
+                )
+        except ScoringException as e:
+            ErrorInspector.inspect(e, claim.ad_account_id, {'job_id': claim.job_id})
 
         _before_next_expectation = time.time()
