@@ -39,9 +39,7 @@ class JobGateKeeper:
             shall_pass = JobGateKeeper._every_x_minutes(minutes_since_progress, REPORT_IN_PROGRESS_FREQUENCY_MINS)
             if not shall_pass or last_success_dt is None:
                 # Either task already running or never succeeded
-                logger.warning(
-                    f'[in-progress] Job {claim.job_id} is in-progress. Gatekeeper result: {shall_pass}'
-                )
+                logger.warning(f'[in-progress] Job {claim.job_id} is in-progress. Gatekeeper result: {shall_pass}')
                 return shall_pass
 
         # Task not running and has succeeded before
