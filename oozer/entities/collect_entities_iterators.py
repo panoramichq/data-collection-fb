@@ -145,9 +145,9 @@ def _iter_get_promotable_posts(page: FB_PAGE_MODEL):
         # Call the {page-id}/ads_posts field for unpublished posts including ads_posts type, which are hidden posts
         # created from the Ads Posts tool in Ads Manager, and inline_create type, which are hidden posts
         # backing published Ads
-        for page_post in page.get_ads_posts(fields, params, batch, success, failure, pending):
-            print(page_post.get('id'))
-            yield page_post
+        for page_post in page.get_ads_posts(fields, {'include_inline_create': True}, batch, success, failure, pending):
+            if page_post.get('is_eligible_for_promotion'):
+                yield page_post
     return fn
 
 

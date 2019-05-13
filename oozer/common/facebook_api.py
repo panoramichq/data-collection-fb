@@ -521,6 +521,7 @@ _default_fields_map = {
             'is_instagram_eligible',
             'is_popular',
             'is_published',
+            'is_eligible_for_promotion',
             'is_spherical',
             'message',
             'message_tags',
