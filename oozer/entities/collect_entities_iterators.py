@@ -1,3 +1,4 @@
+import itertools
 from typing import List, Generator, Callable, Dict, Union, Tuple, Any
 
 from common.enums.entity import Entity
@@ -134,13 +135,29 @@ def iter_native_entities_per_page(
     )
 
 
+def _iter_get_promotable_posts(page: FB_PAGE_MODEL):
+    def fn(fields=None, params=None, batch=None, success=None, failure=None, pending=False):
+        # Call {page-id}/feed and filter by is_eligible_for_promotion field for published Page posts
+        for page_post in page.get_feed(fields, params, batch, success, failure, pending):
+            if page_post.get('is_eligible_for_promotion'):
+                yield page_post
+
+        # Call the {page-id}/ads_posts field for unpublished posts including ads_posts type, which are hidden posts
+        # created from the Ads Posts tool in Ads Manager, and inline_create type, which are hidden posts
+        # backing published Ads
+        for page_post in page.get_ads_posts(fields, params, batch, success, failure, pending):
+            print(page_post.get('id'))
+            yield page_post
+    return fn
+
+
 def iter_native_entities_per_page_graph(
     page: FB_PAGE_MODEL, entity_type: str, fields: List[str] = None, page_size: int = None
 ) -> Generator[Union[FB_PAGE_POST_MODEL], None, None]:
     """
     Generic getter for entities from the Page edge using Graph API
     """
-    getter_method_map = {FB_PAGE_POST_MODEL: page.get_promotable_posts}
+    getter_method_map = {FB_PAGE_POST_MODEL: _iter_get_promotable_posts(page)}
 
     return _iterate_native_entities_per_parent(
         [Entity.PagePostPromotable], getter_method_map, entity_type, fields, page_size
