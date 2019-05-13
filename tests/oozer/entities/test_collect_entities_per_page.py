@@ -77,7 +77,6 @@ class TestCollectEntitiesPerPage(TestCase):
                 }, 'Vendor data is set with the right universal id'
 
 
-
 class TestCollectEntitiesPerPageGraph(TestCase):
     def setUp(self):
         super().setUp()

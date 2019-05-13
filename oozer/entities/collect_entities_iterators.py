@@ -148,6 +148,7 @@ def _iter_get_promotable_posts(page: FB_PAGE_MODEL):
         for page_post in page.get_ads_posts(fields, {'include_inline_create': True}, batch, success, failure, pending):
             if page_post.get('is_eligible_for_promotion'):
                 yield page_post
+
     return fn
 
 
