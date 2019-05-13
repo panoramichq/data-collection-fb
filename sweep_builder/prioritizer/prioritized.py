@@ -22,6 +22,7 @@ MAX_SCORE_MULTIPLIER = 1.0
 MIN_SCORE_MULTIPLIER = 0.0
 JOB_MIN_SUCCESS_PERIOD_IN_DAYS = 30
 JOB_MAX_AGE_IN_DAYS = 365 * 2
+MUST_RUN_SCORE = 1000
 
 SCORE_RANGES: Dict[Tuple[str, str], Tuple[int, int]] = {
     # paid entity and lifetime reports are most important
@@ -100,7 +101,7 @@ def normalize(value_range: Tuple[int, int], ratio: float) -> int:
 def assign_score(claim: ScorableClaim) -> int:
     """Calculate score for a given claim."""
     if claim.report_type in ReportType.MUST_RUN_EVERY_SWEEP:
-        return 1000
+        return MUST_RUN_SCORE
 
     if ACTIVATE_JOB_GATEKEEPER and not JobGateKeeper.shall_pass(claim):
         return JobGateKeeper.JOB_NOT_PASSED_SCORE
