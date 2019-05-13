@@ -17,6 +17,12 @@ from sweep_builder.prioritizer.gatekeeper import JobGateKeeper
 
 
 logger = logging.getLogger(__name__)
+
+MAX_SCORE_MULTIPLIER = 1.0
+MIN_SCORE_MULTIPLIER = 0.0
+JOB_MIN_SUCCESS_PERIOD_IN_DAYS = 30
+JOB_MAX_AGE_IN_DAYS = 365 * 2
+
 SCORE_RANGES: Dict[Tuple[str, str], Tuple[int, int]] = {
     # paid entity and lifetime reports are most important
     (JobType.PAID_DATA, ReportType.entity): (500, 1000),
@@ -49,14 +55,14 @@ def get_score_range(claim: ScorableClaim) -> Tuple[int, int]:
 def historical_ratio(claim: ScorableClaim) -> float:
     """Multiplier based on past efforts to download job."""
     if claim.is_first_attempt:
-        return 1.0
+        return MAX_SCORE_MULTIPLIER
 
     max_dt = now()
-    # Absolute minimum is success every 30 days
-    min_dt = max_dt - timedelta(days=30)
+    # Absolute minimum is success every N days
+    min_dt = max_dt - timedelta(days=JOB_MIN_SUCCESS_PERIOD_IN_DAYS)
     last_success_dt = claim.last_report.last_success_dt
     if last_success_dt <= min_dt:
-        return 1.0
+        return MAX_SCORE_MULTIPLIER
 
     # Least recently successful is most important
     min_timestamp = min_dt.timestamp()
@@ -69,13 +75,13 @@ def recency_ratio(claim: ScorableClaim) -> float:
     """Multiplier based on how likely to change the data in the report is."""
     # lifetime and entity reports get same score as most recent metric reports
     if claim.range_start is None:
-        return 1.0
+        return MAX_SCORE_MULTIPLIER
 
     max_dt = now().date()
-    # Reports older than 2 years ago get minimum
-    min_dt = max_dt - timedelta(days=365 * 2)
+    # Reports older than N years ago get minimum
+    min_dt = max_dt - timedelta(days=JOB_MAX_AGE_IN_DAYS)
     if claim.range_start <= min_dt:
-        return 0.0
+        return MIN_SCORE_MULTIPLIER
 
     # Most recent report day is most important
     min_days = min_dt.toordinal()
