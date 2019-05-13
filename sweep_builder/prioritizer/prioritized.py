@@ -1,5 +1,4 @@
 import logging
-import statistics
 import time
 from datetime import timedelta
 
@@ -110,7 +109,7 @@ def assign_score(claim: ScorableClaim) -> int:
     rec_ratio = recency_ratio(claim)
 
     # equal weight to each ratio
-    combined_ratio = statistics.mean([hist_ratio, rec_ratio])
+    combined_ratio = (hist_ratio + rec_ratio) / 2.0
 
     return normalize(score_range, combined_ratio)
 
