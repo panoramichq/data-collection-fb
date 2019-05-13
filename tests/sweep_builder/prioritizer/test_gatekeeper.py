@@ -5,7 +5,7 @@ from datetime import timedelta
 
 from common.enums.reporttype import ReportType
 from common.tztools import now
-from sweep_builder.prioritizer.assign_score import JobGateKeeper
+from sweep_builder.prioritizer.gatekeeper import JobGateKeeper
 
 
 def test_shall_pass_last_success_dt_and_last_progress_dt_none_returns_true():
