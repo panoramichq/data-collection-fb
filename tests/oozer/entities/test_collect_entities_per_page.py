@@ -122,7 +122,7 @@ class TestCollectEntitiesPerPageGraph(TestCase):
                 ), mock.patch.object(
                     ChunkDumpStore, 'store'
                 ) as store, mock.patch.object(
-                    FB_PAGE_POST_MODEL, 'get', return_value=True
+                    FB_PAGE_POST_MODEL, 'get', side_effect=lambda field: field == 'is_eligible_for_promotion'
                 ):
                     list(iter_collect_entities_per_page_graph(job_scope))
 
