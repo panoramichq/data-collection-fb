@@ -108,7 +108,7 @@ def _upsert_regular_entity(entity_data: Dict[str, Any], entity_type: str):
 
     eol = _parse_fb_datetime(entity_data.get('updated_time')) if _is_eol else None
 
-    upsert_data = {}
+    upsert_data = {'is_accessible': None}
 
     campaign_id = entity_data.get('campaign_id')
     if campaign_id is not None:
