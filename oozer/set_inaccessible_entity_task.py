@@ -2,6 +2,7 @@ import logging
 
 from pynamodb.exceptions import UpdateError
 
+from common.error_inspector import ErrorInspector
 from common.measurement import Measure
 from common.celeryapp import get_celery_app
 from common.store.entities import ENTITY_TYPE_MODEL_MAP
@@ -30,9 +31,7 @@ def set_inaccessible_entity_task(job_scope: JobScope):
     try:
         model.update(actions=[model_factory.is_accessible.set(False)])
     except UpdateError as ex:
-        ex_str = str(ex)
-        if 'ProvisionedThroughputExceededException' in ex_str:
-            logger.info(ex_str)
+        if ErrorInspector.is_dynamo_throughput_error(ex):
+            logger.info(str(ex))
         else:
-            # rest is ok to bubble up
             raise
