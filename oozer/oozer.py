@@ -126,6 +126,17 @@ class TaskOozer:
             },
         ).increment()
 
+        Measure.gauge(
+            f'{__name__}.job_scores',
+            tags={
+                'sweep_id': self.sweep_id,
+                'ad_account_id': job_scope.ad_account_id,
+                'report_type': job_scope.report_type,
+                'report_variant': job_scope.report_variant,
+                'job_type': job_scope.job_type,
+            },
+        )(score)
+
     def ooze_task(self, task: CeleryTask, job_scope: JobScope, job_context: JobContext, score: int):
         """Blocking task oozing function."""
         if OOZER_ENABLE_LEARNING and self.should_review_oozer_rate:
