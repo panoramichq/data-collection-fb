@@ -75,6 +75,8 @@ class TestCollectEntitiesPerPage(TestCase):
                 assert data_actual[vendor_data_key] == {
                     'id': universal_id_should_be
                 }, 'Vendor data is set with the right universal id'
+
+
 #
 #
 # class TestCollectEntitiesPerPageGraph(TestCase):

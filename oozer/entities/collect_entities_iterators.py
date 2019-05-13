@@ -1,7 +1,7 @@
 from typing import List, Generator, Callable, Dict, Union, Tuple, Any
 
 from common.enums.entity import Entity
-from common.id_tools import generate_universal_id
+from common.id_tools import generate_universal_id, NAMESPACE_RAW
 from common.page_tokens import PageTokenManager
 from common.tokens import PlatformTokenManager
 from oozer.common.cold_storage import ChunkDumpStore
@@ -17,6 +17,7 @@ from oozer.common.enum import (
     FB_PAGE_MODEL,
     FB_PAGE_POST_MODEL,
     FB_COMMENT_MODEL,
+    ColdStoreBucketType,
 )
 from oozer.common.facebook_api import (
     get_default_fields,
@@ -235,7 +236,7 @@ def iter_collect_entities_per_page(job_scope: JobScope) -> Generator[Dict[str, A
     Collects an arbitrary entity for a page
     """
     token, entity_type, root_fb_entity = _extract_token_entity_type_parent_entity(
-        job_scope, [Entity.PagePost, Entity.PageVideo, Entity.PagePostPromotable], Entity.Page, 'ad_account_id'
+        job_scope, [Entity.PagePost, Entity.PageVideo], Entity.Page, 'ad_account_id'
     )
 
     entities = iter_native_entities_per_page(root_fb_entity, entity_type)
@@ -244,18 +245,25 @@ def iter_collect_entities_per_page(job_scope: JobScope) -> Generator[Dict[str, A
     record_id_base_data.update(entity_type=entity_type, report_variant=None)
 
     token_manager = PlatformTokenManager.from_job_scope(job_scope)
-    with ChunkDumpStore(job_scope, chunk_size=DEFAULT_CHUNK_SIZE) as store:
+    with ChunkDumpStore(job_scope, chunk_size=DEFAULT_CHUNK_SIZE) as store, ChunkDumpStore(
+        job_scope,
+        chunk_size=DEFAULT_CHUNK_SIZE,
+        bucket_type=ColdStoreBucketType.RAW_BUCKET,
+        custom_namespace=NAMESPACE_RAW,
+    ) as raw_store:
         cnt = 0
         for entity in entities:
             entity_data = entity.export_all_data()
-
-            if entity_type in [Entity.PagePost, Entity.PagePostPromotable]:
-                entity_data = _augment_page_post(entity_data)
 
             entity_data = add_vendor_data(
                 entity_data, id=generate_universal_id(entity_id=entity_data.get('id'), **record_id_base_data)
             )
             entity_data['page_id'] = job_scope.ad_account_id
+
+            if entity_type == Entity.PagePost:
+                # store raw version of response (just to remain consistent)
+                raw_store(entity_data)
+                entity_data = _augment_page_post(entity_data)
 
             # Store the individual datum, use job context for the cold
             # storage thing to divine whatever it needs from the job context
@@ -290,15 +298,23 @@ def iter_collect_entities_per_page_graph(job_scope: JobScope) -> Generator[Dict[
     record_id_base_data = job_scope.to_dict()
     record_id_base_data.update(entity_type=entity_type, report_variant=None)
 
-    with ChunkDumpStore(job_scope, chunk_size=DEFAULT_CHUNK_SIZE) as store:
+    with ChunkDumpStore(job_scope, chunk_size=DEFAULT_CHUNK_SIZE) as store, ChunkDumpStore(
+        job_scope,
+        chunk_size=DEFAULT_CHUNK_SIZE,
+        bucket_type=ColdStoreBucketType.RAW_BUCKET,
+        custom_namespace=NAMESPACE_RAW,
+    ) as raw_store:
         for entity in entities:
             entity_data = entity.export_all_data()
-            if entity_type in [Entity.PagePostPromotable]:
-                entity_data = _augment_page_post(entity_data)
             entity_data = add_vendor_data(
                 entity_data, id=generate_universal_id(entity_id=entity_data.get('id'), **record_id_base_data)
             )
             entity_data['page_id'] = job_scope.ad_account_id
+
+            if entity_type == Entity.PagePostPromotable:
+                # store raw version of response (just to remain consistent)
+                raw_store(entity_data)
+                entity_data = _augment_page_post(entity_data)
 
             # Store the individual datum, use job context for the cold
             # storage thing to divine whatever it needs from the job context
