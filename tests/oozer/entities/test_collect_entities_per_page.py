@@ -88,13 +88,11 @@ class TestCollectEntitiesPerPageGraph(TestCase):
 
         entity_types = [Entity.PagePostPromotable]
         fb_model_map = {Entity.PagePostPromotable: FB_PAGE_POST_MODEL}
-        get_all_method_map = {Entity.PagePostPromotable: 'get_promotable_posts'}
 
         for entity_type in entity_types:
             with self.subTest(f'Entity type - "{entity_type}"'):
                 fbid = random.gen_string_id()
                 FB_MODEL = fb_model_map[entity_type]
-                get_method_name = get_all_method_map[entity_type]
 
                 job_scope = JobScope(
                     sweep_id=self.sweep_id,
@@ -118,11 +116,14 @@ class TestCollectEntitiesPerPageGraph(TestCase):
                 with mock.patch.object(
                     PageTokenManager, 'get_best_token', return_value=None
                 ) as get_best_token, mock.patch.object(
-                    FB_PAGE_MODEL, get_method_name, return_value=entities_data
+                    FB_PAGE_MODEL, 'get_feed', return_value=entities_data
+                ), mock.patch.object(
+                    FB_PAGE_MODEL, 'get_ads_posts', return_value=entities_data
                 ), mock.patch.object(
                     ChunkDumpStore, 'store'
-                ) as store:
-
+                ) as store, mock.patch.object(
+                    FB_PAGE_POST_MODEL, 'get', side_effect=lambda field: field == 'is_eligible_for_promotion'
+                ):
                     list(iter_collect_entities_per_page_graph(job_scope))
 
                 assert get_best_token.called

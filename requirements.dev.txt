@@ -13,7 +13,7 @@ black==19.3b0
 boto3==1.5.27
 botocore==1.8.42
 bugsnag==3.4.2
-celery[redis]==4.2.0
+celery==4.2.0
 certifi==2018.1.18
 chardet==3.0.4
 click==6.7                # via black, pip-tools
@@ -21,7 +21,7 @@ curlify==2.1.1
 datadog==0.28.0
 decorator==4.2.1
 docutils==0.14
-facebook_business==3.1.8
+facebook_business==3.3.1
 flake8-polyfill==1.0.2
 flake8-string-format==0.2.3
 flake8==3.5.0
