@@ -121,7 +121,9 @@ class TestCollectEntitiesPerPageGraph(TestCase):
                     FB_PAGE_MODEL, 'get_ads_posts', return_value=entities_data
                 ), mock.patch.object(
                     ChunkDumpStore, 'store'
-                ) as store:
+                ) as store, mock.patch.object(
+                    FB_PAGE_POST_MODEL, 'get', return_value=True
+                ):
                     list(iter_collect_entities_per_page_graph(job_scope))
 
                 assert get_best_token.called
