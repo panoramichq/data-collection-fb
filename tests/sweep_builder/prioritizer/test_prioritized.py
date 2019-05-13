@@ -10,7 +10,14 @@ from common.job_signature import JobSignature
 from common.store.jobreport import JobReport
 from common.tztools import now
 from sweep_builder.data_containers.scorable_claim import ScorableClaim
-from sweep_builder.prioritizer.prioritized import assign_score, normalize, historical_ratio, recency_ratio
+from sweep_builder.prioritizer.prioritized import (
+    assign_score,
+    normalize,
+    historical_ratio,
+    recency_ratio,
+    JOB_MIN_SUCCESS_PERIOD_IN_DAYS,
+    JOB_MAX_AGE_IN_DAYS,
+)
 from sweep_builder.prioritizer.gatekeeper import JobGateKeeper
 
 
@@ -32,7 +39,7 @@ def test_normalize(value_range, ratio, expected):
     ['range_start', 'expected'],
     [
         (None, 1.0),
-        (now().date() - timedelta(days=1000), 0.0),
+        (now().date() - timedelta(days=JOB_MAX_AGE_IN_DAYS + 1), 0.0),
         (now().date(), 1.0),
     ]
 )
@@ -46,7 +53,12 @@ def test_recency_ratio(range_start, expected):
 
 
 @pytest.mark.parametrize(
-    ['last_success_dt', 'expected'], [(None, 1.0), (now() - timedelta(days=31), 1.0), (now(), 0.0)]
+    ['last_success_dt', 'expected'],
+    [
+        (None, 1.0),
+        (now() - timedelta(days=JOB_MIN_SUCCESS_PERIOD_IN_DAYS + 1), 1.0),
+        (now(), 0.0),
+    ]
 )
 def test_historical_ratio(last_success_dt, expected):
     signature = JobSignature('jobid')
