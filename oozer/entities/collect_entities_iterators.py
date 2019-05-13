@@ -1,4 +1,3 @@
-import itertools
 from typing import List, Generator, Callable, Dict, Union, Tuple, Any
 
 from common.enums.entity import Entity
@@ -230,7 +229,7 @@ def _augment_page_post(page_post: Dict[str, Any]) -> Dict[str, Any]:
 
         Source: https://developers.facebook.com/docs/graph-api/changelog/version3.3
     """
-    if 'attachments' in page_post and len(page_post['attachments']['data']) == 1:
+    if 'attachments' in page_post and 'data' in page_post['attachments'] and len(page_post['attachments']['data']) == 1:
         data = page_post['attachments']['data'][0]
         if 'title' in data:
             page_post['caption'] = data['title']
