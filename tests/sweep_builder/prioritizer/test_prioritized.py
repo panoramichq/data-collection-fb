@@ -1,4 +1,4 @@
-from unittest.mock import patch
+from unittest.mock import patch, sentinel, Mock
 
 import pytest
 
@@ -10,7 +10,9 @@ from common.job_signature import JobSignature
 from common.store.jobreport import JobReport
 from common.tztools import now
 from sweep_builder.data_containers.scorable_claim import ScorableClaim
+from sweep_builder.errors import ScoringException
 from sweep_builder.prioritizer.prioritized import (
+    iter_prioritized,
     assign_score,
     normalize,
     historical_ratio,
@@ -69,6 +71,8 @@ def test_historical_ratio(last_success_dt, expected):
 
     assert score == pytest.approx(expected, abs=0.0001)
 
+# fmt: on
+
 
 @patch.object(JobGateKeeper, 'shall_pass', return_value=True)
 @patch('sweep_builder.prioritizer.prioritized.get_score_range', return_value=(100, 1000))
@@ -81,4 +85,11 @@ def test_assign_score(*_):
 
     assert result == 550
 
-# fmt: on
+
+@patch('sweep_builder.prioritizer.prioritized.assign_score')
+def test_iter_prioritized_assign_score_throws_keeps_going(mock_assign_score):
+    mock_assign_score.side_effect = [ScoringException('test'), 10]
+
+    results = [pc.score for pc in iter_prioritized([Mock(), Mock()])]
+
+    assert results == [10]
