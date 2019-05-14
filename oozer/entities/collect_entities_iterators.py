@@ -207,7 +207,7 @@ def iter_collect_entities_per_adaccount(job_scope: JobScope) -> Generator[Dict[s
             store(entity_data)
 
             # Signal to the system the new entity
-            feedback_entity_task.delay(entity_data, entity_type, [None, None])
+            feedback_entity_task.delay(entity_data, entity_type)
 
             yield entity_data
 
@@ -287,7 +287,7 @@ def iter_collect_entities_per_page(job_scope: JobScope) -> Generator[Dict[str, A
             store(entity_data)
 
             # Signal to the system the new entity
-            feedback_entity_task.delay(entity_data, entity_type, [None, None])
+            feedback_entity_task.delay(entity_data, entity_type)
 
             yield entity_data
             cnt += 1
@@ -338,7 +338,7 @@ def iter_collect_entities_per_page_graph(job_scope: JobScope) -> Generator[Dict[
             store(entity_data)
 
             # Signal to the system the new entity
-            feedback_entity_task.delay(entity_data, entity_type, [None, None])
+            feedback_entity_task.delay(entity_data, entity_type)
             yield entity_data
 
 
