@@ -7,9 +7,7 @@ from oozer.producer import TaskProducer
 
 @contextlib.contextmanager
 def mock_reader(_):
-    yield [
-        ('fb|029dc5f3253c456ea5ee29d0919b686e|||dayplatform|A|2000-01-02', {}, 100)
-    ]
+    yield [('fb|029dc5f3253c456ea5ee29d0919b686e|||dayplatform|A|2000-01-02', {}, 100)]
 
 
 @patch.object(SortedJobsQueue, 'JobsReader', new=mock_reader)

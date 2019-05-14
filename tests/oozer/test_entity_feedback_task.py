@@ -83,8 +83,6 @@ class TestEntityFeedback(TestCase):
             'entity_type': entity_type,
             'bol': datetime(2000, 1, 2, 11, 4, 5, tzinfo=timezone.utc),
             'eol': datetime(2001, 1, 2, 11, 4, 5, tzinfo=timezone.utc),
-            'hash': 'e_hash',
-            'hash_fields': 'f_hash',
         }
 
         # Now testing retention of the original BOL, EOL values
@@ -111,8 +109,6 @@ class TestEntityFeedback(TestCase):
             'entity_type': entity_type,
             'bol': datetime(2000, 1, 2, 11, 4, 5, tzinfo=timezone.utc),  # <- original value
             'eol': datetime(2001, 1, 2, 11, 4, 5, tzinfo=timezone.utc),  # <- original value
-            'hash': 'e_hash',
-            'hash_fields': 'f_hash',
         }
 
     def test_bol_translation(self):
@@ -142,8 +138,6 @@ class TestEntityFeedback(TestCase):
             'entity_type': entity_type,
             'bol': datetime(2018, 4, 6, 21, 11, 10, tzinfo=timezone.utc),
             'eol': None,
-            'hash': 'e_hash',
-            'hash_fields': 'f_hash',
         }
 
     @freeze_time()
@@ -174,8 +168,6 @@ class TestEntityFeedback(TestCase):
             'entity_type': entity_type,
             'bol': datetime.now(timezone.utc),
             'eol': None,
-            'hash': 'e_hash',
-            'hash_fields': 'f_hash',
         }
 
 
@@ -185,13 +177,7 @@ class TestEntityFeedback(TestCase):
         (
             Entity.Campaign,
             {'created_time': '2019-01-01T12:00:00.000Z'},
-            {
-                'entity_type': Entity.Campaign,
-                'bol': datetime(2019, 1, 1, 12, 0, tzinfo=timezone.utc),
-                'eol': None,
-                'hash': 'e_hash',
-                'hash_fields': 'f_hash',
-            },
+            {'entity_type': Entity.Campaign, 'bol': datetime(2019, 1, 1, 12, 0, tzinfo=timezone.utc), 'eol': None},
         ),
         (
             Entity.AdSet,
@@ -200,8 +186,6 @@ class TestEntityFeedback(TestCase):
                 'entity_type': Entity.AdSet,
                 'bol': datetime(2019, 1, 1, 12, 0, tzinfo=timezone.utc),
                 'eol': None,
-                'hash': 'e_hash',
-                'hash_fields': 'f_hash',
                 'campaign_id': 'campaign-1',
             },
         ),
@@ -212,22 +196,12 @@ class TestEntityFeedback(TestCase):
                 'entity_type': Entity.Ad,
                 'bol': datetime(2019, 1, 1, 12, 0, tzinfo=timezone.utc),
                 'eol': None,
-                'hash': 'e_hash',
-                'hash_fields': 'f_hash',
                 'campaign_id': 'campaign-1',
                 'adset_id': 'adset-1',
             },
         ),
-        (
-            Entity.AdCreative,
-            {},
-            {'entity_type': Entity.AdCreative, 'bol': mock.ANY, 'eol': None, 'hash': 'e_hash', 'hash_fields': 'f_hash'},
-        ),
-        (
-            Entity.AdVideo,
-            {},
-            {'entity_type': Entity.AdVideo, 'bol': mock.ANY, 'eol': None, 'hash': 'e_hash', 'hash_fields': 'f_hash'},
-        ),
+        (Entity.AdCreative, {}, {'entity_type': Entity.AdCreative, 'bol': mock.ANY, 'eol': None}),
+        (Entity.AdVideo, {}, {'entity_type': Entity.AdVideo, 'bol': mock.ANY, 'eol': None}),
     ],
 )
 def test_all_upserted(entity_type, entity_data, expected):

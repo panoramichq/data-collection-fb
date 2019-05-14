@@ -110,7 +110,7 @@ def _upsert_regular_entity(entity_data: Dict[str, Any], entity_type: str, entity
 
     eol = _parse_fb_datetime(entity_data.get('updated_time')) if _is_eol else None
 
-    upsert_data = {'hash': entity_hash_pair[0], 'hash_fields': entity_hash_pair[1]}
+    upsert_data = {}
 
     campaign_id = entity_data.get('campaign_id')
     if campaign_id is not None:
@@ -129,4 +129,5 @@ def _upsert_regular_entity(entity_data: Dict[str, Any], entity_type: str, entity
     if eol:
         upsert_data['eol'] = Model.eol | eol  # allow previously computed value to stand against new value
 
-    Model.upsert(ad_account_id, entity_id, **upsert_data)
+    if upsert_data:
+        Model.upsert(ad_account_id, entity_id, **upsert_data)
