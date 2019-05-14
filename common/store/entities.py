@@ -122,8 +122,6 @@ class EntityBaseMixin:
 
     bol = attributes.UTCDateTimeAttribute(null=True)
     eol = attributes.UTCDateTimeAttribute(null=True)
-    hash = attributes.UnicodeAttribute(null=True, attr_name='h')  # Could be binary
-    hash_fields = attributes.UnicodeAttribute(null=True, attr_name='hf')  # Could be binary
 
     # Since we use UpdateItem for inserting records, we must have at least
     # one attribute specified on each model. Normally that would be created_time
@@ -139,8 +137,6 @@ class PageEntityBaseMixin:
 
     bol = attributes.UTCDateTimeAttribute(null=True)
     eol = attributes.UTCDateTimeAttribute(null=True)
-    hash = attributes.UnicodeAttribute(null=True, attr_name='h')  # Could be binary
-    hash_fields = attributes.UnicodeAttribute(null=True, attr_name='hf')  # Could be binary
 
     entity_type = None  # will be overridden in subclass
     _additional_fields = {'entity_type'}

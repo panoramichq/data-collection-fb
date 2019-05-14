@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Set, Tuple
+from typing import Tuple
 
 from common.enums.entity import Entity
 
@@ -24,9 +24,6 @@ class RealityClaim:
     ad_account_id: str = None
     campaign_id: str = None
     adset_id: str = None
-
-    # TODO: Remove cause not used
-    tokens: Set[str] = None
 
     # Comes from parent AdAccount record
     timezone: str = None

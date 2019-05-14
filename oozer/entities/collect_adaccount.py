@@ -79,7 +79,7 @@ def collect_adaccount(job_scope: JobScope) -> Dict[str, Any]:
             ad_account_data_dict,
             id=generate_universal_id(**job_scope_base),
         )
-        feedback_entity_task.delay(ad_account_data_dict, job_scope.report_variant, [None, None])
+        feedback_entity_task.delay(ad_account_data_dict, job_scope.report_variant)
         store = NormalStore(job_scope)
         store.store(augmented_ad_account_data)
 
