@@ -45,11 +45,7 @@ class TestLooperReportTypeInventoryResolution(TestCase):
 
     def test_resolve_job_scope_to_celery_task_page(self):
         real_claim = RealityClaim(
-            entity_id='P1',
-            ad_account_id='P1',
-            entity_type=Entity.Page,
-            tokens='bogus',
-            timezone='America/Los_Angeles',
+            entity_id='P1', ad_account_id='P1', entity_type=Entity.Page, tokens='bogus', timezone='America/Los_Angeles'
         )
         for job_generator in entity_expectation_generator_map[Entity.Page]:
             for exp_claim in job_generator(real_claim):
