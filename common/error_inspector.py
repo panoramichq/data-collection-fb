@@ -3,7 +3,7 @@ import traceback
 from typing import Any, Dict
 
 from gevent import Timeout
-from facebook_business.exceptions import FacebookError
+from facebook_business.exceptions import FacebookRequestError
 from pynamodb.exceptions import UpdateError, GetError, PutError, QueryError
 
 from common.bugsnag import SEVERITY_ERROR, BugSnagContextData
@@ -65,11 +65,9 @@ class ErrorInspector:
         report_to_bugsnag = True
 
         severity = SEVERITY_ERROR
-        if isinstance(exc, FacebookError):
+        if isinstance(exc, FacebookRequestError):
             report_to_bugsnag = False
-            fb_error_inspector = FacebookApiErrorInspector(exc)
-
-            _, failure_bucket = fb_error_inspector.get_status_and_bucket()
+            _, failure_bucket = FacebookApiErrorInspector(exc).get_status_and_bucket()
             error_type = MAPPING_FACEBOOK_ERRORS.get(failure_bucket, ErrorTypesReport.UNKNOWN)
 
         elif isinstance(exc, Timeout) or isinstance(exc, TimeoutError):

@@ -5,6 +5,7 @@ import time
 from typing import Any, Callable
 
 import gevent
+from facebook_business.exceptions import FacebookRequestError
 
 from common.enums.failure_bucket import FailureBucket
 from common.error_inspector import ErrorInspector, ErrorTypesReport
@@ -29,16 +30,13 @@ def _report_failure(job_scope: JobScope, start_time: float, exc: Exception, **kw
 
     ErrorInspector.inspect(exc, job_scope.ad_account_id, {'job_scope': job_scope})
 
-    token = job_scope.token
-    failure_description = FacebookApiErrorInspector(exc).get_status_and_bucket()
-    if failure_description:
-        failure_status, failure_bucket = failure_description
+    if isinstance(exc, FacebookRequestError):
+        failure_status, failure_bucket = FacebookApiErrorInspector(exc).get_status_and_bucket()
     else:
-        failure_status = ExternalPlatformJobStatus.GenericError
-        failure_bucket = FailureBucket.Other
+        failure_status, failure_bucket = ExternalPlatformJobStatus.GenericError, FailureBucket.Other
 
     report_job_status_task.delay(failure_status, job_scope)
-    PlatformTokenManager.from_job_scope(job_scope).report_usage_per_failure_bucket(token, failure_bucket)
+    PlatformTokenManager.from_job_scope(job_scope).report_usage_per_failure_bucket(job_scope.token, failure_bucket)
     SweepStatusTracker(job_scope.sweep_id).report_status(failure_bucket)
     _send_measurement_task_runtime(job_scope, failure_bucket)
 
