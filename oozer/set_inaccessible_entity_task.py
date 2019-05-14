@@ -26,10 +26,10 @@ def set_inaccessible_entity_task(job_scope: JobScope):
     entity_type = job_scope.entity_type
     entity_id = job_scope.entity_id
 
-    model_factory = ENTITY_TYPE_MODEL_MAP[entity_type]
-    model = model_factory(page_id=job_scope.ad_account_id, entity_id=entity_id)
+    model_class = ENTITY_TYPE_MODEL_MAP[entity_type]
+    model = model_class(page_id=job_scope.ad_account_id, entity_id=entity_id)
     try:
-        model.update(actions=[model_factory.is_accessible.set(False)])
+        model.update(actions=[model_class.is_accessible.set(False)])
     except UpdateError as ex:
         if ErrorInspector.is_dynamo_throughput_error(ex):
             logger.info(str(ex))
