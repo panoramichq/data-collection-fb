@@ -1,6 +1,6 @@
 from unittest.mock import patch, call, Mock
 
-from facebook_business.exceptions import FacebookError
+from facebook_business.exceptions import FacebookError, FacebookRequestError
 
 from common.bugsnag import SEVERITY_ERROR
 from common.enums.failure_bucket import FailureBucket
@@ -33,7 +33,7 @@ def test_reported_task_on_success(mock_report):
 def test_reported_task_on_failure_facebook_error(
     mock_get_status_and_bucket, mock_notify, mock_report, mock_from_job_scope
 ):
-    exc = FacebookError('test')
+    exc = FacebookRequestError('test', {}, 404, [], '')
     mock_job_scope = Mock(token='token')
     mock_get_status_and_bucket.return_value = (
         ExternalPlatformJobStatus.UserThrottlingError,
