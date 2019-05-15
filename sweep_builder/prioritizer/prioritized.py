@@ -140,6 +140,7 @@ def iter_prioritized(claims: Iterable[ScorableClaim]) -> Generator[Prioritizatio
                     score,
                     ad_account_id=claim.ad_account_id,
                     timezone=claim.timezone,
+                    range_start=claim.range_start,
                 )
         except ScoringException as e:
             ErrorInspector.inspect(e, claim.ad_account_id, {'job_id': claim.job_id})

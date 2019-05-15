@@ -5,6 +5,7 @@ from collections import defaultdict
 from typing import Generator, Iterable
 
 from common.enums.jobtype import detect_job_type
+from common.enums.reporttype import ReportType
 from common.measurement import Measure
 from oozer.common.sorted_jobs_queue import SortedJobsQueue
 from sweep_builder.prioritizer.gatekeeper import JobGateKeeper
@@ -73,6 +74,10 @@ def iter_persist_prioritized(
 
             with Measure.timer(f'{_measurement_name_base}.add_to_queue', tags=_measurement_tags):
                 Measure.counter(f'{_measurement_name_base}.add_to_queue_cnt', tags=_measurement_tags).increment()
+                if prioritization_claim.report_age_in_days is not None:
+                    Measure.histogram(f'{_measurement_name_base}.report_age', tags=_measurement_tags)(
+                        prioritization_claim.report_age_in_days
+                    )
                 add_to_queue(prioritization_claim.job_id, score, **extra_data)
 
             # This time includes the time consumer of this generator wastes

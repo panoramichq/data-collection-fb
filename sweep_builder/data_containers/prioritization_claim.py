@@ -1,6 +1,8 @@
+from datetime import date
 from typing import Optional
 
 from common.job_signature import JobSignature
+from common.tztools import now
 
 
 class PrioritizationClaim:
@@ -22,6 +24,7 @@ class PrioritizationClaim:
 
     ad_account_id: Optional[str]
     timezone: Optional[str]
+    range_start: Optional[date]
 
     def __init__(
         self,
@@ -33,6 +36,7 @@ class PrioritizationClaim:
         *,
         ad_account_id: str = None,
         timezone: str = None,
+        range_start: date = None,
     ):
         self.entity_id = entity_id
         self.entity_type = entity_type
@@ -41,7 +45,15 @@ class PrioritizationClaim:
         self.score = score
         self.ad_account_id = ad_account_id
         self.timezone = timezone
+        self.range_start = range_start
 
     @property
     def job_id(self) -> str:
         return self.job_signature.job_id
+
+    @property
+    def report_age_in_days(self) -> Optional[int]:
+        if self.range_start is None:
+            return None
+
+        return (now().date() - self.range_start).days
