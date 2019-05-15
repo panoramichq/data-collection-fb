@@ -11,6 +11,7 @@ from common.enums.failure_bucket import FailureBucket
 from common.error_inspector import ErrorInspector, ErrorTypesReport
 from common.measurement import Measure
 from common.tokens import PlatformTokenManager
+from oozer.set_inaccessible_entity_task import set_inaccessible_entity_task
 from oozer.common.job_scope import JobScope
 from oozer.common.report_job_status_task import report_job_status_task
 from oozer.common.enum import ExternalPlatformJobStatus
@@ -34,6 +35,9 @@ def _report_failure(job_scope: JobScope, start_time: float, exc: Exception, **kw
         failure_status, failure_bucket = FacebookApiErrorInspector(exc).get_status_and_bucket()
     else:
         failure_status, failure_bucket = ExternalPlatformJobStatus.GenericError, FailureBucket.Other
+
+    if failure_bucket == FailureBucket.InaccessibleObject:
+        set_inaccessible_entity_task.delay(job_scope)
 
     report_job_status_task.delay(failure_status, job_scope)
     PlatformTokenManager.from_job_scope(job_scope).report_usage_per_failure_bucket(job_scope.token, failure_bucket)

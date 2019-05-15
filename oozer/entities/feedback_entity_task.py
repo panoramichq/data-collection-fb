@@ -2,6 +2,7 @@ import logging
 from typing import Any, Dict
 from pynamodb.exceptions import PutError, UpdateError
 
+from common.error_inspector import ErrorInspector
 from oozer.entities.feedback_entity import feedback_entity, determine_ad_account_id
 from common.celeryapp import get_celery_app
 from common.measurement import Measure
@@ -34,13 +35,11 @@ def feedback_entity_task(entity_data: Dict[str, Any], entity_type: str):
     try:
         feedback_entity(entity_data, entity_type)
     except (PutError, UpdateError) as ex:
-        ex_str = str(ex)
-        if 'ProvisionedThroughputExceededException' in ex_str:
+        if ErrorInspector.is_dynamo_throughput_error(ex):
             Measure.counter(
                 feedback_entity_task.__name__ + '.throughput_exceptions',
                 tags={'entity_type': entity_type, 'ad_account_id': determine_ad_account_id(entity_data, entity_type)},
             ).increment()
-            logger.warning(ex_str)
+            logger.info(str(ex))
         else:
-            # rest is ok to bubble up
             raise
