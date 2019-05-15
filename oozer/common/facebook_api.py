@@ -68,6 +68,7 @@ class FacebookApiErrorInspector:
         (100, 1487534): (ExternalPlatformJobStatus.TooMuchData, FailureBucket.TooLarge),
         # Object does not exist, cannot be loaded due to missing permissions, or does not support this operation
         (100, 13): (ExternalPlatformJobStatus.InaccessibleObject, FailureBucket.InaccessibleObject),
+        (100, 33): (ExternalPlatformJobStatus.InaccessibleObject, FailureBucket.InaccessibleObject),
     }
 
     ERROR_MESSAGE_MAP = {
