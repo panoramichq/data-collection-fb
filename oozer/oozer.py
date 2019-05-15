@@ -126,7 +126,7 @@ class TaskOozer:
             },
         ).increment()
 
-        Measure.gauge(
+        Measure.histogram(
             f'{__name__}.job_scores',
             tags={
                 'sweep_id': self.sweep_id,
