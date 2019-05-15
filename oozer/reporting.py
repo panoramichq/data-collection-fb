@@ -80,6 +80,7 @@ def _send_measurement_task_runtime(job_scope: JobScope, bucket: int):
         Measure.counter(f'{_measurement_base_name}.data_points', tags=_measurement_tags).increment(
             job_scope.datapoint_count
         )
+        Measure.histogram(f'{_measurement_base_name}.data_points', tags=_measurement_tags)(job_scope.datapoint_count)
 
     Measure.gauge(f'{_measurement_base_name}.running_time', tags=_measurement_tags)(job_scope.running_time)
 
