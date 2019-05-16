@@ -1,4 +1,4 @@
-from unittest.mock import patch, sentinel, Mock
+from unittest.mock import patch, Mock
 
 import pytest
 

@@ -36,7 +36,8 @@ def _report_failure(job_scope: JobScope, start_time: float, exc: Exception, **kw
     else:
         failure_status, failure_bucket = ExternalPlatformJobStatus.GenericError, FailureBucket.Other
 
-    if failure_bucket == FailureBucket.InaccessibleObject:
+    # No entity type means we don't know what table to target
+    if failure_bucket == FailureBucket.InaccessibleObject and job_scope.entity_type is not None:
         set_inaccessible_entity_task.delay(job_scope)
 
     report_job_status_task.delay(failure_status, job_scope)
