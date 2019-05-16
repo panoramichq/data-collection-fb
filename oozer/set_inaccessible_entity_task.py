@@ -23,10 +23,10 @@ def _extract_tags_for_report_job_status(job_scope: JobScope, *_, **__):
 )
 def set_inaccessible_entity_task(job_scope: JobScope):
     """Update entity record to flag it as inaccessible."""
-    entity_type = job_scope.entity_type
+    report_variant = job_scope.report_variant
     entity_id = job_scope.entity_id
 
-    model_class = ENTITY_TYPE_MODEL_MAP[entity_type]
+    model_class = ENTITY_TYPE_MODEL_MAP[report_variant]
     model = model_class(page_id=job_scope.ad_account_id, entity_id=entity_id)
     try:
         model.update(actions=[model_class.is_accessible.set(False)])
