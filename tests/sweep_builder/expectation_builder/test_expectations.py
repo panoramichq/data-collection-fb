@@ -21,19 +21,10 @@ def test_iter_expectations_generates_jobs_from_map(mock_map):
     assert [sentinel.expectation_claim] == list(iter_expectations([reality_claim]))
 
 
-def test_aa_import_expectation_not_generated_on_nontoken():
-    reality_claim = RealityClaim(entity_type=Entity.Scope, entity_id=gen_string_id(), tokens=[])
-
-    results = list(iter_expectations([reality_claim]))
-
-    assert not results
-
-
-@pytest.mark.skip
-def test_aa_import_expectation_generated_on_token():
+def test_aa_import_expectation_generated():
     entity_id = gen_string_id()
 
-    reality_claim = RealityClaim(entity_type=Entity.Scope, entity_id=entity_id, tokens=['blah'])
+    reality_claim = RealityClaim(entity_type=Entity.Scope, entity_id=entity_id)
 
     results = list(iter_expectations([reality_claim]))
 
@@ -55,9 +46,7 @@ def test_aa_import_expectation_generated_on_token():
 def test_aa_collection_expectation():
     ad_account_id = gen_string_id()
 
-    reality_claim = RealityClaim(
-        ad_account_id=ad_account_id, entity_id=ad_account_id, entity_type=Entity.AdAccount, tokens=["blah"]
-    )
+    reality_claim = RealityClaim(ad_account_id=ad_account_id, entity_id=ad_account_id, entity_type=Entity.AdAccount)
 
     def is_adaccount_entity_job(expectation_claim):
         parsed_id_parts = parse_id_parts(expectation_claim.job_id)

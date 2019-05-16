@@ -73,7 +73,7 @@ class TestEntityFeedback(TestCase):
             )
         )
 
-        feedback_entity_task(entity_data, entity_type, ('e_hash', 'f_hash'))
+        feedback_entity_task(entity_data, entity_type)
 
         record = DBModel.get(aaid, eid)
 
@@ -83,8 +83,7 @@ class TestEntityFeedback(TestCase):
             'entity_type': entity_type,
             'bol': datetime(2000, 1, 2, 11, 4, 5, tzinfo=timezone.utc),
             'eol': datetime(2001, 1, 2, 11, 4, 5, tzinfo=timezone.utc),
-            'hash': 'e_hash',
-            'hash_fields': 'f_hash',
+            'is_accessible': True,
         }
 
         # Now testing retention of the original BOL, EOL values
@@ -101,7 +100,7 @@ class TestEntityFeedback(TestCase):
             )
         )
 
-        feedback_entity_task(entity_data, entity_type, ('e_hash', 'f_hash'))
+        feedback_entity_task(entity_data, entity_type)
 
         record = DBModel.get(aaid, eid)
 
@@ -111,8 +110,7 @@ class TestEntityFeedback(TestCase):
             'entity_type': entity_type,
             'bol': datetime(2000, 1, 2, 11, 4, 5, tzinfo=timezone.utc),  # <- original value
             'eol': datetime(2001, 1, 2, 11, 4, 5, tzinfo=timezone.utc),  # <- original value
-            'hash': 'e_hash',
-            'hash_fields': 'f_hash',
+            'is_accessible': True,
         }
 
     def test_bol_translation(self):
@@ -132,7 +130,7 @@ class TestEntityFeedback(TestCase):
             self._entity_factory(FBModel, account_id=aaid, id=eid, time_created=1523049070, time_updated=1533162823)
         )
 
-        feedback_entity_task(entity_data, entity_type, ('e_hash', 'f_hash'))
+        feedback_entity_task(entity_data, entity_type)
 
         record = DBModel.get(aaid, eid)
 
@@ -142,8 +140,7 @@ class TestEntityFeedback(TestCase):
             'entity_type': entity_type,
             'bol': datetime(2018, 4, 6, 21, 11, 10, tzinfo=timezone.utc),
             'eol': None,
-            'hash': 'e_hash',
-            'hash_fields': 'f_hash',
+            'is_accessible': True,
         }
 
     @freeze_time()
@@ -164,7 +161,7 @@ class TestEntityFeedback(TestCase):
             self._entity_factory(FBModel, ad_account_id=aaid, id=eid)
         )
 
-        feedback_entity_task(entity_data, entity_type, ('e_hash', 'f_hash'))
+        feedback_entity_task(entity_data, entity_type)
 
         record = DBModel.get(aaid, eid)
 
@@ -174,8 +171,7 @@ class TestEntityFeedback(TestCase):
             'entity_type': entity_type,
             'bol': datetime.now(timezone.utc),
             'eol': None,
-            'hash': 'e_hash',
-            'hash_fields': 'f_hash',
+            'is_accessible': True,
         }
 
 
@@ -189,8 +185,7 @@ class TestEntityFeedback(TestCase):
                 'entity_type': Entity.Campaign,
                 'bol': datetime(2019, 1, 1, 12, 0, tzinfo=timezone.utc),
                 'eol': None,
-                'hash': 'e_hash',
-                'hash_fields': 'f_hash',
+                'is_accessible': True,
             },
         ),
         (
@@ -200,9 +195,8 @@ class TestEntityFeedback(TestCase):
                 'entity_type': Entity.AdSet,
                 'bol': datetime(2019, 1, 1, 12, 0, tzinfo=timezone.utc),
                 'eol': None,
-                'hash': 'e_hash',
-                'hash_fields': 'f_hash',
                 'campaign_id': 'campaign-1',
+                'is_accessible': True,
             },
         ),
         (
@@ -212,22 +206,17 @@ class TestEntityFeedback(TestCase):
                 'entity_type': Entity.Ad,
                 'bol': datetime(2019, 1, 1, 12, 0, tzinfo=timezone.utc),
                 'eol': None,
-                'hash': 'e_hash',
-                'hash_fields': 'f_hash',
                 'campaign_id': 'campaign-1',
                 'adset_id': 'adset-1',
+                'is_accessible': True,
             },
         ),
         (
             Entity.AdCreative,
             {},
-            {'entity_type': Entity.AdCreative, 'bol': mock.ANY, 'eol': None, 'hash': 'e_hash', 'hash_fields': 'f_hash'},
+            {'entity_type': Entity.AdCreative, 'bol': mock.ANY, 'eol': None, 'is_accessible': True},
         ),
-        (
-            Entity.AdVideo,
-            {},
-            {'entity_type': Entity.AdVideo, 'bol': mock.ANY, 'eol': None, 'hash': 'e_hash', 'hash_fields': 'f_hash'},
-        ),
+        (Entity.AdVideo, {}, {'entity_type': Entity.AdVideo, 'bol': mock.ANY, 'eol': None, 'is_accessible': True}),
     ],
 )
 def test_all_upserted(entity_type, entity_data, expected):
@@ -237,7 +226,7 @@ def test_all_upserted(entity_type, entity_data, expected):
     entity_data.update(account_id=aaid, id=eid)
     expected.update(ad_account_id=aaid, entity_id=eid)
 
-    feedback_entity_task(entity_data, entity_type, ('e_hash', 'f_hash'))
+    feedback_entity_task(entity_data, entity_type)
 
     record = ENTITY_TYPE_DB_MODEL_MAP[entity_type].get(entity_data['account_id'], entity_data['id'])
     assert record.to_dict() == expected

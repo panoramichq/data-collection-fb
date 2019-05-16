@@ -90,7 +90,7 @@ class _JobsWriter:
                 },
             ).increment()
 
-            Measure.gauge(
+            Measure.histogram(
                 f'{self._measurement_base}.flushed_scores',
                 tags={
                     'sweep_id': self.sweep_id,

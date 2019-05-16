@@ -126,7 +126,7 @@ class TaskOozer:
             },
         ).increment()
 
-        Measure.gauge(
+        Measure.histogram(
             f'{__name__}.job_scores',
             tags={
                 'sweep_id': self.sweep_id,
@@ -147,6 +147,7 @@ class TaskOozer:
             self._rate_review_time = self.current_time()
             self._tasks_since_review = 0
             logger.warning(f'Updated oozing rate from {old_rate:.2f} to {self.oozing_rate:.2f}')
+            Measure.gauge(f'{__name__}.oozing_rate', tags={'sweep_id': self.sweep_id})(self.oozing_rate)
 
         if self._tasks_since_review > self.expected_tasks_since_oozer_rate_review:
             gevent.sleep(self.wait_interval)

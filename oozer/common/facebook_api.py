@@ -68,6 +68,7 @@ class FacebookApiErrorInspector:
         (100, 1487534): (ExternalPlatformJobStatus.TooMuchData, FailureBucket.TooLarge),
         # Object does not exist, cannot be loaded due to missing permissions, or does not support this operation
         (100, 13): (ExternalPlatformJobStatus.InaccessibleObject, FailureBucket.InaccessibleObject),
+        (100, 33): (ExternalPlatformJobStatus.InaccessibleObject, FailureBucket.InaccessibleObject),
     }
 
     ERROR_MESSAGE_MAP = {
@@ -77,17 +78,14 @@ class FacebookApiErrorInspector:
         )
     }
 
-    _exception = None
+    _exception: FacebookRequestError
 
-    def __init__(self, exception):
+    def __init__(self, exception: FacebookRequestError):
         """Store the exception we want to test."""
         self._exception = exception
 
     def get_status_and_bucket(self) -> Optional[Tuple[int, int]]:
         """Extract status and bucket from inspected exception."""
-        if not isinstance(self._exception, FacebookRequestError):
-            return None
-
         code = self._exception.api_error_code()
         subcode = self._exception.api_error_subcode()
         error_message = self._exception.api_error_message()

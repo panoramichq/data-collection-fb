@@ -5,11 +5,13 @@ import time
 from typing import Any, Callable
 
 import gevent
+from facebook_business.exceptions import FacebookRequestError
 
 from common.enums.failure_bucket import FailureBucket
 from common.error_inspector import ErrorInspector, ErrorTypesReport
 from common.measurement import Measure
 from common.tokens import PlatformTokenManager
+from oozer.set_inaccessible_entity_task import set_inaccessible_entity_task
 from oozer.common.job_scope import JobScope
 from oozer.common.report_job_status_task import report_job_status_task
 from oozer.common.enum import ExternalPlatformJobStatus
@@ -29,16 +31,16 @@ def _report_failure(job_scope: JobScope, start_time: float, exc: Exception, **kw
 
     ErrorInspector.inspect(exc, job_scope.ad_account_id, {'job_scope': job_scope})
 
-    token = job_scope.token
-    failure_description = FacebookApiErrorInspector(exc).get_status_and_bucket()
-    if failure_description:
-        failure_status, failure_bucket = failure_description
+    if isinstance(exc, FacebookRequestError):
+        failure_status, failure_bucket = FacebookApiErrorInspector(exc).get_status_and_bucket()
     else:
-        failure_status = ExternalPlatformJobStatus.GenericError
-        failure_bucket = FailureBucket.Other
+        failure_status, failure_bucket = ExternalPlatformJobStatus.GenericError, FailureBucket.Other
+
+    if failure_bucket == FailureBucket.InaccessibleObject:
+        set_inaccessible_entity_task.delay(job_scope)
 
     report_job_status_task.delay(failure_status, job_scope)
-    PlatformTokenManager.from_job_scope(job_scope).report_usage_per_failure_bucket(token, failure_bucket)
+    PlatformTokenManager.from_job_scope(job_scope).report_usage_per_failure_bucket(job_scope.token, failure_bucket)
     SweepStatusTracker(job_scope.sweep_id).report_status(failure_bucket)
     _send_measurement_task_runtime(job_scope, failure_bucket)
 
@@ -78,6 +80,7 @@ def _send_measurement_task_runtime(job_scope: JobScope, bucket: int):
         Measure.counter(f'{_measurement_base_name}.data_points', tags=_measurement_tags).increment(
             job_scope.datapoint_count
         )
+        Measure.histogram(f'{_measurement_base_name}.data_points', tags=_measurement_tags)(job_scope.datapoint_count)
 
     Measure.gauge(f'{_measurement_base_name}.running_time', tags=_measurement_tags)(job_scope.running_time)
 

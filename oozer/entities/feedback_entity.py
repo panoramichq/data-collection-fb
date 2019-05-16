@@ -31,15 +31,13 @@ def _parse_fb_datetime(value) -> Optional[datetime]:
 _eol_status = {'ARCHIVED', 'DELETED'}
 
 
-def feedback_entity(entity_data: Dict[str, Any], entity_type: str, entity_hash_pair):
+def feedback_entity(entity_data: Dict[str, Any], entity_type: str):
     """
     This task is to feedback information about entity collected by updating
     data store.
 
     :param entity_data: The entity we're feeding back to the system
     :param entity_type: Type of the entity, a string representation
-    :param entity_hash_pair: Tuple containing both entity data
-        itself and fields hashes that we can use
     """
     if entity_type not in Entity.ALL:
         raise ValueError(f'Argument "entity_type" must be one of {Entity.ALL}. Received "{entity_type}" instead.')
@@ -49,12 +47,12 @@ def feedback_entity(entity_data: Dict[str, Any], entity_type: str, entity_hash_p
         )
 
     if entity_type == Entity.AdAccount:
-        _upsert_ad_account_entity(entity_data, entity_type, entity_hash_pair)
+        _upsert_ad_account_entity(entity_data, entity_type)
     else:
-        _upsert_regular_entity(entity_data, entity_type, entity_hash_pair)
+        _upsert_regular_entity(entity_data, entity_type)
 
 
-def _upsert_ad_account_entity(entity_data: Dict[str, Any], entity_type: str, entity_hash_pair):
+def _upsert_ad_account_entity(entity_data: Dict[str, Any], entity_type: str):
     assert entity_type == Entity.AdAccount
     upsert_data = {'timezone': entity_data['timezone_name']}
     ad_account_id = entity_data['account_id']
@@ -72,7 +70,7 @@ def determine_ad_account_id(entity_data: Dict[str, Any], entity_type: str) -> st
     return ad_account_id
 
 
-def _upsert_regular_entity(entity_data: Dict[str, Any], entity_type: str, entity_hash_pair):
+def _upsert_regular_entity(entity_data: Dict[str, Any], entity_type: str):
     if entity_type not in Entity.ALL:
         raise ValueError(f'Argument "entity_type" must be one of {Entity.ALL}. Received "{entity_type}" instead.')
     if not isinstance(entity_data, dict):
@@ -110,7 +108,7 @@ def _upsert_regular_entity(entity_data: Dict[str, Any], entity_type: str, entity
 
     eol = _parse_fb_datetime(entity_data.get('updated_time')) if _is_eol else None
 
-    upsert_data = {'hash': entity_hash_pair[0], 'hash_fields': entity_hash_pair[1]}
+    upsert_data = {'is_accessible': True}
 
     campaign_id = entity_data.get('campaign_id')
     if campaign_id is not None:
@@ -129,4 +127,5 @@ def _upsert_regular_entity(entity_data: Dict[str, Any], entity_type: str, entity
     if eol:
         upsert_data['eol'] = Model.eol | eol  # allow previously computed value to stand against new value
 
-    Model.upsert(ad_account_id, entity_id, **upsert_data)
+    if upsert_data:
+        Model.upsert(ad_account_id, entity_id, **upsert_data)

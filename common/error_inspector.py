@@ -3,10 +3,10 @@ import traceback
 from typing import Any, Dict
 
 from gevent import Timeout
-from facebook_business.exceptions import FacebookError
+from facebook_business.exceptions import FacebookRequestError
 from pynamodb.exceptions import UpdateError, GetError, PutError, QueryError
 
-from common.bugsnag import SEVERITY_ERROR, BugSnagContextData
+from common.bugsnag import SEVERITY_ERROR, BugSnagContextData, SEVERITY_WARNING
 from common.enums.failure_bucket import FailureBucket
 from common.measurement import Measure
 from config.bugsnag import API_KEY
@@ -65,11 +65,9 @@ class ErrorInspector:
         report_to_bugsnag = True
 
         severity = SEVERITY_ERROR
-        if isinstance(exc, FacebookError):
+        if isinstance(exc, FacebookRequestError):
             report_to_bugsnag = False
-            fb_error_inspector = FacebookApiErrorInspector(exc)
-
-            _, failure_bucket = fb_error_inspector.get_status_and_bucket()
+            _, failure_bucket = FacebookApiErrorInspector(exc).get_status_and_bucket()
             error_type = MAPPING_FACEBOOK_ERRORS.get(failure_bucket, ErrorTypesReport.UNKNOWN)
 
         elif isinstance(exc, Timeout) or isinstance(exc, TimeoutError):
@@ -81,6 +79,11 @@ class ErrorInspector:
             report_to_bugsnag = False
 
         final_extra_data = {'error_type': error_type, **(extra_data or {})}
+
+        # Notify team when page not accessible
+        if error_type == ErrorTypesReport.INACCESSIBLE_OBJECT:
+            severity = SEVERITY_WARNING
+            report_to_bugsnag = True
 
         if report_to_bugsnag and API_KEY:
             BugSnagContextData.notify(exc, severity=severity, **final_extra_data)

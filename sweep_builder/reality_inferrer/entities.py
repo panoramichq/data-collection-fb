@@ -60,7 +60,7 @@ def iter_entities_per_ad_account_id(
             tags={'ad_account_id': ad_account_id, 'entity_type': EntityModel.entity_type},
         ) as cntr:
 
-            for record in EntityModel.query(ad_account_id):
+            for record in EntityModel.query(ad_account_id, filter_condition=(EntityModel.is_accessible != False)):
                 cnt += 1
                 yield record.to_dict(fields=fields, skip_null=True)
                 if cnt % _step == 0:
@@ -87,7 +87,7 @@ def iter_entities_per_page_id(
             __name__ + '.entities_per_page_id', tags={'ad_account_id': page_id, 'entity_type': EntityModel.entity_type}
         ) as cntr:
 
-            for record in EntityModel.query(page_id):
+            for record in EntityModel.query(page_id, filter_condition=(EntityModel.is_accessible != False)):
                 cnt += 1
                 record_dict = record.to_dict(fields=fields, skip_null=True)
                 # this is unfortunate, but we need to change page_id to ad_account_id

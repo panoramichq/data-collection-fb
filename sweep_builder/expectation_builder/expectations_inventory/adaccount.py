@@ -20,10 +20,6 @@ def ad_accounts_per_scope(reality_claim: RealityClaim) -> Generator[ExpectationC
 
     To be used by Scope-level RealityClaim / ExpectationClaim.
     """
-    if not reality_claim.tokens:
-        logger.warning(f"Tokens for Scope '{reality_claim.entity_id}' are missing. Skipping all work for this scope.")
-        return
-
     yield ExpectationClaim(
         reality_claim.entity_id,
         reality_claim.entity_type,
