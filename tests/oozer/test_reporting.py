@@ -1,6 +1,6 @@
 from unittest.mock import patch, call, Mock
 
-from facebook_business.exceptions import FacebookError, FacebookRequestError
+from facebook_business.exceptions import FacebookRequestError
 
 from common.bugsnag import SEVERITY_ERROR
 from common.enums.failure_bucket import FailureBucket
