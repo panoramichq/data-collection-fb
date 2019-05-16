@@ -1,7 +1,5 @@
 from unittest.mock import patch, sentinel, Mock
 
-import pytest
-
 import config.application
 
 from common.enums.entity import Entity
