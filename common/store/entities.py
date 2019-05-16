@@ -123,7 +123,7 @@ class EntityBaseMixin:
     bol = attributes.UTCDateTimeAttribute(null=True)
     eol = attributes.UTCDateTimeAttribute(null=True)
 
-    is_accessible = attributes.BooleanAttribute(default=True, attr_name='is_accessible')
+    is_accessible = attributes.BooleanAttribute(default=True, null=True, attr_name='is_accessible')
 
     # Since we use UpdateItem for inserting records, we must have at least
     # one attribute specified on each model. Normally that would be created_time
@@ -140,7 +140,7 @@ class PageEntityBaseMixin:
     bol = attributes.UTCDateTimeAttribute(null=True)
     eol = attributes.UTCDateTimeAttribute(null=True)
 
-    is_accessible = attributes.BooleanAttribute(default=True, attr_name='is_accessible')
+    is_accessible = attributes.BooleanAttribute(default=True, null=True, attr_name='is_accessible')
 
     entity_type = None  # will be overridden in subclass
     _additional_fields = {'entity_type'}
