@@ -110,7 +110,6 @@ class SweepStatusTracker:
             FailureBucket.ApplicationThrottling: 0,
             FailureBucket.AdAccountThrottling: 0,
             FailureBucket.TooLarge: 0,
-            FailureBucket.WorkingOnIt: 0,
             FailureBucket.InaccessibleObject: 0,
         }
         # Now the proportion of successes, failure
@@ -127,10 +126,11 @@ class SweepStatusTracker:
         # Since these are voodoo numbers, feel free to rejiggle this formula,
         # but must adapt uses of them in looper below.
         for data, ratio in zip([m1, m2, m3], [0.80, 0.15, 0.05]):
-            minute_total = sum(data.values())
+            terminal_data = {fb: val for fb, val in data.items() if fb != FailureBucket.WorkingOnIt}
+            minute_total = sum(terminal_data.values())
             if minute_total:
                 for k in list(result.keys()):
-                    contributor = ratio * data.get(k, 0) / minute_total
+                    contributor = ratio * terminal_data.get(k, 0) / minute_total
                     result[k] = result[k] + contributor
 
         aggregate_data = self._get_aggregate_data()
