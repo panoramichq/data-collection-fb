@@ -14,7 +14,7 @@ from oozer.waiter import TaskWaiter
 
 logger = logging.getLogger(__name__)
 
-MIN_DELAY_SECS = 5
+MIN_DELAY_SECS = 15
 
 
 @Measure.timer(__name__, function_name_as_metric=True)
