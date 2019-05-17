@@ -4,15 +4,16 @@ from sys import getsizeof
 from itertools import chain
 from collections import deque
 
-from typing import Match
+from typing import Match, Optional, List
 from facebook_business.exceptions import FacebookError
 
 
-def convert_class_with_props_to_str(class_instance):
+def convert_class_with_props_to_str(class_instance, filter_props: Optional[List[str]] = None):
+    final_filter_props = filter_props or []
     new_dict = {
         key: class_instance.__dict__[key]
         for key in class_instance.__dict__
-        if key[:2] != '__' and not callable(class_instance.__dict__[key])
+        if key[:2] != '__' and not callable(class_instance.__dict__[key]) and key not in final_filter_props
     }
 
     return f'<{class_instance.__class__.__name__} {new_dict}>'

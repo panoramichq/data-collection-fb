@@ -346,9 +346,11 @@ def iter_collect_entities_per_page_post(job_scope: JobScope) -> Generator[Dict[s
     """
     Collects an arbitrary entity for a page post
     """
-    token, entity_type, root_fb_entity = _extract_token_entity_type_parent_entity(
-        job_scope, [Entity.Comment], Entity.PagePost, 'entity_id'
-    )
+    entity_type = job_scope.report_variant
+
+    page_token_manager = PageTokenManager.from_job_scope(job_scope)
+    with PlatformApiContext(page_token_manager.get_best_token(job_scope.ad_account_id)) as fb_ctx:
+        root_fb_entity = fb_ctx.to_fb_model(job_scope.entity_id, Entity.PagePost)
 
     entities = iter_native_entities_per_page_post(root_fb_entity, entity_type)
 
@@ -356,9 +358,7 @@ def iter_collect_entities_per_page_post(job_scope: JobScope) -> Generator[Dict[s
     record_id_base_data.update(entity_type=entity_type, report_variant=None)
     del record_id_base_data['entity_id']
 
-    token_manager = PlatformTokenManager.from_job_scope(job_scope)
     with ChunkDumpStore(job_scope, chunk_size=DEFAULT_CHUNK_SIZE) as store:
-        cnt = 0
         for entity in entities:
             entity_data = entity.export_all_data()
             entity_data = add_vendor_data(
@@ -372,12 +372,3 @@ def iter_collect_entities_per_page_post(job_scope: JobScope) -> Generator[Dict[s
             store(entity_data)
 
             yield entity_data
-            cnt += 1
-
-            if cnt % 1000 == 0:
-                # default paging size for entities per parent
-                # is typically around 250. So, each 250 results
-                # means about 4 hits to FB
-                token_manager.report_usage(token, 4)
-
-    token_manager.report_usage(token)
