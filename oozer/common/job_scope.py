@@ -57,7 +57,7 @@ class JobScope:
         return self.__dict__.get(item)
 
     def __repr__(self):
-        return convert_class_with_props_to_str(self)
+        return convert_class_with_props_to_str(self, ['tokens'])
 
     def __str__(self):
         return f'<JobScope {self.sweep_id}:{self.job_id}>'
