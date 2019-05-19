@@ -322,7 +322,9 @@ _default_fields_map = {
             'data_source',
             'delivery_status',
             'description',
-            'rule',
+            # `rule` too large objects to download
+            # (for more information, see https://operam.atlassian.net/browse/PROD-4298)
+            # 'rule',
             'rule_aggregation',
             'subtype',
             'external_event_source',
@@ -605,7 +607,7 @@ def get_default_fields(model_klass: Type['Model']) -> List[str]:
 
 
 # defaults for most of these are some 20-25
-# at that level paging throigh tens of thousands of results is super painful (and long, obviously)
+# at that level paging through tens of thousands of results is super painful (and long, obviously)
 # Hence bumping the page size for each, but the larger the size, the more change
 # is there for too much data on the page killing the request.
 # So, if you start seeing chronic failures in fetches of particular type of object across
@@ -620,6 +622,7 @@ _default_page_size = {
     AdSet: 200,  # this is super heavy object mostly because of Targeting spec. Keep it smallish
     Ad: 400,
     Comment: 250,
+    CustomAudience: 50,
 }
 
 DEFAULT_PAGE_ACCESS_TOKEN_LIMIT = 250
