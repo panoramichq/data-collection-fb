@@ -1,4 +1,4 @@
-from unittest.mock import patch, sentinel, Mock
+from unittest.mock import patch, Mock
 
 import config.application
 
@@ -12,11 +12,12 @@ from tests.base.random import gen_string_id
 
 @patch('sweep_builder.expectation_builder.expectations.entity_expectation_generator_map')
 def test_iter_expectations_generates_jobs_from_map(mock_map):
-    mock_map.get.return_value = [Mock(return_value=[sentinel.expectation_claim])]
+    expected_claim = Mock()
+    mock_map.get.return_value = [Mock(return_value=[expected_claim])]
 
     reality_claim = RealityClaim(entity_id=gen_string_id(), entity_type=Entity.AdAccount)
 
-    assert [sentinel.expectation_claim] == list(iter_expectations([reality_claim]))
+    assert [expected_claim] == list(iter_expectations([reality_claim]))
 
 
 def test_aa_import_expectation_generated():
