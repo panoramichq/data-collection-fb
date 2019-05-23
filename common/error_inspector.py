@@ -9,6 +9,7 @@ from pynamodb.exceptions import UpdateError, GetError, PutError, QueryError
 from common.bugsnag import SEVERITY_ERROR, BugSnagContextData, SEVERITY_WARNING
 from common.enums.failure_bucket import FailureBucket
 from common.measurement import Measure
+from common.util import redact_access_token_from_str
 from config.bugsnag import API_KEY
 from oozer.common.facebook_api import FacebookApiErrorInspector
 
@@ -91,6 +92,7 @@ class ErrorInspector:
         logger.warning(
             f'[error-inspector] We encountered exception in tasks with following extra_data ->  {final_extra_data}'
         )
-        logger.warning(ErrorInspector._get_trackback_exception(exc))
+
+        logger.warning(redact_access_token_from_str(ErrorInspector._get_trackback_exception(exc)))
 
         ErrorInspector.send_measurement_error(error_type, ad_account_id)
