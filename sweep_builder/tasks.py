@@ -39,7 +39,6 @@ def echo(message: str = 'This is Long-Running queue'):
 )
 def build_sweep_slice_per_ad_account_task(sweep_id: str, ad_account_reality_claim: RealityClaim, task_id: str = None):
     from sweep_builder.pipeline import iter_pipeline
-    from sweep_builder.reality_inferrer.reality import iter_reality_per_ad_account_claim
 
     cnt = 0
     try:
@@ -48,10 +47,7 @@ def build_sweep_slice_per_ad_account_task(sweep_id: str, ad_account_reality_clai
             _measurement_name_base = __name__ + '.' + build_sweep_slice_per_ad_account_task.__name__ + '.'
             _measurement_tags = {'sweep_id': sweep_id, 'ad_account_id': ad_account_reality_claim.ad_account_id}
 
-            reality_claims_iter = itertools.chain(
-                [ad_account_reality_claim],
-                iter_reality_per_ad_account_claim(ad_account_reality_claim, entity_types=[Entity.Campaign]),
-            )
+            reality_claims_iter = itertools.chain([ad_account_reality_claim])
 
             _step = 1000
             _before_fetch = time.time()
