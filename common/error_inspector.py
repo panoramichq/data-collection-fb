@@ -55,7 +55,7 @@ class ErrorInspector:
         Measure.counter(__name__ + '.errors', {'error_type': error_type, 'ad_account_id': ad_account_id}).increment()
 
     @staticmethod
-    def _get_trackback_exception(exception: Exception) -> str:
+    def _get_traceback_exception(exception: Exception) -> str:
         return ''.join(
             traceback.format_exception(etype=type(exception), value=exception, tb=exception.__traceback__)
         ).replace('\n', '\\n')
@@ -91,7 +91,7 @@ class ErrorInspector:
 
         logger.warning(
             f'[error-inspector] We encountered exception in tasks with following extra_data ->  {final_extra_data}\n'
-            + redact_access_token_from_str(ErrorInspector._get_trackback_exception(exc))
+            + redact_access_token_from_str(ErrorInspector._get_traceback_exception(exc))
         )
 
         ErrorInspector.send_measurement_error(error_type, ad_account_id)
