@@ -90,7 +90,8 @@ class ErrorInspector:
             BugSnagContextData.notify(exc, severity=severity, **final_extra_data)
 
         logger.warning(
-            f'[error-inspector] We encountered exception in tasks with following extra_data ->  {final_extra_data}\n'
+            f'[error-inspector][{error_type}] We encountered exception in tasks with following extra_data'
+            + f' ->  {final_extra_data}\n'
             + redact_access_token_from_str(ErrorInspector._get_traceback_exception(exc))
         )
 
