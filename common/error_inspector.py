@@ -9,6 +9,7 @@ from pynamodb.exceptions import UpdateError, GetError, PutError, QueryError
 from common.bugsnag import SEVERITY_ERROR, BugSnagContextData, SEVERITY_WARNING
 from common.enums.failure_bucket import FailureBucket
 from common.measurement import Measure
+from common.util import redact_access_token_from_str
 from config.bugsnag import API_KEY
 from oozer.common.facebook_api import FacebookApiErrorInspector
 
@@ -54,7 +55,7 @@ class ErrorInspector:
         Measure.counter(__name__ + '.errors', {'error_type': error_type, 'ad_account_id': ad_account_id}).increment()
 
     @staticmethod
-    def _get_trackback_exception(exception: Exception) -> str:
+    def _get_traceback_exception(exception: Exception) -> str:
         return ''.join(
             traceback.format_exception(etype=type(exception), value=exception, tb=exception.__traceback__)
         ).replace('\n', '\\n')
@@ -89,8 +90,9 @@ class ErrorInspector:
             BugSnagContextData.notify(exc, severity=severity, **final_extra_data)
 
         logger.warning(
-            f'[error-inspector] We encountered exception in tasks with following extra_data ->  {final_extra_data}'
+            f'[error-inspector][{error_type}] We encountered exception in tasks with following extra_data'
+            + f' ->  {final_extra_data}\n'
+            + redact_access_token_from_str(ErrorInspector._get_traceback_exception(exc))
         )
-        logger.warning(ErrorInspector._get_trackback_exception(exc))
 
         ErrorInspector.send_measurement_error(error_type, ad_account_id)
