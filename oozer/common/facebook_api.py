@@ -621,7 +621,7 @@ _default_page_size = {
     Campaign: 400,
     AdSet: 200,  # this is super heavy object mostly because of Targeting spec. Keep it smallish
     Ad: 400,
-    Comment: 250,
+    Comment: 100,
     CustomAudience: 50,
 }
 
