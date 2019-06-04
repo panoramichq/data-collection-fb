@@ -44,12 +44,7 @@ class JobCounter:
         for ((ad_account_id, job_type, report_type), counter_val) in self.counter_total.items():
             Measure.counter(
                 self._SCORED_JOBS_NAME,
-                tags={
-                    **self.tags,
-                    'ad_account_id': ad_account_id,
-                    'job_type': job_type,
-                    'report_type': report_type,
-                },
+                tags={**self.tags, 'ad_account_id': ad_account_id, 'job_type': job_type, 'report_type': report_type},
             ).increment(counter_val % self._COUNTER_STEP)
             logger.info(
                 f'[write-job-batch][{self.sweep_id}][{ad_account_id}] TotalJobCount={counter_val} '
@@ -59,12 +54,7 @@ class JobCounter:
         for ((counter_name, ad_account_id, job_type, report_type), counter_val) in self.counters.items():
             Measure.counter(
                 counter_name,
-                tags={
-                    **self.tags,
-                    'ad_account_id': ad_account_id,
-                    'job_type': job_type,
-                    'report_type': report_type,
-                },
+                tags={**self.tags, 'ad_account_id': ad_account_id, 'job_type': job_type, 'report_type': report_type},
             ).increment(counter_val % self._COUNTER_STEP)
             logger.info(
                 f'[write-job-batch][{self.sweep_id}][{ad_account_id}] {counter_name}={counter_val} '
