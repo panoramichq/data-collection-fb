@@ -30,7 +30,12 @@ def test_shall_pass_last_success_dt_and_last_progress_dt_none_returns_true():
 def test_shall_pass_range_end_less_than_seven_days_true(range_start_delta, last_success_delta, expected):
     """Check range_start now - delta and last_success now - delta returns expected."""
     last_report = Mock(last_success_dt=now() - last_success_delta, last_progress_dt=None)
-    claim = Mock(last_report=last_report, range_start=(now() - range_start_delta).date(), range_end=None)
+    claim = Mock(
+        last_report=last_report,
+        range_start=(now() - range_start_delta).date(),
+        range_end=None,
+        report_type=ReportType.day_hour,
+    )
 
     assert expected == JobGateKeeper.shall_pass(claim)
 

@@ -13,8 +13,7 @@ from config.jobs import ACTIVATE_JOB_GATEKEEPER
 from sweep_builder.data_containers.prioritization_claim import PrioritizationClaim
 from sweep_builder.data_containers.scorable_claim import ScorableClaim
 from sweep_builder.errors import ScoringException
-from sweep_builder.prioritizer.gatekeeper import JobGateKeeper
-
+from sweep_builder.prioritizer.gatekeeper import JobGateKeeper, JobGateKeeperCache
 
 logger = logging.getLogger(__name__)
 
@@ -102,6 +101,9 @@ def assign_score(claim: ScorableClaim) -> int:
     """Calculate score for a given claim."""
     if claim.report_type in ReportType.MUST_RUN_EVERY_SWEEP:
         return MUST_RUN_SCORE
+
+    if ACTIVATE_JOB_GATEKEEPER and not JobGateKeeperCache.shall_pass(claim.job_id):
+        return JobGateKeeperCache.JOB_NOT_PASSED_SCORE
 
     if ACTIVATE_JOB_GATEKEEPER and not JobGateKeeper.shall_pass(claim):
         return JobGateKeeper.JOB_NOT_PASSED_SCORE
