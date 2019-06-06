@@ -58,9 +58,11 @@ class JobGateKeeper:
             return cls._shall_pass_entity_jobs(claim)
         elif report_type in ReportType.ALL_METRICS:
             return cls._shall_pass_metrics_jobs(claim)
+        elif report_type in ReportType.MUST_RUN_EVERY_SWEEP:
+            return True, None
 
-        # we dont know what this job is so just run it
-        return True, None
+        # we dont know what this job is
+        raise ValueError(f'Trying to run unknown report type "{report_type}"')
 
     @classmethod
     def _shall_pass_metrics_jobs(cls, claim: ScorableClaim) -> Tuple[bool, Optional[timedelta]]:
@@ -122,7 +124,7 @@ class JobGateKeeperCache:
 
     """Caches gatekeeper results with TTL."""
 
-    JOB_NOT_PASSED_SCORE = -1
+    JOB_NOT_PASSED_SCORE = 2
 
     @staticmethod
     def _gen_job_key(job_id: str) -> str:

@@ -11,6 +11,7 @@ from sweep_builder.prioritizer.gatekeeper import JobGateKeeper, JobGateKeeperCac
 from sweep_builder.data_containers.prioritization_claim import PrioritizationClaim
 
 logger = logging.getLogger(__name__)
+CUTOFF_SCORE = max(JobGateKeeper.JOB_NOT_PASSED_SCORE, JobGateKeeperCache.JOB_NOT_PASSED_SCORE)
 
 
 class JobCounter:
@@ -87,7 +88,7 @@ class JobCounter:
 
 def should_persist(job_score: int) -> bool:
     """Determine whether job with score should be persisted."""
-    return job_score > JobGateKeeper.JOB_NOT_PASSED_SCORE
+    return job_score > CUTOFF_SCORE
 
 
 def iter_persist_prioritized(

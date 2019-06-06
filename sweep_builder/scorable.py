@@ -74,20 +74,10 @@ def should_select(report: JobReport) -> bool:
 def generate_scorable(claim: ExpectationClaim) -> Generator[ScorableClaim, None, None]:
     """Select job signature for single expectation claim."""
     if ACTIVATE_JOB_GATEKEEPER and not JobGateKeeperCache.shall_pass(claim.job_id):
-        yield ScorableClaim(
-            claim.entity_id,
-            claim.entity_type,
-            claim.report_type,
-            claim.report_variant,
-            claim.job_signature,
-            None,
-            ad_account_id=claim.ad_account_id,
-            timezone=claim.timezone,
-            range_start=claim.range_start,
-        )
-        return
+        last_report = None
+    else:
+        last_report = _fetch_job_report(claim.job_id)
 
-    last_report = _fetch_job_report(claim.job_id)
     if not TASK_BREAKDOWN_ENABLED or not claim.is_divisible or last_report is None or should_select(last_report):
         yield ScorableClaim(
             claim.entity_id,
