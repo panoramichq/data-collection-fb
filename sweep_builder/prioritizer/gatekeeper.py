@@ -87,16 +87,22 @@ class JobGateKeeper:
             return True, None
         datapoint_age_in_days = (now().date() - report_day).total_seconds() / (60 * 60 * 24)
 
-        if datapoint_age_in_days < 7:
-            return JobGateKeeper._every_x_hours(claim.last_report.last_success_dt, 3)
-        elif datapoint_age_in_days < 14:
-            return JobGateKeeper._every_x_hours(claim.last_report.last_success_dt, 10)
-        elif datapoint_age_in_days < 30:
-            return JobGateKeeper._every_x_hours(claim.last_report.last_success_dt, 24)
-        elif datapoint_age_in_days < 90:
-            return JobGateKeeper._every_x_hours(claim.last_report.last_success_dt, 24 * 7)
+        if report_type in [ReportType.day_dma, ReportType.day_age_gender]:
+            if datapoint_age_in_days < 3:
+                return JobGateKeeper._every_x_hours(claim.last_report.last_success_dt, 24)
+            elif datapoint_age_in_days < 14:
+                return JobGateKeeper._every_x_hours(claim.last_report.last_success_dt, 24 * 3)
         else:
-            return JobGateKeeper._every_x_hours(claim.last_report.last_success_dt, 24 * 7 * 3)
+            if datapoint_age_in_days < 7:
+                return JobGateKeeper._every_x_hours(claim.last_report.last_success_dt, 3)
+            elif datapoint_age_in_days < 14:
+                return JobGateKeeper._every_x_hours(claim.last_report.last_success_dt, 10)
+            elif datapoint_age_in_days < 30:
+                return JobGateKeeper._every_x_hours(claim.last_report.last_success_dt, 24)
+            elif datapoint_age_in_days < 90:
+                return JobGateKeeper._every_x_hours(claim.last_report.last_success_dt, 24 * 7)
+
+        return JobGateKeeper._every_x_hours(claim.last_report.last_success_dt, 24 * 7 * 4 * 4)  #  4 Months
 
     @classmethod
     def _shall_pass_entity_jobs(cls, claim: ScorableClaim) -> Tuple[bool, Optional[timedelta]]:
