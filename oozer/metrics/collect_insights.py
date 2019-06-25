@@ -4,7 +4,7 @@ import gevent
 from datetime import datetime, date
 from facebook_business.adobjects.adreportrun import AdReportRun
 from facebook_business.adobjects.adsinsights import AdsInsights
-from typing import Dict, Any, Generator
+from typing import Dict, Any, Generator, List
 
 from common.enums.entity import Entity
 from common.enums.reporttype import ReportType
@@ -41,7 +41,6 @@ def _convert_and_validate_date_format(dt) -> str:
 
 class FieldTransformation:
     # for the time being FIXME then
-    _action_fields = ['actions']  # , 'unique_actions']
 
     @classmethod
     def _remap_actions(cls, field_name: str, actions_dict: Dict) -> Dict:
@@ -58,10 +57,10 @@ class FieldTransformation:
         return out_dict
 
     @classmethod
-    def transform(cls, datum: Dict) -> Dict:
+    def transform(cls, datum: Dict, action_fields: List[str]) -> Dict:
         transformed = {}
 
-        for action_field_name in FieldTransformation._action_fields:
+        for action_field_name in action_fields:
             actions_list = datum[action_field_name]
 
             for actions in actions_list:

@@ -348,7 +348,6 @@ expected = {
         "actions__page_engagement_28d_view": "206537",
         "actions__page_engagement_28d_click": "17390",
 
-
         "actions__post_engagement": "223927",
         "actions__post_engagement_1d_click": "17390",
         "actions__post_engagement_1d_view": "206537",
@@ -361,6 +360,5 @@ expected = {
 class InsightTransformationTest(TestCase):
 
     def test_basic_transformation(self):
-        transformed = FieldTransformation.transform(data)
-        self.maxDiff = None
+        transformed = FieldTransformation.transform(data, ['actions'])
         self.assertDictEqual(transformed, expected)
