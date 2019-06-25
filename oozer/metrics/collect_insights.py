@@ -39,6 +39,45 @@ def _convert_and_validate_date_format(dt) -> str:
     return dt.strftime('%Y-%m-%d')
 
 
+class FieldTransformation:
+    # for the time being FIXME then
+    _action_fields = ['actions']  # , 'unique_actions']
+
+    @classmethod
+    def _remap_actions(cls, field_name: str, actions_dict: Dict) -> Dict:
+        _base_name = f"{field_name}__{actions_dict['action_type']}"
+        _base_value = actions_dict['value']
+        other_keys = set(actions_dict.keys()).difference(['action_type', 'value'])
+
+        out_dict = {_base_name: _base_value}
+
+        for key in other_keys:
+            new_key = f"{_base_name}_{key}"
+            out_dict[new_key] = actions_dict[key]
+
+        return out_dict
+
+    @classmethod
+    def transform(cls, datum: Dict) -> Dict:
+        transformed = {}
+
+        for action_field_name in FieldTransformation._action_fields:
+            actions_list = datum[action_field_name]
+
+            for actions in actions_list:
+                transformed.update(
+                    **FieldTransformation._remap_actions(
+                        field_name=action_field_name,
+                        actions_dict=actions
+                    )
+                )
+
+        return {
+            **datum,
+            '__transformed': transformed
+        }
+
+
 class JobScopeParsed:
     report_params: Dict[str, Any] = None
     datum_handler: BaseStoreHandler = None

@@ -1,10 +1,10 @@
+from tests.base.testcase import TestCase
 from datetime import datetime
 
 from common.enums.entity import Entity
 from oozer.common.enum import ReportEntityApiKind
 from oozer.common.job_scope import JobScope
 from oozer.metrics import collect_organic_insights
-from tests.base.testcase import TestCase
 from tests.base import random
 
 
