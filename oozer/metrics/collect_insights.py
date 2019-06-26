@@ -40,7 +40,6 @@ def _convert_and_validate_date_format(dt) -> str:
 
 
 class FieldTransformation:
-    # for the time being FIXME then
 
     @classmethod
     def _remap_actions(cls, field_name: str, actions_dict: Dict) -> Dict:
