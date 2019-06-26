@@ -42,7 +42,7 @@ def _convert_and_validate_date_format(dt) -> str:
 class FieldTransformation:
     @classmethod
     def _remap_actions(cls, field_name: str, actions_dict: Dict) -> Dict:
-        # Because of "offsite_conversion.fb_pixel_view_content" and similar
+        # Because of "offsite_conversion.fb_pixel_view_content" action types and similar
         remapped_action_type = actions_dict['action_type'].replace('.', '_')
         base_name = f"{field_name}__{remapped_action_type}"
         base_value = actions_dict['value']
@@ -61,14 +61,17 @@ class FieldTransformation:
         transformed = {}
 
         for action_field_name in action_fields:
-            actions_list = datum[action_field_name]
+            actions_list = datum.get(action_field_name, [])
 
             for actions in actions_list:
                 transformed.update(
                     **FieldTransformation._remap_actions(field_name=action_field_name, actions_dict=actions)
                 )
 
-        return {**datum, '__transformed': transformed}
+        if bool(transformed):  # if transformed dict is not empty
+            return {**datum, '__transformed': transformed}
+
+        return datum
 
 
 class JobScopeParsed:
