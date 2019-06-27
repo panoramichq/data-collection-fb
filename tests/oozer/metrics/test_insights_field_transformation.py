@@ -3,7 +3,7 @@ from oozer.metrics.collect_insights import FieldTransformation
 
 # This data point is a mashup from two different ones (so that "offsite_conversion.fb_pixel_view_content" is present)
 data = {
-    "__api_version": "v3.1",
+    "__api_version": "v3.3",
     "__extracted_at": "2019-03-23 05:44:55.378191",
     "__oprm": {
         "entity_id": "23843314131640341",
