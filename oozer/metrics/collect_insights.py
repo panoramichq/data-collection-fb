@@ -279,7 +279,9 @@ class Insights:
                 # this computes values for and adds _oprm data object
                 # to each datum that passes through us.
                 scope_parsed.augment_with_vendor_data(datum)
-                datum_with_transformed_fields = FieldTransformation.transform(datum, Insights._ACTIONS_FIELDS_TO_TRANSFORM)
+                datum_with_transformed_fields = FieldTransformation.transform(
+                    datum, Insights._ACTIONS_FIELDS_TO_TRANSFORM
+                )
 
                 store(datum_with_transformed_fields)
                 yield datum_with_transformed_fields
