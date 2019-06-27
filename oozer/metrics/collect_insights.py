@@ -45,7 +45,7 @@ class FieldTransformation:
         # Because of "offsite_conversion.fb_pixel_view_content" action types and similar
         remapped_action_type = actions_dict['action_type'].replace('.', '_')
         base_name = f"{field_name}__{remapped_action_type}"
-        base_value = actions_dict['value']
+        base_value = actions_dict.get('value', '')
         other_keys = set(actions_dict.keys()).difference({'action_type', 'value'})
 
         out_dict = {base_name: base_value}
