@@ -4,7 +4,7 @@ import gevent
 from datetime import datetime, date
 from facebook_business.adobjects.adreportrun import AdReportRun
 from facebook_business.adobjects.adsinsights import AdsInsights
-from typing import Dict, Any, Generator, List
+from typing import Dict, Any, Generator
 
 from common.enums.entity import Entity
 from common.enums.reporttype import ReportType
@@ -18,6 +18,7 @@ from oozer.common.job_scope import JobScope
 from oozer.common.vendor_data import add_vendor_data
 
 from oozer.metrics.constants import ENUM_LEVEL_MAP, REPORT_TYPE_FB_BREAKDOWN_ENUM, DEFAULT_REPORT_FIELDS
+from oozer.metrics.field_transformation import FieldTransformation
 from oozer.metrics.vendor_data_extractor import report_type_vendor_data_extractor_map
 
 
@@ -37,41 +38,6 @@ def _convert_and_validate_date_format(dt) -> str:
         except (ValueError, TypeError):
             raise ValueError(f"Value '{dt}' cannot be read as 'YYYY-MM-DD' string")
     return dt.strftime('%Y-%m-%d')
-
-
-class FieldTransformation:
-    @classmethod
-    def _remap_actions(cls, field_name: str, actions_dict: Dict) -> Dict:
-        # Because of "offsite_conversion.fb_pixel_view_content" action types and similar
-        remapped_action_type = actions_dict['action_type'].replace('.', '_')
-        base_name = f"{field_name}__{remapped_action_type}"
-        base_value = actions_dict.get('value', '')
-        other_keys = set(actions_dict.keys()).difference({'action_type', 'value'})
-
-        out_dict = {base_name: base_value}
-
-        for key in other_keys:
-            new_key = f"{base_name}_{key}"
-            out_dict[new_key] = actions_dict[key]
-
-        return out_dict
-
-    @classmethod
-    def transform(cls, datum: Dict, action_fields: List[str]) -> Dict:
-        transformed = {}
-
-        for action_field_name in action_fields:
-            actions_list = datum.get(action_field_name, [])
-
-            for actions in actions_list:
-                transformed.update(
-                    **FieldTransformation._remap_actions(field_name=action_field_name, actions_dict=actions)
-                )
-
-        if transformed:  # if transformed dict is not empty
-            return {**datum, '__transformed': transformed}
-
-        return datum
 
 
 class JobScopeParsed:

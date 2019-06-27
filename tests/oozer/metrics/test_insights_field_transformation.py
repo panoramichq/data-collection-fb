@@ -1,5 +1,5 @@
 from tests.base.testcase import TestCase
-from oozer.metrics.collect_insights import FieldTransformation
+from oozer.metrics.field_transformation import FieldTransformation
 
 # This data point is a mashup from two different ones (so that "offsite_conversion.fb_pixel_view_content" is present)
 data = {
