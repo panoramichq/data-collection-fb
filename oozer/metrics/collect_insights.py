@@ -18,6 +18,7 @@ from oozer.common.job_scope import JobScope
 from oozer.common.vendor_data import add_vendor_data
 
 from oozer.metrics.constants import ENUM_LEVEL_MAP, REPORT_TYPE_FB_BREAKDOWN_ENUM, DEFAULT_REPORT_FIELDS
+from oozer.metrics.field_transformation import FieldTransformation
 from oozer.metrics.vendor_data_extractor import report_type_vendor_data_extractor_map
 
 
@@ -191,6 +192,36 @@ class JobScopeParsed:
 
 
 class Insights:
+    _ACTIONS_FIELDS = [
+        'actions',
+        'action_values',
+        'outbound_clicks',
+        'video_10_sec_watched_actions',
+        'video_30_sec_watched_actions',
+        'video_p100_watched_actions',
+        'video_p25_watched_actions',
+        'video_p50_watched_actions',
+        'video_p75_watched_actions',
+        'video_p95_watched_actions',
+    ]
+
+    _UNIQUE_ACTIONS_FIELDS = [
+        'actions',
+        'unique_actions',
+        'action_values',
+        'outbound_clicks',
+        'unique_outbound_clicks',
+        'video_10_sec_watched_actions',
+        'video_30_sec_watched_actions',
+        'video_p100_watched_actions',
+        'video_p25_watched_actions',
+        'video_p50_watched_actions',
+        'video_p75_watched_actions',
+        'video_p95_watched_actions',
+    ]
+
+    _ACTIONS_FIELDS_TO_TRANSFORM = [*_ACTIONS_FIELDS, *_UNIQUE_ACTIONS_FIELDS]
+
     @staticmethod
     def iter_ads_insights(fb_entity: Any, report_params: Dict[str, Any]) -> Generator[Dict[str, Any], None, None]:
         """
@@ -248,9 +279,12 @@ class Insights:
                 # this computes values for and adds _oprm data object
                 # to each datum that passes through us.
                 scope_parsed.augment_with_vendor_data(datum)
+                datum_with_transformed_fields = FieldTransformation.transform(
+                    datum, Insights._ACTIONS_FIELDS_TO_TRANSFORM
+                )
 
-                store(datum)
-                yield datum
+                store(datum_with_transformed_fields)
+                yield datum_with_transformed_fields
 
                 if cnt % 1000 == 0:
                     # default paging size for entities per parent
