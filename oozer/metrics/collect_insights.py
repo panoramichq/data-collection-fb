@@ -220,6 +220,8 @@ class Insights:
         'video_p95_watched_actions',
     ]
 
+    _ACTIONS_FIELDS_TO_TRANSFORM = [*_ACTIONS_FIELDS, *_UNIQUE_ACTIONS_FIELDS]
+
     @staticmethod
     def iter_ads_insights(fb_entity: Any, report_params: Dict[str, Any]) -> Generator[Dict[str, Any], None, None]:
         """
@@ -277,9 +279,7 @@ class Insights:
                 # this computes values for and adds _oprm data object
                 # to each datum that passes through us.
                 scope_parsed.augment_with_vendor_data(datum)
-                datum_with_transformed_fields = FieldTransformation.transform(
-                    datum, [*Insights._ACTIONS_FIELDS, *Insights._UNIQUE_ACTIONS_FIELDS]
-                )
+                datum_with_transformed_fields = FieldTransformation.transform(datum, Insights._ACTIONS_FIELDS_TO_TRANSFORM)
 
                 store(datum_with_transformed_fields)
                 yield datum_with_transformed_fields
