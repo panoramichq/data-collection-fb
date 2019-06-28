@@ -220,7 +220,7 @@ class Insights:
         'video_p95_watched_actions',
     ]
 
-    _ACTIONS_FIELDS_TO_TRANSFORM = [*_ACTIONS_FIELDS, *_UNIQUE_ACTIONS_FIELDS]
+    _ACTIONS_FIELDS_TO_TRANSFORM = {*_ACTIONS_FIELDS, *_UNIQUE_ACTIONS_FIELDS}
 
     @staticmethod
     def iter_ads_insights(fb_entity: Any, report_params: Dict[str, Any]) -> Generator[Dict[str, Any], None, None]:

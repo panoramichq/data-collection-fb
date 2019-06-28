@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import Dict, Iterable
 
 
 class FieldTransformation:
@@ -19,7 +19,7 @@ class FieldTransformation:
         return out_dict
 
     @classmethod
-    def transform(cls, datum: Dict, action_fields: List[str]) -> Dict:
+    def transform(cls, datum: Dict, action_fields: Iterable[str]) -> Dict:
         transformed = {}
 
         for action_field_name in action_fields:
