@@ -120,17 +120,20 @@ expected = {
 
 
 class InsightTransformationTest(TestCase):
-    def test_basic_transformation(self):
+    def setUp(self):
         self.maxDiff = None
+
+    def test_basic_transformation(self):
         with_transformed = FieldTransformation.transform(data, ['actions', 'unique_actions'])
         self.assertDictEqual(with_transformed, expected)
 
     def test_on_a_datum_without_action_field(self):
         with_transformed = FieldTransformation.transform(data, ['some_very_special_field'])
 
-        # In that case the input should be unchanged
-        self.assertDictEqual(with_transformed, data)
+        # In that case the input should contain a blank __transformed dict
+        self.assertDictEqual(with_transformed, {**data, '__transformed': {}})
 
     def test_emtpy_datum_transformation(self):
         with_transformed = FieldTransformation.transform({}, ['some_very_special_field'])
-        self.assertDictEqual(with_transformed, {})
+        # In that case the input should contain a blank __transformed dict
+        self.assertDictEqual(with_transformed, {'__transformed': {}})

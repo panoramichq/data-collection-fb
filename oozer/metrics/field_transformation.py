@@ -30,7 +30,7 @@ class FieldTransformation:
                     **FieldTransformation._remap_actions(field_name=action_field_name, actions_dict=actions)
                 )
 
-        if transformed:  # if transformed dict is not empty
-            return {**datum, '__transformed': transformed}
-
-        return datum
+        return {
+            **datum,
+            '__transformed': transformed
+        }
