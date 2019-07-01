@@ -68,48 +68,76 @@ data = {
 expected = {
     **data,
     '__transformed': {
-        "actions__link_click": "13637",
-        "actions__link_click_1d_click": "13637",
-        "actions__link_click_28d_click": "13637",
-        "actions__post": "236",
-        "actions__post_1d_click": "236",
-        "actions__post_28d_click": "236",
-        "actions__video_view": "208454",
-        "actions__video_view_1d_click": "1917",
-        "actions__video_view_1d_view": "206537",
-        "actions__video_view_28d_click": "1917",
-        "actions__video_view_28d_view": "206537",
-        "actions__comment": "110",
-        "actions__comment_1d_click": "110",
-        "actions__comment_28d_click": "110",
-        "actions__post_reaction": "1490",
-        "actions__post_reaction_1d_click": "1490",
-        "actions__post_reaction_28d_click": "1490",
-        "actions__page_engagement": "223927",
-        "actions__page_engagement_1d_click": "17390",
-        "actions__page_engagement_1d_view": "206537",
-        "actions__page_engagement_28d_view": "206537",
-        "actions__page_engagement_28d_click": "17390",
-        "actions__post_engagement": "223927",
-        "actions__post_engagement_1d_click": "17390",
-        "actions__post_engagement_1d_view": "206537",
-        "actions__post_engagement_28d_click": "17390",
-        "actions__post_engagement_28d_view": "206537",
-        "unique_actions__link_click": "5",
-        "unique_actions__link_click_1d_click": "5",
-        "unique_actions__link_click_28d_click": "5",
-        "unique_actions__offsite_conversion_fb_pixel_view_content": "1",
-        "unique_actions__offsite_conversion_fb_pixel_view_content_1d_click": "1",
-        "unique_actions__offsite_conversion_fb_pixel_view_content_28d_click": "1",
-        "unique_actions__post_engagement": "5",
-        "unique_actions__post_engagement_1d_click": "5",
-        "unique_actions__post_engagement_28d_click": "5",
-        "unique_actions__page_engagement": "5",
-        "unique_actions__page_engagement_1d_click": "5",
-        "unique_actions__page_engagement_28d_click": "5",
-        "unique_actions__offsite_conversion": "1",
-        "unique_actions__offsite_conversion_1d_click": "1",
-        "unique_actions__offsite_conversion_28d_click": "1",
+        "actions": {
+            "link_click": {
+                "value": "13637",
+                "1d_click": "13637",
+                "28d_click": "13637",
+            },
+            "post": {
+                "value": "236",
+                "1d_click": "236",
+                "28d_click": "236",
+            },
+            "video_view": {
+                "value": "208454",
+                "1d_click": "1917",
+                "1d_view": "206537",
+                "28d_click": "1917",
+                "28d_view": "206537"
+            },
+            "comment": {
+                "value": "110",
+                "1d_click": "110",
+                "28d_click": "110"
+            },
+            "post_reaction": {
+                "value":"1490",
+                "1d_click": "1490",
+                "28d_click": "1490"
+            },
+            "page_engagement": {
+                "value":"223927",
+                "1d_click": "17390",
+                "1d_view": "206537",
+                "28d_view": "206537",
+                "28d_click": "17390"
+            },
+            "post_engagement": {
+                "value":"223927",
+                "1d_click": "17390",
+                "1d_view": "206537",
+                "28d_view": "206537",
+                "28d_click": "17390"
+            },
+
+        }, "unique_actions": {
+            "link_click": {
+                "value": "5",
+                "1d_click": "5",
+                "28d_click": "5",
+            },
+            "offsite_conversion.fb_pixel_view_content": {
+                "value": "1",
+                "1d_click": "1",
+                "28d_click": "1"
+            },
+            "post_engagement": {
+                "value": "5",
+                "1d_click": "5",
+                "28d_click": "5",
+            },
+            "page_engagement": {
+                "value": "5",
+                "1d_click": "5",
+                "28d_click": "5",
+            },
+            "offsite_conversion": {
+                "value": "1",
+                "1d_click": "1",
+                "28d_click": "1"
+            }
+        },
     },
 }
 
