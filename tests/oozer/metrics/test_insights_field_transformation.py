@@ -69,74 +69,38 @@ expected = {
     **data,
     '__transformed': {
         "actions": {
-            "link_click": {
-                "value": "13637",
-                "1d_click": "13637",
-                "28d_click": "13637",
-            },
-            "post": {
-                "value": "236",
-                "1d_click": "236",
-                "28d_click": "236",
-            },
+            "link_click": {"value": "13637", "1d_click": "13637", "28d_click": "13637"},
+            "post": {"value": "236", "1d_click": "236", "28d_click": "236"},
             "video_view": {
                 "value": "208454",
                 "1d_click": "1917",
                 "1d_view": "206537",
                 "28d_click": "1917",
-                "28d_view": "206537"
+                "28d_view": "206537",
             },
-            "comment": {
-                "value": "110",
-                "1d_click": "110",
-                "28d_click": "110"
-            },
-            "post_reaction": {
-                "value":"1490",
-                "1d_click": "1490",
-                "28d_click": "1490"
-            },
+            "comment": {"value": "110", "1d_click": "110", "28d_click": "110"},
+            "post_reaction": {"value": "1490", "1d_click": "1490", "28d_click": "1490"},
             "page_engagement": {
-                "value":"223927",
+                "value": "223927",
                 "1d_click": "17390",
                 "1d_view": "206537",
                 "28d_view": "206537",
-                "28d_click": "17390"
+                "28d_click": "17390",
             },
             "post_engagement": {
-                "value":"223927",
+                "value": "223927",
                 "1d_click": "17390",
                 "1d_view": "206537",
                 "28d_view": "206537",
-                "28d_click": "17390"
+                "28d_click": "17390",
             },
-
-        }, "unique_actions": {
-            "link_click": {
-                "value": "5",
-                "1d_click": "5",
-                "28d_click": "5",
-            },
-            "offsite_conversion.fb_pixel_view_content": {
-                "value": "1",
-                "1d_click": "1",
-                "28d_click": "1"
-            },
-            "post_engagement": {
-                "value": "5",
-                "1d_click": "5",
-                "28d_click": "5",
-            },
-            "page_engagement": {
-                "value": "5",
-                "1d_click": "5",
-                "28d_click": "5",
-            },
-            "offsite_conversion": {
-                "value": "1",
-                "1d_click": "1",
-                "28d_click": "1"
-            }
+        },
+        "unique_actions": {
+            "link_click": {"value": "5", "1d_click": "5", "28d_click": "5"},
+            "offsite_conversion.fb_pixel_view_content": {"value": "1", "1d_click": "1", "28d_click": "1"},
+            "post_engagement": {"value": "5", "1d_click": "5", "28d_click": "5"},
+            "page_engagement": {"value": "5", "1d_click": "5", "28d_click": "5"},
+            "offsite_conversion": {"value": "1", "1d_click": "1", "28d_click": "1"},
         },
     },
 }

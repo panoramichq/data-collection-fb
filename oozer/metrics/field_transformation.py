@@ -12,7 +12,7 @@ class FieldTransformation:
         for key in other_keys:
             out_dict[key] = actions_dict[key]
 
-        return { action_type: out_dict }
+        return {action_type: out_dict}
 
     @classmethod
     def transform(cls, datum: Dict, action_fields: Iterable[str]) -> Dict:
@@ -22,9 +22,7 @@ class FieldTransformation:
             if action_field_name in datum:
                 remapped_actions_dict = {}
                 for actions in datum[action_field_name]:
-                    remapped_actions_dict.update(
-                        **FieldTransformation._remap_actions(actions)
-                    )
+                    remapped_actions_dict.update(**FieldTransformation._remap_actions(actions))
 
                 transformed[action_field_name] = remapped_actions_dict
 
