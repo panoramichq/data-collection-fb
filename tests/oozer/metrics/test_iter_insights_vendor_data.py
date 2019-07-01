@@ -374,7 +374,7 @@ class VendorDataInjectionTests(TestCase):
                             'entity_id': 'SomeID',
                             'entity_type': entity_type,
                         },
-                        '__transformed': {}
+                        '__transformed': {},
                     },
                 )
 
@@ -435,7 +435,7 @@ class VendorDataInjectionTests(TestCase):
                         "frequency": "0",
                         "hourly_stats_aggregated_by_advertiser_time_zone": "00:00:00 - 00:59:59",
                         "impressions": "371",
-                        '__transformed': {}
+                        '__transformed': {},
                     },
                 )
 
@@ -505,7 +505,7 @@ class VendorDataInjectionTests(TestCase):
                         "ctr": "2.155172",
                         "gender": "female",  # <----------
                         "impressions": "464",
-                        '__transformed': {}
+                        '__transformed': {},
                     },
                 )
 
@@ -575,7 +575,7 @@ class VendorDataInjectionTests(TestCase):
                         "impressions": "2",
                         "reach": "2",
                         "spend": "0.01",
-                        '__transformed': {}
+                        '__transformed': {},
                     },
                 )
 
@@ -641,6 +641,6 @@ class VendorDataInjectionTests(TestCase):
                         "platform_position": "feed",  # <-----------
                         "publisher_platform": "facebook",  # <-----------
                         "reach": "636",
-                        '__transformed': {}
+                        '__transformed': {},
                     },
                 )

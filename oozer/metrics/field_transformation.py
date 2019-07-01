@@ -30,7 +30,4 @@ class FieldTransformation:
                     **FieldTransformation._remap_actions(field_name=action_field_name, actions_dict=actions)
                 )
 
-        return {
-            **datum,
-            '__transformed': transformed
-        }
+        return {**datum, '__transformed': transformed}

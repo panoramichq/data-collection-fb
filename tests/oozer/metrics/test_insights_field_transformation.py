@@ -95,23 +95,18 @@ expected = {
         "actions__post_engagement_1d_view": "206537",
         "actions__post_engagement_28d_click": "17390",
         "actions__post_engagement_28d_view": "206537",
-
         "unique_actions__link_click": "5",
         "unique_actions__link_click_1d_click": "5",
         "unique_actions__link_click_28d_click": "5",
-
         "unique_actions__offsite_conversion_fb_pixel_view_content": "1",
         "unique_actions__offsite_conversion_fb_pixel_view_content_1d_click": "1",
         "unique_actions__offsite_conversion_fb_pixel_view_content_28d_click": "1",
-
         "unique_actions__post_engagement": "5",
         "unique_actions__post_engagement_1d_click": "5",
         "unique_actions__post_engagement_28d_click": "5",
-
         "unique_actions__page_engagement": "5",
         "unique_actions__page_engagement_1d_click": "5",
         "unique_actions__page_engagement_28d_click": "5",
-
         "unique_actions__offsite_conversion": "1",
         "unique_actions__offsite_conversion_1d_click": "1",
         "unique_actions__offsite_conversion_28d_click": "1",
