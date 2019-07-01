@@ -95,23 +95,18 @@ expected = {
         "actions__post_engagement_1d_view": "206537",
         "actions__post_engagement_28d_click": "17390",
         "actions__post_engagement_28d_view": "206537",
-
         "unique_actions__link_click": "5",
         "unique_actions__link_click_1d_click": "5",
         "unique_actions__link_click_28d_click": "5",
-
         "unique_actions__offsite_conversion_fb_pixel_view_content": "1",
         "unique_actions__offsite_conversion_fb_pixel_view_content_1d_click": "1",
         "unique_actions__offsite_conversion_fb_pixel_view_content_28d_click": "1",
-
         "unique_actions__post_engagement": "5",
         "unique_actions__post_engagement_1d_click": "5",
         "unique_actions__post_engagement_28d_click": "5",
-
         "unique_actions__page_engagement": "5",
         "unique_actions__page_engagement_1d_click": "5",
         "unique_actions__page_engagement_28d_click": "5",
-
         "unique_actions__offsite_conversion": "1",
         "unique_actions__offsite_conversion_1d_click": "1",
         "unique_actions__offsite_conversion_28d_click": "1",
@@ -120,17 +115,20 @@ expected = {
 
 
 class InsightTransformationTest(TestCase):
-    def test_basic_transformation(self):
+    def setUp(self):
         self.maxDiff = None
+
+    def test_basic_transformation(self):
         with_transformed = FieldTransformation.transform(data, ['actions', 'unique_actions'])
         self.assertDictEqual(with_transformed, expected)
 
     def test_on_a_datum_without_action_field(self):
         with_transformed = FieldTransformation.transform(data, ['some_very_special_field'])
 
-        # In that case the input should be unchanged
-        self.assertDictEqual(with_transformed, data)
+        # In that case the input should contain a blank __transformed dict
+        self.assertDictEqual(with_transformed, {**data, '__transformed': {}})
 
     def test_emtpy_datum_transformation(self):
         with_transformed = FieldTransformation.transform({}, ['some_very_special_field'])
-        self.assertDictEqual(with_transformed, {})
+        # In that case the input should contain a blank __transformed dict
+        self.assertDictEqual(with_transformed, {'__transformed': {}})
