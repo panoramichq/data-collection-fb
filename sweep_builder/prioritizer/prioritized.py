@@ -34,6 +34,8 @@ SCORE_RANGES: Dict[Tuple[str, str], Tuple[int, int]] = {
     (JobType.PAID_DATA, ReportType.day): (100, 600),
     (JobType.PAID_DATA, ReportType.day_age_gender): (100, 600),
     (JobType.PAID_DATA, ReportType.day_dma): (100, 600),
+    (JobType.PAID_DATA, ReportType.day_region): (100, 600),
+    (JobType.PAID_DATA, ReportType.day_country): (100, 600),
     (JobType.PAID_DATA, ReportType.day_hour): (100, 600),
     (JobType.PAID_DATA, ReportType.day_platform): (100, 600),
 }

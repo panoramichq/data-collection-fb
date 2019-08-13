@@ -80,15 +80,19 @@ class ReportType:
         age_gender = 'agegender'
         day = 'day'
         dma = 'dma'
+        region = 'region'
+        country = 'country'
         hour = 'hour'
         platform = 'platform'
 
     day = f'{Breakdown.day}'
     day_age_gender = f'day{Breakdown.age_gender}'
     day_dma = f'day{Breakdown.dma}'
+    day_region = f'day{Breakdown.region}'
+    day_country = f'day{Breakdown.country}'
     day_hour = f'day{Breakdown.hour}'
     day_platform = f'day{Breakdown.platform}'
 
-    ALL_DAY_BREAKDOWNS = {day, day_age_gender, day_dma, day_hour, day_platform}
+    ALL_DAY_BREAKDOWNS = {day, day_age_gender, day_dma, day_region, day_country, day_hour, day_platform}
 
     ALL_METRICS = ALL_DAY_BREAKDOWNS | {lifetime}

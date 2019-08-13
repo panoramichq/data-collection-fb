@@ -1,4 +1,5 @@
 # must be first, as it does event loop patching and other "first" things
+from oozer.metrics.vendor_data_extractor import report_type_vendor_data_extractor_map
 from tests.base.testcase import TestCase, mock
 
 import functools
@@ -644,3 +645,29 @@ class VendorDataInjectionTests(TestCase):
                         '__transformed': {},
                     },
                 )
+
+
+class TestVendorDataExtractor(TestCase):
+    def test_universal_breakdown_field(self):
+        vendor_data_extractor = report_type_vendor_data_extractor_map[ReportType.day_region]
+        data = {
+            "account_id": "2034428216844013",
+            "ad_id": "23842698250300224",
+            "adset_id": "23842698250720224",
+            "campaign_id": "23842698250110224",
+            "clicks": "0",
+            "cpc": "0",
+            "cpm": "5",
+            "ctr": "0",
+            "date_start": "2017-12-31",
+            "date_stop": "2017-12-31",
+            "region": "My home Region",
+            "impressions": "2",
+            "reach": "2",
+            "spend": "0.01"
+        }
+        actual = vendor_data_extractor(data, Entity.Ad)
+        expected = {'id': 'oprm|m|fb||A|23842698250300224|||2017-12-31||My+home+Region', 'range_start': '2017-12-31',
+                    'entity_id': '23842698250300224', 'entity_type': 'A'}
+
+        self.assertDictEqual(expected, actual)

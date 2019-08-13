@@ -75,6 +75,8 @@ entity_expectation_generator_map: Dict[str, List[ExpectationGeneratorType]] = {
                                 None if jobs_config.INSIGHTS_HOUR_A_DISABLED else ReportType.day_hour,
                                 None if jobs_config.INSIGHTS_AGE_GENDER_A_DISABLED else ReportType.day_age_gender,
                                 None if jobs_config.INSIGHTS_DMA_A_DISABLED else ReportType.day_dma,
+                                None if jobs_config.INSIGHTS_REGION_A_DISABLED else ReportType.day_region,
+                                None if jobs_config.INSIGHTS_COUNTRY_A_DISABLED else ReportType.day_country,
                                 None if jobs_config.INSIGHTS_PLATFORM_A_DISABLED else ReportType.day_platform,
                             ],
                         )

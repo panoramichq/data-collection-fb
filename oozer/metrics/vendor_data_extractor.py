@@ -1,3 +1,4 @@
+import functools
 from datetime import datetime
 from typing import Dict, Any
 
@@ -278,10 +279,40 @@ def _from_dma_segmented_entity(data: Dict[str, Any], entity_type: str = None, **
     }
 
 
+def _from_universal_segmented_entity(breakdown_field: str,
+                                     data: Dict[str, Any],
+                                     entity_type: str = None,
+                                     **kwargs) -> Dict[str, str]:
+    """
+    Generates Universal record ID from data that is differentiated only by entity ID and breakdown fields.
+    """
+    assert entity_type
+    entity_id = data[_entity_type_id_field_map[entity_type]]
+
+    # let's be lazy here and assume we always get single day data
+    # so we'll ignore date_stop for now.
+    # The rest of data is in kwargs
+    return {
+        'id': generate_universal_id(
+            fields=universal_id_fields + ['breakdown_field'],
+            entity_id=entity_id,
+            entity_type=entity_type,
+            range_start=data[_date_start],
+            breakdown_field=data[breakdown_field],  # generate_universal_id URL-encodes values. Sleep well.
+            **kwargs,
+        ),
+        'range_start': data[_date_start],
+        'entity_id': entity_id,
+        'entity_type': entity_type,
+    }
+
+
 report_type_vendor_data_extractor_map = {
     ReportType.day: _from_day_segmented_entity,
     ReportType.day_age_gender: _from_age_gender_segmented_entity,
     ReportType.day_dma: _from_dma_segmented_entity,
+    ReportType.day_region: functools.partial(_from_universal_segmented_entity, 'region'),
+    ReportType.day_country: functools.partial(_from_universal_segmented_entity, 'country'),
     # Hour handler is special. Needs Timezone name as first arg
     # It will be handled specially by code that matches report types
     # to vendor ID handlers
