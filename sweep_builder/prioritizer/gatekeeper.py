@@ -87,10 +87,12 @@ class JobGateKeeper:
             return True, None
         datapoint_age_in_days = (now().date() - report_day).total_seconds() / (60 * 60 * 24)
 
-        if report_type in [ReportType.day_dma,
-                           ReportType.day_age_gender,
-                           ReportType.day_region,
-                           ReportType.day_country]:
+        if report_type in [
+            ReportType.day_dma,
+            ReportType.day_age_gender,
+            ReportType.day_region,
+            ReportType.day_country,
+        ]:
             if datapoint_age_in_days < 3:
                 return JobGateKeeper._every_x_hours(claim.last_report.last_success_dt, 24)
             elif datapoint_age_in_days < 14:

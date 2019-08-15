@@ -664,10 +664,14 @@ class TestVendorDataExtractor(TestCase):
             "region": "My home Region",
             "impressions": "2",
             "reach": "2",
-            "spend": "0.01"
+            "spend": "0.01",
         }
         actual = vendor_data_extractor(data, Entity.Ad)
-        expected = {'id': 'oprm|m|fb||A|23842698250300224|||2017-12-31||My+home+Region', 'range_start': '2017-12-31',
-                    'entity_id': '23842698250300224', 'entity_type': 'A'}
+        expected = {
+            'id': 'oprm|m|fb||A|23842698250300224|||2017-12-31||My+home+Region',
+            'range_start': '2017-12-31',
+            'entity_id': '23842698250300224',
+            'entity_type': 'A',
+        }
 
         self.assertDictEqual(expected, actual)

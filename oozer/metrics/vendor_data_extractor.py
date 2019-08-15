@@ -279,10 +279,9 @@ def _from_dma_segmented_entity(data: Dict[str, Any], entity_type: str = None, **
     }
 
 
-def _from_universal_segmented_entity(breakdown_field: str,
-                                     data: Dict[str, Any],
-                                     entity_type: str = None,
-                                     **kwargs) -> Dict[str, str]:
+def _from_universal_segmented_entity(
+    breakdown_field: str, data: Dict[str, Any], entity_type: str = None, **kwargs
+) -> Dict[str, str]:
     """
     Generates Universal record ID from data that is differentiated only by entity ID and breakdown fields.
     """
