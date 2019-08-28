@@ -79,7 +79,7 @@ def day_metrics_per_ads_under_ad_account(
             # Temporarily limiting new reports
             if report_type in [ReportType.day_country, ReportType.day_region]:
                 if reality_claim.ad_account_id != '42926315' or day < _tmp_earliest_date:
-                        continue
+                    continue
             yield ExpectationClaim(
                 reality_claim.entity_id,
                 reality_claim.entity_type,
