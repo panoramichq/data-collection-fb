@@ -67,7 +67,6 @@ def day_metrics_per_ads_under_ad_account(
         f'[dividing-possible] Ad Account {reality_claim.ad_account_id} Dividing possible: {is_dividing_possible}'
     )
 
-    _tmp_earliest_date = date(2019, 8, 1)
     for (day, active_adset_ids) in active_adset_ids_by_day.items():
         ad_account_node = EntityNode(reality_claim.entity_id, reality_claim.entity_type)
         for adset_id in active_adset_ids:
@@ -78,7 +77,7 @@ def day_metrics_per_ads_under_ad_account(
         for report_type in report_types:
             # Temporarily limiting new reports
             if report_type in [ReportType.day_country, ReportType.day_region]:
-                if reality_claim.ad_account_id != '42926315' or day < _tmp_earliest_date:
+                if reality_claim.ad_account_id != '42926315':
                     continue
             yield ExpectationClaim(
                 reality_claim.entity_id,
