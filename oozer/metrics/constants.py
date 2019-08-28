@@ -16,6 +16,8 @@ REPORT_TYPE_FB_BREAKDOWN_ENUM = {
     ReportType.day: None,
     ReportType.day_age_gender: [AdsInsights.Breakdowns.age, AdsInsights.Breakdowns.gender],
     ReportType.day_dma: [AdsInsights.Breakdowns.dma],
+    ReportType.day_region: [AdsInsights.Breakdowns.region],
+    ReportType.day_country: [AdsInsights.Breakdowns.country],
     ReportType.day_hour: [AdsInsights.Breakdowns.hourly_stats_aggregated_by_advertiser_time_zone],
     ReportType.day_platform: [AdsInsights.Breakdowns.publisher_platform, AdsInsights.Breakdowns.platform_position],
 }

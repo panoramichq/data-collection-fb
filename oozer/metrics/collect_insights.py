@@ -129,7 +129,7 @@ class JobScopeParsed:
             and
             # except for DMA-based data, as these can be very long,
             # - 10s of thousands of records per day
-            not job_scope.report_type == ReportType.day_dma
+            job_scope.report_type not in [ReportType.day_dma, ReportType.day_region, ReportType.day_country]
             and
             # and the report is per single entity ID
             job_scope.entity_id

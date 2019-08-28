@@ -54,6 +54,16 @@ entity_report_handler_map: Dict[str, Dict[str, Any]] = {
         Entity.AdSet: collect_insights_task,
         Entity.Campaign: collect_insights_task,
     },
+    ReportType.day_region: {
+        Entity.Ad: collect_insights_task,
+        Entity.AdSet: collect_insights_task,
+        Entity.Campaign: collect_insights_task,
+    },
+    ReportType.day_country: {
+        Entity.Ad: collect_insights_task,
+        Entity.AdSet: collect_insights_task,
+        Entity.Campaign: collect_insights_task,
+    },
     ReportType.day_hour: {
         Entity.Campaign: collect_insights_task,
         Entity.AdSet: collect_insights_task,
