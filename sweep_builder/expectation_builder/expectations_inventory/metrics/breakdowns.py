@@ -4,7 +4,6 @@ from datetime import date, timedelta
 from typing import Generator, List, Tuple, Dict, Set
 
 from common.enums.entity import Entity
-from common.enums.reporttype import ReportType
 from common.id_tools import generate_id
 from common.job_signature import JobSignature
 from common.tztools import now_in_tz, date_range
