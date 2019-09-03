@@ -4,7 +4,6 @@ from datetime import date, timedelta
 from typing import Generator, List, Tuple, Dict, Set
 
 from common.enums.entity import Entity
-from common.enums.reporttype import ReportType
 from common.id_tools import generate_id
 from common.job_signature import JobSignature
 from common.tztools import now_in_tz, date_range
@@ -75,10 +74,6 @@ def day_metrics_per_ads_under_ad_account(
             ad_account_node.add_node(new_node, path=(campaign_id,))
 
         for report_type in report_types:
-            # Temporarily limiting new reports
-            if report_type in [ReportType.day_country, ReportType.day_region]:
-                if reality_claim.ad_account_id != '42926315':
-                    continue
             yield ExpectationClaim(
                 reality_claim.entity_id,
                 reality_claim.entity_type,
