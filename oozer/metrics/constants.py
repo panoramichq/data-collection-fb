@@ -50,7 +50,7 @@ DEFAULT_REPORT_FIELDS = [
     AdsInsights.Field.video_avg_time_watched_actions,
     AdsInsights.Field.video_avg_percent_watched_actions,
     # Not sure
-    # AdsInsights.Field.action_values,
+    AdsInsights.Field.action_values,
     # 'inline_link_clicks',
     # 'inline_post_engagement',
     # 'social_clicks',
