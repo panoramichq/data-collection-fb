@@ -80,7 +80,7 @@ class TestCollectAdAccount(TestCase):
         account_data._data['timezone_name'] = timezone
         account_data._data['account_id'] = account_id
 
-        with mock.patch.object(FB_ADACCOUNT_MODEL, 'remote_read', return_value=account_data), mock.patch.object(
+        with mock.patch.object(FB_ADACCOUNT_MODEL, 'api_get', return_value=account_data), mock.patch.object(
             NormalStore, 'store'
         ) as store:
             collect_adaccount(job_scope)

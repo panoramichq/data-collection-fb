@@ -69,7 +69,7 @@ class FacebookAsyncReportStatus:
         Get fresh status of the report with FB
         """
         self._refresh_count += 1
-        return self._report.remote_read()
+        return self._report.api_get()
 
     @property
     def status(self):
