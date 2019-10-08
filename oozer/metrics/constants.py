@@ -48,7 +48,6 @@ DEFAULT_REPORT_FIELDS = [
     AdsInsights.Field.cpc,
     # AdsInsights.Field.relevance_score, Why? => https://operam.atlassian.net/browse/PROD-4362
     AdsInsights.Field.video_avg_time_watched_actions,
-    AdsInsights.Field.video_avg_percent_watched_actions,
     # Not sure
     AdsInsights.Field.action_values,
     # 'inline_link_clicks',
