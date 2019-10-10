@@ -21,7 +21,7 @@ curlify==2.1.1
 datadog==0.28.0
 decorator==4.2.1
 docutils==0.14
-facebook_business==3.3.1
+facebook_business==4.0.6
 flake8-polyfill==1.0.2
 flake8-string-format==0.2.3
 flake8==3.5.0

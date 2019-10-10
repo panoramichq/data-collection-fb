@@ -62,7 +62,7 @@ def collect_adaccount(job_scope: JobScope) -> Dict[str, Any]:
 
         fields = get_default_fields(ad_account.__class__)
 
-        ad_account_with_selected_fields = ad_account.remote_read(fields=fields)  # Read just the fields we need
+        ad_account_with_selected_fields = ad_account.api_get(fields=fields)  # Read just the fields we need
         ad_account_data_dict = ad_account_with_selected_fields.export_all_data()  # Export the object to a dict
 
         token_manager.report_usage(token)

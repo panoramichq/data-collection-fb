@@ -76,7 +76,7 @@ def _have_entity_access(entity_type: str, entity_id: str, access_token: str) -> 
     with PlatformApiContext(access_token) as fb_ctx:
         entity = fb_ctx.to_fb_model(entity_id, entity_type)
         fields = get_default_fields(entity.__class__)
-        entity_data = entity.remote_read(fields=fields)
+        entity_data = entity.api_get(fields=fields)
         return True
 
 
