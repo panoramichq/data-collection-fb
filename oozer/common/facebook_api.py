@@ -672,6 +672,7 @@ _default_fetch_statuses = {
         # 'PENDING_BILLING_INFO',
         # 'PENDING_REVIEW',
         # 'PREAPPROVED',
+        'IN_PROCESS',
     ],
     AdSet: [
         'ACTIVE',
@@ -684,6 +685,7 @@ _default_fetch_statuses = {
         'PENDING_BILLING_INFO',
         'PENDING_REVIEW',
         'PREAPPROVED',
+        'IN_PROCESS',
     ],
     Ad: [
         'ACTIVE',
@@ -696,6 +698,7 @@ _default_fetch_statuses = {
         'PENDING_BILLING_INFO',
         'PENDING_REVIEW',
         'PREAPPROVED',
+        'IN_PROCESS',
     ],
 }
 
