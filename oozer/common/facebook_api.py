@@ -1,8 +1,11 @@
+import threading
+import json
+
 from typing import List, Type, Any, Dict, Tuple, Optional
 
 from facebook_business.adobjects.adaccount import AdAccount
 from facebook_business.adobjects.comment import Comment
-from facebook_business.api import FacebookAdsApi, FacebookSession
+from facebook_business.api import FacebookAdsApi as OriginalFacebookAdsApi, FacebookSession, FacebookResponse
 from facebook_business.adobjects import abstractcrudobject
 from facebook_business.adobjects.campaign import Campaign
 from facebook_business.adobjects.adset import AdSet
@@ -17,6 +20,231 @@ from facebook_business.adobjects.pagepost import PagePost
 from common.enums.failure_bucket import FailureBucket
 from oozer.common.enum import to_fb_model, ExternalPlatformJobStatus
 from oozer.common.facebook_fields import collapse_fields_children
+
+
+FB_THROTTLING_HEADER = 'x-business-use-case-usage'
+
+
+class NotFound:
+    pass
+
+
+def transform_buc_data_to_generic_local(data : Dict) -> Dict:
+    # data looks like this for API requests hitting multiple ad accounts:
+    # (value for "counts" are actually percentage expressed as integer.)
+    # (once it gets over 99, Boom!)
+    # {
+    #     "1908934339393402": [
+    #         {
+    #             "call_count": 1,
+    #             "estimated_time_to_regain_access": 0,
+    #             "total_cputime": 1,
+    #             "total_time": 1,
+    #             "type": "ads_management"
+    #         },
+    #         {
+    #             "call_count": 1,
+    #             "estimated_time_to_regain_access": 0,
+    #             "total_cputime": 1,
+    #             "total_time": 1,
+    #             "type": "ads_insights"
+    #         }
+    #     ],
+    #     "1908934339393403": [
+    #         {
+    #             "call_count": 1,
+    #             "estimated_time_to_regain_access": 0,
+    #             "total_cputime": 1,
+    #             "total_time": 1,
+    #             "type": "ads_management"
+    #         }
+    #     ]
+    # }
+    # and contains only one key for requests targeting one ad account
+    # This is crude function, expecting to process all kinds of inputs
+    # including malformatted.
+
+    # When data is good, we reduce it one value and
+    # return something like that (type is turned into key):
+    # {
+    #     "ads_management": {
+    #         "call_count": 1,
+    #         "estimated_time_to_regain_access": 0,
+    #         "total_cputime": 1,
+    #         "total_time": 1,
+    #     },
+    #     "ads_insights": {
+    #         "call_count": 1,
+    #         "estimated_time_to_regain_access": 0,
+    #         "total_cputime": 1,
+    #         "total_time": 1,
+    #     }
+    # }
+
+    # output format is specific to its use. No magic about how it's supposed to look like.
+
+    return_data = {}
+
+    # try:
+    try:
+        use_measurements = list(data.values())[0]
+    except Exception as ex:
+        return return_data
+
+    # at this point `value` COULD be an array of one or more dicts
+    try:
+        for measurement in use_measurements:
+            key = measurement.pop('type', NotFound)
+            if key is not NotFound:
+                return_data[key] = measurement
+    except Exception as ex:
+        pass
+
+    return return_data
+
+
+class FacebookAdsApi(OriginalFacebookAdsApi):
+    """
+    Overriding base FacebookAdsApi in order to extract headers from last seen response.
+
+    Because FacebookAdsApi is never used directly in business logic, but is wrapped into
+    a generator that yields individual items from the response data, FacebookResponse
+    instance is never seen by the business logic. As result, there is no way to get
+    the last response headers inside business logic.
+
+    Here we override `.call` method on FacebookAdsApi to push specific headers from
+    response object into Thread.local dict. This way, no matter how deeply
+    FacebookResponse is wrapped inside the generator, every time there is a new
+    FacebookResponse object emitted from `.call` within a given thread,
+    its headers are available to all consumers in the thread.
+
+    Note: gevent.monkey patches Thread and Thread.local, resulting in unique
+    value of Thread local per greenlet. This means you WILL not see the
+    headers on Thread Local in your business logic if you used some Gevent
+    mechanic to pull it, as all the locals will stay within (and disappear with) resolved greenlet.
+    """
+
+    throttling_metrics : Dict = None
+    throttling_metrics_last : Dict = None
+
+    def call(
+        self,
+        method,
+        path,
+        params=None,
+        headers=None,
+        files=None,
+        url_override=None,
+        api_version=None,
+    ) -> FacebookResponse:
+
+        response = super().call(
+            method,
+            path,
+            params,
+            headers,
+            files,
+            url_override,
+            api_version,
+        )
+
+        # If we are here, no exception was raised
+        # Time to pack headers into Thread.local
+
+        headers = response.headers()
+        if headers:
+            throttling_data_str = headers.get(FB_THROTTLING_HEADER)
+            if throttling_data_str:
+                try:
+                    throttling_data = json.loads(throttling_data_str)
+                except: # TODO: carefully narrow down set of Exception classes to catch
+                    throttling_data = None
+                if throttling_data:
+                    throttling_data_transformed = transform_buc_data_to_generic_local(throttling_data)
+                    # self == instance of FacebookAdsApi that we ourselves spin up at top of business logic
+                    # We also have access to it from any FB Model like so: `model._api`
+                    # (note, since we threw away account IDs, while majority of throttling data is account specific
+                    #  we, effectively, stop differentiating between ad accounts. Think about using separate FBAdsAPI
+                    #  objects per account scope if you care to differentiate, or recode this to keep AA Ids,
+                    #  but, then, consumption code becomes complicated - needs to know about Ad Accounts)
+                    self.throttling_metrics = throttling_metrics = (self.throttling_metrics or {})
+                    throttling_metrics.update(throttling_data_transformed)
+                    self.throttling_metrics_last = throttling_data_transformed
+
+        return response
+
+    @property
+    def throttling_percentage(self) -> int:
+        """
+        Very crude function.
+        Returns integer percentage of closeness to complete throttle in ranges from 0 to 99
+        Completely ignores the type of throttling metric and picks the worst measure.
+        """
+        value = 0
+
+        # throttling_metrics = {
+        #     "ads_management": {
+        #         "call_count": 1,
+        #         "estimated_time_to_regain_access": 0,
+        #         "total_cputime": 1,
+        #         "total_time": 1,
+        #     },
+        #     "ads_insights": {
+        #         "call_count": 1,
+        #         "estimated_time_to_regain_access": 0,
+        #         "total_cputime": 1,
+        #         "total_time": 1,
+        #     }
+        # }
+
+        for v in list(self.throttling_metrics.values()):
+            try:
+                value = max(
+                    value,
+                    v.get('call_count', 0),
+                    v.get('total_cputime', 0),
+                    v.get('total_time', 0)
+                )
+            except:
+                pass
+
+        return value
+
+    @property
+    def throttling_wait(self) -> float:
+        """
+        Returns time in SECONDS before throttling turns off.
+        Very crude. Ignores type of metric. Just picks the worst case
+        """
+        value = 0
+
+        # throttling_metrics = {
+        #     "ads_management": {
+        #         "call_count": 1,
+        #         "estimated_time_to_regain_access": 1.2,
+        #         "total_cputime": 1,
+        #         "total_time": 1,
+        #     },
+        #     "ads_insights": {
+        #         "call_count": 1,
+        #         "estimated_time_to_regain_access": 0,
+        #         "total_cputime": 1,
+        #         "total_time": 1,
+        #     }
+        # }
+
+        for v in list(self.throttling_metrics.values()):
+            try:
+                value = max(
+                    value,
+                    v.get('estimated_time_to_regain_access', 0)
+                )
+            except:
+                pass
+
+        # FB value is MINUTES. Converting to seconds
+        # (for ease of sticking into timeout functions)
+        return value * 60
 
 
 class PlatformApiContext:
