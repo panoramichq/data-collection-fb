@@ -1,4 +1,3 @@
-import threading
 import json
 
 from typing import List, Type, Any, Dict, Tuple, Optional
@@ -112,16 +111,11 @@ class FacebookAdsApi(OriginalFacebookAdsApi):
     instance is never seen by the business logic. As result, there is no way to get
     the last response headers inside business logic.
 
-    Here we override `.call` method on FacebookAdsApi to push specific headers from
-    response object into Thread.local dict. This way, no matter how deeply
+    Here we override `.call` method on FacebookAdsApi to push specific header value from
+    response object into attribute on instance of this class. This way, no matter how deeply
     FacebookResponse is wrapped inside the generator, every time there is a new
-    FacebookResponse object emitted from `.call` within a given thread,
-    its headers are available to all consumers in the thread.
-
-    Note: gevent.monkey patches Thread and Thread.local, resulting in unique
-    value of Thread local per greenlet. This means you WILL not see the
-    headers on Thread Local in your business logic if you used some Gevent
-    mechanic to pull it, as all the locals will stay within (and disappear with) resolved greenlet.
+    FacebookResponse object emitted from `.call` within a given context
+    its throttling headers are available to all consumers seeing same context.
     """
 
     throttling_metrics : Dict = None
@@ -147,9 +141,6 @@ class FacebookAdsApi(OriginalFacebookAdsApi):
             url_override,
             api_version,
         )
-
-        # If we are here, no exception was raised
-        # Time to pack headers into Thread.local
 
         headers = response.headers()
         if headers:
