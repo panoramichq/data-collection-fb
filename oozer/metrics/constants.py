@@ -76,6 +76,7 @@ DEFAULT_REPORT_FIELDS = [
     # Unique
     # Essential
     AdsInsights.Field.unique_actions,
+    AdsInsights.Field.video_thruplay_watched_actions,
     AdsInsights.Field.reach,
     # Good to have
     AdsInsights.Field.frequency,
