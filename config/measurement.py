@@ -10,6 +10,8 @@ STATSD_PORT = 8125
 The port of the statsd server
 """
 
+SOCKET_PATH = None
+
 METRIC_PREFIX = 'data-collection-fb'
 """
 All custom metrics will be prefixed with the value (and dot at the end)
