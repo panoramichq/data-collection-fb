@@ -404,7 +404,12 @@ class MeasureWrapper:
     timer = None  # type: TimerMeasuringPrimitive
 
     def __init__(
-        self, host: str = 'localhost', port: int = 8125, prefix: str = None, default_tags: Dict[str, Any] = None
+        self,
+        host: str = 'localhost',
+        port: int = 8125,
+        socket_path: str = None,
+        prefix: str = None,
+        default_tags: Dict[str, Any] = None,
     ):
         """
         This is a wrapper that does primarily this:
@@ -421,7 +426,9 @@ class MeasureWrapper:
         :param default_tags: Default tags to add to all metrics
         """
         # Setup stats connection
-        self._statsd = DogStatsd(host=host, port=port, constant_tags=_dict_as_statsd_tags(default_tags))
+        self._statsd = DogStatsd(
+            host=host, port=port, socket_path=socket_path, constant_tags=_dict_as_statsd_tags(default_tags)
+        )
 
         # Add measurement methods
         self.increment = self._wrap_measurement_method(
@@ -490,6 +497,7 @@ class MeasureWrapper:
 
 # Instance of the measuring tools injected with configuration options
 Measure = MeasureWrapper(
+    socket_path=config.measurement.SOCKET_PATH,
     host=config.measurement.STATSD_SERVER,
     port=config.measurement.STATSD_PORT,
     # https://help.datadoghq.com/hc/en-us/articles/203764705-What-are-valid-metric-names-
