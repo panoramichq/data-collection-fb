@@ -78,18 +78,6 @@ class _JobsWriter:
             # in ideal case, we would have access to something like JobScope, because parsing jobId is expensive
             parts_id = parse_id_parts(job_id)
 
-            Measure.counter(
-                f'{self._measurement_base}.flushed_scores',
-                tags={
-                    'sweep_id': self.sweep_id,
-                    'score': score,
-                    'ad_account_id': parts_id.ad_account_id,
-                    'report_variant': parts_id.report_variant,
-                    'report_type': parts_id.report_type,
-                    'job_type': detect_job_type(parts_id.report_type, parts_id.report_variant),
-                },
-            ).increment()
-
             Measure.histogram(
                 f'{self._measurement_base}.flushed_scores',
                 tags={

@@ -114,18 +114,6 @@ class TaskOozer:
         if self.oozed_count % OOZING_COUNTER_STEP == 0:
             self.counter += OOZING_COUNTER_STEP
 
-        Measure.counter(
-            f'{__name__}.job_scores',
-            tags={
-                'sweep_id': self.sweep_id,
-                'score': score,
-                'ad_account_id': job_scope.ad_account_id,
-                'report_type': job_scope.report_type,
-                'report_variant': job_scope.report_variant,
-                'job_type': job_scope.job_type,
-            },
-        ).increment()
-
         Measure.histogram(
             f'{__name__}.job_scores',
             tags={
