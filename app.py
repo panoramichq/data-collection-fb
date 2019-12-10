@@ -23,6 +23,10 @@ import common.patch
 
 common.patch.patch_event_loop()
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 import argparse
 import sys
 

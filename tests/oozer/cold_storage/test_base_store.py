@@ -95,7 +95,8 @@ class TestUploadToS3(TestCase):
         # .store() generates its own timestamp, so checking
         # for exact time is not possible. hence we did the _start, _end range.
         # it must be an ISO string in UTC
-        extracted_at = s3_obj.metadata.pop('extracted_at')
+        metadata = {k.lower(): v for (k, v) in s3_obj.metadata.items()}
+        extracted_at = metadata.pop('extracted_at')
         # this mast parse without errors.
         # error here means value is not present or is wrong format.
         dt = datetime.strptime(
@@ -108,7 +109,7 @@ class TestUploadToS3(TestCase):
         assert dt >= run_start
         assert dt <= run_end
 
-        assert s3_obj.metadata == {
+        assert metadata == {
             'build_id': config.build.BUILD_ID,
             'job_id': ctx.job_id,
             'platform': 'fb',
