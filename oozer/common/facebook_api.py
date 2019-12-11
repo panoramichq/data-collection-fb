@@ -368,7 +368,7 @@ _default_fields_map = {
             'awards',
             'band_interests',
             'band_members',
-            'best_page',
+            # 'best_page', # requires Page Public Content Access
             'bio',
             'birthday',
             'booking_agent',
@@ -407,7 +407,7 @@ _default_fields_map = {
             'global_brand_page_name',
             'global_brand_root_id',
             'has_whatsapp_number',
-            'has_added_app',
+            # 'has_added_app', # requires Page Public Content Access
             'hometown',
             'hours',
             'id',
@@ -445,7 +445,7 @@ _default_fields_map = {
             'offer_eligible',
             'overall_star_rating',
             'page_token',
-            'parent_page',
+            # 'parent_page', # requires Page Public Content Access
             'parking',
             'payment_options',
             'personal_info',
@@ -479,7 +479,7 @@ _default_fields_map = {
             'store_location_descriptor',
             'store_number',
             'studio',
-            'supports_instant_articles',
+            # 'supports_instant_articles', # requires 'view instant articles"
             'username',
             'unread_message_count',
             'verification_status',
