@@ -208,18 +208,18 @@ def build_sweep(sweep_id: str):
             while True:
                 done_counter = 0
                 for result in group_result.results:
-                    logger.info(f'{result}: {result.state}')
+                    logger.debug(f'{result}: {result.state}')
                     if result.ready():
                         done_counter += 1
 
-                logger.info(f"TOTAL: {done_counter}/{len(group_result.results)}")
-                logger.info("=" * 20)
+                logger.debug(f"TOTAL: {done_counter}/{len(group_result.results)}")
+                logger.debug("=" * 20)
 
-                logger.info("Checking group result")
+                logger.debug("Checking group result")
 
                 measure_done(done_counter)
                 if group_result.ready():
-                    logger.info(f"#{sweep_id}-root: Sweep build complete")
+                    logger.debug(f"#{sweep_id}-root: Sweep build complete")
                     break
 
                 # Important. If we don't sleep, the native join in celery context

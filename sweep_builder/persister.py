@@ -117,7 +117,7 @@ def iter_persist_prioritized(
 
             score = prioritization_claim.score
             if not should_persist(score):
-                logger.info(f'Not persisting job {prioritization_claim.job_id} due to low score: {score}')
+                logger.debug(f'Not persisting job {prioritization_claim.job_id} due to low score: {score}')
                 continue
 
             # Following are JobScope attributes we don't store on JobID
