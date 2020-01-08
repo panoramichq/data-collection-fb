@@ -485,7 +485,14 @@ class MeasureWrapper:
         :return function: The partial to be called on the MeasuringPrimitive
             constructor
         """
-        return functools.partial(wrapper or MeasuringPrimitive, func, prefix, default_value)
+
+        def _trace_func(metric, *args, **kwargs):
+            func(metric, *args, **kwargs)
+            # Socket was closed, log error
+            if self._statsd.socket is None:
+                logger.warning('Metric %s was dropped', metric)
+
+        return functools.partial(wrapper or MeasuringPrimitive, _trace_func, prefix, default_value)
 
     def _join_with_prefix(self, value_prefix, global_prefix):
         """
