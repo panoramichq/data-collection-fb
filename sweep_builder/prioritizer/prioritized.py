@@ -98,7 +98,9 @@ def normalize(value_range: Tuple[int, int], ratio: float) -> int:
     return round((ratio * (score_max - score_min)) + score_min)
 
 
-@Measure.timer(__name__, function_name_as_metric=True, extract_tags_from_arguments=_extract_tags_from_claim)
+@Measure.timer(
+    __name__, function_name_as_metric=True, extract_tags_from_arguments=_extract_tags_from_claim, sample_rate=0.01
+)
 def assign_score(claim: ScorableClaim) -> int:
     """Calculate score for a given claim."""
     if claim.report_type in ReportType.MUST_RUN_EVERY_SWEEP:
@@ -129,7 +131,7 @@ def iter_prioritized(claims: Iterable[ScorableClaim]) -> Generator[Prioritizatio
     for claim in claims:
         _measurement_tags = {'entity_type': claim.entity_type, 'ad_account_id': claim.ad_account_id}
 
-        Measure.timing(f'{_measurement_name_base}.next_expected', tags=_measurement_tags)(
+        Measure.timing(f'{_measurement_name_base}.next_expected', tags=_measurement_tags, sample_rate=0.01)(
             (time.time() - _before_next_expectation) * 1000
         )
 

@@ -111,7 +111,7 @@ def iter_persist_prioritized(
             }
             counter.increment(prioritization_claim)
 
-            Measure.timing(f'{_measurement_name_base}.next_prioritized', tags=_measurement_tags)(
+            Measure.timing(f'{_measurement_name_base}.next_prioritized', tags=_measurement_tags, sample_rate=0.01)(
                 (time.time() - _before_next_prioritized) * 1000
             )
 
