@@ -44,7 +44,7 @@ jobs:
           name: Build and publish image
           command: |
             set -eu
-            export REPOSITORY_URL=${AWS_ACCOUNT_ASSETS}.dkr.ecr.${AWS_REGION}.amazonaws.com/
+            export REPOSITORY_URL=${AWS_ECR_REPO_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/
             make print_image_name_build > /tmp/workspace/image_url
             echo Image URL: `cat /tmp/workspace/image_url`
             make push_image
