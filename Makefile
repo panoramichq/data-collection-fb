@@ -46,7 +46,7 @@ PUSH_IMAGE_NAME_BRANCH?=$(PUSH_IMAGE_NAME_PREFIX):$(BRANCH_NAME)
 # Docker image tags size limit is 128 characters.
 # Normal Commit ID is 40 chars. We use short commit IDs - 7 chars
 # Should be enough.
-PUSH_IMAGE_TAG?=$(BUILD_ID)-$(COMMIT_ID)
+PUSH_IMAGE_TAG?=$(BUILD_ID)-$(BRANCH_NAME)-$(COMMIT_ID)
 PUSH_IMAGE_NAME_BUILD?=$(PUSH_IMAGE_NAME_PREFIX):$(PUSH_IMAGE_TAG)
 
 image:

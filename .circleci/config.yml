@@ -1,6 +1,9 @@
-# CircleCI Data Collection config
+version: 2.1
 
-version: 2.0
+orbs:
+  aws-cli: circleci/aws-cli@0.1.13
+  docker: circleci/docker@0.5.20
+  aws-ecr: circleci/aws-ecr@6.7.0
 
 references:
   workspace_root: &workspace_root
@@ -10,39 +13,25 @@ references:
     attach_workspace:
       at: *workspace_root
 
-
 jobs:
   publish_image:
     docker:
       - image: circleci/python:3.6-jessie-node
-
     environment:
-      - AWS_ACCOUNT_PROD: "583912811210"
-      - AWS_ACCOUNT_STAGE: "897117390337"
-      - AWS_ACCOUNT_ASSETS: "936368275341"
-      - AWS_REGION: "us-east-1"
+      AWS_ECR_REPO_ACCOUNT_ID: "936368275341"
+      AWS_REGION: "us-east-1"
 
     steps:
       - *attach_workspace
       - setup_remote_docker:
           docker_layer_caching: true
 
-      - run:
-          name: install AWS Cli
-          command: sudo pip install awscli --upgrade
-
       - checkout
 
       # Setup workspace directory
       - run: mkdir -p /tmp/workspace
 
-      # For builds we use base images hosted at Docker Hub, private repo
-      - run :
-          name: auth AWS ECR and Docker Hub
-          command: |
-            set -eu
-            echo "$DOCKERHUB_PASS" | docker login -u ${DOCKERHUB_USER} --password-stdin
-            eval $(aws ecr get-login --region ${AWS_REGION} --no-include-email --registry-ids ${AWS_ACCOUNT_ASSETS})
+      - aws-ecr/login-for-secondary-account
 
       # build and push Docker image
       # Note that this will push 2 images, one tagged with the branch name and the other with the build ID
@@ -66,63 +55,35 @@ jobs:
           paths:
             - image_url
 
-  # These two tasks - flake & black - run super fast.
-  # makes sense to reuse same exact instance in CI,
-  # since prep takes longer than run of both.
   run_lint:
     machine:
       image: circleci/classic:latest
     environment:
-      - AWS_ACCOUNT_PROD: "583912811210"
-      - AWS_ACCOUNT_STAGE: "897117390337"
-      - AWS_ACCOUNT_ASSETS: "936368275341"
-      - AWS_REGION: "us-east-1"
+      AWS_ECR_REPO_ACCOUNT_ID: "936368275341"
+      AWS_REGION: "us-east-1"
     steps:
       - *attach_workspace
       - checkout
-      - run :
-          name: auth AWS ECR and Docker Hub
-          command: |
-            set -eu
-            echo "$DOCKERHUB_PASS" | docker login -u ${DOCKERHUB_USER} --password-stdin
-            eval $(aws ecr get-login --region ${AWS_REGION} --no-include-email --registry-ids ${AWS_ACCOUNT_ASSETS})
-      - run :
+      - aws-ecr/login-for-secondary-account
+      - run:
           name: check flake8
           command: docker run --rm `cat /tmp/workspace/image_url` sh -c "flake8 --filename=*.py"
-      - run :
+      - run:
           name: check black
           command: docker run --rm `cat /tmp/workspace/image_url` sh -c "black --skip-string-normalization --diff --check --line-length 120 --target-version py36 ."
-
 
   run_tests:
     machine:
       image: circleci/classic:latest
     environment:
-      - AWS_ACCOUNT_PROD: "583912811210"
-      - AWS_ACCOUNT_STAGE: "897117390337"
-      - AWS_ACCOUNT_ASSETS: "936368275341"
-      - AWS_REGION: "us-east-1"
+      AWS_ECR_REPO_ACCOUNT_ID: "936368275341"
+      AWS_REGION: "us-east-1"
+
     steps:
       - *attach_workspace
       - checkout
-
-      # Get the latest supported Docker Compose from Circle S3 repo & remove old copy
-      # https://github.com/CircleCI-Public/circleci-dockerfiles/blob/master/python/images/3.6.4-jessie/Dockerfile#L60
-      - run :
-          name: update docker-compose
-          command: |
-            set -eu
-            export COMPOSE_URL="https://circle-downloads.s3.amazonaws.com/circleci-images/cache/linux-amd64/docker-compose-latest"
-            sudo rm -fr /usr/local/bin/docker-compose
-            sudo curl --silent --show-error --location --fail --retry 3 --output /usr/bin/docker-compose $COMPOSE_URL
-            sudo chmod +x /usr/bin/docker-compose
-
-      - run :
-          name: auth AWS ECR and Docker Hub
-          command: |
-            set -eu
-            echo "$DOCKERHUB_PASS" | docker login -u ${DOCKERHUB_USER} --password-stdin
-            eval $(aws ecr get-login --region ${AWS_REGION} --no-include-email --registry-ids ${AWS_ACCOUNT_ASSETS})
+      - docker/install-docker-compose
+      - aws-ecr/login-for-secondary-account
 
       - run :
           name: run tests
@@ -130,7 +91,6 @@ jobs:
             set -eu
             export IMAGE_NAME_FULL=`cat /tmp/workspace/image_url`
             make test
-
 
 workflows:
   version: 2
