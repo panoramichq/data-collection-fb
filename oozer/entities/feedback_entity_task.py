@@ -16,12 +16,18 @@ def _extract_tags_for_feedback_entity(entity_data: Dict[str, Any], entity_type: 
 
 
 @app.task
-@Measure.timer(__name__, function_name_as_metric=True, extract_tags_from_arguments=_extract_tags_for_feedback_entity)
+@Measure.timer(
+    __name__,
+    function_name_as_metric=True,
+    extract_tags_from_arguments=_extract_tags_for_feedback_entity,
+    sample_rate=0.01,
+)
 @Measure.counter(
     __name__,
     function_name_as_metric=True,
     count_once=True,
     extract_tags_from_arguments=_extract_tags_for_feedback_entity,
+    sample_rate=0.01,
 )
 def feedback_entity_task(entity_data: Dict[str, Any], entity_type: str):
     """

@@ -112,7 +112,8 @@ def iter_persist_prioritized(
             counter.increment(prioritization_claim)
 
             Measure.timing(f'{_measurement_name_base}.next_prioritized', tags=_measurement_tags)(
-                (time.time() - _before_next_prioritized) * 1000
+                (time.time() - _before_next_prioritized) * 1000,
+                sample_rate=0.01,
             )
 
             score = prioritization_claim.score
