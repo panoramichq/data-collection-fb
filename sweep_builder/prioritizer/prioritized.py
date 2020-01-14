@@ -131,8 +131,8 @@ def iter_prioritized(claims: Iterable[ScorableClaim]) -> Generator[Prioritizatio
     for claim in claims:
         _measurement_tags = {'entity_type': claim.entity_type, 'ad_account_id': claim.ad_account_id}
 
-        Measure.timing(f'{_measurement_name_base}.next_expected', tags=_measurement_tags)(
-            (time.time() - _before_next_expectation) * 1000, sample_rate=0.01
+        Measure.timing(f'{_measurement_name_base}.next_expected', tags=_measurement_tags, sample_rate=0.01)(
+            (time.time() - _before_next_expectation) * 1000
         )
 
         try:
