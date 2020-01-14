@@ -31,6 +31,8 @@ jobs:
       # Setup workspace directory
       - run: mkdir -p /tmp/workspace
 
+      - aws-cli/install
+
       - aws-ecr/ecr-login-for-secondary-account
 
       # build and push Docker image
