@@ -99,10 +99,7 @@ def normalize(value_range: Tuple[int, int], ratio: float) -> int:
 
 
 @Measure.timer(
-    __name__,
-    function_name_as_metric=True,
-    extract_tags_from_arguments=_extract_tags_from_claim,
-    sample_rate=0.01,
+    __name__, function_name_as_metric=True, extract_tags_from_arguments=_extract_tags_from_claim, sample_rate=0.01
 )
 def assign_score(claim: ScorableClaim) -> int:
     """Calculate score for a given claim."""
@@ -135,8 +132,7 @@ def iter_prioritized(claims: Iterable[ScorableClaim]) -> Generator[Prioritizatio
         _measurement_tags = {'entity_type': claim.entity_type, 'ad_account_id': claim.ad_account_id}
 
         Measure.timing(f'{_measurement_name_base}.next_expected', tags=_measurement_tags)(
-            (time.time() - _before_next_expectation) * 1000,
-            sample_rate=0.01,
+            (time.time() - _before_next_expectation) * 1000, sample_rate=0.01
         )
 
         try:
