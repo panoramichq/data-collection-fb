@@ -42,48 +42,45 @@ class JobCounter:
         return self._COUNTER_NAME_MAP.get(claim.score, self._PASSED_JOBS_NAME)
 
     def _flush(self):
-        for ((ad_account_id, job_type, report_type), counter_val) in self.counter_total.items():
-            Measure.counter(
-                self._SCORED_JOBS_NAME,
-                tags={**self.tags, 'ad_account_id': ad_account_id, 'job_type': job_type, 'report_type': report_type},
-            ).increment(counter_val % self._COUNTER_STEP)
-            logger.info(
-                f'[write-job-batch][{self.sweep_id}][{ad_account_id}] TotalJobCount={counter_val} '
-                f'JobType="{job_type}" ReportType="{report_type}"'
-            )
+        with Measure as batch:
+            for ((ad_account_id, job_type, report_type), counter_val) in self.counter_total.items():
+                batch.gauge(
+                    self._SCORED_JOBS_NAME,
+                    tags={
+                        **self.tags,
+                        'ad_account_id': ad_account_id,
+                        'job_type': job_type,
+                        'report_type': report_type,
+                    },
+                )(counter_val)
+                logger.info(
+                    f'[write-job-batch][{self.sweep_id}][{ad_account_id}] TotalJobCount={counter_val} '
+                    f'JobType="{job_type}" ReportType="{report_type}"'
+                )
 
-        for ((counter_name, ad_account_id, job_type, report_type), counter_val) in self.counters.items():
-            Measure.counter(
-                counter_name,
-                tags={**self.tags, 'ad_account_id': ad_account_id, 'job_type': job_type, 'report_type': report_type},
-            ).increment(counter_val % self._COUNTER_STEP)
-            logger.info(
-                f'[write-job-batch][{self.sweep_id}][{ad_account_id}] {counter_name}={counter_val} '
-                f'JobType="{job_type}" ReportType="{report_type}"'
-            )
+            for ((counter_name, ad_account_id, job_type, report_type), counter_val) in self.counters.items():
+                batch.gauge(
+                    counter_name,
+                    tags={
+                        **self.tags,
+                        'ad_account_id': ad_account_id,
+                        'job_type': job_type,
+                        'report_type': report_type,
+                    },
+                )(counter_val)
+                logger.info(
+                    f'[write-job-batch][{self.sweep_id}][{ad_account_id}] {counter_name}={counter_val} '
+                    f'JobType="{job_type}" ReportType="{report_type}"'
+                )
 
     def increment(self, claim: PrioritizationClaim):
         job_type = detect_job_type(claim.report_type, claim.entity_type)
         key = (claim.ad_account_id, job_type, claim.report_type)
         self.counter_total[key] += 1
-        if self.counter_total[key] % self._COUNTER_STEP == 0:
-            Measure.counter(
-                self._SCORED_JOBS_NAME, tags={**self.tags, 'job_type': job_type, 'report_type': claim.report_type}
-            ).increment(self._COUNTER_STEP)
 
         counter_name = self._get_counter_name(claim)
         counter_key = (counter_name, claim.ad_account_id, job_type, claim.report_type)
         self.counters[counter_key] += 1
-        if self.counters[counter_key] % self._COUNTER_STEP == 0:
-            Measure.counter(
-                counter_name,
-                tags={
-                    **self.tags,
-                    'ad_account_id': claim.ad_account_id,
-                    'job_type': job_type,
-                    'report_type': claim.report_type,
-                },
-            ).increment(self._COUNTER_STEP)
 
 
 def should_persist(job_score: int) -> bool:
