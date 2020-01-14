@@ -31,7 +31,7 @@ jobs:
       # Setup workspace directory
       - run: mkdir -p /tmp/workspace
 
-      - aws-ecr/login-for-secondary-account
+      - aws-ecr/ecr-login-for-secondary-account
 
       # build and push Docker image
       # Note that this will push 2 images, one tagged with the branch name and the other with the build ID
@@ -64,7 +64,7 @@ jobs:
     steps:
       - *attach_workspace
       - checkout
-      - aws-ecr/login-for-secondary-account
+      - aws-ecr/ecr-login-for-secondary-account
       - run:
           name: check flake8
           command: docker run --rm `cat /tmp/workspace/image_url` sh -c "flake8 --filename=*.py"
@@ -83,7 +83,7 @@ jobs:
       - *attach_workspace
       - checkout
       - docker/install-docker-compose
-      - aws-ecr/login-for-secondary-account
+      - aws-ecr/ecr-login-for-secondary-account
 
       - run :
           name: run tests
@@ -96,12 +96,15 @@ workflows:
   version: 2
   build:
     jobs:
-      - publish_image
+      - publish_image:
+          context: aws
 
       - run_tests:
+          context: aws
           requires:
             - publish_image
 
       - run_lint:
+          context: aws
           requires:
             - publish_image
