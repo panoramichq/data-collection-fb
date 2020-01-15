@@ -154,9 +154,15 @@ def _extract_tags_for_store(_: Any, job_scope: JobScope, *__, **___):
     return {'entity_type': job_scope.entity_type, 'ad_account_id': job_scope.ad_account_id}
 
 
-@Measure.timer(__name__, function_name_as_metric=True, extract_tags_from_arguments=_extract_tags_for_store)
+@Measure.timer(
+    __name__, function_name_as_metric=True, extract_tags_from_arguments=_extract_tags_for_store, sample_rate=0.01
+)
 @Measure.counter(
-    __name__, function_name_as_metric=True, count_once=True, extract_tags_from_arguments=_extract_tags_for_store
+    __name__,
+    function_name_as_metric=True,
+    count_once=True,
+    extract_tags_from_arguments=_extract_tags_for_store,
+    sample_rate=0.01,
 )
 def store(
     data: Any,

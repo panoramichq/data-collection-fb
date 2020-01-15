@@ -469,6 +469,13 @@ class MeasureWrapper:
             wrapper=CounterMeasuringPrimitive,
         )
 
+    def __enter__(self):
+        self._statsd.__enter__()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self._statsd.__exit__(exc_type, exc_val, exc_tb)
+
     def _wrap_measurement_method(self, func, prefix, default_value=None, wrapper=None):
         """
         We need to wrap the singular measurement function with our

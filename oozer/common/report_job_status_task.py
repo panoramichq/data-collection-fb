@@ -14,12 +14,18 @@ def _extract_tags_for_report_job_status(stage_status: int, job_scope: JobScope, 
 
 
 @app.task
-@Measure.timer(__name__, function_name_as_metric=True, extract_tags_from_arguments=_extract_tags_for_report_job_status)
+@Measure.timer(
+    __name__,
+    function_name_as_metric=True,
+    extract_tags_from_arguments=_extract_tags_for_report_job_status,
+    sample_rate=0.01,
+)
 @Measure.counter(
     __name__,
     function_name_as_metric=True,
     count_once=True,
     extract_tags_from_arguments=_extract_tags_for_report_job_status,
+    sample_rate=0.01,
 )
 def report_job_status_task(stage_status: int, job_scope: JobScope):
     """
