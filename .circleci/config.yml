@@ -84,7 +84,8 @@ jobs:
     steps:
       - *attach_workspace
       - checkout
-      - docker/install-docker-compose
+      - docker/install-docker-compose:
+          version: 1.25.1
       - aws-ecr/ecr-login-for-secondary-account
 
       - run :
