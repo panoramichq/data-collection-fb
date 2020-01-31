@@ -153,9 +153,7 @@ class VendorOrganicDataInjectionTests(TestCase):
                 )
 
                 with mock.patch.object(
-                    collect_organic_insights.InsightsOrganic,
-                    'iter_page_entities_lifetime_insights',
-                    return_value=input_data,
+                    collect_organic_insights.InsightsOrganic, 'iter_other_insights', return_value=input_data
                 ), mock.patch.object(NormalStore, 'store') as store:
 
                     data_iter = collect_organic_insights.InsightsOrganic.iter_collect_insights(job_scope)
