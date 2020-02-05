@@ -51,11 +51,11 @@ class InsightsOrganic:
             yield datum.export_all_data()
 
     @staticmethod
-    def iter_other_insights(
+    def iter_page_entities_lifetime_insights(
         fb_entity: Union[FB_PAGE_MODEL, FB_PAGE_POST_MODEL], report_entity_kind: str
     ) -> Generator[Dict[str, Any], None, None]:
         """
-        Run the actual execution of the insights job for video insights
+        Run the actual execution of the lifetime insights job for page and page post insights
         """
 
         params = {'metric': ORGANIC_DATA_FIELDS_MAP[report_entity_kind], 'period': 'lifetime'}
@@ -95,7 +95,7 @@ class InsightsOrganic:
             with PlatformApiContext(page_token_manager.get_best_token(job_scope.ad_account_id)) as fb_ctx:
                 report_root_fb_entity = fb_ctx.to_fb_model(job_scope.entity_id, job_scope.report_variant)
 
-            data_iter = cls.iter_other_insights(report_root_fb_entity, report_entity_kind)
+            data_iter = cls.iter_page_entities_lifetime_insights(report_root_fb_entity, report_entity_kind)
         else:
             raise ValueError(f'Unsupported report entity kind "{report_entity_kind}" to collect organic insights')
 
