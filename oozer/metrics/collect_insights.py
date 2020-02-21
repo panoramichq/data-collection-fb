@@ -57,17 +57,21 @@ class JobScopeParsed:
         self.report_params = {
             'fields': DEFAULT_REPORT_FIELDS,
             'action_attribution_windows': [
-                # Default 'value' cannot be removed. It's always 1d_view PLUS 28d_click
-                # but, our customers, especially Fandango, like just clicks
-                # and at different windows. So, we ask for extra windows for all actions
-                # The move windows we ask the data for, the less reliably it returns
-                # Be super conservative about asking for more
-                AdsInsights.ActionAttributionWindows.value_1d_view,  # requirement for Fandango
-                # AdsInsights.ActionAttributionWindows.value_7d_view,  # nobody cared to ask for it
-                AdsInsights.ActionAttributionWindows.value_28d_view,  # nice to have for Fandango
-                AdsInsights.ActionAttributionWindows.value_1d_click,  # nice to have for Fandango
-                # AdsInsights.ActionAttributionWindows.value_7d_click,  # nobody cared to ask for it
-                AdsInsights.ActionAttributionWindows.value_28d_click,  # requirement for Fandango
+                # https://developers.facebook.com/docs/marketing-api/reference/adgroup/insights/
+                # https://developers.facebook.com/docs/marketing-api/insights#sample
+                # 'actions' and 'action_values' can contain values per different measurement window
+                # In case of 'actions', default 'value' is always 1d_view PLUS 28d_click and cannot be removed.
+                # In case of 'action_values', default 'value' is some weighted sum of
+                #  1d_view AND 28d_click $ values, that may be smaller than raw 1d_view PLUS 28d_click $ values.
+                # Many customers interpret their conversions / actions in different attribution windows.
+                # The more windows we ask the data for, the less reliably it returns reports.
+                # Be super conservative about asking for more / all.
+                AdsInsights.ActionAttributionWindows.value_1d_view,
+                AdsInsights.ActionAttributionWindows.value_7d_view,
+                AdsInsights.ActionAttributionWindows.value_28d_view,
+                AdsInsights.ActionAttributionWindows.value_1d_click,
+                AdsInsights.ActionAttributionWindows.value_7d_click,
+                AdsInsights.ActionAttributionWindows.value_28d_click,
             ],
         }
 
