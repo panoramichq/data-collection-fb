@@ -59,6 +59,8 @@ class AdAccountEntity(ConsoleEntityMixin, BaseModel):
     # in that AdAccount's timezone (not UTC).
     timezone = attributes.UnicodeAttribute(attr_name='tz')
 
+    recollect_records_older_than = attributes.UTCDateTimeAttribute(null=True, attr_name='rrot')
+
     entity_type = Entity.AdAccount
 
     @property
