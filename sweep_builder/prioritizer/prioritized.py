@@ -50,7 +50,12 @@ def _get_recollect_older_than() -> Optional[Dict[str, datetime]]:
     if RECOLLECT_OLDER_THAN is None:
         return None
 
-    recollect_older_than_raw = json.loads(RECOLLECT_OLDER_THAN)
+    try:
+        recollect_older_than_raw = json.loads(RECOLLECT_OLDER_THAN)
+    except Exception as e:
+        ErrorInspector.inspect(e)
+        return None
+
     return {k: datetime.strptime(v, '%Y-%m-%d').replace(tzinfo=tzutc()) for k, v in recollect_older_than_raw.items()}
 
 
