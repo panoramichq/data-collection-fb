@@ -1,8 +1,11 @@
+import json
 import logging
 import time
-from datetime import timedelta
+from datetime import timedelta, datetime
 
-from typing import Generator, Iterable, Tuple, Dict
+from typing import Generator, Iterable, Tuple, Dict, Optional
+
+from dateutil.tz import tzutc
 
 from common.enums.jobtype import JobType, detect_job_type
 from common.enums.reporttype import ReportType
@@ -10,6 +13,7 @@ from common.error_inspector import ErrorInspector
 from common.measurement import Measure
 from common.tztools import now
 from config.jobs import ACTIVATE_JOB_GATEKEEPER
+from config.application import RECOLLECT_OLDER_THAN
 from sweep_builder.data_containers.prioritization_claim import PrioritizationClaim
 from sweep_builder.data_containers.scorable_claim import ScorableClaim
 from sweep_builder.errors import ScoringException
@@ -39,6 +43,18 @@ SCORE_RANGES: Dict[Tuple[str, str], Tuple[int, int]] = {
     (JobType.PAID_DATA, ReportType.day_hour): (100, 600),
     (JobType.PAID_DATA, ReportType.day_platform): (100, 600),
 }
+
+
+def _get_recollect_older_than() -> Optional[Dict[str, datetime]]:
+    """Return dict of values or None"""
+    if RECOLLECT_OLDER_THAN is None:
+        return None
+
+    recollect_older_than_raw = json.loads(RECOLLECT_OLDER_THAN)
+    return {k: datetime.strptime(v, '%Y-%m-%d').replace(tzinfo=tzutc()) for k, v in recollect_older_than_raw.items()}
+
+
+recollect_older_than = _get_recollect_older_than()
 
 
 def _extract_tags_from_claim(claim: ScorableClaim, *_, **__) -> Dict[str, str]:
@@ -105,6 +121,14 @@ def assign_score(claim: ScorableClaim) -> int:
     """Calculate score for a given claim."""
     if claim.report_type in ReportType.MUST_RUN_EVERY_SWEEP:
         return MUST_RUN_SCORE
+
+    if claim.ad_account_id:
+        recollect_date = recollect_older_than.get(claim.ad_account_id)
+
+        logger.debug(f'Recollect date for {claim.ad_account_id} set to: {recollect_date}')
+        if recollect_date is not None and claim.last_report is not None and claim.last_report.last_progress_dt < recollect_date:
+            logger.info(f'Skipping gatekeeper checks to recollect job: {claim.job_id}')
+            return MUST_RUN_SCORE
 
     if ACTIVATE_JOB_GATEKEEPER and not JobGateKeeperCache.shall_pass(claim.job_id):
         return JobGateKeeperCache.JOB_NOT_PASSED_SCORE

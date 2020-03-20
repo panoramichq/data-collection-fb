@@ -21,6 +21,7 @@ See https://operam.atlassian.net/wiki/spaces/EN/pages/160596078/Universal+IDs
 """
 
 PERMANENTLY_FAILING_JOB_THRESHOLD = 10
+RECOLLECT_OLDER_THAN = None
 
 from common.updatefromenv import update_from_env
 
