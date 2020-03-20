@@ -16,6 +16,7 @@ from common.job_signature import JobSignature
 from sweep_builder.data_containers.expectation_claim import ExpectationClaim
 from sweep_builder.data_containers.scorable_claim import ScorableClaim
 from sweep_builder.prioritizer.gatekeeper import JobGateKeeperCache
+from sweep_builder.prioritizer.prioritized import recollect_older_than
 
 logger = logging.getLogger(__name__)
 
@@ -73,7 +74,8 @@ def should_select(report: JobReport) -> bool:
 
 def generate_scorable(claim: ExpectationClaim) -> Generator[ScorableClaim, None, None]:
     """Select job signature for single expectation claim."""
-    if ACTIVATE_JOB_GATEKEEPER and not JobGateKeeperCache.shall_pass(claim.job_id):
+    needs_recollect = claim.ad_account_id and recollect_older_than and recollect_older_than.get(claim.ad_account_id)
+    if not needs_recollect and ACTIVATE_JOB_GATEKEEPER and not JobGateKeeperCache.shall_pass(claim.job_id):
         last_report = None
     else:
         last_report = _fetch_job_report(claim.job_id)
