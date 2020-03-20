@@ -127,7 +127,7 @@ def assign_score(claim: ScorableClaim) -> int:
     if claim.report_type in ReportType.MUST_RUN_EVERY_SWEEP:
         return MUST_RUN_SCORE
 
-    if claim.ad_account_id:
+    if claim.ad_account_id and recollect_older_than is not None:
         recollect_date = recollect_older_than.get(claim.ad_account_id)
 
         logger.debug(f'Recollect date for {claim.ad_account_id} set to: {recollect_date}')
