@@ -126,7 +126,11 @@ def assign_score(claim: ScorableClaim) -> int:
         recollect_date = recollect_older_than.get(claim.ad_account_id)
 
         logger.debug(f'Recollect date for {claim.ad_account_id} set to: {recollect_date}')
-        if recollect_date is not None and claim.last_report is not None and claim.last_report.last_progress_dt < recollect_date:
+        if (
+            recollect_date is not None
+            and claim.last_report is not None
+            and claim.last_report.last_progress_dt < recollect_date
+        ):
             logger.info(f'Skipping gatekeeper checks to recollect job: {claim.job_id}')
             return MUST_RUN_SCORE
 
