@@ -5,7 +5,6 @@ flake8==3.5.0
 flower
 ipdb
 ipython
-pip-tools
 pytest
 freezegun
 flake8
