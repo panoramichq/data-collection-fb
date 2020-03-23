@@ -16,12 +16,13 @@ curlify==2.1.1            # via facebook-business
 datadog==0.28.0           # via -r requirements.src
 decorator==4.2.1          # via datadog
 docutils==0.14            # via botocore
-facebook_business==4.0.6  # via -r requirements.src
+facebook_business==6.0.2  # via -r requirements.src
 gevent==1.3.4             # via -r requirements.base.txt
 greenlet==0.4.13          # via -r requirements.base.txt, gevent
 idna==2.6                 # via requests
 jmespath==0.9.3           # via boto3, botocore
 kombu==4.2.1              # via -r requirements.base.txt, celery
+pycountry==19.8.18        # via facebook-business
 pynamodb==4.2.0           # via -r requirements.src
 python-dateutil==2.6.1    # via botocore, pynamodb
 python-dotenv==0.10.3     # via -r requirements.src
