@@ -8,6 +8,7 @@
 
 
 from common.patch import patch_event_loop
+
 patch_event_loop()
 
 from invoke import task
@@ -26,6 +27,7 @@ def scope_list(ctx):
             pt = PlatformToken.get(token_id)
             print(scope.scope, pt.token)
 
+
 @task
 def scope_set(ctx, scope, token):
     PlatformToken.upsert(scope, token=token)
@@ -37,8 +39,9 @@ def ad_account_list(ctx):
     for aa in AdAccountEntity.scan():
         print(aa)
 
+
 @task
-def ad_account_set(ctx, scope, id=None,  name='AdAccount', is_active=True, data=None):
+def ad_account_set(ctx, scope, id=None, name='AdAccount', is_active=True, data=None):
     # PlatformToken.upsert(scope, token=TOKEN)
     # AssetScope.upsert(scope, platform_token_ids={scope})
 
@@ -47,12 +50,7 @@ def ad_account_set(ctx, scope, id=None,  name='AdAccount', is_active=True, data=
     else:
         data = {}
 
-    a = AdAccountEntity.upsert(
-        scope,
-        gen_string_id() if id is None else id,
-        is_active=is_active,
-        **data
-    )
+    a = AdAccountEntity.upsert(scope, gen_string_id() if id is None else id, is_active=is_active, **data)
     print(a.to_dict())
 
 
@@ -87,7 +85,7 @@ def ad_account_remote_view(cts, scope, id, token=None):
     with PlatformApiContext(token.token) as fb_ctx:
         ad_account = fb_ctx.to_fb_model(id, Entity.AdAccount)
         fields = get_default_fields(ad_account.__class__)
-        ad_account_with_selected_fields = ad_account.api_get(fields=['id','name'])  # Read just the fields we need
+        ad_account_with_selected_fields = ad_account.api_get(fields=['id', 'name'])  # Read just the fields we need
         ad_account_data_dict = ad_account_with_selected_fields.export_all_data()  # Export the object to a dict
         print(ad_account_data_dict)
 
@@ -95,4 +93,5 @@ def ad_account_remote_view(cts, scope, id, token=None):
 @task
 def sweep_run(ctx):
     from oozer.full_loop import run_sweep
+
     run_sweep()
