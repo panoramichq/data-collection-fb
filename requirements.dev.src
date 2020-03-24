@@ -1,11 +1,12 @@
 -r requirements.txt
+black
+flake8
 flake8-polyfill==1.0.2
 flake8-string-format==0.2.3
 flake8==3.5.0
 flower
+freezegun
+invoke==1.4.1
 ipdb
 ipython
 pytest
-freezegun
-flake8
-black
