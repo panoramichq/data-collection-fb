@@ -115,7 +115,7 @@ class TestUploadToS3(TestCase):
             'platform': 'fb',
             'ad_account_id': ctx.ad_account_id,
             'report_type': ReportType.entity,
-            'platform_api_version': 'v4.0',
+            'platform_api_version': 'v6.0',
         }
 
 
@@ -287,7 +287,7 @@ def test__job_scope_to_metadata():
         'ad_account_id': '007',
         'report_type': 'report type',
         'entity_type': 'A',
-        'platform_api_version': 'v4.0',
+        'platform_api_version': 'v6.0',
         'platform': 'fb',
         'score': '10',
     } == result
