@@ -1,3 +1,5 @@
+# flake8: noqa
+
 # This is Invoke [http://docs.pyinvoke.org/en/latest/] config file
 # (it's like Makefile but understand Python and can import your code)
 # Do `invoke --list` to see possible commands
