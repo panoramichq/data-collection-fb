@@ -38,7 +38,6 @@ DEFAULT_REPORT_FIELDS = [
     AdsInsights.Field.video_p75_watched_actions,
     AdsInsights.Field.video_p95_watched_actions,
     AdsInsights.Field.video_p100_watched_actions,
-    AdsInsights.Field.video_10_sec_watched_actions,
     AdsInsights.Field.video_30_sec_watched_actions,
     # Good to have
     AdsInsights.Field.cost_per_action_type,
@@ -70,8 +69,6 @@ DEFAULT_REPORT_FIELDS = [
     AdsInsights.Field.cost_per_estimated_ad_recallers,
     # 'estimated_ad_recallers',
     # 'total_action_value',
-    # 'video_10_sec_watched_actions',
-    # 'video_30_sec_watched_actions',
     # 'website_ctr',
     # Unique
     # Essential

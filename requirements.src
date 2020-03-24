@@ -1,7 +1,7 @@
 -r requirements.base.txt
 boto3==1.10.28
 # When upgrading facebook sdk, make sure to update redshift parser config
-facebook_business==4.0.6
+facebook_business==6.0.2
 pynamodb==4.2.0
 ujson==1.35
 xxhash==1.0.1
