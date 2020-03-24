@@ -177,10 +177,10 @@ PIP_TOOLS_VERSION:=4.5.1
 requirements-compile:
 	docker run \
 		-v $(PWD):$(WORKDIR) \
-		--rm $(IMAGE_NAME_FULL) \
+		--rm $(BASE_IMAGE_NAME) \
 		/bin/bash -c "\
 			pip install \
-				--user \
+				--upgrade \
 				pip-tools==$(PIP_TOOLS_VERSION) && \
 			pip-compile requirements.base.src && \
 			pip-compile requirements.src && \
