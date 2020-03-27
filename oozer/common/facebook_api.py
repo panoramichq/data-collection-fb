@@ -178,12 +178,15 @@ _default_fields_map = {
             Ad.Field.status,
             Ad.Field.tracking_specs,
             Ad.Field.updated_time,
-            (Ad.Field.creative, [
-                AdCreative.Field.effective_instagram_story_id,
-                AdCreative.Field.effective_object_story_id,
-                AdCreative.Field.id,
-                AdCreative.Field.name,
-            ]),
+            (
+                Ad.Field.creative,
+                [
+                    AdCreative.Field.effective_instagram_story_id,
+                    AdCreative.Field.effective_object_story_id,
+                    AdCreative.Field.id,
+                    AdCreative.Field.name,
+                ],
+            ),
         ]
     ),
     AdCreative: collapse_fields_children(
@@ -443,7 +446,7 @@ _default_fields_map = {
             PagePost.Field.admin_creator,
             PagePost.Field.allowed_advertising_objectives,
             PagePost.Field.application,
-            'attachments', # PagePost.Field.attachments, <- :( not official attribute
+            'attachments',  # PagePost.Field.attachments, <- :( not official attribute
             PagePost.Field.backdated_time,
             PagePost.Field.call_to_action,
             PagePost.Field.child_attachments,
@@ -514,7 +517,7 @@ _default_fields_map = {
             Comment.Field.message_tags,
             Comment.Field.object,
             Comment.Field.parent,
-            'parent_id', # Comment.Field.parent_id, # Not official?
+            'parent_id',  # Comment.Field.parent_id, # Not official?
             Comment.Field.permalink_url,
             Comment.Field.user_likes,
             # 'can_reply_privately',
