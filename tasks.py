@@ -1,11 +1,11 @@
 # flake8: noqa
+# fmt: off
 
 # This is Invoke [http://docs.pyinvoke.org/en/latest/] config file
 # (it's like Makefile but understand Python and can import your code)
 # Do `invoke --list` to see possible commands
 # Used mostly easing scaffolding in command line.
 # Nothing in production should be using this. Feel free to change in development.
-
 
 from common.patch import patch_event_loop
 
@@ -16,7 +16,7 @@ import json
 
 from common.store.scope import AssetScope, PlatformToken, DEFAULT_SCOPE
 from tests.base.random import gen_string_id
-from common.store.entities import AdAccountEntity
+from common.store.entities import AdAccountEntity, PageEntity
 from config.facebook import TOKEN, AD_ACCOUNT, AD_ACCOUNT_TIME_ZONE
 
 
@@ -89,6 +89,65 @@ def ad_account_remote_view(cts, scope, id, token=None):
         ad_account_data_dict = ad_account_with_selected_fields.export_all_data()  # Export the object to a dict
         print(ad_account_data_dict)
 
+
+@task
+def page_list(ctx):
+    for p in PageEntity.scan():
+        print(p)
+
+
+@task
+def page_set(ctx, scope, id=None, name='Page', is_active=True, data=None):
+    # PlatformToken.upsert(scope, token=TOKEN)
+    # AssetScope.upsert(scope, platform_token_ids={scope})
+
+    if data:
+        data = json.loads(data)
+    else:
+        data = {}
+
+    a = PageEntity.upsert(
+        scope,
+        gen_string_id() if id is None else id,
+        is_active=is_active,
+        **data
+    )
+    print(a.to_dict())
+
+
+@task
+def page_delete(ctx, scope, id, complain=False):
+    """
+    :param ctx:
+    :param scope:
+    :param id:  is "*" deletes them all
+    :param complain:
+    :return:
+    """
+    if id == '*':
+        for aa in PageEntity.query(scope):
+            aa.delete()
+
+    if complain:
+        PageEntity.get(scope, id).delete()
+    else:
+        PageEntity(scope, id).delete()
+
+@task
+def page_remote_view(cts, scope, id=None, token=None):
+    from oozer.common.facebook_api import PlatformApiContext, get_default_fields
+    from facebook_business.adobjects.user import User
+
+    if not token:
+        scope = AssetScope.get(scope)
+        token = PlatformToken.get(list(scope.platform_token_ids)[0])
+
+    with PlatformApiContext(token.token) as fb_ctx:
+
+        pages = User(fbid='me', api=fb_ctx.api).get_accounts()
+
+        for page in pages:
+            print(page)
 
 @task
 def sweep_run(ctx):

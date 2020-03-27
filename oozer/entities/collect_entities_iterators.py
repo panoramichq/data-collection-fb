@@ -310,7 +310,9 @@ def iter_collect_entities_per_page_graph(job_scope: JobScope) -> Generator[Dict[
         page_root_fb_entity = fb_ctx.to_fb_model(job_scope.ad_account_id, Entity.Page)
 
     entity_type = job_scope.report_variant
-    entities = iter_native_entities_per_page_graph(page_root_fb_entity, entity_type)
+    # page size reduced to avoid error:
+    #  "Please reduce the amount of data you're asking for, then retry your request"
+    entities = iter_native_entities_per_page_graph(page_root_fb_entity, entity_type, page_size=30)
 
     record_id_base_data = job_scope.to_dict()
     record_id_base_data.update(entity_type=entity_type, report_variant=None)
