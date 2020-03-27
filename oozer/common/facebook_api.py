@@ -308,7 +308,7 @@ _default_fields_map = {
             Page.Field.ad_campaign,
             Page.Field.affiliation,
             Page.Field.app_id,
-            Page.Field.app_links,
+            # Page.Field.app_links, # quietly removed in v6.0
             Page.Field.artists_we_like,
             Page.Field.attire,
             Page.Field.awards,
