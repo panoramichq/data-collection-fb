@@ -56,7 +56,7 @@ image:
 		--build-arg COMMIT_ID=${COMMIT_ID} \
 		--build-arg BUILD_ID=${BUILD_ID} \
 		--build-arg PYTHONUSERBASE=$(PYTHONUSERBASE_INNER) \
-		-f docker/Dockerfile .
+		-f Dockerfile .
 
 push_image: image
 	docker tag $(IMAGE_NAME_FULL):$(BUILD_ID) \
@@ -113,7 +113,7 @@ start-dev: .dynamodb_data .s3_data
 	USER_ID=$(shell id -u) \
 	GROUP_ID=$(shell id -g) \
 	WORKDIR=$(WORKDIR) \
-	docker-compose -f docker/docker-compose-dev.yaml run --service-ports app
+	docker-compose -f docker-compose-dev.yaml run --service-ports app
 
 # use this for standing up entire stack on its own and interacting with it remotely
 start-stack: .dynamodb_data .s3_data
@@ -126,7 +126,7 @@ start-stack: .dynamodb_data .s3_data
 	USER_ID=$(shell id -u) \
 	GROUP_ID=$(shell id -g) \
 	WORKDIR=$(WORKDIR) \
-	docker-compose -f docker/docker-compose-stack.yaml up
+	docker-compose -f docker-compose-stack.yaml up
 
 # use this to completely remove the stack containers
 drop-stack:
@@ -139,7 +139,7 @@ drop-stack:
 	USER_ID=$(shell id -u) \
 	GROUP_ID=$(shell id -g) \
 	WORKDIR=$(WORKDIR) \
-	docker-compose -f docker/docker-compose-stack.yaml down
+	docker-compose -f docker-compose-stack.yaml down
 
 # Use this for standing up services in docker, but not the app (that can be ran on host). Useful for local dev.
 start-services: .dynamodb_data .s3_data
@@ -152,7 +152,7 @@ start-services: .dynamodb_data .s3_data
 	USER_ID=$(shell id -u) \
 	GROUP_ID=$(shell id -g) \
 	WORKDIR=$(WORKDIR) \
-	docker-compose -f docker/docker-compose-services.yaml up
+	docker-compose -f docker-compose-services.yaml up
 
 .PHONY: start-dev start-stack drop-stack
 
@@ -163,7 +163,7 @@ test: .dynamodb_data .s3_data
 	FAKES3DIR=$(FAKES3DIR) \
 	IMAGE_NAME_FULL=$(IMAGE_NAME_FULL) \
 	WORKDIR=/usr/src/app \
-	docker-compose -f docker/docker-compose-test.yaml run \
+	docker-compose -f docker-compose-test.yaml run \
 		--rm app
 
 .PHONY: test
