@@ -1,0 +1,100 @@
+pipeline {
+  agent any
+  environment {
+    AWS_ACCOUNT_ASSETS = '936368275341'
+    AWS_DEFAULT_REGION = 'us-east-1'
+    REPOSITORY_URL = "${env.AWS_ACCOUNT_ASSETS}.dkr.ecr.${env.AWS_DEFAULT_REGION}.amazonaws.com/"
+  }
+  stages {
+    stage('Build Image') {
+      steps {
+        withCredentials([
+          [
+            $class: 'AmazonWebServicesCredentialsBinding',
+            credentialsId: 'AWS_ASSETS_ECR',
+            accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+            secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+          ],
+          file(credentialsId: 'ARTIFACTORY_PIPCONF', variable: 'PIPCONF_PATH')
+        ]) {
+          sh script: """
+            set +x
+            eval \$(aws ecr get-login --registry-ids ${AWS_ACCOUNT_ASSETS} --no-include-email)
+            echo ${GIT_URL}
+            set -x
+          """, label: 'Log in to ECR'
+          sh script: "make image", label: 'Build Docker image'
+        }
+      }
+      post {
+        success { githubReportStatus("build", "Build passed") }
+        aborted { githubReportStatus("build", "Build cancelled") }
+        failure { githubReportStatus("build", "Build failed") }
+        unsuccessful { githubReportStatus("build", "Build failed") }
+      }
+    }
+    stage('Post Build') {
+      parallel {
+        stage('Deploy Image') {
+          steps {
+            sh script: "make push_image", label: 'Push Docker image'
+          }
+          post {
+            success { githubReportStatus("deploy", "Deploy passed") }
+            aborted { githubReportStatus("deploy", "Deploy cancelled") }
+            failure { githubReportStatus("deploy", "Deploy failed") }
+            unsuccessful { githubReportStatus("deploy", "Deploy failed") }
+          }
+        }
+        stage('Lint') {
+          steps {
+            githubReportStatus("lint", "Running flake8...")
+            sh script: 'make flake8 || true', label: 'Run flake8'
+            githubReportStatus("lint", "Running black diff...")
+            sh script: 'make black-check ', label: 'Run flake8'
+          }
+          post {
+            success { githubReportStatus("lint", "Lint passed") }
+            aborted { githubReportStatus("lint", "Lint cancelled") }
+            failure { githubReportStatus("lint", "Lint failed") }
+            unsuccessful { githubReportStatus("lint", "Lint failed") }
+          }
+        }
+        stage('Test') {
+          environment {
+            COMPOSE_PROJECT_NAME = "${env.JOB_NAME}-test-${env.BUILD_NUMBER}"
+          }
+          steps {
+            sh script: 'make test', label: 'Run tests'
+          }
+          post {
+            success { githubReportStatus("test", "Tests passed") }
+            aborted { githubReportStatus("test", "Tests cancelled") }
+            failure { githubReportStatus("test", "Tests failed") }
+            unsuccessful { githubReportStatus("test", "Tests failed") }
+          }
+        }
+      }
+    }
+  }
+}
+
+
+def githubReportStatus(String context, String message) {
+  // https://github.com/jenkinsci/github-plugin#setting-commit-status
+
+  step([
+    $class: 'GitHubCommitStatusSetter',
+    reposSource: [$class: "ManuallyEnteredRepositorySource", url: "https://github.com/panoramichq/data-collection-fb"],
+    contextSource: [$class: "ManuallyEnteredCommitContextSource", context: context],
+    errorHandlers: [[$class: 'ShallowAnyErrorHandler']],
+    statusResultSource: [
+      $class: 'ConditionalStatusResultSource',
+      results: [
+        [$class: 'BetterThanOrEqualBuildResult', result: 'SUCCESS', state: 'SUCCESS', message: message],
+        [$class: 'BetterThanOrEqualBuildResult', result: 'FAILURE', state: 'FAILURE', message: message],
+        [$class: 'AnyBuildResult', state: 'PENDING', message: message]
+      ]
+    ]
+  ])
+}
