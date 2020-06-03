@@ -24,6 +24,7 @@ pipeline {
             set -x
           """, label: 'Log in to ECR'
           sh script: "make image", label: 'Build Docker image'
+          sh script: "make print_image_name_build", label: 'Print image release tag'
         }
       }
       post {
