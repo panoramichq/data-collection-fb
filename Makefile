@@ -20,7 +20,7 @@ IMAGE_NAME?=$(APP_SLUG)
 IMAGE_NAME_FULL?=$(VENDOR_NAME)/$(IMAGE_NAME)
 
 # When we are building through Circle CI, use the
-BRANCH_NAME:=$(if $(CIRCLE_BRANCH),$(CIRCLE_BRANCH),$(shell git rev-parse --abbrev-ref HEAD))
+BRANCH_NAME:=$(if $(BRANCH_NAME),$(BRANCH_NAME),$(shell git rev-parse --abbrev-ref HEAD))
 COMMIT_ID?=$(shell git rev-parse --short HEAD)
 BUILD_ID?=$(if $(CIRCLE_BUILD_NUM),$(CIRCLE_BUILD_NUM),latest)
 
