@@ -86,7 +86,7 @@ def githubReportStatus(String context, String message) {
 
   step([
     $class: 'GitHubCommitStatusSetter',
-    reposSource: [$class: "ManuallyEnteredRepositorySource", url: "https://github.com/panoramichq/data-collection-fb"],
+    reposSource: [$class: "ManuallyEnteredRepositorySource", url: System.getenv("GIT_URL")],
     contextSource: [$class: "ManuallyEnteredCommitContextSource", context: context],
     errorHandlers: [[$class: 'ShallowAnyErrorHandler']],
     statusResultSource: [
