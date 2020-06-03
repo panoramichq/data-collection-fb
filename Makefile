@@ -56,17 +56,11 @@ image:
 		--build-arg COMMIT_ID=${COMMIT_ID} \
 		--build-arg BUILD_ID=${BUILD_ID} \
 		--build-arg PYTHONUSERBASE=$(PYTHONUSERBASE_INNER) \
-		-f docker/Dockerfile .
+		-f Dockerfile .
 
-push_image: image
-	docker tag $(IMAGE_NAME_FULL):$(BUILD_ID) \
-		$(PUSH_IMAGE_NAME_BRANCH)
-	docker tag $(IMAGE_NAME_FULL):$(BUILD_ID) \
-		$(PUSH_IMAGE_NAME_BUILD)
-	docker push \
-		$(PUSH_IMAGE_NAME_BRANCH)
-	docker push \
-		$(PUSH_IMAGE_NAME_BUILD)
+push_image:
+	docker tag $(IMAGE_NAME_FULL):$(BUILD_ID) $(PUSH_IMAGE_NAME_BUILD)
+	docker push $(PUSH_IMAGE_NAME_BUILD)
 
 # used in Circle CI to save image ID between build steps
 print_image_name_build:
@@ -113,7 +107,7 @@ start-dev: .dynamodb_data .s3_data
 	USER_ID=$(shell id -u) \
 	GROUP_ID=$(shell id -g) \
 	WORKDIR=$(WORKDIR) \
-	docker-compose -f docker/docker-compose-dev.yaml run --service-ports app
+	docker-compose -f docker-compose-dev.yaml run --service-ports app
 
 # use this for standing up entire stack on its own and interacting with it remotely
 start-stack: .dynamodb_data .s3_data
@@ -126,7 +120,7 @@ start-stack: .dynamodb_data .s3_data
 	USER_ID=$(shell id -u) \
 	GROUP_ID=$(shell id -g) \
 	WORKDIR=$(WORKDIR) \
-	docker-compose -f docker/docker-compose-stack.yaml up
+	docker-compose -f docker-compose-stack.yaml up
 
 # use this to completely remove the stack containers
 drop-stack:
@@ -139,7 +133,7 @@ drop-stack:
 	USER_ID=$(shell id -u) \
 	GROUP_ID=$(shell id -g) \
 	WORKDIR=$(WORKDIR) \
-	docker-compose -f docker/docker-compose-stack.yaml down
+	docker-compose -f docker-compose-stack.yaml down
 
 # Use this for standing up services in docker, but not the app (that can be ran on host). Useful for local dev.
 start-services: .dynamodb_data .s3_data
@@ -152,7 +146,7 @@ start-services: .dynamodb_data .s3_data
 	USER_ID=$(shell id -u) \
 	GROUP_ID=$(shell id -g) \
 	WORKDIR=$(WORKDIR) \
-	docker-compose -f docker/docker-compose-services.yaml up
+	docker-compose -f docker-compose-services.yaml up
 
 .PHONY: start-dev start-stack drop-stack
 
@@ -161,9 +155,9 @@ start-services: .dynamodb_data .s3_data
 test: .dynamodb_data .s3_data
 	DYNAMODIR=$(DYNAMODIR) \
 	FAKES3DIR=$(FAKES3DIR) \
-	IMAGE_NAME_FULL=$(IMAGE_NAME_FULL) \
+	IMAGE_NAME_FULL=$(IMAGE_NAME_FULL):$(BUILD_ID) \
 	WORKDIR=/usr/src/app \
-	docker-compose -f docker/docker-compose-test.yaml run \
+	docker-compose -f docker-compose-test.yaml run \
 		--rm app
 
 .PHONY: test
@@ -172,43 +166,41 @@ test: .dynamodb_data .s3_data
 # requirement files management
 .PHONY: requirements-compile
 
-PIP_TOOLS_VERSION:=4.5.1
-
 requirements-compile:
 	docker run \
+		-v ${HOME}/.pip/pip.conf:/etc/pip.conf \
 		-v $(PWD):$(WORKDIR) \
-		--rm $(BASE_IMAGE_NAME) \
+		--workdir $(WORKDIR) \
+		--rm ${BASE_IMAGE_NAME} \
 		/bin/bash -c "\
 			pip install \
 				--upgrade \
-				pip-tools==$(PIP_TOOLS_VERSION) && \
-			pip-compile requirements.base.src && \
-			pip-compile requirements.src && \
-			pip-compile requirements.dev.src"
+				pip-tools pip && \
+			pip-compile --build-isolation --allow-unsafe --no-emit-index-url --generate-hashes requirements.base.src && \
+			pip-compile --build-isolation --allow-unsafe --no-emit-index-url --generate-hashes requirements.src && \
+			pip-compile --build-isolation --allow-unsafe --no-emit-index-url --generate-hashes requirements.dev.src"
 
 
 flake8:
 	docker run \
 		-v $(PWD):$(WORKDIR) \
-		--rm $(IMAGE_NAME_FULL) \
+		--rm $(IMAGE_NAME_FULL):$(BUILD_ID) \
 		/bin/bash -c "flake8 --filename=*.py"
 
 .PHONY: flake8
 
-
 black:
 	docker run \
 		-v $(PWD):$(WORKDIR) \
-		--rm $(IMAGE_NAME_FULL) \
-		/bin/bash -c "black --skip-string-normalization --line-length 120 --target-version py36 ."
+		--rm $(IMAGE_NAME_FULL):$(BUILD_ID) \
+		/bin/bash -c "black ."
 
 .PHONY: black
-
 
 black-check:
 	docker run \
 		-v $(PWD):$(WORKDIR) \
-		--rm $(IMAGE_NAME_FULL) \
-		/bin/bash -c "black --skip-string-normalization --diff --check --line-length 120 --target-version py36 ."
+		--rm $(IMAGE_NAME_FULL):$(BUILD_ID) \
+		/bin/bash -c "black --diff --check ."
 
 .PHONY: black-check
