@@ -17,12 +17,15 @@ pipeline {
           ],
           file(credentialsId: 'ARTIFACTORY_PIPCONF', variable: 'PIPCONF_PATH')
         ]) {
+          githubReportStatus("build", "Logging in to ECR...")
           sh script: """
             set +x
             eval \$(aws ecr get-login --registry-ids ${AWS_ACCOUNT_ASSETS} --no-include-email)
             echo ${GIT_URL}
             set -x
           """, label: 'Log in to ECR'
+
+          githubReportStatus("build", "Building image...")
           sh script: "make image", label: 'Build Docker image'
           sh script: "make print_image_name_build", label: 'Print image release tag'
         }
@@ -86,7 +89,7 @@ def githubReportStatus(String context, String message) {
 
   step([
     $class: 'GitHubCommitStatusSetter',
-    reposSource: [$class: "ManuallyEnteredRepositorySource", url: "https://github.com/panoramichq/data-collection-fb"],
+    reposSource: [$class: "ManuallyEnteredRepositorySource", url: "${env.GIT_URL}"],
     contextSource: [$class: "ManuallyEnteredCommitContextSource", context: context],
     errorHandlers: [[$class: 'ShallowAnyErrorHandler']],
     statusResultSource: [
