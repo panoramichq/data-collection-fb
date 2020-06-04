@@ -22,7 +22,7 @@ IMAGE_NAME_FULL?=$(VENDOR_NAME)/$(IMAGE_NAME)
 # When we are building through Circle CI, use the
 BRANCH_NAME:=$(if $(BRANCH_NAME),$(BRANCH_NAME),$(shell git rev-parse --abbrev-ref HEAD))
 COMMIT_ID?=$(shell git rev-parse --short HEAD)
-BUILD_ID?=$(if $(BUILD_ID?),$(BUILD_ID?),latest)
+BUILD_ID?=latest
 
 # Datadog instrumentation agent
 DDOG_IMAGE_NAME:=datadog/docker-dd-agent
