@@ -58,14 +58,19 @@ def generate_child_claims(claim: ExpectationClaim) -> Generator[ExpectationClaim
         )
 
 
-def should_select(report: JobReport) -> bool:
+def prefer_job_breakdown(report: JobReport) -> bool:
     """Decide if signature should be used based on last report."""
-    # only break down jobs with too large error
-    if report.last_failure_bucket != FailureBucket.TooLarge:
+
+    # this is obvious and one of THE reasons for task breakdown
+    if report.last_failure_bucket == FailureBucket.TooLarge:
         return True
 
+    # there is another THE reason for breakdown but we don't capture that error yet
+    # When we kill Celery tasks a special "Stop Oozer" exception. Let' catch that one and record on jobs
+    # so we know which ones to break down on next sweep.
+
     # need to fail n-times in a row
-    if report.fails_in_row is None or report.fails_in_row < FAILS_IN_ROW_BREAKDOWN_LIMIT:
+    if report.fails_in_row is not None and report.fails_in_row > FAILS_IN_ROW_BREAKDOWN_LIMIT:
         return True
 
     return False
@@ -78,7 +83,14 @@ def generate_scorable(claim: ExpectationClaim) -> Generator[ScorableClaim, None,
     else:
         last_report = _fetch_job_report(claim.job_id)
 
-    if not TASK_BREAKDOWN_ENABLED or not claim.is_divisible or last_report is None or should_select(last_report):
+    _prefer_breakdown = (
+        TASK_BREAKDOWN_ENABLED and
+        claim.is_divisible and
+        last_report and
+        prefer_job_breakdown(last_report)
+    )
+
+    if not _prefer_breakdown:
         yield ScorableClaim(
             claim.entity_id,
             claim.entity_type,

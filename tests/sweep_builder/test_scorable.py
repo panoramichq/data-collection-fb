@@ -10,7 +10,7 @@ from common.job_signature import JobSignature
 from common.store.jobreport import JobReport
 from sweep_builder.data_containers.entity_node import EntityNode
 from sweep_builder.data_containers.expectation_claim import ExpectationClaim
-from sweep_builder.scorable import should_select, generate_scorable, generate_child_claims
+from sweep_builder.scorable import prefer_job_breakdown, generate_scorable, generate_child_claims
 
 
 @pytest.yield_fixture(autouse=True)
@@ -65,9 +65,9 @@ def test_generate_child_claims():
 
 
 @patch('sweep_builder.scorable._fetch_job_report')
-@patch('sweep_builder.scorable.should_select')
+@patch('sweep_builder.scorable.prefer_job_breakdown')
 @patch('sweep_builder.scorable.generate_child_claims')
-def test_generate_scorable_claim_not_divisible(mock_generate_child_claims, mock_should_select, mock_fetch_job_report):
+def test_generate_scorable_claim_not_divisible(mock_generate_child_claims, mock_prefer_job_breakdown, mock_fetch_job_report):
     mock_fetch_job_report.return_value = None
     claim = Mock(
         entity_id='entity_id',
@@ -80,14 +80,14 @@ def test_generate_scorable_claim_not_divisible(mock_generate_child_claims, mock_
     result = list(generate_scorable(claim))
 
     assert len(result) == 1
-    assert not mock_should_select.called
+    assert not mock_prefer_job_breakdown.called
     assert not mock_generate_child_claims.called
 
 
 @patch('sweep_builder.scorable._fetch_job_report')
-@patch('sweep_builder.scorable.should_select')
+@patch('sweep_builder.scorable.prefer_job_breakdown')
 @patch('sweep_builder.scorable.generate_child_claims')
-def test_generate_scorable_job_report_none(mock_generate_child_claims, mock_should_select, mock_fetch_job_report):
+def test_generate_scorable_job_report_none(mock_generate_child_claims, mock_prefer_job_breakdown, mock_fetch_job_report):
     mock_fetch_job_report.return_value = None
     claim = Mock(
         entity_id='entity_id',
@@ -100,17 +100,17 @@ def test_generate_scorable_job_report_none(mock_generate_child_claims, mock_shou
     result = list(generate_scorable(claim))
 
     assert len(result) == 1
-    assert not mock_should_select.called
+    assert not mock_prefer_job_breakdown.called
     assert not mock_generate_child_claims.called
 
 
 @patch('sweep_builder.scorable._fetch_job_report')
-@patch('sweep_builder.scorable.should_select')
+@patch('sweep_builder.scorable.prefer_job_breakdown')
 @patch('sweep_builder.scorable.generate_child_claims')
-def test_generate_scorable_job_report_should_select_true(
-    mock_generate_child_claims, mock_should_select, mock_fetch_job_report
+def test_generate_scorable_job_report_prefer_job_breakdown_true(
+    mock_generate_child_claims, mock_prefer_job_breakdown, mock_fetch_job_report
 ):
-    mock_should_select.return_value = True
+    mock_prefer_job_breakdown.return_value = False
     mock_fetch_job_report.return_value = sentinel.job_report
     claim = Mock(
         entity_id='entity_id',
@@ -127,12 +127,12 @@ def test_generate_scorable_job_report_should_select_true(
 
 
 @patch('sweep_builder.scorable._fetch_job_report')
-@patch('sweep_builder.scorable.should_select')
+@patch('sweep_builder.scorable.prefer_job_breakdown')
 @patch('sweep_builder.scorable.generate_child_claims')
-def test_generate_scorable_job_report_should_select_false(
-    mock_generate_child_claims, mock_should_select, mock_fetch_job_report
+def test_generate_scorable_job_report_prefer_job_breakdown_false(
+    mock_generate_child_claims, mock_prefer_job_breakdown, mock_fetch_job_report
 ):
-    mock_should_select.side_effect = [False, True]
+    mock_prefer_job_breakdown.side_effect = [True, False]
     mock_fetch_job_report.return_value = sentinel.job_report
     mock_generate_child_claims.return_value = [
         Mock(
@@ -160,27 +160,33 @@ def test_generate_scorable_job_report_should_select_false(
 @pytest.mark.parametrize(
     'bucket', [FailureBucket.WorkingOnIt, FailureBucket.Success, FailureBucket.Other, FailureBucket.Throttling]
 )
-def test_should_select_last_error_not_too_large(bucket):
+def test_prefer_job_breakdown_last_error_not_too_large(bucket):
     report = JobReport(last_failure_bucket=bucket)
 
-    assert should_select(report)
+    assert not prefer_job_breakdown(report)
 
 
-def test_should_select_last_error_is_too_large_none_fails_in_row():
+def test_prefer_job_breakdown_last_error_is_too_large_none_fails_in_row():
     report = Mock(last_failure_bucket=FailureBucket.TooLarge, fails_in_row=None)
 
-    assert should_select(report)
+    assert prefer_job_breakdown(report)
 
 
 @patch('sweep_builder.scorable.FAILS_IN_ROW_BREAKDOWN_LIMIT', new=2)
-def test_should_select_last_error_is_too_large_none_fails_under_limit():
+def test_prefer_job_breakdown_last_error_is_too_large_none_fails_under_limit():
     report = Mock(last_failure_bucket=FailureBucket.TooLarge, fails_in_row=1)
 
-    assert should_select(report)
+    assert prefer_job_breakdown(report)
 
 
 @patch('sweep_builder.scorable.FAILS_IN_ROW_BREAKDOWN_LIMIT', new=2)
-def test_should_select_last_error_is_too_large_fails_in_row_over_limit():
-    report = Mock(last_failure_bucket=FailureBucket.TooLarge, fails_in_row=3)
+def test_prefer_job_breakdown_last_error_is_unrelated_but_over_limit():
+    report = Mock(last_failure_bucket=FailureBucket.Throttling, fails_in_row=3)
 
-    assert not should_select(report)
+    assert prefer_job_breakdown(report)
+
+@patch('sweep_builder.scorable.FAILS_IN_ROW_BREAKDOWN_LIMIT', new=2)
+def test_prefer_job_breakdown_last_error_is_unrelated_but_under_limit():
+    report = Mock(last_failure_bucket=FailureBucket.Throttling, fails_in_row=1)
+
+    assert not prefer_job_breakdown(report)
