@@ -24,11 +24,6 @@ def test_add_child_with_path():
     assert 'ad-id' == ad_node.entity_id
 
 
-def test_is_leaf():
-    node = EntityNode('ad-account-id', Entity.AdAccount)
-    assert node.is_leaf
-
-
 def test_has_child():
     node = EntityNode('ad-account-id', Entity.AdAccount)
     node.add_node(EntityNode('ad-id1', Entity.Ad))
