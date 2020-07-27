@@ -41,7 +41,8 @@ def test_normalize(value_range, ratio, expected):
     ['range_start', 'expected'],
     [
         (None, 1.0),
-        (now().date() - timedelta(days=JOB_MAX_AGE_IN_DAYS + 1), 0.0),
+        (now().date() - timedelta(days=JOB_MAX_AGE_IN_DAYS), 0.5),
+        (now().date() - timedelta(days=JOB_MAX_AGE_IN_DAYS * 2 +1), 0.01),
         (now().date(), 1.0),
     ]
 )
@@ -51,7 +52,7 @@ def test_recency_ratio(range_start, expected):
 
     score = recency_ratio(claim)
 
-    assert score == pytest.approx(expected, abs=0.0001)
+    assert score == pytest.approx(expected, abs=0.01)
 
 
 @pytest.mark.parametrize(
@@ -69,13 +70,12 @@ def test_historical_ratio(last_success_dt, expected):
 
     score = historical_ratio(claim)
 
-    assert score == pytest.approx(expected, abs=0.0001)
+    assert score == pytest.approx(expected, abs=0.01)
 
 # fmt: on
 
 
 @patch.object(JobGateKeeper, 'shall_pass', return_value=True)
-@patch('sweep_builder.prioritizer.prioritized.get_score_range', return_value=(100, 1000))
 @patch('sweep_builder.prioritizer.prioritized.historical_ratio', return_value=0.75)
 @patch('sweep_builder.prioritizer.prioritized.recency_ratio', return_value=0.25)
 def test_assign_score(*_):
@@ -83,7 +83,7 @@ def test_assign_score(*_):
 
     result = assign_score(claim)
 
-    assert result == 550
+    assert result == 187
 
 
 @patch('sweep_builder.prioritizer.prioritized.assign_score')

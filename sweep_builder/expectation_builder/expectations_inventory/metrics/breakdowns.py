@@ -55,23 +55,32 @@ def day_metrics_per_ads_under_ad_account(
     # Divide tasks only if parent levels are defined for all ads
     is_dividing_possible = True
 
+    # we are stopping task breakdown at lowest "parent" possible - AdSet.
+    # Don't go "Ad" - too inefficient for US at this point as Celery task overhead and
+    # scheduling will cost us more than collection and tracking of individual ad level data task.
     for child_claim in iter_reality_per_ad_account_claim(reality_claim, entity_types=[Entity.Ad]):
+        is_dividing_possible = is_dividing_possible and child_claim.all_parent_ids_set
+        adset_campaigns[child_claim.adset_id] = child_claim.campaign_id
         range_start, range_end = _determine_active_date_range_for_claim(child_claim)
         for day in date_range(range_start, range_end):
-            is_dividing_possible = is_dividing_possible and child_claim.all_parent_ids_set
-            adset_campaigns[child_claim.adset_id] = child_claim.campaign_id
             active_adset_ids_by_day[day].add(child_claim.adset_id)
 
     logger.warning(
         f'[dividing-possible] Ad Account {reality_claim.ad_account_id} Dividing possible: {is_dividing_possible}'
     )
 
+    # We generate a claim of existence of child records for each day we see signs of
+    # existence / activity for any child of ad account.
+    # Note that here we do NOT generate separate Job IDs
+    # Thus, we yield claims that are effectively combination of
+    # existence day, report type (indicating what kind of record migght exist)
+    # Obviously this approach works only for metrics report types that have day-based dimension.
     for (day, active_adset_ids) in active_adset_ids_by_day.items():
+
         ad_account_node = EntityNode(reality_claim.entity_id, reality_claim.entity_type)
         for adset_id in active_adset_ids:
             campaign_id = adset_campaigns[adset_id]
-            new_node = EntityNode(adset_id, Entity.AdSet)
-            ad_account_node.add_node(new_node, path=(campaign_id,))
+            ad_account_node.add_node(EntityNode(adset_id, Entity.AdSet), path=(campaign_id,))
 
         for report_type in report_types:
             yield ExpectationClaim(
