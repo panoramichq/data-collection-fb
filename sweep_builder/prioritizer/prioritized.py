@@ -65,7 +65,8 @@ class ScoreSkewHandlers:
 
     @staticmethod
     def random_half_skew(claim: ScorableClaim) -> float:
-        return random.randrange(MAX_SCORE_MULTIPLIER/2, MAX_SCORE_MULTIPLIER)
+        r = random.randrange(50, 100) / 100.0
+        return MAX_SCORE_MULTIPLIER * r
 
 # You don't have to list all possible report types here.
 # same_score is default if not on this list,
