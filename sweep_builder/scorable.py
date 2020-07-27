@@ -7,7 +7,7 @@ from pynamodb.exceptions import DoesNotExist
 
 from common.enums.jobtype import detect_job_type
 from config.application import PERMANENTLY_FAILING_JOB_THRESHOLD
-from config.jobs import FAILS_IN_ROW_BREAKDOWN_LIMIT, TASK_BREAKDOWN_ENABLED, ACTIVATE_JOB_GATEKEEPER
+from config.jobs import FAILS_IN_ROW_BREAKDOWN_LIMIT, TASK_BREAKDOWN_ENABLED
 from common.enums.failure_bucket import FailureBucket
 from common.measurement import Measure
 from common.store.jobreport import JobReport
@@ -15,7 +15,6 @@ from common.id_tools import generate_id
 from common.job_signature import JobSignature
 from sweep_builder.data_containers.expectation_claim import ExpectationClaim
 from sweep_builder.data_containers.scorable_claim import ScorableClaim
-from sweep_builder.prioritizer.gatekeeper import JobGateKeeperCache
 
 logger = logging.getLogger(__name__)
 
@@ -78,10 +77,7 @@ def prefer_job_breakdown(report: JobReport) -> bool:
 
 def generate_scorable(claim: ExpectationClaim) -> Generator[ScorableClaim, None, None]:
     """Select job signature for single expectation claim."""
-    if ACTIVATE_JOB_GATEKEEPER and not JobGateKeeperCache.shall_pass(claim.job_id):
-        last_report = None
-    else:
-        last_report = _fetch_job_report(claim.job_id)
+    last_report = _fetch_job_report(claim.job_id)
 
     _prefer_breakdown = (
         TASK_BREAKDOWN_ENABLED and

@@ -1,8 +1,7 @@
-from unittest.mock import patch, Mock
-
 import pytest
 
-from datetime import timedelta
+from datetime import timedelta, datetime
+from unittest.mock import patch, Mock
 
 from common.enums.entity import Entity
 from common.enums.reporttype import ReportType
@@ -12,48 +11,12 @@ from common.tztools import now
 from sweep_builder.data_containers.scorable_claim import ScorableClaim
 from sweep_builder.errors import ScoringException
 from sweep_builder.prioritizer.prioritized import (
-    iter_prioritized,
-    assign_score,
-    normalize,
-    historical_ratio,
-    recency_ratio,
-    JOB_MIN_SUCCESS_PERIOD_IN_DAYS,
     JOB_MAX_AGE_IN_DAYS,
+    JOB_MIN_SUCCESS_PERIOD_IN_DAYS,
+    MUST_RUN_SCORE,
+    ScoreCalculator,
+    ScoreSkewHandlers,
 )
-from sweep_builder.prioritizer.gatekeeper import JobGateKeeper
-
-
-# fmt: off
-@pytest.mark.parametrize(
-    ['value_range', 'ratio', 'expected'],
-    [
-        ((0, 100), 0.5, 50.0),
-        ((100, 600), 0.5, 350.0),
-        ((100, 600), 0, 100),
-        ((100, 600), 1, 600),
-    ],
-)
-def test_normalize(value_range, ratio, expected):
-    assert normalize(value_range, ratio) == expected
-
-
-@pytest.mark.parametrize(
-    ['range_start', 'expected'],
-    [
-        (None, 1.0),
-        (now().date() - timedelta(days=JOB_MAX_AGE_IN_DAYS), 0.5),
-        (now().date() - timedelta(days=JOB_MAX_AGE_IN_DAYS * 2 +1), 0.01),
-        (now().date(), 1.0),
-    ]
-)
-def test_recency_ratio(range_start, expected):
-    signature = JobSignature('jobid')
-    claim = ScorableClaim('A1', Entity.Ad, ReportType.lifetime, Entity.Ad, signature, None, range_start=range_start)
-
-    score = recency_ratio(claim)
-
-    assert score == pytest.approx(expected, abs=0.01)
-
 
 @pytest.mark.parametrize(
     ['last_success_dt', 'expected'],
@@ -68,28 +31,53 @@ def test_historical_ratio(last_success_dt, expected):
     last_report = JobReport(last_success_dt=last_success_dt)
     claim = ScorableClaim('A1', Entity.Ad, ReportType.lifetime, Entity.Ad, signature, last_report)
 
-    score = historical_ratio(claim)
+    score = ScoreCalculator.historical_ratio(claim)
 
     assert score == pytest.approx(expected, abs=0.01)
 
-# fmt: on
+
+@pytest.mark.parametrize(
+    ['report_type', 'historical_ratio', 'skew_ratio', 'score'],
+    [
+        (ReportType.lifetime, 1.0, 1.0, MUST_RUN_SCORE),
+        (ReportType.lifetime, 1.0, 0.5, MUST_RUN_SCORE * 0.5),
+        (ReportType.lifetime, 0.6, 0.2, MUST_RUN_SCORE * 0.12),
+        (ReportType.entity, 1.0, 1.0, MUST_RUN_SCORE),
+        (ReportType.entity, 1.0, 0.5, MUST_RUN_SCORE * 0.5),
+        (ReportType.entity, 0.6, 0.2, MUST_RUN_SCORE * 0.12),
+    ]
+)
+def test_assign_score(report_type, historical_ratio, skew_ratio, score):
+    claim = ScorableClaim('A1', Entity.Ad, report_type, Entity.Ad, JobSignature('jobid'), None)
+    with patch.object(ScoreCalculator, 'historical_ratio', return_value=historical_ratio), \
+            patch.object(ScoreCalculator, 'skew_ratio', return_value=skew_ratio):
+
+        result = ScoreCalculator.assign_score(claim)
+    assert result == pytest.approx(score, abs=0.1)
 
 
-@patch.object(JobGateKeeper, 'shall_pass', return_value=True)
-@patch('sweep_builder.prioritizer.prioritized.historical_ratio', return_value=0.75)
-@patch('sweep_builder.prioritizer.prioritized.recency_ratio', return_value=0.25)
-def test_assign_score(*_):
-    claim = ScorableClaim('A1', Entity.Ad, ReportType.lifetime, Entity.Ad, JobSignature('jobid'), None)
+@pytest.mark.parametrize(
+    ['dt', 'expected_score'],
+    [
+        (datetime(2000, 1, 1, 1, 0), 1.0),
+        (datetime(2000, 1, 1, 1, 5), 0.83),
+        (datetime(2000, 1, 1, 1, 10), 0.67),
+        (datetime(2000, 1, 1, 1, 15), 0.5),
+        (datetime(2000, 1, 1, 1, 20), 0.33),
+        (datetime(2000, 1, 1, 1, 25), 0.17),
+        (datetime(2000, 1, 1, 1, 30), 0.0),
+        (datetime(2000, 1, 1, 1, 35), 0.17),
+        (datetime(2000, 1, 1, 1, 40), 0.33),
+        (datetime(2000, 1, 1, 1, 45), 0.5),
+        (datetime(2000, 1, 1, 1, 50), 0.67),
+        (datetime(2000, 1, 1, 1, 55), 0.83),
+    ]
+)
+def test_lifetime_score(dt, expected_score):
+    signature = JobSignature('jobid')
+    claim = ScorableClaim('A1', Entity.Ad, ReportType.lifetime, Entity.Ad, signature, None)
+    with patch.object(ScoreSkewHandlers, 'get_now', return_value=dt) as mm:
+        score = ScoreSkewHandlers.lifetime_score(claim=claim)
 
-    result = assign_score(claim)
-
-    assert result == 187
-
-
-@patch('sweep_builder.prioritizer.prioritized.assign_score')
-def test_iter_prioritized_assign_score_throws_keeps_going(mock_assign_score):
-    mock_assign_score.side_effect = [ScoringException('test'), 10]
-
-    results = [pc.score for pc in iter_prioritized([Mock(), Mock()])]
-
-    assert results == [10]
+    assert mm.called
+    assert score == pytest.approx(expected_score, abs=0.01)

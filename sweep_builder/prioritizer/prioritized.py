@@ -1,138 +1,144 @@
 import logging
 import math
+import random
 import time
-from datetime import timedelta
+from datetime import timedelta, datetime
 
-from typing import Generator, Iterable, Tuple, Dict
+from typing import Generator, Iterable, Tuple, Dict, Callable
 
 from common.enums.jobtype import JobType, detect_job_type
 from common.enums.reporttype import ReportType
 from common.error_inspector import ErrorInspector
 from common.measurement import Measure
 from common.tztools import now
-from config.jobs import ACTIVATE_JOB_GATEKEEPER
 from sweep_builder.data_containers.prioritization_claim import PrioritizationClaim
 from sweep_builder.data_containers.scorable_claim import ScorableClaim
 from sweep_builder.errors import ScoringException
-from sweep_builder.prioritizer.gatekeeper import JobGateKeeper, JobGateKeeperCache
 
 logger = logging.getLogger(__name__)
 
 MAX_SCORE_MULTIPLIER = 1.0
-MIN_SCORE_MULTIPLIER = 0.01
+MIN_SCORE_MULTIPLIER = 0.5
 JOB_MIN_SUCCESS_PERIOD_IN_DAYS = 30
 JOB_MAX_AGE_IN_DAYS = 365 * 2
 MUST_RUN_SCORE = 1000
 
 
-SCORE_RANGES: Dict[Tuple[str, str], Tuple[int, int]] = {
-    (JobType.PAID_DATA, ReportType.entity): (500, 1000),
-    (JobType.PAID_DATA, ReportType.lifetime): (400, 900),
-    (JobType.ORGANIC_DATA, ReportType.entity): (250, 750),
-    (JobType.ORGANIC_DATA, ReportType.lifetime): (150, 650),
-    (JobType.PAID_DATA, ReportType.day): (100, 600),
-    (JobType.PAID_DATA, ReportType.day_age_gender): (100, 600),
-    (JobType.PAID_DATA, ReportType.day_dma): (100, 600),
-    (JobType.PAID_DATA, ReportType.day_region): (100, 600),
-    (JobType.PAID_DATA, ReportType.day_country): (100, 600),
-    (JobType.PAID_DATA, ReportType.day_hour): (100, 600),
-    (JobType.PAID_DATA, ReportType.day_platform): (100, 600),
+class ScoreSkewHandlers:
+    # nested as such mostly for ease of mocking in tests.
+    # do NOT unbundle this class.
+
+    @staticmethod
+    def get_now():
+        # factored out to allow mocking in tests
+        return datetime.now()
+
+    @staticmethod
+    def same_score(claim: ScorableClaim) -> float:
+        return MAX_SCORE_MULTIPLIER
+
+    @classmethod
+    def lifetime_score(cls, claim: ScorableClaim) -> float:
+        # focus is on collecting most-recent data
+        # but we gravitate towards "top of the hour" timeslots
+        # The closer to "top of hour" the higher the score
+        # (We used to make lifetime diff tables to capture uniques better
+        #  but because of throttling and timing, it's very hard to guarantee "every hour on hour")
+        # This also helps rotate scores between lifetime and non-lifetime metrics within the hour.
+        m = cls.get_now().minute
+        # movement from 0+ to 30 minutes and backward movement from 59- to 30
+        # produce scores from 1.0 to 0.0 (with typical floating point errors)
+        return abs(30 - m) / 30
+
+    @staticmethod
+    def day_based_metrics(claim: ScorableClaim) -> float:
+        decay_per_day = 1 / (JOB_MAX_AGE_IN_DAYS * 2)
+        today = now().date().toordinal()
+        claim_day = claim.range_start.toordinal()
+        days_in_past = today - claim_day
+        mult = MAX_SCORE_MULTIPLIER * (1 - days_in_past * decay_per_day)
+
+        if mult < MIN_SCORE_MULTIPLIER:
+            return MIN_SCORE_MULTIPLIER
+        else:
+            return mult
+
+    @staticmethod
+    def random_half_skew(claim: ScorableClaim) -> float:
+        return random.randrange(MAX_SCORE_MULTIPLIER/2, MAX_SCORE_MULTIPLIER)
+
+# You don't have to list all possible report types here.
+# same_score is default if not on this list,
+# but it helps to list possibilities for our record
+SCORE_SKEW_HANDLERS: Dict[Tuple[str, str], Callable[[ScorableClaim], float]] = {
+    (JobType.PAID_DATA, ReportType.entity): ScoreSkewHandlers.random_half_skew,
+    (JobType.PAID_DATA, ReportType.lifetime): ScoreSkewHandlers.lifetime_score,
+    (JobType.ORGANIC_DATA, ReportType.entity): ScoreSkewHandlers.random_half_skew,
+    (JobType.ORGANIC_DATA, ReportType.lifetime): ScoreSkewHandlers.lifetime_score,
+    (JobType.PAID_DATA, ReportType.day): ScoreSkewHandlers.day_based_metrics,
+    (JobType.PAID_DATA, ReportType.day_age_gender): ScoreSkewHandlers.day_based_metrics,
+    (JobType.PAID_DATA, ReportType.day_dma): ScoreSkewHandlers.day_based_metrics,
+    (JobType.PAID_DATA, ReportType.day_region): ScoreSkewHandlers.day_based_metrics,
+    (JobType.PAID_DATA, ReportType.day_country): ScoreSkewHandlers.day_based_metrics,
+    (JobType.PAID_DATA, ReportType.day_hour): ScoreSkewHandlers.day_based_metrics,
+    (JobType.PAID_DATA, ReportType.day_platform): ScoreSkewHandlers.day_based_metrics,
 }
 
 
-def _extract_tags_from_claim(claim: ScorableClaim, *_, **__) -> Dict[str, str]:
-    return {'entity_type': claim.entity_type, 'ad_account_id': claim.ad_account_id}
+class ScoreCalculator:
+    @staticmethod
+    def skew_ratio(claim: ScorableClaim) -> float:
+        job_type = detect_job_type(claim.report_type, claim.report_variant)
+        fn = SCORE_SKEW_HANDLERS.get((job_type, claim.report_type), ScoreSkewHandlers.same_score)
+        return fn(claim)
 
+    @staticmethod
+    def historical_ratio(claim: ScorableClaim) -> float:
+        """Multiplier based on past efforts to download job."""
+        last_success_dt = claim.last_report.last_success_dt if claim.last_report else None
 
-def get_score_range(claim: ScorableClaim) -> Tuple[int, int]:
-    """Returns score range based on job and report type."""
-    job_type = detect_job_type(claim.report_type, claim.report_variant)
-    try:
-        return SCORE_RANGES[(job_type, claim.report_type)]
-    except KeyError:
-        raise ScoringException(f'Error scoring job {claim.job_id}')
-
-
-def historical_ratio(claim: ScorableClaim) -> float:
-    """Multiplier based on past efforts to download job."""
-    last_success_dt = claim.last_report and claim.last_report.last_success_dt
-
-    if not last_success_dt:
-        return MAX_SCORE_MULTIPLIER
-    else:
-        # cool! prior success!
-        # **the further in the past is prior success the higher is
-        # the need to recollect / refresh**
-        # (but caps out on constant some ~30 days in past)
-        # (not same thing as "the futher in past is the reporting date of data". Separate score there)
-
-        # most recently-successfully collected data score gets close to zero score
-        max_dt = now()
-        # Absolute minimum is success every N days
-        min_dt = max_dt - timedelta(days=JOB_MIN_SUCCESS_PERIOD_IN_DAYS)
-        if last_success_dt <= min_dt:
+        if not last_success_dt:
             return MAX_SCORE_MULTIPLIER
-        else: #  between min and max
-            min_timestamp = min_dt.timestamp()
-            max_timestamp = max_dt.timestamp()
-            last_success_timestamp = last_success_dt.timestamp()
-            return min(
-                MAX_SCORE_MULTIPLIER * (max_timestamp - last_success_timestamp) / (max_timestamp - min_timestamp),
-                MIN_SCORE_MULTIPLIER
-            )
+        else:
+            # cool! prior success!
+            # **the further in the past is prior success the higher is
+            # the need to recollect / refresh**
+            # (but caps out on constant some ~30 days in past)
+            # (not same thing as "the futher in past is the reporting date of data". Separate score there)
 
+            # most recently-successfully collected data score gets close to zero score
+            max_dt = now()
+            # Absolute minimum is success every N days
+            min_dt = max_dt - timedelta(days=JOB_MIN_SUCCESS_PERIOD_IN_DAYS)
+            if last_success_dt <= min_dt:
+                return MAX_SCORE_MULTIPLIER
+            else: #  between min and max
+                min_timestamp = min_dt.timestamp()
+                max_timestamp = max_dt.timestamp()
+                last_success_timestamp = last_success_dt.timestamp()
+                return min(
+                    MAX_SCORE_MULTIPLIER * (max_timestamp - last_success_timestamp) / (max_timestamp - min_timestamp),
+                    MIN_SCORE_MULTIPLIER
+                )
 
-def recency_ratio(claim: ScorableClaim) -> float:
-    """Multiplier based on how likely to change the data in the report is."""
+    @classmethod
+    def assign_score(cls, claim: ScorableClaim) -> int:
+        """Calculate score for a given claim."""
+        if claim.report_type in ReportType.MUST_RUN_EVERY_SWEEP:
+            return MUST_RUN_SCORE
 
-    # data points without natural "age" (lifetime metrics and entity reports)
-    # must always stay fresh and get full score
-    if claim.range_start is None:
-        return MAX_SCORE_MULTIPLIER
+        timer = Measure.timer(
+            f'{__name__}.assign_score',
+            tags={'entity_type': claim.entity_type, 'ad_account_id': claim.ad_account_id},
+            sample_rate=0.01
+        )
 
-    # reporting-date-tied records are scored on a downward-sloping line
-    # where "half-life" (50% decay) is at JOB_MAX_AGE_IN_DAYS in past
+        with timer:
+            hist_ratio = cls.historical_ratio(claim)
+            score_skew_ratio = cls.skew_ratio(claim)
 
-    decay_per_day = 1 / (JOB_MAX_AGE_IN_DAYS * 2)
-    today = now().date().toordinal()
-    claim_day = claim.range_start.toordinal()
-    days_in_past = today - claim_day
-    mult = MAX_SCORE_MULTIPLIER * (1 - days_in_past * decay_per_day)
-
-    if mult < MIN_SCORE_MULTIPLIER:
-        return MIN_SCORE_MULTIPLIER
-    else:
-        return mult
-
-
-def normalize(value_range: Tuple[int, int], ratio: float) -> int:
-    """Returns value in the range linearly scaled with ratio between 0 and 1."""
-    score_min, score_max = value_range
-    return round((ratio * (score_max - score_min)) + score_min)
-
-
-@Measure.timer(
-    __name__, function_name_as_metric=True, extract_tags_from_arguments=_extract_tags_from_claim, sample_rate=0.01
-)
-def assign_score(claim: ScorableClaim) -> int:
-    """Calculate score for a given claim."""
-    if claim.report_type in ReportType.MUST_RUN_EVERY_SWEEP:
-        return MUST_RUN_SCORE
-
-    if ACTIVATE_JOB_GATEKEEPER and not JobGateKeeperCache.shall_pass(claim.job_id):
-        return JobGateKeeperCache.JOB_NOT_PASSED_SCORE
-
-    if ACTIVATE_JOB_GATEKEEPER and not JobGateKeeper.shall_pass(claim):
-        return JobGateKeeper.JOB_NOT_PASSED_SCORE
-
-    # score_range = get_score_range(claim)
-    hist_ratio = historical_ratio(claim)
-    rec_ratio = recency_ratio(claim)
-
-    # equal weight to each ratio
-    combined_ratio = hist_ratio * rec_ratio
-
-    return int(MUST_RUN_SCORE * combined_ratio)
+        combined_ratio = hist_ratio * score_skew_ratio
+        return int(MUST_RUN_SCORE * combined_ratio)
 
 
 def iter_prioritized(claims: Iterable[ScorableClaim]) -> Generator[PrioritizationClaim, None, None]:
@@ -149,7 +155,7 @@ def iter_prioritized(claims: Iterable[ScorableClaim]) -> Generator[Prioritizatio
         )
 
         try:
-            score = assign_score(claim)
+            score = ScoreCalculator.assign_score(claim)
             with Measure.timer(f'{_measurement_name_base}.yield_result', tags=_measurement_tags):
                 yield PrioritizationClaim(
                     claim.entity_id,

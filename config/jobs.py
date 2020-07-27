@@ -18,8 +18,6 @@ is more meaningful in context of some particular job DISABLED=False
 In this case, group level DISABLED clearly takes precedence.
 """
 
-# Activate Job Gatekeeper
-ACTIVATE_JOB_GATEKEEPER = True
 REPORT_IN_PROGRESS_FREQUENCY_MINS = 10
 REPORT_TYPE_LIFETIME_FREQUENCY = 6
 REPORT_TYPE_LIFETIME_PAGE_POSTS_FREQUENCY = 10
