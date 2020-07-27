@@ -50,20 +50,20 @@ pipeline {
             unsuccessful { githubReportStatus("deploy", "Deploy failed") }
           }
         }
-        stage('Lint') {
-          steps {
-            githubReportStatus("lint", "Running flake8...")
-            sh script: 'make flake8 || true', label: 'Run flake8'
-            githubReportStatus("lint", "Running black diff...")
-            sh script: 'make black-check ', label: 'Run flake8'
-          }
-          post {
-            success { githubReportStatus("lint", "Lint passed") }
-            aborted { githubReportStatus("lint", "Lint cancelled") }
-            failure { githubReportStatus("lint", "Lint failed") }
-            unsuccessful { githubReportStatus("lint", "Lint failed") }
-          }
-        }
+//        stage('Lint') {
+//          steps {
+//            githubReportStatus("lint", "Running flake8...")
+//            sh script: 'make flake8 || true', label: 'Run flake8'
+//            githubReportStatus("lint", "Running black diff...")
+//            sh script: 'make black-check ', label: 'Run flake8'
+//          }
+//          post {
+//            success { githubReportStatus("lint", "Lint passed") }
+//            aborted { githubReportStatus("lint", "Lint cancelled") }
+//            failure { githubReportStatus("lint", "Lint failed") }
+//            unsuccessful { githubReportStatus("lint", "Lint failed") }
+//          }
+//        }
         stage('Test') {
           environment {
             COMPOSE_PROJECT_NAME = "${env.JOB_NAME}-test-${env.BUILD_NUMBER}"
