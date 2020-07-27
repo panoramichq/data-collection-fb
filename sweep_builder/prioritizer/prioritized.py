@@ -1,4 +1,5 @@
 import logging
+import math
 import time
 from datetime import timedelta
 
@@ -18,19 +19,17 @@ from sweep_builder.prioritizer.gatekeeper import JobGateKeeper, JobGateKeeperCac
 logger = logging.getLogger(__name__)
 
 MAX_SCORE_MULTIPLIER = 1.0
-MIN_SCORE_MULTIPLIER = 0.0
+MIN_SCORE_MULTIPLIER = 0.01
 JOB_MIN_SUCCESS_PERIOD_IN_DAYS = 30
 JOB_MAX_AGE_IN_DAYS = 365 * 2
 MUST_RUN_SCORE = 1000
 
+
 SCORE_RANGES: Dict[Tuple[str, str], Tuple[int, int]] = {
-    # paid entity and lifetime reports are most important
     (JobType.PAID_DATA, ReportType.entity): (500, 1000),
     (JobType.PAID_DATA, ReportType.lifetime): (400, 900),
-    # organic reports less important than paid reports
     (JobType.ORGANIC_DATA, ReportType.entity): (250, 750),
     (JobType.ORGANIC_DATA, ReportType.lifetime): (150, 650),
-    # breakdown reports less important than entities or lifetime reports
     (JobType.PAID_DATA, ReportType.day): (100, 600),
     (JobType.PAID_DATA, ReportType.day_age_gender): (100, 600),
     (JobType.PAID_DATA, ReportType.day_dma): (100, 600),
@@ -56,40 +55,54 @@ def get_score_range(claim: ScorableClaim) -> Tuple[int, int]:
 
 def historical_ratio(claim: ScorableClaim) -> float:
     """Multiplier based on past efforts to download job."""
-    if claim.is_first_attempt:
-        return MAX_SCORE_MULTIPLIER
+    last_success_dt = claim.last_report and claim.last_report.last_success_dt
 
-    max_dt = now()
-    # Absolute minimum is success every N days
-    min_dt = max_dt - timedelta(days=JOB_MIN_SUCCESS_PERIOD_IN_DAYS)
-    last_success_dt = claim.last_report.last_success_dt
-    if last_success_dt <= min_dt:
+    if not last_success_dt:
         return MAX_SCORE_MULTIPLIER
+    else:
+        # cool! prior success!
+        # **the further in the past is prior success the higher is
+        # the need to recollect / refresh**
+        # (but caps out on constant some ~30 days in past)
+        # (not same thing as "the futher in past is the reporting date of data". Separate score there)
 
-    # Least recently successful is most important
-    min_timestamp = min_dt.timestamp()
-    max_timestamp = max_dt.timestamp()
-    last_success_timestamp = last_success_dt.timestamp()
-    return (max_timestamp - last_success_timestamp) / (max_timestamp - min_timestamp)
+        # most recently-successfully collected data score gets close to zero score
+        max_dt = now()
+        # Absolute minimum is success every N days
+        min_dt = max_dt - timedelta(days=JOB_MIN_SUCCESS_PERIOD_IN_DAYS)
+        if last_success_dt <= min_dt:
+            return MAX_SCORE_MULTIPLIER
+        else: #  between min and max
+            min_timestamp = min_dt.timestamp()
+            max_timestamp = max_dt.timestamp()
+            last_success_timestamp = last_success_dt.timestamp()
+            return min(
+                MAX_SCORE_MULTIPLIER * (max_timestamp - last_success_timestamp) / (max_timestamp - min_timestamp),
+                MIN_SCORE_MULTIPLIER
+            )
 
 
 def recency_ratio(claim: ScorableClaim) -> float:
     """Multiplier based on how likely to change the data in the report is."""
-    # lifetime and entity reports get same score as most recent metric reports
+
+    # data points without natural "age" (lifetime metrics and entity reports)
+    # must always stay fresh and get full score
     if claim.range_start is None:
         return MAX_SCORE_MULTIPLIER
 
-    max_dt = now().date()
-    # Reports older than N years ago get minimum
-    min_dt = max_dt - timedelta(days=JOB_MAX_AGE_IN_DAYS)
-    if claim.range_start <= min_dt:
-        return MIN_SCORE_MULTIPLIER
+    # reporting-date-tied records are scored on a downward-sloping line
+    # where "half-life" (50% decay) is at JOB_MAX_AGE_IN_DAYS in past
 
-    # Most recent report day is most important
-    min_days = min_dt.toordinal()
-    max_days = max_dt.toordinal()
-    report_days = claim.range_start.toordinal()
-    return (report_days - min_days) / (max_days - min_days)
+    decay_per_day = 1 / (JOB_MAX_AGE_IN_DAYS * 2)
+    today = now().date().toordinal()
+    claim_day = claim.range_start.toordinal()
+    days_in_past = today - claim_day
+    mult = MAX_SCORE_MULTIPLIER * (1 - days_in_past * decay_per_day)
+
+    if mult < MIN_SCORE_MULTIPLIER:
+        return MIN_SCORE_MULTIPLIER
+    else:
+        return mult
 
 
 def normalize(value_range: Tuple[int, int], ratio: float) -> int:
@@ -112,14 +125,14 @@ def assign_score(claim: ScorableClaim) -> int:
     if ACTIVATE_JOB_GATEKEEPER and not JobGateKeeper.shall_pass(claim):
         return JobGateKeeper.JOB_NOT_PASSED_SCORE
 
-    score_range = get_score_range(claim)
+    # score_range = get_score_range(claim)
     hist_ratio = historical_ratio(claim)
     rec_ratio = recency_ratio(claim)
 
     # equal weight to each ratio
-    combined_ratio = (hist_ratio + rec_ratio) / 2.0
+    combined_ratio = hist_ratio * rec_ratio
 
-    return normalize(score_range, combined_ratio)
+    return int(MUST_RUN_SCORE * combined_ratio)
 
 
 def iter_prioritized(claims: Iterable[ScorableClaim]) -> Generator[PrioritizationClaim, None, None]:
