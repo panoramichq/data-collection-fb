@@ -45,6 +45,27 @@ PageTree = [
 PageTree_len = len(PageTree)
 
 
+class AccountScoreMultiplierCache():
+
+    scope = 'Console'
+    _cache = {}
+
+    @classmethod
+    def get_score_multiplier(self, account_id, entity_type=AdAccountEntity):
+        if account_id not in self._cache:
+            try:
+                score_multiplier = AdAccountEntity.get(self.scope, account_id).score_multiplier
+            except AdAccountEntity.DoesNotExist:
+                score_multiplier = None
+            self._cache[account_id] = score_multiplier
+
+        return self._cache[account_id]
+
+    @classmethod
+    def reset(cls):
+        cls._cache.clear()
+
+
 class ScoreSkewHandlers:
     # nested as such mostly for ease of mocking in tests.
     # do NOT unbundle this class.
@@ -117,23 +138,6 @@ SCORE_SKEW_HANDLERS: Dict[Tuple[str, str], Callable[[ScorableClaim], float]] = {
 }
 
 
-class AccountCache():
-
-    scope = 'Console'
-    _cache = {}
-
-    @classmethod
-    def get_score_multiplier(self, account_id, entity_type=AdAccountEntity):
-        if account_id not in self._cache:
-            try:
-                score_multiplier = AdAccountEntity.get(self.scope, account_id).score_multiplier
-            except AdAccountEntity.DoesNotExist:
-                score_multiplier = None
-            self._cache[account_id] = score_multiplier
-
-        return self._cache[account_id]
-
-
 class ScoreCalculator:
     @staticmethod
     def skew_ratio(claim: ScorableClaim) -> float:
@@ -189,7 +193,7 @@ class ScoreCalculator:
     @classmethod
     def account_skew(cls, claim: ScorableClaim) -> float:
         if claim.entity_type == Entity.AdAccount and claim.entity_id:
-            mult = AccountCache.get_score_multiplier(claim.entity_id)
+            mult = AccountScoreMultiplierCache.get_score_multiplier(claim.entity_id)
 
             if mult is None:
                 return 1.0

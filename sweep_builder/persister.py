@@ -8,6 +8,7 @@ from common.enums.jobtype import detect_job_type
 from common.measurement import Measure
 from oozer.common.sorted_jobs_queue import SortedJobsQueue
 from sweep_builder.data_containers.prioritization_claim import PrioritizationClaim
+from sweep_builder.prioritizer.prioritized import AccountScoreMultiplierCache
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +24,9 @@ def iter_persist_prioritized(
     sweep_id: str, prioritized_iter: Iterable[PrioritizationClaim]
 ) -> Generator[PrioritizationClaim, None, None]:
     """Persist prioritized jobs and pass-through context objects for inspection."""
+
+    AccountScoreMultiplierCache.reset()
+
     with SortedJobsQueue(sweep_id).JobsWriter() as add_to_queue:
 
         _measurement_name_base = f'{__name__}.{iter_persist_prioritized.__name__}'
