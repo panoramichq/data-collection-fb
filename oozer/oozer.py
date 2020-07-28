@@ -99,12 +99,9 @@ class TaskOozer:
     @classmethod
     def calculate_rate(cls: 'TaskOozer', current_rate: float, pulse: Pulse) -> float:
         """Calculate new oozing rate based on current rate and oozing pulse."""
-        error_rate = cls.error_function(pulse)
-        # Larger error rate => larger step
-        if error_rate == 0:
-            error_rate = -1
-        rate_change = -error_rate * OOZER_LEARNING_RATE
-        return cls.clamp_oozing_rate(current_rate + (rate_change * current_rate))
+        throttling_rate = cls.error_function(pulse)
+        # at small error rate still grow but as error rate goes up it crosses 50 and starts to reduce
+        return cls.clamp_oozing_rate(current_rate + ((0.5 - throttling_rate) * current_rate))
 
     def _ooze_task(self, task: CeleryTask, job_scope: JobScope, job_context: JobContext, score: int):
         """Non-blocking task oozing function."""
