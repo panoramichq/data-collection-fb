@@ -11,6 +11,7 @@ from common.enums.jobtype import JobType, detect_job_type
 from common.enums.reporttype import ReportType
 from common.error_inspector import ErrorInspector
 from common.measurement import Measure
+from common.store.entities import AdAccountEntity
 from common.tztools import now
 from sweep_builder.data_containers.prioritization_claim import PrioritizationClaim
 from sweep_builder.data_containers.scorable_claim import ScorableClaim
@@ -116,6 +117,23 @@ SCORE_SKEW_HANDLERS: Dict[Tuple[str, str], Callable[[ScorableClaim], float]] = {
 }
 
 
+class AccountCache():
+
+    scope = 'Console'
+    _cache = {}
+
+    @classmethod
+    def get_score_multiplier(self, account_id, entity_type=AdAccountEntity):
+        if account_id not in self:
+            try:
+                score_multiplier = AdAccountEntity.get(self.scope, account_id).score_multiplier
+            except AdAccountEntity.DoesNotExist:
+                score_multiplier = None
+            self._cache[account_id] = score_multiplier
+
+        return self._cache[account_id]
+
+
 class ScoreCalculator:
     @staticmethod
     def skew_ratio(claim: ScorableClaim) -> float:
@@ -169,7 +187,19 @@ class ScoreCalculator:
             return MIN_SCORE_MULTIPLIER
 
     @classmethod
-    def assign_score(cls, claim: ScorableClaim) -> int:
+    def account_skew(cls, claim: ScorableClaim) -> float:
+        if claim.entity_type == Entity.AdAccount and claim.entity_id:
+            mult = AccountCache.get_score_multiplier(claim.entity_id)
+
+            if mult is None:
+                return 1.0
+            else:
+                return mult
+
+        return 1.0
+
+    @classmethod
+    def assign_score(cls, claim: ScorableClaim) -> float:
         """Calculate score for a given claim."""
         if claim.report_type in ReportType.MUST_RUN_EVERY_SWEEP:
             return MUST_RUN_SCORE
@@ -183,8 +213,9 @@ class ScoreCalculator:
         with timer:
             hist_ratio = cls.historical_ratio(claim)
             score_skew_ratio = cls.skew_ratio(claim)
+            account_skew = cls.account_skew(claim)
 
-        combined_ratio = hist_ratio * score_skew_ratio
+        combined_ratio = hist_ratio * score_skew_ratio * account_skew
         return int(MUST_RUN_SCORE * combined_ratio)
 
 

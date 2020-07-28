@@ -59,6 +59,10 @@ class AdAccountEntity(ConsoleEntityMixin, BaseModel):
     # in that AdAccount's timezone (not UTC).
     timezone = attributes.UnicodeAttribute(attr_name='tz')
 
+    # manually controlled through Dynamo UI. Here we just read it
+    # does not have to be set for majority of records.
+    score_multiplier = attributes.NumberAttribute(null=True, attr_name='score_skew')
+
     entity_type = Entity.AdAccount
 
     @property
