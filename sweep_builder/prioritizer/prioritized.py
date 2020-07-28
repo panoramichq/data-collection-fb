@@ -11,11 +11,11 @@ from common.enums.jobtype import JobType, detect_job_type
 from common.enums.reporttype import ReportType
 from common.error_inspector import ErrorInspector
 from common.measurement import Measure
-from common.store.entities import AdAccountEntity
 from common.tztools import now
 from sweep_builder.data_containers.prioritization_claim import PrioritizationClaim
 from sweep_builder.data_containers.scorable_claim import ScorableClaim
 from sweep_builder.errors import ScoringException
+from sweep_builder.account_cache import AccountCache
 
 logger = logging.getLogger(__name__)
 
@@ -43,27 +43,6 @@ PageTree = [
     Entity.PagePost,
 ]
 PageTree_len = len(PageTree)
-
-
-class AccountScoreMultiplierCache():
-
-    scope = 'Console'
-    _cache = {}
-
-    @classmethod
-    def get_score_multiplier(self, account_id, entity_type=AdAccountEntity):
-        if account_id not in self._cache:
-            try:
-                score_multiplier = AdAccountEntity.get(self.scope, account_id).score_multiplier
-            except AdAccountEntity.DoesNotExist:
-                score_multiplier = None
-            self._cache[account_id] = score_multiplier
-
-        return self._cache[account_id]
-
-    @classmethod
-    def reset(cls):
-        cls._cache.clear()
 
 
 class ScoreSkewHandlers:
@@ -193,7 +172,7 @@ class ScoreCalculator:
     @classmethod
     def account_skew(cls, claim: ScorableClaim) -> float:
         if claim.entity_type == Entity.AdAccount and claim.entity_id:
-            mult = AccountScoreMultiplierCache.get_score_multiplier(claim.entity_id)
+            mult = AccountCache.get_score_multiplier(claim.entity_id)
 
             if mult is None:
                 return 1.0

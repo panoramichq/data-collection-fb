@@ -5,6 +5,7 @@ from typing import Iterable, Generator, Optional
 
 from pynamodb.exceptions import DoesNotExist
 
+from common.enums.entity import Entity
 from common.enums.jobtype import detect_job_type
 from config.application import PERMANENTLY_FAILING_JOB_THRESHOLD
 from config.jobs import FAILS_IN_ROW_BREAKDOWN_LIMIT, TASK_BREAKDOWN_ENABLED
@@ -15,6 +16,7 @@ from common.id_tools import generate_id
 from common.job_signature import JobSignature
 from sweep_builder.data_containers.expectation_claim import ExpectationClaim
 from sweep_builder.data_containers.scorable_claim import ScorableClaim
+from sweep_builder.account_cache import AccountCache
 
 logger = logging.getLogger(__name__)
 
@@ -77,7 +79,19 @@ def prefer_job_breakdown(report: JobReport) -> bool:
 
 def generate_scorable(claim: ExpectationClaim) -> Generator[ScorableClaim, None, None]:
     """Select job signature for single expectation claim."""
+
     last_report = _fetch_job_report(claim.job_id)
+
+    if claim.ad_account_id and claim.entity_type == Entity.AdAccount:
+        refresh_if_older_than = AccountCache.get_refresh_if_older_than(claim.ad_account_id)
+        _reset = (
+            refresh_if_older_than and
+            last_report and
+            last_report.last_success_dt and
+            last_report.last_success_dt < refresh_if_older_than
+        )
+        if _reset:
+            last_report = None
 
     _prefer_breakdown = (
         TASK_BREAKDOWN_ENABLED and

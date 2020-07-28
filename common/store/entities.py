@@ -62,6 +62,7 @@ class AdAccountEntity(ConsoleEntityMixin, BaseModel):
     # manually controlled through Dynamo UI. Here we just read it
     # does not have to be set for majority of records.
     score_multiplier = attributes.NumberAttribute(null=True, attr_name='score_skew')
+    refresh_if_older_than = attributes.UTCDateTimeAttribute(null=True, attr_name='refresh_to')
 
     entity_type = Entity.AdAccount
 
