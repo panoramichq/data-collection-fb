@@ -6,6 +6,7 @@ from datetime import timedelta, datetime
 
 from typing import Generator, Iterable, Tuple, Dict, Callable
 
+from common.enums.entity import Entity
 from common.enums.jobtype import JobType, detect_job_type
 from common.enums.reporttype import ReportType
 from common.error_inspector import ErrorInspector
@@ -22,6 +23,25 @@ MIN_SCORE_MULTIPLIER = 0.5
 JOB_MIN_SUCCESS_PERIOD_IN_DAYS = 30
 JOB_MAX_AGE_IN_DAYS = 365 * 2
 MUST_RUN_SCORE = 1000
+
+
+AdTree = [
+    Entity.AdAccount,
+    Entity.Campaign,
+    Entity.AdSet,
+    Entity.Ad,
+    Entity.AdCreative,
+    Entity.AdVideo,
+    Entity.CustomAudience,
+]
+AdTree_len = len(AdTree)
+
+PageTree = [
+    Entity.Page,
+    Entity.PageVideo,
+    Entity.PagePost,
+]
+PageTree_len = len(PageTree)
 
 
 class ScoreSkewHandlers:
@@ -64,17 +84,27 @@ class ScoreSkewHandlers:
             return mult
 
     @staticmethod
-    def random_half_skew(claim: ScorableClaim) -> float:
-        r = random.randrange(50, 100) / 100.0
-        return MAX_SCORE_MULTIPLIER * r
+    def entity_hierarchy_skew(claim: ScorableClaim) -> float:
+        try:
+            i = AdTree.index(claim.report_variant)
+            # upper 50% of range
+            return 1.0 - i/(AdTree_len + AdTree_len)
+        except ValueError:
+            try:
+                i = PageTree.index(claim.report_variant)
+                # lower 50% of range
+                return 0.5 * (1.0 - i/PageTree_len)
+            except ValueError:
+                return random.randrange(50, 80) / 100.0
+
 
 # You don't have to list all possible report types here.
 # same_score is default if not on this list,
 # but it helps to list possibilities for our record
 SCORE_SKEW_HANDLERS: Dict[Tuple[str, str], Callable[[ScorableClaim], float]] = {
-    (JobType.PAID_DATA, ReportType.entity): ScoreSkewHandlers.random_half_skew,
+    (JobType.PAID_DATA, ReportType.entity): ScoreSkewHandlers.entity_hierarchy_skew,
     (JobType.PAID_DATA, ReportType.lifetime): ScoreSkewHandlers.lifetime_score,
-    (JobType.ORGANIC_DATA, ReportType.entity): ScoreSkewHandlers.random_half_skew,
+    (JobType.ORGANIC_DATA, ReportType.entity): ScoreSkewHandlers.entity_hierarchy_skew,
     (JobType.ORGANIC_DATA, ReportType.lifetime): ScoreSkewHandlers.lifetime_score,
     (JobType.PAID_DATA, ReportType.day): ScoreSkewHandlers.day_based_metrics,
     (JobType.PAID_DATA, ReportType.day_age_gender): ScoreSkewHandlers.day_based_metrics,
@@ -109,18 +139,34 @@ class ScoreCalculator:
 
             # most recently-successfully collected data score gets close to zero score
             max_dt = now()
-            # Absolute minimum is success every N days
-            min_dt = max_dt - timedelta(days=JOB_MIN_SUCCESS_PERIOD_IN_DAYS)
-            if last_success_dt <= min_dt:
-                return MAX_SCORE_MULTIPLIER
-            else: #  between min and max
-                min_timestamp = min_dt.timestamp()
-                max_timestamp = max_dt.timestamp()
-                last_success_timestamp = last_success_dt.timestamp()
-                return min(
-                    MAX_SCORE_MULTIPLIER * (max_timestamp - last_success_timestamp) / (max_timestamp - min_timestamp),
+            age = max_dt - last_success_dt
+            age_days = age.days
+
+            if age < timedelta(hours=6):
+                return 0.0
+
+            if age < timedelta(days=3):
+                # score rises to day 3
+                return max(
+                    MAX_SCORE_MULTIPLIER * age_days / 3,
                     MIN_SCORE_MULTIPLIER
                 )
+
+            if age < timedelta(days=7):
+                # score falls by day 7
+                return max(
+                    MAX_SCORE_MULTIPLIER * (1.0 - (age_days-3) / 4),
+                    MIN_SCORE_MULTIPLIER
+                )
+
+            if age < timedelta(days=JOB_MIN_SUCCESS_PERIOD_IN_DAYS):
+                # score falls by day 7
+                return max(
+                    MAX_SCORE_MULTIPLIER * (age_days-7) / (JOB_MIN_SUCCESS_PERIOD_IN_DAYS-7),
+                    MIN_SCORE_MULTIPLIER
+                )
+
+            return MIN_SCORE_MULTIPLIER
 
     @classmethod
     def assign_score(cls, claim: ScorableClaim) -> int:
