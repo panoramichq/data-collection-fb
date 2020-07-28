@@ -124,7 +124,7 @@ class AccountCache():
 
     @classmethod
     def get_score_multiplier(self, account_id, entity_type=AdAccountEntity):
-        if account_id not in self:
+        if account_id not in self._cache:
             try:
                 score_multiplier = AdAccountEntity.get(self.scope, account_id).score_multiplier
             except AdAccountEntity.DoesNotExist:
