@@ -52,7 +52,7 @@ def test_calculate_rate_no_user_throttling():
     pulse = Pulse(Total=100, InProgress=10, CurrentCounts=StatusCounts(**statuses, Total=20), **statuses)
     new_rate = TaskOozer.calculate_rate(50, pulse)
 
-    assert new_rate == 52.5
+    assert new_rate == 75.0
 
 
 def test_calculate_rate_all_user_throttling():
@@ -61,4 +61,4 @@ def test_calculate_rate_all_user_throttling():
     pulse = Pulse(Total=100, InProgress=10, CurrentCounts=StatusCounts(**statuses, Total=20), **statuses)
     new_rate = TaskOozer.calculate_rate(50, pulse)
 
-    assert 45 <= new_rate < 50
+    assert 27 <= new_rate < 30

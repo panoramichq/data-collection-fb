@@ -88,13 +88,13 @@ class ScoreSkewHandlers:
     def entity_hierarchy_skew(claim: ScorableClaim) -> float:
         try:
             i = AdTree.index(claim.report_variant)
-            # upper 50% of range
-            return 1.0 - i/(AdTree_len + AdTree_len)
+            # upper ~60% of range + random
+            return (1.0 - i/(AdTree_len*1.6)) * random.randrange(50, 200) / 100.0
         except ValueError:
             try:
                 i = PageTree.index(claim.report_variant)
-                # lower 50% of range
-                return 0.5 * (1.0 - i/PageTree_len)
+                # lower 60% of range + random
+                return (0.6 * (1.0 - i/PageTree_len)) * random.randrange(50, 150) / 100.0
             except ValueError:
                 return random.randrange(50, 80) / 100.0
 

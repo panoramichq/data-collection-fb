@@ -22,7 +22,7 @@ from sweep_builder.prioritizer.prioritized import (
     ['last_success_dt', 'expected'],
     [
         (None, 1.0),
-        (now() - timedelta(days=JOB_MIN_SUCCESS_PERIOD_IN_DAYS + 1), 1.0),
+        (now() - timedelta(days=JOB_MIN_SUCCESS_PERIOD_IN_DAYS + 1), 0.5),
         (now(), 0.0),
     ]
 )
