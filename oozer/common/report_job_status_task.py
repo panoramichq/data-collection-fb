@@ -43,6 +43,7 @@ def report_job_status_task(stage_status: int, job_scope: JobScope):
         report_job_status(stage_status, job_scope)
     except PutError as ex:
         if ErrorInspector.is_dynamo_throughput_error(ex):
-            logger.info(str(ex))
+            # logger.info(str(ex))
+            pass # hundreds of thousads of these every sweep... need dump Dynamo.
         else:
             raise

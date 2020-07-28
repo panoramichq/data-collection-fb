@@ -4,14 +4,12 @@ RUN_SWEEP_TIMEOUT = 60 * 60  # seconds
 RUN_TASKS_TIMEOUT = 30 * 60  # 30 minutes.
 
 FB_THROTTLING_WINDOW = 20 * 60  # 20 minutes.
-ALLOW_RECURSION = False
 
-OOZER_ENABLE_LEARNING = False
+OOZER_ENABLE_LEARNING = True
 OOZER_LEARNING_RATE = 0.05
-OOZER_REVIEW_INTERVAL = 30
-OOZER_START_RATE = 10
-OOZER_MAX_RATE = 100.0
-OOZER_MIN_RATE = 5.0
+OOZER_REVIEW_INTERVAL = 10
+OOZER_START_RATE = 100.0
+OOZER_MIN_RATE = 10.0
 
 # Hour, DMA, AgeGender * about 2 years back + 3 levels of lifetime + 3 levels of Entities
 _number_of_long_tasks_per_aa = 3 * 600 + 3 + 3

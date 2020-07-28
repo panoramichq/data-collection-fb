@@ -9,7 +9,6 @@ from config.looper import (
     OOZER_START_RATE,
     OOZER_REVIEW_INTERVAL,
     OOZER_MIN_RATE,
-    OOZER_MAX_RATE,
     OOZER_LEARNING_RATE,
     OOZER_ENABLE_LEARNING,
 )
@@ -95,7 +94,7 @@ class TaskOozer:
     @staticmethod
     def clamp_oozing_rate(rate: float) -> float:
         """Ensure rate between min and max value."""
-        return max(OOZER_MIN_RATE, min(rate, OOZER_MAX_RATE))
+        return max(OOZER_MIN_RATE, rate)
 
     @classmethod
     def calculate_rate(cls: 'TaskOozer', current_rate: float, pulse: Pulse) -> float:

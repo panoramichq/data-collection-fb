@@ -23,7 +23,7 @@ MIN_DELAY_SECS = 15
 def run_tasks(sweep_id: str) -> Tuple[int, Pulse]:
     """Oozes tasks gradually into Celery workers queue."""
     start_time = time.time()
-    stop_waiting_time = start_time + looper_config.FB_THROTTLING_WINDOW
+    stop_waiting_time = start_time + looper_config.FB_THROTTLING_WINDOW * 1.5
     # 90% time oozing; 10% waiting
     stop_oozing_time = start_time + 0.9 * looper_config.FB_THROTTLING_WINDOW
 
