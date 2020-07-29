@@ -92,7 +92,7 @@ class ScoreSkewHandlers:
     def reporting_day_skew(claim: ScorableClaim) -> float:
         # contemplate rotating these around the hour like lifetime,
         # or rather skew them into slots not naturally occupied by lifetime jobs
-        i = ReportingDayTypePriority.get(claim.report_type, random.randrange(50, 90) / 100.0)
+        return ReportingDayTypePriority.get(claim.report_type, random.randrange(50, 90) / 100.0)
 
     @staticmethod
     def entity_hierarchy_skew(claim: ScorableClaim) -> float:
