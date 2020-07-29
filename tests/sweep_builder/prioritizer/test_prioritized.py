@@ -18,23 +18,6 @@ from sweep_builder.prioritizer.prioritized import (
     ScoreSkewHandlers,
 )
 
-@pytest.mark.parametrize(
-    ['last_success_dt', 'expected'],
-    [
-        (None, 1.0),
-        (now() - timedelta(days=JOB_MIN_SUCCESS_PERIOD_IN_DAYS + 1), 0.5),
-        (now(), 0.0),
-    ]
-)
-def test_historical_ratio(last_success_dt, expected):
-    signature = JobSignature('jobid')
-    last_report = JobReport(last_success_dt=last_success_dt)
-    claim = ScorableClaim('A1', Entity.Ad, ReportType.lifetime, Entity.Ad, signature, last_report)
-
-    score = ScoreCalculator.historical_ratio(claim)
-
-    assert score == pytest.approx(expected, abs=0.01)
-
 
 @pytest.mark.parametrize(
     ['report_type', 'historical_ratio', 'skew_ratio', 'score'],
@@ -77,7 +60,7 @@ def test_lifetime_score(dt, expected_score):
     signature = JobSignature('jobid')
     claim = ScorableClaim('A1', Entity.Ad, ReportType.lifetime, Entity.Ad, signature, None)
     with patch.object(ScoreSkewHandlers, 'get_now', return_value=dt) as mm:
-        score = ScoreSkewHandlers.lifetime_score(claim=claim)
+        score = ScoreSkewHandlers.lifetime_skew(claim=claim)
 
     assert mm.called
     assert score == pytest.approx(expected_score, abs=0.01)
