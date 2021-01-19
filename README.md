@@ -1,14 +1,10 @@
 # Facebook data collection system
 
-The initial write-up and specification can be found [in the Operam drive](https://drive.google.com/drive/folders/1zrGT3l3BbLmdhs6BwlL8CUEViqFXrJgF?usp=sharing).
+This contains a system which can be used to collect data from Facebook Ad accounts. It takes into account rate limits and balances them to ensure you always have the most recent data. It relies on many AWS services to operate.
 
 ## Prerequisites
 
 This project relies on Make, [Docker and Docker Compose](https://www.docker.com/docker-mac). Please ensure you have the latest version of all 3 tools installed before you begin development.
-
-In order to build the project locally, you will need to be added to the [Operam Docker Hub Organization](https://hub.docker.com/u/operam/). If you are not currently added, please post a message in the #engineering Slack channel with your Docker Hub username and Mike, JJ or Peto will get you setup.
-
-This project uses an [Operam Base Docker Image](https://github.com/unite-io/docker-base-images). If you are unable to get the image from Docker Hub or prefer an offline build, please refer to that repository for instructions.
 
 ## To get up and running
 
